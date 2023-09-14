@@ -15,6 +15,7 @@ test-py39-module-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py39-module
@@ -31,6 +32,7 @@ test-py39-flake8-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py39-flake8
@@ -47,6 +49,7 @@ test-py39-lizard-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py39-lizard
@@ -63,6 +66,7 @@ test-py39-mypy-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py39-mypy
@@ -79,6 +83,7 @@ test-py310-module-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py310-module
@@ -95,6 +100,7 @@ test-py310-flake8-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py310-flake8
@@ -111,6 +117,7 @@ test-py310-lizard-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py310-lizard
@@ -127,6 +134,7 @@ test-py310-mypy-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py310-mypy
@@ -143,6 +151,7 @@ test-py311-module-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py311-module
@@ -159,6 +168,7 @@ test-py311-flake8-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py311-flake8
@@ -175,6 +185,7 @@ test-py311-lizard-job:
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
     - tox -e py311-lizard
@@ -230,6 +241,7 @@ deploy_to_pypi_package:
   stage: deploy
   image: python:3.11
   before_script:
+    - cp pip.conf /etc/pip.conf
     - python3 -m pip install --upgrade build twine
   script:
     - |-
