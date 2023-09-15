@@ -1,5 +1,7 @@
 variables:
   CI_TAGS: docker
+  TWINE_USERNAME: $CI_REGISTRY_USER
+  TWINE_PASSWORD: $CI_REGISTRY_PASSWORD
 
 stages:
   - test-py39
@@ -279,10 +281,8 @@ deploy_to_pypi_package:
     - cp pip.conf /etc/pip.conf
     - python3 -m pip install --upgrade build twine
   script:
-    - |-
-      python3 -m build
-      TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token
-      python3 -m twine upload --skip-existing --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
+    - python3 -m build
+    - python3 -m twine upload --skip-existing -u ${TWINE_USERNAME} -p ${TWINE_PASSWORD} --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
       when: always
