@@ -22,8 +22,6 @@ test-py39-module-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py39-flake8-job:
@@ -38,8 +36,6 @@ test-py39-flake8-job:
     - tox -e py39-flake8
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
 
@@ -56,8 +52,6 @@ test-py39-lizard-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py39-mypy-job:
@@ -73,8 +67,7 @@ test-py39-mypy-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
+
 
 test-py39-build-job:
   stage: test-py39
@@ -91,8 +84,6 @@ test-py39-build-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py310-module-job:
@@ -107,8 +98,6 @@ test-py310-module-job:
     - tox -e py310-module
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
 
@@ -125,8 +114,6 @@ test-py310-flake8-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py310-lizard-job:
@@ -142,8 +129,6 @@ test-py310-lizard-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py310-mypy-job:
@@ -158,8 +143,6 @@ test-py310-mypy-job:
     - tox -e py310-mypy
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
 
@@ -178,8 +161,6 @@ test-py310-build-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py311-module-job:
@@ -194,8 +175,6 @@ test-py311-module-job:
     - tox -e py311-module
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
 
@@ -212,8 +191,6 @@ test-py311-flake8-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py311-lizard-job:
@@ -229,8 +206,6 @@ test-py311-lizard-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
-      when: always
 
 
 test-py311-mypy-job:
@@ -245,8 +220,6 @@ test-py311-mypy-job:
     - tox -e py311-mypy
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
 
@@ -264,8 +237,6 @@ test-py311-build-job:
     - ls -l dist/*
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
 
@@ -288,11 +259,22 @@ coverage-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
+      when: always
+
+auto_add_git_tag:
+  stage: deploy
+  script:
+    - |-
+      VERSION_NUMBER=$(grep -E -o "(version =) (.*)" pyproject.toml | cut -d'"' -f2)
+      git pull origin $CI_DEFAULT_BRANCH
+      git tag "v${VERSION_NUMBER}"
+      git push --tags
+  rules:
     - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
     - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
       when: always
-
 
 deploy_to_pypi_package:
   stage: deploy
@@ -304,7 +286,7 @@ deploy_to_pypi_package:
     - |-
       python3 -m build
       TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token
-      python3 -m twine upload --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
+      python3 -m twine upload --skip-existing --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
   rules:
     - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
       when: always
