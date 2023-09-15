@@ -10,7 +10,6 @@
 --trusted-host pypi.org
 --trusted-host files.pythonhosted.org
 -e file:.
-cchardet==2.1.7
 chardet==5.2.0
 charset-normalizer==3.2.0
 contourpy==1.1.0

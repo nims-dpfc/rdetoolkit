@@ -8,7 +8,6 @@ authors = [
 dependencies = [
     "chardet>=5.2.0",
     "charset-normalizer>=3.2.0",
-    "cchardet>=2.1.7",
     "numpy>=1.25.2",
     "matplotlib>=3.7.2",
     "openpyxl>=3.1.2",

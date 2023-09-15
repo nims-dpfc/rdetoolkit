@@ -12,7 +12,6 @@
 -e file:.
 black==23.9.1
 cachetools==5.3.1
-cchardet==2.1.7
 chardet==5.2.0
 charset-normalizer==3.2.0
 click==8.1.7
