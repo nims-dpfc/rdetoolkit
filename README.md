@@ -1,3 +1,10 @@
+[![Latest Release](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/badges/release.svg)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/releases)
+[![pipeline status](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/badges/main/pipeline.svg)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/commits/main)
+[![coverage report](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/badges/main/coverage.svg)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/commits/main)
+[![python.org](https://img.shields.io/badge/Python-3.9%7C3.10%7C3.11-%233776AB?logo=python)](https://www.python.org/downloads/release/python-3917/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/blob/main/LICENSE)
+[![Issue](https://img.shields.io/badge/issue_tracking-gitlab-orange)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/issues)
+
 # RdeToolKit
 
 RdeToolKitは、RDE2.0構造化プログラムのワークフローを作成するための基本的なPythonパッケージです。
