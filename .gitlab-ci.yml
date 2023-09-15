@@ -264,10 +264,14 @@ coverage-job:
 
 auto_add_git_tag:
   stage: deploy
+  image: python:3.9
   script:
     - |-
+      ls -l
       VERSION_NUMBER=$(grep -E -o "(version =) (.*)" pyproject.toml | cut -d'"' -f2)
-      git pull origin $CI_DEFAULT_BRANCH
+      git config user.name $GIT_USER_NAME
+      git config user.email $GIT_USER_EMAIL
+      git fetch
       git tag "v${VERSION_NUMBER}"
       git push --tags
   rules:
