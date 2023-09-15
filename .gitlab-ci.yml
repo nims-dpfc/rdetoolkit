@@ -242,7 +242,7 @@ test-py311-mypy-job:
     - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
-    - tox -e py39-mypy
+    - tox -e py311-mypy
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
