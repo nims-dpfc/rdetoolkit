@@ -76,6 +76,24 @@ test-py39-mypy-job:
     - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
       when: always
 
+test-py39-build-job:
+  stage: test-py39
+  image: python:3.9
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - python3 -m pip install --upgrade build
+    - python3 -m build
+    - ls -l dist/*
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
+      when: always
+
 
 test-py310-module-job:
   stage: test-py310
@@ -138,6 +156,25 @@ test-py310-mypy-job:
     - pip install tox
   script:
     - tox -e py310-mypy
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
+      when: always
+
+
+test-py310-build-job:
+  stage: test-py310
+  image: python:3.10
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - python3 -m pip install --upgrade build
+    - python3 -m build
+    - ls -l dist/*
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
@@ -213,15 +250,35 @@ test-py311-mypy-job:
       when: always
 
 
+test-py311-build-job:
+  stage: test-py311
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - python3 -m pip install --upgrade build
+    - python3 -m build
+    - ls -l dist/*
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop-*/'
+      when: always
+
+
 coverage-job:
   stage: coverage
   image: python:3.11
   tags:
     - ${CI_TAGS}
   before_script:
+    - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
-    - tox -e py39-module
+    - tox -e py311-module
   artifacts:
     reports:
       coverage_report:
