@@ -2,6 +2,7 @@ variables:
   CI_TAGS: docker
   TWINE_USERNAME: $CI_REGISTRY_USER
   TWINE_PASSWORD: $CI_REGISTRY_PASSWORD
+  TOKEN: $CI_REGISTRY_PASSWORD
 
 stages:
   - test-py39
@@ -269,7 +270,7 @@ auto_add_git_tag:
   image: python:3.9
   script:
     - VERSION_NUMBER=$(grep -E -o "(version =) (.*)" pyproject.toml | cut -d'"' -f2)
-    - curl --request POST --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" --url https://gitlab.nims.go.jp/api/v4/projects/648/repository/tags?tag_name=v${VERSION_NUMBER}&ref=develop-version0.1.0
+    - curl --request POST --header "PRIVATE-TOKEN:${TOKEN}" --url https://gitlab.nims.go.jp/api/v4/projects/648/repository/tags?tag_name=v${VERSION_NUMBER}&ref=main
   rules:
     - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
       when: always
@@ -281,12 +282,8 @@ deploy_to_pypi_package:
     - cp pip.conf /etc/pip.conf
     - python3 -m pip install --upgrade build twine
   script:
-    - echo $CI_PIPELINE_SOURCE
-    - echo $TWINE_USERNAME
-    - echo $CI_DEFAULT_BRANCH
-    - echo $CI_COMMIT_BRANCH
     - python3 -m build
     - python3 -m twine upload --skip-existing -u ${TWINE_USERNAME} -p ${TWINE_PASSWORD} --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
       when: always
