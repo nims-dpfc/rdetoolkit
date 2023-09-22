@@ -1,5 +1,6 @@
 import os
 import pathlib
+import platform
 import shutil
 from unittest import mock
 
@@ -7,6 +8,7 @@ import pandas as pd
 import pytest
 from src.rdetoolkit.impl.compressed_controller import (
     CompressedFlatFileParser, CompressedFolderParser)
+from src.rdetoolkit.exceptions import StructuredError
 
 
 @pytest.fixture
@@ -60,3 +62,23 @@ class TestCompressedFolderParser:
         assert len(verification_files) == 1
         assert "test1.txt" in [p.name for p in verification_files["tests/temp"]]
         assert "test2.txt" in [p.name for p in verification_files["tests/temp"]]
+
+    def test_invalid_validation_uniq_dirname(self, temp_dir):
+        compressed_filepath1 = pathlib.Path("tests", "temp", "test1.txt")
+        compressed_filepath2 = pathlib.Path("tests", "temp", "Test1.txt")
+        compressed_filepath1.touch()
+        compressed_filepath2.touch()
+
+        xlsx_invoice = pd.DataFrame()
+
+        if platform.system() == "Linux":
+            parser = CompressedFolderParser(xlsx_invoice)
+            with pytest.raises(StructuredError) as e:
+                verification_files = parser.validation_uniq_dirname(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
+            assert str(e.value) == 'ERROR: data directory should have unique name but same name found "{test1.txt}"'
+        else:
+            parser = CompressedFolderParser(xlsx_invoice)
+            verification_files = parser.validation_uniq_dirname(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
+
+            assert len(verification_files) == 1
+            assert "test1.txt" in [p.name for p in verification_files["tests/temp"]]

@@ -118,11 +118,11 @@ class CompressedFolderParser(ICompressedFileStructParser):
             fnames = [f for f in fnames if f not in exclude_names]
             if not fnames:
                 continue
-            dir = str(dir).lower()
-            if dir in unique_dirname_set:
-                raise StructuredError(f'ERROR: data directory should have unique name but same name found "{dir}"')
-            unique_dirname_set.add(dir)
-            verification_files[dir] = [Path(dir) / Path(f) for f in fnames]
+            lower_dir = str(dir).lower()
+            if lower_dir in unique_dirname_set:
+                raise StructuredError(f'ERROR: data directory should have unique name but same name found "{lower_dir}"')
+            unique_dirname_set.add(lower_dir)
+            verification_files[lower_dir] = [Path(dir) / Path(f) for f in fnames]
 
         return verification_files
 
