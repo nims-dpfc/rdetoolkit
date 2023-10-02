@@ -82,7 +82,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
             validated based on unique directory names.
         """
         _ = self._unpacked(zipfile, target_path)
-        safe_verification_files = self.validation_uniq_dirname(target_path, exclude_names=["invoice_org.json"])
+        safe_verification_files = self.validation_uniq_fspath(target_path, exclude_names=["invoice_org.json"])
         return [tuple(f) for f in safe_verification_files.values()]
 
     def _unpacked(self, zipfile: Union[Path, str], target_dir: Union[Path, str]):
@@ -91,7 +91,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
         shutil.unpack_archive(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file()]
 
-    def validation_uniq_dirname(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:
+    def validation_uniq_fspath(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:
         """Check if there are any non-unique directory names under the target directory
 
         Args:
@@ -115,14 +115,21 @@ class CompressedFolderParser(ICompressedFileStructParser):
         verification_files: dict[str, list[Path]] = {}
         unique_dirname_set = set()
         for dir, _, fnames in os.walk(target_path):
-            fnames = [f for f in fnames if f not in exclude_names]
             if not fnames:
                 continue
+            # check file
+            _filered_paths = [Path(dir) / Path(f) for f in fnames if f not in exclude_names]
+            for f in _filered_paths:
+                if str(f).lower() in unique_dirname_set:
+                    raise StructuredError('ERROR: folder paths and file paths stored in a zip file must always have unique names.')
+                unique_dirname_set.add(str(f).lower())
+
+            # check folder
             lower_dir = str(dir).lower()
             if lower_dir in unique_dirname_set:
-                raise StructuredError(f'ERROR: data directory should have unique name but same name found "{lower_dir}"')
+                raise StructuredError('ERROR: folder paths and file paths stored in a zip file must always have unique names.')
             unique_dirname_set.add(lower_dir)
-            verification_files[lower_dir] = [Path(dir) / Path(f) for f in fnames]
+            verification_files[lower_dir] = _filered_paths
 
         return verification_files
 
