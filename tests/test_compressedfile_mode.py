@@ -92,7 +92,7 @@ class TestCompressedFolderParser:
             verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
 
             assert len(verification_files) == 1
-            assert "test1.txt" in [p.name for p in verification_files["tests/temp"]]
+            assert "test1.txt" in [p.name for p in verification_files["tests/temp/sample"]]
 
 
     def test_invalid_validation_uniq_fspath_file(self, temp_dir):
@@ -121,4 +121,4 @@ class TestCompressedFolderParser:
             verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
 
             assert len(verification_files) == 1
-            assert "test1.txt" in [p.name for p in verification_files["tests/temp"]]
+            assert "test1.txt" in [p.name for p in verification_files["tests/temp/sample"]]

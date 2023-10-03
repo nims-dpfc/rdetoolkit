@@ -96,7 +96,22 @@ class TestExcelInvoiceChecker:
         checker = ExcelInvoiceChecker(unpacked_dir_basename)
         rawfiles, excelinvoice = checker.parse(src_dir_input)
 
-        assert len(rawfiles) == 2
+        assert rawfiles == [(Path('data/temp/test_child1.txt'),), (Path('data/temp/test_child2.txt'),)]
+        assert excelinvoice is not None
+        assert isinstance(rawfiles[0], tuple)
+        assert all(isinstance(file, Path) for file in rawfiles[0])
+
+    def test_parse_multi_folder(self, inputfile_zip_with_folder_multi, inputfile_multi_folder_excelinvoice):
+        """sortを考慮したテスト
+        """
+
+        unpacked_dir_basename = Path("data/temp")
+        src_dir_input = Path("data/inputdata")
+
+        checker = ExcelInvoiceChecker(unpacked_dir_basename)
+        rawfiles, excelinvoice = checker.parse(src_dir_input)
+
+        assert rawfiles == [(Path('data/temp/data2/test_child2.txt'),), (Path('data/temp/data1/test_child1.txt'),)]
         assert excelinvoice is not None
         assert isinstance(rawfiles[0], tuple)
         assert all(isinstance(file, Path) for file in rawfiles[0])

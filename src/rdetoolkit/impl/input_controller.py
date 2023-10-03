@@ -110,10 +110,21 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
     def _get_rawfiles(self, zipfile: Optional[Path], excel_invoice_file: Path) -> List[Tuple[Path, ...]]:
         df_excel_invoice, _, _ = readExcelInvoice(excel_invoice_file)
+        original_sort_items = df_excel_invoice.iloc[:,0].to_list()
         if zipfile is not None:
             archive_parser = compressed_controller.parse_compressedfile_mode(df_excel_invoice)
-            return archive_parser.read(zipfile, self.out_dir_temp)
+            _parse_items = archive_parser.read(zipfile, self.out_dir_temp)
+            return sorted(
+                _parse_items,
+                key=lambda paths: self.get_index(paths[0], original_sort_items)
+            )
         return [() for _ in range(len(df_excel_invoice["basic/dataName"]))]
+
+    def get_index(self, paths, sort_items):
+        for idx, item in enumerate(sort_items):
+            if item in paths.parts:
+                return idx
+        return len(sort_items)
 
     def _validate_files(self, zipfiles: ZipFilesPathList, excel_invoice_files: ExcelInvoicePathList, other_files: OtherFilesPathList) -> None:
         self._detect_invalid_zipfiles(zipfiles)
