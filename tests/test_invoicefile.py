@@ -52,6 +52,64 @@ def test_read_valid_excel_invoice_file(inputfile_single_dummy_header_excelinvoic
     assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
+def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
+    """Excelinvoiceのsample情報なしの時のreadテスト"""
+    invoice_path = Path(excelinvoice_non_sampleinfo)
+    excel_invoice_file = ExcelInvoiceFile(invoice_path)
+
+    dfExcelInvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+
+    assert dfExcelInvoice.columns[0] == "data_file_names/name"
+    assert (dfGeneral.columns == ["term_id", "key_name"]).all()
+    assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
+
+
+def test_excelinvoice_overwrite(
+    inputfile_multi_excelinvoice,
+    ivnoice_json_with_sample_info,
+    ivnoice_schema_json
+    ):
+    """試料情報ありの上書き処理
+    上書き後のinvoice.jsonの内容を確認する
+    上書き前のkey/value -> custom.key1: test1
+    上書き前のkey/value -> custom.key2: test2
+    """
+    dist_path = Path("data", "invoice", "invoice.json")
+    excel_invoice_path = Path(inputfile_multi_excelinvoice)
+
+    excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
+    excel_invoice_file.overwrite(ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json, 0)
+
+    with open(dist_path, mode="r", encoding="utf-8") as f:
+        contents = json.load(f)
+
+    assert contents['custom']["key1"] == "AAA"
+    assert contents['custom']["key2"] == "CCC"
+
+
+def test_excelinvoice_overwrite_none_sample(
+    excelinvoice_non_sampleinfo,
+    ivnoice_json_none_sample_info,
+    ivnoice_schema_json
+    ):
+    """試料情報なしの上書き処理
+    上書き後のinvoice.jsonの内容を確認する
+    上書き前のkey/value -> custom.key1: test1
+    上書き前のkey/value -> custom.key2: test2
+    """
+    dist_path = Path("data", "invoice", "invoice.json")
+    excel_invoice_path = Path(excelinvoice_non_sampleinfo)
+
+    excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
+    excel_invoice_file.overwrite(ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json, 0)
+
+    with open(dist_path, mode="r", encoding="utf-8") as f:
+        contents = json.load(f)
+
+    assert contents['custom']["key1"] == "AAA"
+    assert contents['custom']["key2"] == "CCC"
+
+
 def test_read_invalid_excel_invoice_file():
     invoice_path = Path("dummy/file.xlsx")
     with pytest.raises(StructuredError) as e:

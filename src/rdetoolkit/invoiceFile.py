@@ -298,7 +298,10 @@ class ExcelInvoiceFile:
         _assignInvoiceVal(invoice_obj, "custom", cval, value, schema_obj)
 
     def _ensure_sample_id_order(sefl, invoice_obj: dict):
-        if "sampleId" not in invoice_obj["sample"]:
+        sample_info_value = invoice_obj.get("sample")
+        if sample_info_value is None:
+            return
+        if "sampleId" not in sample_info_value:
             return
 
         sampleId_value = invoice_obj["sample"].pop("sampleId")
