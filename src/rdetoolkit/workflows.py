@@ -8,12 +8,24 @@
 # ---------------------------------------------------------
 # coding: utf-8
 from pathlib import Path
+import sys
+import traceback
 from typing import Generator, Optional
 
 from src.rdetoolkit.models.rde2types import (RdeFormatFlags, RdeInputDirPaths,
                                              RdeOutputResourcePath)
 from src.rdetoolkit.modeproc import selected_input_checker
 from src.rdetoolkit.rde2util import StorageDir
+from src.rdetoolkit.exceptions import StructuredError
+from src.rdetoolkit.invoiceFile import backup_invoice_json_files
+from src.rdetoolkit.modeproc import (excel_invoice_mode_process,
+                                     invoice_mode_process,
+                                     multifile_mode_process,
+                                     rdeformat_mode_process,
+                                     _CallbackType)
+from src.rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
+
+logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
 
 
 def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tuple[list[tuple[Path, ...]], Optional[Path]]:
@@ -114,3 +126,60 @@ def generate_folder_paths_iterator(
             temp=StorageDir.get_specific_outputdir(True, "temp", idx),
         )
         yield rdeoutput_resource_path
+
+
+def run(*, custom_dataset_function: Optional[_CallbackType] = None):
+    """RDE Structuring Processing Function
+    If you want to implement custom processing for the input data, please pass a user-defined function as an argument.
+    The function passed as an argument should accept the data class RdeInputDirPaths, parsed internally by RDE,
+    and the data class RdeOutputResourcePath, which stores the output directory paths used by RDE.
+
+    Args:
+        custom_dataset_function (Optional[_CallbackType], optional): User-defined structuring function. Defaults to None.
+
+    Example:
+        # custom.py
+        def custom_dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath) -> None:
+            ...(original process)...
+
+        # main.py
+        from rdetoolkit import workflow
+        from custom import custom_dataset # User-defined structuring processing function
+
+        workflow.run(custom_dataset) # Execute structuring process
+    """
+    try:
+        # Enabling mode flag and validating input file
+        format_flags = RdeFormatFlags()
+        srcpaths = RdeInputDirPaths(
+            inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
+            invoice=StorageDir.get_specific_outputdir(False, "invoice"),
+            tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        )
+        raw_files_group, excel_invoice_files = check_files(srcpaths, fmt_flags=format_flags)
+
+        # Backup of invoice.json
+        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, format_flags)
+        invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
+
+        # Execution of data set structuring process based on various modes
+        for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
+            if format_flags.is_rdeformat_enabled:
+                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+            elif format_flags.is_multifile_enabled:
+                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+            elif excel_invoice_files is not None:
+                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
+            else:
+                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+
+    except StructuredError as e:
+        traceback.print_exc(file=sys.stderr)
+        write_job_errorlog_file(e.eCode, e.eMsg)
+        logger.exception(e.eMsg)
+        sys.exit(1)
+    except Exception as e:
+        traceback.print_exc(file=sys.stderr)
+        write_job_errorlog_file(999, "ERROR: unknown error")
+        logger.exception(str(e))
+        sys.exit(1)
