@@ -25,85 +25,18 @@ pip install --index-url https://<access_token_name>:<access_token>@gitlab.nims.g
 
 RDE構造化プログラム構築の一例です。任意のディレクトリに、下記で示したファイル・ディレクトリを準備します。この例では、`container`というディレクトリを作成して、開発を進めます。
 
-- **main.py**
-  - 構造化プログラムの起動処理を定義
 - **requirements.txt**
   - 構造化プログラム構築で使用したいPythonパッケージを追加してください。必要に応じて`pip install`を実行してください。
 - **modules**
   - 構造化処理で使用したいプログラムを格納してください。別セクションで説明します。
+- **main.py**
+  - 構造化プログラムの起動処理を定義
 
 ```bash
 container/
 ├── main.py
 ├── requirements.txt
 └── modules/
-```
-
-### 起動処理について
-
-起動処理で主に実行処理は、
-
-- 入力ファイルのチェック
-- 入力ファイルとRDE構造化で規定する各種ディレクトリパスを取得する
-- ユーザーごとで定義した具体的な構造化処理を実行
-
-```python
-import sys
-import traceback
-
-from modules import datasets_process
-from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import backup_invoice_json_files
-from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
-from rdetoolkit.modeproc import (excel_invoice_mode_process,
-                                     invoice_mode_process,
-                                     multifile_mode_process,
-                                     rdeformat_mode_process)
-from rdetoolkit.rde2util import StorageDir
-from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
-from rdetoolkit.workflows import (check_files,
-                                      generate_folder_paths_iterator)
-
-
-def main() -> None:
-    try:
-        # Enabling mode flag and validating input file
-        format_flags = RdeFormatFlags()
-        srcpaths = RdeInputDirPaths(
-            inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
-            invoice=StorageDir.get_specific_outputdir(False, "invoice"),
-            tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
-        )
-        raw_files_group, excel_invoice_files = check_files(srcpaths, fmt_flags=format_flags)
-
-        # Backup of invoice.json
-        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, format_flags)
-        invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
-
-        # Execution of data set structuring process based on various modes
-        for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if format_flags.is_rdeformat_enabled:
-                rdeformat_mode_process(srcpaths, rdeoutput_resource, datasets_process.dataset)
-            elif format_flags.is_multifile_enabled:
-                multifile_mode_process(srcpaths, rdeoutput_resource, datasets_process.dataset)
-            elif excel_invoice_files is not None:
-                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, datasets_process.dataset)
-            else:
-                invoice_mode_process(srcpaths, rdeoutput_resource, datasets_process.dataset)
-
-    except StructuredError as e:
-        traceback.print_exc(file=sys.stderr)
-        write_job_errorlog_file(e.eCode, e.eMsg)
-        logger.exception(e.eMsg)
-        sys.exit(1)
-    except Exception as e:
-        traceback.print_exc(file=sys.stderr)
-        write_job_errorlog_file(999, "ERROR: unknown error")
-        logger.exception(str(e))
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
 ```
 
 ### 構造化処理の実装
@@ -132,50 +65,33 @@ def dataset(srcpaths, resource_paths):
     display_messsage(resource_paths)
 ```
 
-続いて、起動処理`main.py`に以下の処理を追加します。
+### 起動処理について
+
+続いて、`rdetoolkit.workflow.run()`を使って、起動処理を定義します。起動処理で主に実行処理は、
+
+- 入力ファイルのチェック
+- 入力ファイルとRDE構造化で規定する各種ディレクトリパスを取得する
+- ユーザーごとで定義した具体的な構造化処理を実行
 
 ```python
-# main.py
-import sys
-import traceback
+from modules import datasets_process #独自で定義した構造化処理関数
+import rdetoolkit
 
-- from modules import datasets_process
-+ from modules import process #変更
+#独自で定義した構造化処理関数を引数として渡す
+rdetoolkit.run(datasets_process)
+```
 
-def main() -> None:
-    try:
-        ...#割愛
-            if format_flags.is_rdeformat_enabled:
-                rdeformat_mode_process(
-                    srcpaths,
-                    rdeoutput_resource,
-                    process.dataset #変更
-                )
-            elif format_flags.is_multifile_enabled:
-                multifile_mode_process(
-                    srcpaths,
-                    rdeoutput_resource,
-                    process.dataset #変更
-                )
-            elif excel_invoice_files is not None:
-                excel_invoice_mode_process(
-                    srcpaths,
-                    rdeoutput_resource,
-                    excel_invoice_files,
-                    idx,
-                    process.dataset #変更
-                )
-            else:
-                invoice_mode_process(
-                    srcpaths,
-                    rdeoutput_resource,
-                    process.dataset #変更
-                )
+もし、独自の構造化処理を渡さない場合、以下のように定義してください。
+
+```python
+import rdetoolkit
+
+rdetoolkit.run()
 ```
 
 ### ローカル環境で動作させる場合
 
-`data`ディレクトリに必要な入力データを追加することで、ローカル環境でも実行可能です。
+各自のローカル環境で、デバッグやテスト的にRDEの構造化処理を実行したい場合、`data`ディレクトリに必要な入力データを追加することで、ローカル環境でも実行可能です。ディレクトリ構造は、以下のように、main.pyと同じ階層にdataディレクトリを配置していただければ動作します。
 
 ```bash
 container/
