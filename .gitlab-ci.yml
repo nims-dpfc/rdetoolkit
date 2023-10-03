@@ -1,0 +1,289 @@
+variables:
+  CI_TAGS: docker
+  TWINE_USERNAME: $CI_REGISTRY_USER
+  TWINE_PASSWORD: $CI_REGISTRY_PASSWORD
+  TOKEN: $CI_REGISTRY_PASSWORD
+
+stages:
+  - test-py39
+  - test-py310
+  - test-py311
+  - coverage
+  - deploy
+
+
+test-py39-module-job:
+  stage: test-py39
+  image: python:3.9
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py39-module
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py39-flake8-job:
+  stage: test-py39
+  image: python:3.9
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py39-flake8
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py39-lizard-job:
+  stage: test-py39
+  image: python:3.9
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py39-lizard
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py39-mypy-job:
+  stage: test-py39
+  image: python:3.9
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py39-mypy
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py39-build-job:
+  stage: test-py39
+  image: python:3.9
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - python3 -m pip install --upgrade build
+    - python3 -m build
+    - ls -l dist/*
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py310-module-job:
+  stage: test-py310
+  image: python:3.10
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py310-module
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py310-flake8-job:
+  stage: test-py310
+  image: python:3.10
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py310-flake8
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py310-lizard-job:
+  stage: test-py310
+  image: python:3.10
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py310-lizard
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py310-mypy-job:
+  stage: test-py310
+  image: python:3.10
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py310-mypy
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py310-build-job:
+  stage: test-py310
+  image: python:3.10
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - python3 -m pip install --upgrade build
+    - python3 -m build
+    - ls -l dist/*
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py311-module-job:
+  stage: test-py311
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py311-module
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py311-flake8-job:
+  stage: test-py311
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py311-flake8
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py311-lizard-job:
+  stage: test-py311
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py311-lizard
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py311-mypy-job:
+  stage: test-py311
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py311-mypy
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+test-py311-build-job:
+  stage: test-py311
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - python3 -m pip install --upgrade build
+    - python3 -m build
+    - ls -l dist/*
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+
+
+coverage-job:
+  stage: coverage
+  image: python:3.11
+  tags:
+    - ${CI_TAGS}
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - pip install tox
+  script:
+    - tox -e py311-module
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: container/coverage.xml
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
+      when: always
+
+auto_add_git_tag:
+  stage: deploy
+  image: python:3.9
+  script:
+    - VERSION_NUMBER=$(grep -E -o "(version =) (.*)" pyproject.toml | cut -d'"' -f2)
+    - curl --request POST --header "PRIVATE-TOKEN:${TOKEN}" --url https://gitlab.nims.go.jp/api/v4/projects/648/repository/tags?tag_name=v${VERSION_NUMBER}&ref=main
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
+      when: always
+
+deploy_to_pypi_package:
+  stage: deploy
+  image: python:3.11
+  before_script:
+    - cp pip.conf /etc/pip.conf
+    - python3 -m pip install --upgrade build twine
+  script:
+    - python3 -m build
+    - python3 -m twine upload --skip-existing -u ${TWINE_USERNAME} -p ${TWINE_PASSWORD} --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: always
