@@ -110,7 +110,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
     def _get_rawfiles(self, zipfile: Optional[Path], excel_invoice_file: Path) -> List[Tuple[Path, ...]]:
         df_excel_invoice, _, _ = readExcelInvoice(excel_invoice_file)
-        original_sort_items = df_excel_invoice.iloc[:,0].to_list()
+        original_sort_items = df_excel_invoice.iloc[:, 0].to_list()
         if zipfile is not None:
             archive_parser = compressed_controller.parse_compressedfile_mode(df_excel_invoice)
             _parse_items = archive_parser.read(zipfile, self.out_dir_temp)
