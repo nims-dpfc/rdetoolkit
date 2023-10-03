@@ -68,7 +68,7 @@ def inputfile_zip_with_file() ->  Generator[str, None, None]:
 
 @pytest.fixture
 def inputfile_zip_with_folder() ->  Generator[str, None, None]:
-    """フォルダを圧縮したzip"""
+    """単一のフォルダを圧縮したzip"""
     input_dir = pathlib.Path("data", "inputdata")
     input_dir.mkdir(parents=True, exist_ok=True)
     test_zip_filepath = pathlib.Path(input_dir, "test_input_multi")
@@ -91,6 +91,37 @@ def inputfile_zip_with_folder() ->  Generator[str, None, None]:
     if os.path.exists("data"):
         shutil.rmtree("data")
 
+@pytest.fixture
+def inputfile_zip_with_folder_multi() ->  Generator[str, None, None]:
+    """フォルダを複数圧縮したzip"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_zip_filepath = pathlib.Path(input_dir, "test_input_multi")
+
+    zip_root_dirpath1 = pathlib.Path("pack", "data1")
+    zip_root_dirpath2 = pathlib.Path("pack", "data2")
+    compressed_filepath1 = pathlib.Path(zip_root_dirpath1, "test_child1.txt")
+    compressed_filepath2 = pathlib.Path(zip_root_dirpath2, "test_child2.txt")
+
+    # setup
+    zip_root_dirpath1.mkdir(exist_ok=True, parents=True)
+    zip_root_dirpath2.mkdir(exist_ok=True, parents=True)
+    compressed_filepath1.touch()
+    compressed_filepath2.touch()
+    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir="pack")
+    yield str(zip_file)
+
+    # teardown
+    if os.path.exists(zip_root_dirpath1):
+        shutil.rmtree(zip_root_dirpath1)
+    if os.path.exists(zip_root_dirpath2):
+        shutil.rmtree(zip_root_dirpath2)
+    if os.path.exists("pack"):
+        shutil.rmtree("pack")
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
 EXCELINVOICE_ENTRYDATA_SHEET1_MULTI = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
@@ -98,20 +129,31 @@ EXCELINVOICE_ENTRYDATA_SHEET1_MULTI = [
         ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
         ["test_child2.txt", "N_TEST_2", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test2","test_230606_2", "desc2", "sample2", "cbf194ea-813f-4e05-b288", "1111", "sample2", "test_ref", "desc4", "testname", "Fe", "magnet", "7439-89-6", "BBB", "DDD"]
     ]
+EXCELINVOICE_ENTRYDATA_SHEET1_MULTI_FOLDER = [
+        ["data_folder_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
+        ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
+        ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
+        ["data2", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
+        ["data1", "N_TEST_2", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test2","test_230606_2", "desc2", "sample2", "cbf194ea-813f-4e05-b288", "1111", "sample2", "test_ref", "desc4", "testname", "Fe", "magnet", "7439-89-6", "BBB", "DDD"]
+    ]
 EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
         ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
     ]
-
+EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_NON_SAMPLE = [
+        ["data_file_names", "", "", "basic", "basic", "basic", "basic", "basic", "custom", "custom"],
+        ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "key1", "key2"],
+        ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "key1", "key2"],
+        ["test_child1.txt", "DATASETNAME_TEST_1", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "TEST DATA NAME", "exp_id", "test_ref_url", "desc1", "AAA", "CCC"],
+    ]
 EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MERGE = [
         ["data_file_names/name", "/dataset_title", "/dataOwner", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
         ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
     ]
-
 EXCELINVOICE_ENTRYDATA_SHEET1_NONFILE = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
@@ -248,6 +290,28 @@ def inputfile_multi_excelinvoice() ->  Generator[str, None, None]:
         shutil.rmtree("data")
 
 @pytest.fixture
+def inputfile_multi_folder_excelinvoice() ->  Generator[str, None, None]:
+    """ExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_MULTI_FOLDER, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['term_id', 'key_name'])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['sample_class_id', 'term_id', 'key_name'])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+@pytest.fixture
 def inputfile_single_dummy_header_excelinvoice() ->  Generator[str, None, None]:
     """ExcelInvoice"""
     input_dir = pathlib.Path("data", "inputdata")
@@ -298,6 +362,29 @@ def non_inputfile_excelinvoice() ->  Generator[str, None, None]:
     test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
 
     df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_NONFILE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['term_id', 'key_name'])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['sample_class_id', 'term_id', 'key_name'])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture
+def excelinvoice_non_sampleinfo() ->  Generator[str, None, None]:
+    """ExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_NON_SAMPLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", ""])
     df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['term_id', 'key_name'])
     df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['sample_class_id', 'term_id', 'key_name'])
 
@@ -535,7 +622,7 @@ def metadata_def_json_with_feature() ->  Generator[str, None, None]:
                 "schema": {
                     "type": "string"
                 },
-                "_feature": True
+                "_feature": 1
             },
             "test_feature_meta2": {
                 "name": {
@@ -546,7 +633,7 @@ def metadata_def_json_with_feature() ->  Generator[str, None, None]:
                     "type": "string"
                 },
                 "unit": "V",
-                "_feature": True
+                "_feature": 1
             },
             "test_feature_meta3": {
                 "name": {
