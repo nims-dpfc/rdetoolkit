@@ -14,11 +14,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.impl import compressed_controller
-from src.rdetoolkit.interfaces.filechecker import IInputFileChecker
-from src.rdetoolkit.invoiceFile import readExcelInvoice
-from src.rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.impl import compressed_controller
+from rdetoolkit.interfaces.filechecker import IInputFileChecker
+from rdetoolkit.invoiceFile import readExcelInvoice
+from rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
 
 
 class InvoiceChechker(IInputFileChecker):

@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional
 
-from src.rdetoolkit.rde2util import StorageDir
+from rdetoolkit.rde2util import StorageDir
 
 
 def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
@@ -18,13 +18,13 @@ def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
         logging.Logger: Configured logger object
 
     Exsample:
-        from src.rdetoolkit import rdelogger
+        from rdetoolkit import rdelogger
 
         logger = rdelogger.get_logger(__name__, data/log/rdesys.log)
 
         # If you want to output a debug message, add the following code
         logger.debug('This is an debug message.')
-        >>> 2023-01-01 00:00:00,111 - [src.rdetoolkit.rde2util](DEBUG) - This is an debug message.
+        >>> 2023-01-01 00:00:00,111 - [rdetoolkit.rde2util](DEBUG) - This is an debug message.
     """
 
     logger = logging.getLogger(name)

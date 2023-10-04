@@ -12,18 +12,18 @@ import sys
 import traceback
 from typing import Generator, Optional
 
-from src.rdetoolkit.models.rde2types import (RdeFormatFlags, RdeInputDirPaths,
+from rdetoolkit.models.rde2types import (RdeFormatFlags, RdeInputDirPaths,
                                              RdeOutputResourcePath)
-from src.rdetoolkit.modeproc import selected_input_checker
-from src.rdetoolkit.rde2util import StorageDir
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.invoiceFile import backup_invoice_json_files
-from src.rdetoolkit.modeproc import (excel_invoice_mode_process,
+from rdetoolkit.modeproc import selected_input_checker
+from rdetoolkit.rde2util import StorageDir
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.invoiceFile import backup_invoice_json_files
+from rdetoolkit.modeproc import (excel_invoice_mode_process,
                                      invoice_mode_process,
                                      multifile_mode_process,
                                      rdeformat_mode_process,
                                      _CallbackType)
-from src.rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
+from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 
 logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
 

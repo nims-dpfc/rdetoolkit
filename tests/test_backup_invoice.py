@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.rdetoolkit.invoiceFile import backup_invoice_json_files
-from src.rdetoolkit.models.rde2types import RdeFormatFlags
+from rdetoolkit.invoiceFile import backup_invoice_json_files
+from rdetoolkit.models.rde2types import RdeFormatFlags
 
 
 def test_backup_invoice_json_files_with_excel_invoice_file(

@@ -7,8 +7,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.impl.compressed_controller import (
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.impl.compressed_controller import (
     CompressedFlatFileParser,
     CompressedFolderParser,
 )
@@ -22,7 +22,7 @@ def temp_dir():
 
 
 class TestCompressedFlatFileParser:
-    @mock.patch("src.rdetoolkit.impl.compressed_controller.checkExistRawFiles")
+    @mock.patch("rdetoolkit.impl.compressed_controller.checkExistRawFiles")
     def test_read(self, mocker, inputfile_zip_with_file, temp_dir):
         xlsx_invoice = pd.DataFrame()
         expected_files = [

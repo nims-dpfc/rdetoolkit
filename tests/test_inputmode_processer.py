@@ -4,8 +4,8 @@ from pathlib import Path
 import shutil
 import pytest
 
-from src.rdetoolkit.modeproc import copy_input_to_rawfile, copy_input_to_rawfile_for_rdeformat, invoice_mode_process, excel_invoice_mode_process, multifile_mode_process, rdeformat_mode_process
-from src.rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeInputDirPaths
+from rdetoolkit.modeproc import copy_input_to_rawfile, copy_input_to_rawfile_for_rdeformat, invoice_mode_process, excel_invoice_mode_process, multifile_mode_process, rdeformat_mode_process
+from rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeInputDirPaths
 
 
 @pytest.fixture

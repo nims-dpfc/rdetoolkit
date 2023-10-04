@@ -3,12 +3,12 @@ import shutil
 from pathlib import Path
 from typing import Callable, Optional
 
-from src.rdetoolkit import img2thumb
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
-from src.rdetoolkit.interfaces.filechecker import IInputFileChecker
-from src.rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features
-from src.rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit import img2thumb
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
+from rdetoolkit.interfaces.filechecker import IInputFileChecker
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features
+from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 

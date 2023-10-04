@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from src.rdetoolkit.models.rde2types import ZipFilesPathList, unZipFilesPathList, RawFiles
+from rdetoolkit.models.rde2types import ZipFilesPathList, unZipFilesPathList, RawFiles
 
 
 class IInputFileHelper(ABC):

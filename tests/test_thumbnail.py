@@ -3,8 +3,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.img2thumb import copy_images_to_thumbnail
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.img2thumb import copy_images_to_thumbnail
 
 
 @pytest.fixture

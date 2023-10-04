@@ -16,9 +16,9 @@ Note:
 """
 from pathlib import Path
 
-from src.rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
-from src.rdetoolkit.rde2util import StorageDir
-from src.rdetoolkit.workflows import check_files
+from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
+from rdetoolkit.rde2util import StorageDir
+from rdetoolkit.workflows import check_files
 
 
 def test_check_files_single(

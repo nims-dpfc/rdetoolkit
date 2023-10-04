@@ -18,10 +18,10 @@ from typing import Any, Callable, Optional
 import chardet
 import pandas as pd
 
-from src.rdetoolkit import rde2util
-from src.rdetoolkit.rde2util import StorageDir
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeFormatFlags
+from rdetoolkit import rde2util
+from rdetoolkit.rde2util import StorageDir
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeFormatFlags
 
 
 def readExcelInvoice(excelInvoiceFilePath):

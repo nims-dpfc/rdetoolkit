@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 import pytest
-from src.rdetoolkit.models.rde2types import (RdeFormatFlags,
+from rdetoolkit.models.rde2types import (RdeFormatFlags,
                                              RdeOutputResourcePath)
 
 

@@ -18,8 +18,8 @@ from charset_normalizer import detect
 import dateutil.parser
 from typing import Any, TypedDict
 
-from src.rdetoolkit.exceptions import StructuredError, catch_exception_with_message
-from src.rdetoolkit.models.rde2types import MetadataDefJson, RdeFsPath, ValueUnitPair, MetaType, RepeatedMetaType, MetaItem
+from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
+from rdetoolkit.models.rde2types import MetadataDefJson, RdeFsPath, ValueUnitPair, MetaType, RepeatedMetaType, MetaItem
 
 
 class _ChardetType(TypedDict):

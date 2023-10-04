@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.ticker import ScalarFormatter
 
-from src.rdetoolkit.exceptions import StructuredError
+from rdetoolkit.exceptions import StructuredError
 
 maxTitleLen = 35
 

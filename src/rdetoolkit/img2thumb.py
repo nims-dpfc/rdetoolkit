@@ -10,7 +10,7 @@ import shutil
 from glob import glob
 from typing import Optional
 
-from src.rdetoolkit.exceptions import catch_exception_with_message
+from rdetoolkit.exceptions import catch_exception_with_message
 
 
 @catch_exception_with_message("ERROR: failed to copy image files")

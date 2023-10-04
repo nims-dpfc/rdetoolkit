@@ -21,12 +21,12 @@ main::checkFiles()の入力パターンとその出力をテストする
 
 from pathlib import Path
 
-from src.rdetoolkit.impl.input_controller import (ExcelInvoiceChecker,
+from rdetoolkit.impl.input_controller import (ExcelInvoiceChecker,
                                                   InvoiceChechker,
                                                   MultiFileChecker,
                                                   RDEFormatChecker)
-from src.rdetoolkit.modeproc import selected_input_checker
-from src.rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
+from rdetoolkit.modeproc import selected_input_checker
+from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
 
 
 class TestInvoiceChecker:

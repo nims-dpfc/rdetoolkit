@@ -3,10 +3,10 @@ import os
 from pathlib import Path
 
 import pytest
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.invoiceFile import (ExcelInvoiceFile, InvoiceFile,
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.invoiceFile import (ExcelInvoiceFile, InvoiceFile,
                                         update_description_with_features)
-from src.rdetoolkit.models.rde2types import RdeOutputResourcePath
+from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
 def test_invoicefile_read_method(ivnoice_json_none_sample_info):
