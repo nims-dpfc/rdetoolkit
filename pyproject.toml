@@ -1,6 +1,6 @@
 [project]
 name = "rdetoolkit"
-version = "0.1.0"
+version = "0.1.1"
 description = "A module that supports the workflow of the RDE2.0 dataset construction program"
 authors = [
     { name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }
@@ -12,6 +12,7 @@ dependencies = [
     "matplotlib>=3.7.2",
     "openpyxl>=3.1.2",
     "pandas>=2.0.3",
+    "build>=1.0.3",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
@@ -41,7 +42,7 @@ no_implicit_optional = true
 exclude = "tests"
 
 [tool.coverage.run]
-omit = ["tests/*", "modules_shared/interfaces/*"]
+omit = ["tests/*", "interfaces/*"]
 
 [tool.coverage.report]
 exclude_also = [
