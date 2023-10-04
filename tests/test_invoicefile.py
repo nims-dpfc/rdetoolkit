@@ -28,6 +28,7 @@ def test_invoicefile_read_method(ivnoice_json_none_sample_info):
     }
     assert invoice_file.invoice_json == expect_data
 
+
 def test_overwrite_method(ivnoice_json_none_sample_info):
     """テストケース: InvoiceFileのoverwrite"""
     dist_file_path = Path("tests/test_dist_invoice.json")
@@ -68,7 +69,7 @@ def test_excelinvoice_overwrite(
     inputfile_multi_excelinvoice,
     ivnoice_json_with_sample_info,
     ivnoice_schema_json
-    ):
+):
     """試料情報ありの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -91,7 +92,7 @@ def test_excelinvoice_overwrite_none_sample(
     excelinvoice_non_sampleinfo,
     ivnoice_json_none_sample_info,
     ivnoice_schema_json
-    ):
+):
     """試料情報なしの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -141,6 +142,7 @@ def rde_resource():
     )
     yield rde_resource
 
+
 def test_update_description_with_features(
     rde_resource,
     ivnoice_schema_json,
@@ -161,3 +163,24 @@ def test_update_description_with_features(
     assert result_contents["basic"]["description"] == expect_message
 
 
+def test_update_description_with_features_missing_target_key(
+    rde_resource,
+    ivnoice_schema_json,
+    metadata_def_json_with_feature,
+    ivnoice_json_none_sample_info,
+    metadata_json_missing_value
+):
+    """テストケース:
+    descriptionへの書き出すはずのメタデータのvalueが存在しないとき、descriptionが記述できるかどうかテスト
+    想定としては、書き出す対象のメタデータのvalueがなくても記述できることを想定している。
+    """
+    expect_message = "desc1\n特徴量1:test-value1\n特徴量3(V):test-value3\n"
+
+    # 検証
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
+
+    # 書き込み結果を比較
+    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+        result_contents = json.load(f)
+
+    assert result_contents["basic"]["description"] == expect_message

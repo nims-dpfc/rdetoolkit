@@ -408,6 +408,10 @@ def update_description_with_features(
             dscheader = metadata_json_obj["constant"]
         else:
             dscheader = metadata_json_obj["variable"][0]
+
+        if dscheader.get(key) is None:
+            continue
+
         if value.get("unit"):
             description += f"{metadata_def_obj[key]['name']['ja']}({metadata_def_obj[key]['unit']}):{dscheader[key]['value']}\n"
         else:
