@@ -23,7 +23,19 @@ pip install --index-url https://<access_token_name>:<access_token>@gitlab.nims.g
 
 ## Usage
 
-RDE構造化プログラム構築の一例です。任意のディレクトリに、下記で示したファイル・ディレクトリを準備します。この例では、`container`というディレクトリを作成して、開発を進めます。
+RDE構造化プログラム構築の一例です。
+
+### プロジェクトを作成する
+
+まず、RDE構造化プログラムに必要なファイルを準備します。以下のコマンドをターミナルやシェル上で実行してください。
+
+```python
+python3 -m rdetoolkit init
+```
+
+コマンドが正しく動作すると、下記で示したファイル・ディレクトリが生成されます。
+
+この例では、`container`というディレクトリを作成して、開発を進めます。
 
 - **requirements.txt**
   - 構造化プログラム構築で使用したいPythonパッケージを追加してください。必要に応じて`pip install`を実行してください。
@@ -31,12 +43,25 @@ RDE構造化プログラム構築の一例です。任意のディレクトリ�
   - 構造化処理で使用したいプログラムを格納してください。別セクションで説明します。
 - **main.py**
   - 構造化プログラムの起動処理を定義
+- **data/inputdata**
+  - 構造化処理対象データファイルを配置してください。
+- **data/invoice**
+  - ローカル実行させるためには空ファイルでも必要になります。
+- **data/tasksupport**
+  - 構造化処理の補助するファイル群を配置してください。
 
 ```bash
-container/
+container
+├── data
+│   ├── inputdata
+│   ├── invoice
+│   │   └── invoice.json
+│   └── tasksupport
+│       ├── invoice.schema.json
+│       └── metadata-def.json
 ├── main.py
-├── requirements.txt
-└── modules/
+├── modules
+└── requirements.txt
 ```
 
 ### 構造化処理の実装
