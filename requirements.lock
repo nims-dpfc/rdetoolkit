@@ -10,12 +10,15 @@
 --trusted-host pypi.org
 --trusted-host files.pythonhosted.org
 -e file:.
+build==1.0.3
 chardet==5.2.0
 charset-normalizer==3.2.0
+click==8.1.7
 contourpy==1.1.0
 cycler==0.11.0
 et-xmlfile==1.1.0
 fonttools==4.42.1
+importlib-metadata==6.8.0
 importlib-resources==6.0.1
 kiwisolver==1.4.5
 matplotlib==3.7.3
@@ -25,8 +28,10 @@ packaging==23.1
 pandas==2.1.0
 pillow==10.0.0
 pyparsing==3.1.1
+pyproject-hooks==1.0.0
 python-dateutil==2.8.2
 pytz==2023.3.post1
 six==1.16.0
+tomli==2.0.1
 tzdata==2023.3
 zipp==3.16.2
