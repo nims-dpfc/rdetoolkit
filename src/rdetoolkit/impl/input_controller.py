@@ -14,11 +14,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.impl import compressed_controller
-from src.rdetoolkit.interfaces.filechecker import IInputFileChecker
-from src.rdetoolkit.invoiceFile import readExcelInvoice
-from src.rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.impl import compressed_controller
+from rdetoolkit.interfaces.filechecker import IInputFileChecker
+from rdetoolkit.invoiceFile import readExcelInvoice
+from rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
 
 
 class InvoiceChechker(IInputFileChecker):
@@ -111,14 +111,23 @@ class ExcelInvoiceChecker(IInputFileChecker):
     def _get_rawfiles(self, zipfile: Optional[Path], excel_invoice_file: Path) -> List[Tuple[Path, ...]]:
         df_excel_invoice, _, _ = readExcelInvoice(excel_invoice_file)
         original_sort_items = df_excel_invoice.iloc[:, 0].to_list()
-        if zipfile is not None:
-            archive_parser = compressed_controller.parse_compressedfile_mode(df_excel_invoice)
-            _parse_items = archive_parser.read(zipfile, self.out_dir_temp)
+        if zipfile is None:
+            return [() for _ in range(len(df_excel_invoice["basic/dataName"]))]
+
+        archive_parser = compressed_controller.parse_compressedfile_mode(df_excel_invoice)
+        _parse = archive_parser.read(zipfile, self.out_dir_temp)
+
+        # When storing the same filename in all tiles, fill the values with
+        # the same file so that the number of decompressed files matches
+        # the number of "filename" columns in the data frame.
+        if len(_parse) == 1 and len(_parse) != len(df_excel_invoice[df_excel_invoice.columns[0]]):
             return sorted(
-                _parse_items,
-                key=lambda paths: self.get_index(paths[0], original_sort_items)
+                [_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]], key=lambda paths: self.get_index(paths[0], original_sort_items)
             )
-        return [() for _ in range(len(df_excel_invoice["basic/dataName"]))]
+        elif len(_parse) == len(df_excel_invoice[df_excel_invoice.columns[0]]):
+            return sorted(_parse, key=lambda paths: self.get_index(paths[0], original_sort_items))
+        else:
+            raise StructuredError("Error! The input file and the description in the ExcelInvoice are not consistent.")
 
     def get_index(self, paths, sort_items):
         for idx, item in enumerate(sort_items):

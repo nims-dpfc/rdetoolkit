@@ -18,10 +18,10 @@ from typing import Any, Callable, Optional
 import chardet
 import pandas as pd
 
-from src.rdetoolkit import rde2util
-from src.rdetoolkit.rde2util import StorageDir
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeFormatFlags
+from rdetoolkit import rde2util
+from rdetoolkit.rde2util import StorageDir
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeFormatFlags
 
 
 def readExcelInvoice(excelInvoiceFilePath):
@@ -408,6 +408,10 @@ def update_description_with_features(
             dscheader = metadata_json_obj["constant"]
         else:
             dscheader = metadata_json_obj["variable"][0]
+
+        if dscheader.get(key) is None:
+            continue
+
         if value.get("unit"):
             description += f"{metadata_def_obj[key]['name']['ja']}({metadata_def_obj[key]['unit']}):{dscheader[key]['value']}\n"
         else:

@@ -122,6 +122,7 @@ def inputfile_zip_with_folder_multi() ->  Generator[str, None, None]:
         shutil.rmtree("data")
 
 
+# エクセルインボイス(file mode): zipに複数フォルダ+複数タイル登録
 EXCELINVOICE_ENTRYDATA_SHEET1_MULTI = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
@@ -129,6 +130,8 @@ EXCELINVOICE_ENTRYDATA_SHEET1_MULTI = [
         ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
         ["test_child2.txt", "N_TEST_2", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test2","test_230606_2", "desc2", "sample2", "cbf194ea-813f-4e05-b288", "1111", "sample2", "test_ref", "desc4", "testname", "Fe", "magnet", "7439-89-6", "BBB", "DDD"]
     ]
+
+# エクセルインボイス(folder mode): zipに複数フォルダ+複数タイル登録
 EXCELINVOICE_ENTRYDATA_SHEET1_MULTI_FOLDER = [
         ["data_folder_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
@@ -136,29 +139,49 @@ EXCELINVOICE_ENTRYDATA_SHEET1_MULTI_FOLDER = [
         ["data2", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
         ["data1", "N_TEST_2", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test2","test_230606_2", "desc2", "sample2", "cbf194ea-813f-4e05-b288", "1111", "sample2", "test_ref", "desc4", "testname", "Fe", "magnet", "7439-89-6", "BBB", "DDD"]
     ]
+
+# エクセルインボイス(file mode): zipに1ファイルのみ+1タイル登録
 EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
         ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
     ]
+
+# エクセルインボイス(file mode): zipに1ファイルのみ+複数タイル登録
+EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MULTILINE = [
+        ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
+        ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
+        ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
+        ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
+        ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "DDD", "FFF"],
+        ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "DDD", "FFF"],
+    ]
+
+# エクセルインボイス(file mode): 1ファイルのみ+1タイル登録+サンプル情報なし
 EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_NON_SAMPLE = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "basic", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "key1", "key2"],
         ["test_child1.txt", "DATASETNAME_TEST_1", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "TEST DATA NAME", "exp_id", "test_ref_url", "desc1", "AAA", "CCC"],
     ]
+
+# エクセルインボイス(file mode): 1ファイルのみ+1タイル登録+headerをマージした形式
 EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MERGE = [
         ["data_file_names/name", "/dataset_title", "/dataOwner", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
         ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
     ]
+
+# エクセルインボイス(file mode): ファイルなし+1タイル登録
 EXCELINVOICE_ENTRYDATA_SHEET1_NONFILE = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
     ]
+
+# エクセルインボイス: 2シート目の情報
 EXCELINVOICE_ENTRYDATA_SHEET2 = [
         ['33c6e9dc-5787-0f96-7683-f39281c60419', 'sample.general.composiiton'],
         ['f2d5e89e-01f0-66a2-5d8e-623a4fc31698', 'sample.general.material-name'],
@@ -186,6 +209,7 @@ EXCELINVOICE_ENTRYDATA_SHEET2 = [
         ['0d0417a3-3c3b-496a-b0fb-5a26f8a74166', 'sample.general.lot-number-or-product-number-etc'],
     ]
 
+# エクセルインボイス: 3シート目の情報
 EXCELINVOICE_ENTRYDATA_SHEET3 = [
         ['01cb3c01-37a4-5a43-d8ca-f523ca99a75b', '3250c45d-0ed6-1438-43b5-eb679918604a', 'sample.specific.organic.chemical-formula'],
         ['01cb3c01-37a4-5a43-d8ca-f523ca99a75b', '70c2c751-5404-19b7-4a5e-981e6cebbb15', 'sample.specific.organic.name'],
@@ -398,6 +422,30 @@ def excelinvoice_non_sampleinfo() ->  Generator[str, None, None]:
     # teardown
     if os.path.exists("data"):
         shutil.rmtree("data")
+
+
+@pytest.fixture
+def excelinvoice_single_input_multiline() ->  Generator[str, None, None]:
+    """ExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MULTILINE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['term_id', 'key_name'])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['sample_class_id', 'term_id', 'key_name'])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
 
 @pytest.fixture()
 def ivnoice_json_with_sample_info() ->  Generator[str, None, None]:
@@ -695,6 +743,38 @@ def metadata_json() ->  Generator[str, None, None]:
     if os.path.exists("data"):
         shutil.rmtree("data")
 
+
+@pytest.fixture()
+def metadata_json_missing_value() ->  Generator[str, None, None]:
+    """test用のmetadata.json
+    variable test_feature_meta2を欠損させたもの
+    """
+    tasksupport_dir = pathlib.Path("data", "meta")
+    invoice_json_path = pathlib.Path(str(tasksupport_dir), "metadata.json")
+    data = {
+            "constant":{
+                "test_feature_meta1": {
+                    "value": "test-value1"
+                }
+            },
+            "variable": [
+                {"test_feature_meta3":{
+                    "value": "test-value3",
+                    "unit": "V"
+                }}
+            ]
+        }
+
+    # setup
+    tasksupport_dir.mkdir(parents=True, exist_ok=True)
+    with open(invoice_json_path, mode="w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    yield str(invoice_json_path)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
 
 @pytest.fixture()
 def ivnoice_schema_json() ->  Generator[str, None, None]:

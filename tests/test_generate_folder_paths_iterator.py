@@ -13,8 +13,8 @@ Note:
 import os
 from pathlib import Path
 
-from src.rdetoolkit.models.rde2types import RdeOutputResourcePath
-from src.rdetoolkit.workflows import generate_folder_paths_iterator
+from rdetoolkit.models.rde2types import RdeOutputResourcePath
+from rdetoolkit.workflows import generate_folder_paths_iterator
 
 
 def test_standard_output_dir_structured(

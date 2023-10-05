@@ -1,5 +1,5 @@
 import pytest
-from src.rdetoolkit.exceptions import (StructuredError,
+from rdetoolkit.exceptions import (StructuredError,
                                        catch_exception_with_message)
 
 

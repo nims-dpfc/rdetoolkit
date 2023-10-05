@@ -15,9 +15,9 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
-from src.rdetoolkit.exceptions import StructuredError
-from src.rdetoolkit.interfaces.filechecker import ICompressedFileStructParser
-from src.rdetoolkit.invoiceFile import checkExistRawFiles
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser
+from rdetoolkit.invoiceFile import checkExistRawFiles
 
 
 class CompressedFlatFileParser(ICompressedFileStructParser):

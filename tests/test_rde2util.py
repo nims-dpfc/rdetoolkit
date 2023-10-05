@@ -2,11 +2,11 @@ import json
 import os
 
 import pytest
-from src.rdetoolkit.rde2util import Meta, _split_value_unit
+from rdetoolkit.rde2util import Meta, _split_value_unit
 import tempfile
 
 import pytest
-from src.rdetoolkit.rde2util import (
+from rdetoolkit.rde2util import (
     detect_text_file_encoding,
     read_from_json_file,
     write_to_json_file

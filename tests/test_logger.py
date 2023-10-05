@@ -4,7 +4,7 @@ import pathlib
 import shutil
 
 import pytest
-from src.rdetoolkit.rdelogger import get_logger
+from rdetoolkit.rdelogger import get_logger
 
 
 def test_get_logger_without_filepath(tmpdir):
