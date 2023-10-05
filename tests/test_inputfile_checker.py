@@ -126,6 +126,17 @@ class TestExcelInvoiceChecker:
         assert len(rawfiles) == 0
         assert excelinvoice is not None
 
+    def test_parse_only_singlefile_with_zip_multiline(self, inputfile_zip_with_file, excelinvoice_single_input_multiline):
+        """zipに1ファイルのみ+Excelinvoiceに書かれた全ての行に同じデータを登録する"""
+        unpacked_dir_basename = Path("data/temp")
+        src_dir_input = Path("data/inputdata")
+
+        checker = ExcelInvoiceChecker(unpacked_dir_basename)
+        rawfiles, excelinvoice = checker.parse(src_dir_input)
+
+        assert rawfiles == [(Path('data/temp/test_child1.txt'),), (Path('data/temp/test_child1.txt'),),(Path('data/temp/test_child1.txt'),)]
+        assert excelinvoice is not None
+
 
 class TestRDEFormatChecker:
     """3 テストスイート: RDEフォーマット登録を想定したファイルチェックテスト
