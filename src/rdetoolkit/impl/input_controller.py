@@ -122,17 +122,12 @@ class ExcelInvoiceChecker(IInputFileChecker):
         # the number of "filename" columns in the data frame.
         if len(_parse) == 1 and len(_parse) != len(df_excel_invoice[df_excel_invoice.columns[0]]):
             return sorted(
-                [_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]],
-                key=lambda paths: self.get_index(paths[0], original_sort_items)
+                [_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]], key=lambda paths: self.get_index(paths[0], original_sort_items)
             )
         elif len(_parse) == len(df_excel_invoice[df_excel_invoice.columns[0]]):
-            return sorted(
-                _parse,
-                key=lambda paths: self.get_index(paths[0], original_sort_items)
-            )
+            return sorted(_parse, key=lambda paths: self.get_index(paths[0], original_sort_items))
         else:
             raise StructuredError("Error! The input file and the description in the ExcelInvoice are not consistent.")
-
 
     def get_index(self, paths, sort_items):
         for idx, item in enumerate(sort_items):
