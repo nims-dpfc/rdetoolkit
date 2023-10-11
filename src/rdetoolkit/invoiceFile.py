@@ -397,7 +397,7 @@ def update_description_with_features(
         metadata_json_obj = json.load(f)
 
     if invoice_obj["basic"]["description"]:
-        description = invoice_obj["basic"]["description"] + "\n"
+        description = invoice_obj["basic"]["description"]
     else:
         description = ""
     for key, value in metadata_def_obj.items():
@@ -406,16 +406,22 @@ def update_description_with_features(
 
         if key in metadata_json_obj["constant"]:
             dscheader = metadata_json_obj["constant"]
+        elif metadata_json_obj.get("variable"):
+            _variable = metadata_json_obj["variable"]
+            if len(_variable) > 0:
+                dscheader = metadata_json_obj["variable"][0]
+            else:
+                continue
         else:
-            dscheader = metadata_json_obj["variable"][0]
+            continue
 
         if dscheader.get(key) is None:
             continue
 
         if value.get("unit"):
-            description += f"{metadata_def_obj[key]['name']['ja']}({metadata_def_obj[key]['unit']}):{dscheader[key]['value']}\n"
+            description += f"\n{metadata_def_obj[key]['name']['ja']}({metadata_def_obj[key]['unit']}):{dscheader[key]['value']}"
         else:
-            description += f"{metadata_def_obj[key]['name']['ja']}:{dscheader[key]['value']}\n"
+            description += f"\n{metadata_def_obj[key]['name']['ja']}:{dscheader[key]['value']}"
 
     _assignInvoiceVal(invoice_obj, "basic", "description", description, invoice_schema_obj)
     rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
