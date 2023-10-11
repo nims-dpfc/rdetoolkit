@@ -151,7 +151,7 @@ def test_update_description_with_features(
     metadata_json
 ):
     """テストケース: descriptionへの書き出しがパスするかテスト"""
-    expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3\n"
+    expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     # 検証
     update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
@@ -174,11 +174,98 @@ def test_update_description_with_features_missing_target_key(
     descriptionへの書き出すはずのメタデータのvalueが存在しないとき、descriptionが記述できるかどうかテスト
     想定としては、書き出す対象のメタデータのvalueがなくても記述できることを想定している。
     """
-    expect_message = "desc1\n特徴量1:test-value1\n特徴量3(V):test-value3\n"
+    expect_message = "desc1\n特徴量1:test-value1\n特徴量3(V):test-value3"
 
     # 検証
     update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
 
+    # 書き込み結果を比較
+    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+        result_contents = json.load(f)
+
+    assert result_contents["basic"]["description"] == expect_message
+
+def test_update_description_with_features_missing_target_key(
+    rde_resource,
+    ivnoice_schema_json,
+    metadata_def_json_with_feature,
+    ivnoice_json_none_sample_info,
+    metadata_json_missing_value
+):
+    """テストケース:
+    metadata.jsonにconstant, variableがない場合でも、descriptionの処理を正しく実行できるか確認。
+    constant, variableがない場合、descriptionにコメントを追加せずに処理をパスする。
+    """
+    expect_message = "desc1\n特徴量1:test-value1\n特徴量3(V):test-value3"
+
+    # 検証
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
+
+    # 書き込み結果を比較
+    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+        result_contents = json.load(f)
+
+    assert result_contents["basic"]["description"] == expect_message
+
+
+def test_update_description_with_features_none_variable(
+    rde_resource,
+    ivnoice_schema_json,
+    metadata_def_json_with_feature,
+    ivnoice_json_none_sample_info,
+    metadata_json_non_variable
+):
+    """テストケース: metadata.jsonのconstantに全て特徴量の情報が記述されており、
+    descriptionへの書き出しがパスするかテスト
+    """
+    expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+
+    # 検証
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
+
+    # 書き込み結果を比較
+    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+        result_contents = json.load(f)
+
+    assert result_contents["basic"]["description"] == expect_message
+
+
+def test_update_description_with_features_none_constant(
+    rde_resource,
+    ivnoice_schema_json,
+    metadata_def_json_with_feature,
+    ivnoice_json_none_sample_info,
+    metadata_json_non_constat
+):
+    """テストケース: metadata.jsonのconstantに全て特徴量の情報が記述されており、
+    descriptionへの書き出しがパスするかテスト
+    """
+    expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+
+    # 検証
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
+
+    # 書き込み結果を比較
+    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+        result_contents = json.load(f)
+
+    assert result_contents["basic"]["description"] == expect_message
+
+
+def test_update_description_none_features_none_variable(
+    rde_resource,
+    ivnoice_schema_json,
+    metadata_def_json_none_feature,
+    ivnoice_json_none_sample_info,
+    metadata_json_non_variable
+):
+    """テストケース:
+    metadata.jsonのconstantにメタデータの記載はあるが、featureがないmetadata.josnを正しくPassできるかテスト
+    """
+    expect_message = "desc1"
+
+    # 検証
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_none_feature)
     # 書き込み結果を比較
     with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
         result_contents = json.load(f)
