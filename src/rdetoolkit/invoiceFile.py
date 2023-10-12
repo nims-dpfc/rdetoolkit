@@ -203,6 +203,7 @@ class ExcelInvoiceFile:
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfExcelInvoice is not None:
                     raise StructuredError("ERROR: multiple sheet in invoiceList files")
+                self._check_intermittent_empty_rows(df)
                 df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
                 hd1 = list(df.iloc[1, :].fillna(""))
                 hd2 = list(df.iloc[2, :].fillna(""))
@@ -251,6 +252,16 @@ class ExcelInvoiceFile:
         enc = self._detect_encoding(invoice_org)
         enc = "utf_8" if enc.lower() == "ascii" else enc
         self._write_json(dist_path, invoice_obj, enc)
+
+    def _check_intermittent_empty_rows(self, df: pd.DataFrame) -> None:
+        for i, row in df.iterrows():
+            if not self._is_empty_row(row):
+                continue
+            if any(not self._is_empty_row(r) for r in df.iloc[i+1]):
+                raise StructuredError(f"Error! Blank lines exist between lines")
+
+    def _is_empty_row(self, row) -> bool:
+        return all(cell == '' or pd.isnull(cell) for cell in row)
 
     def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
         assign_funcs: dict[str, Callable[[str, str, dict[Any, Any], dict[Any, Any]], None]] = {

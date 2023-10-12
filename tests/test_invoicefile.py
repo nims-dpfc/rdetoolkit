@@ -65,6 +65,19 @@ def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
     assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
+def test_read_none_sample_excel_invoice_file(inputfile_single_excelinvoice_with_blankline):
+    """Excelinvoiceの行間に空行がある場合のテスト
+    想定としては、エクセルインボイスの5行目移行に空行がある場合エラーメッセージを出す
+    """
+    invoice_path = Path(inputfile_single_excelinvoice_with_blankline)
+
+    with pytest.raises(StructuredError) as e:
+        excel_invoice_file = ExcelInvoiceFile(invoice_path)
+        dfExcelInvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+
+    assert str(e.value) == "Error! Blank lines exist between lines"
+
+
 def test_excelinvoice_overwrite(
     inputfile_multi_excelinvoice,
     ivnoice_json_with_sample_info,
