@@ -109,7 +109,7 @@ from modules import process #独自で定義した構造化処理関数
 import rdetoolkit
 
 #独自で定義した構造化処理関数を引数として渡す
-rdetoolkit.workflows.run()
+rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
 ```
 
 もし、独自の構造化処理を渡さない場合、以下のように定義してください。
@@ -117,7 +117,7 @@ rdetoolkit.workflows.run()
 ```python
 import rdetoolkit
 
-rdetoolkit.run()
+rdetoolkit.workflows.run()
 ```
 
 ### ローカル環境で動作させる場合
