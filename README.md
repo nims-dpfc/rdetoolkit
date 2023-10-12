@@ -11,6 +11,12 @@ RdeToolKitは、RDE2.0構造化プログラムのワークフローを作成す�
 RdeToolKitの各種モジュールを使うことで、RDEへの研究・実験データの登録処理を簡単に構築できます。
 また、ユーザーが研究や実験データに対して使用されているPythonモジュールと組み合わせることで、データの登録から加工、グラフ化などより多様な処理を実現できます。
 
+## Contributing
+
+変更を加える場合、以下のドキュメントを一読お願いします。
+
+- [RdeToolKitを変更する - RDE開発者ドキュメント](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/sample_project/-/wikis/base/RdeToolKit%E3%82%92%E5%A4%89%E6%9B%B4%E3%81%99%E3%82%8B)
+
 ## Install
 
 インストールは、下記コマンドを実行してください。
@@ -99,11 +105,11 @@ def dataset(srcpaths, resource_paths):
 - ユーザーごとで定義した具体的な構造化処理を実行
 
 ```python
-from modules import datasets_process #独自で定義した構造化処理関数
+from modules import process #独自で定義した構造化処理関数
 import rdetoolkit
 
 #独自で定義した構造化処理関数を引数として渡す
-rdetoolkit.run(datasets_process)
+rdetoolkit.workflows.run()
 ```
 
 もし、独自の構造化処理を渡さない場合、以下のように定義してください。
