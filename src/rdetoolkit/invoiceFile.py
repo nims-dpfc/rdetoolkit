@@ -33,23 +33,33 @@ def readExcelInvoice(excelInvoiceFilePath):
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfExcelInvoice is not None:
                 raise StructuredError("ERROR: multiple sheet in invoiceList files")
-            df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
-            hd1 = list(df.iloc[1, :].fillna(""))
-            hd2 = list(df.iloc[2, :].fillna(""))
-            df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
-            dfExcelInvoice = df.iloc[4:, :].reset_index(drop=True).copy()
+            ExcelInvoiceFile._check_intermittent_empty_rows(df)
+            dfExcelInvoice = __process_invoice_sheet(df)
         elif shName == "generalTerm":
-            dfGeneral = df[1:].copy()
-            dfGeneral.columns = ["term_id", "key_name"]
+            dfGeneral = __process_general_term_sheet(df)
         elif shName == "specificTerm":
-            dfSpecific = df[1:].copy()
-            dfSpecific.columns = ["sample_class_id", "term_id", "key_name"]
-        else:
-            pass
+            dfSpecific = __process_specific_term_sheet(df)
 
     if dfExcelInvoice is None:
         raise StructuredError("ERROR: no sheet in invoiceList files")
     return dfExcelInvoice, dfGeneral, dfSpecific
+
+def __process_invoice_sheet(df: pd.DataFrame) -> pd.Series:
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    hd1 = list(df.iloc[1, :].fillna(""))
+    hd2 = list(df.iloc[2, :].fillna(""))
+    df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
+    return df.iloc[4:, :].reset_index(drop=True).copy()
+
+def __process_general_term_sheet(df: pd.DataFrame) -> pd.Series:
+    _df_general = df[1:].copy()
+    _df_general.columns = ["term_id", "key_name"]
+    return _df_general
+
+def __process_specific_term_sheet(df: pd.DataFrame) -> pd.Series:
+    _df_specific = df[1:].copy()
+    _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
+    return _df_specific
 
 
 def checkExistRawFiles(dfExcelInvoice, excelRawFiles):
@@ -203,25 +213,34 @@ class ExcelInvoiceFile:
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfExcelInvoice is not None:
                     raise StructuredError("ERROR: multiple sheet in invoiceList files")
-                self._check_intermittent_empty_rows(df)
-                df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
-                hd1 = list(df.iloc[1, :].fillna(""))
-                hd2 = list(df.iloc[2, :].fillna(""))
-                df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
-                dfExcelInvoice = df.iloc[4:, :].reset_index(drop=True).copy()
+                ExcelInvoiceFile._check_intermittent_empty_rows(df)
+                dfExcelInvoice = self._process_invoice_sheet(df)
             elif shName == "generalTerm":
-                dfGeneral = df[1:].copy()
-                dfGeneral.columns = ["term_id", "key_name"]
+                dfGeneral = self._process_general_term_sheet(df)
             elif shName == "specificTerm":
-                dfSpecific = df[1:].copy()
-                dfSpecific.columns = ["sample_class_id", "term_id", "key_name"]
-            else:
-                pass
+                dfSpecific = self._process_specific_term_sheet(df)
 
         if dfExcelInvoice is None:
             raise StructuredError("ERROR: no sheet in invoiceList files")
 
         return dfExcelInvoice, dfGeneral, dfSpecific
+
+    def _process_invoice_sheet(self, df: pd.DataFrame) -> pd.Series:
+        df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+        hd1 = list(df.iloc[1, :].fillna(""))
+        hd2 = list(df.iloc[2, :].fillna(""))
+        df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
+        return df.iloc[4:, :].reset_index(drop=True).copy()
+
+    def _process_general_term_sheet(self, df: pd.DataFrame) -> pd.Series:
+        _df_general = df[1:].copy()
+        _df_general.columns = ["term_id", "key_name"]
+        return _df_general
+
+    def _process_specific_term_sheet(self, df: pd.DataFrame) -> pd.Series:
+        _df_specific = df[1:].copy()
+        _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
+        return _df_specific
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.
@@ -253,14 +272,25 @@ class ExcelInvoiceFile:
         enc = "utf_8" if enc.lower() == "ascii" else enc
         self._write_json(dist_path, invoice_obj, enc)
 
-    def _check_intermittent_empty_rows(self, df: pd.DataFrame) -> None:
+    @staticmethod
+    def _check_intermittent_empty_rows(df: pd.DataFrame) -> None:
+        """Function to detect if there are empty rows between data rows in the ExcelInvoice (in DataFrame format).
+        If an empty row exists, an exception is raised.
+
+        Args:
+            df (pd.DataFrame): Information of Sheet 1 of ExcelInvoice.
+
+        Raises:
+            StructuredError: An exception is raised if an empty row exists.
+        """
         for i, row in df.iterrows():
-            if not self._is_empty_row(row):
+            if not ExcelInvoiceFile.__is_empty_row(row):
                 continue
-            if any(not self._is_empty_row(r) for r in df.iloc[i+1]):
+            if any(not ExcelInvoiceFile.__is_empty_row(r) for r in df.iloc[i+1]):
                 raise StructuredError(f"Error! Blank lines exist between lines")
 
-    def _is_empty_row(self, row) -> bool:
+    @staticmethod
+    def __is_empty_row(row) -> bool:
         return all(cell == '' or pd.isnull(cell) for cell in row)
 
     def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):

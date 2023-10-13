@@ -444,6 +444,45 @@ def non_inputfile_excelinvoice() ->  Generator[str, None, None]:
     if os.path.exists("data"):
         shutil.rmtree("data")
 
+@pytest.fixture
+def empty_inputfile_excelinvoice() ->  Generator[str, None, None]:
+    """空のExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df = pd.DataFrame([[1,2,3,4]])
+    df.to_excel(test_excel_invoice)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture
+def inputfile_invalid_samesheet_excelinvoice() ->  Generator[str, None, None]:
+    """Sheet1の内容が複数シート存在するExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['dummy1', 'dummy2', 'dummy3'])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
 
 @pytest.fixture
 def excelinvoice_non_sampleinfo() ->  Generator[str, None, None]:
