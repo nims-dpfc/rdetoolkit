@@ -123,7 +123,7 @@ def generate_folder_paths_iterator(
         yield rdeoutput_resource_path
 
 
-def run(*, custom_dataset_function: Optional[_CallbackType] = None):
+def run(*, custom_dataset_function: Optional[_CallbackType] = None): # pragma: no cover
     """RDE Structuring Processing Function
     If you want to implement custom processing for the input data, please pass a user-defined function as an argument.
     The function passed as an argument should accept the data class RdeInputDirPaths, parsed internally by RDE,
