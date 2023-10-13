@@ -44,6 +44,7 @@ def readExcelInvoice(excelInvoiceFilePath):
         raise StructuredError("ERROR: no sheet in invoiceList files")
     return dfExcelInvoice, dfGeneral, dfSpecific
 
+
 def __process_invoice_sheet(df: pd.DataFrame) -> pd.Series:
     df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
     hd1 = list(df.iloc[1, :].fillna(""))
@@ -51,10 +52,12 @@ def __process_invoice_sheet(df: pd.DataFrame) -> pd.Series:
     df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
     return df.iloc[4:, :].reset_index(drop=True).copy()
 
+
 def __process_general_term_sheet(df: pd.DataFrame) -> pd.Series:
     _df_general = df[1:].copy()
     _df_general.columns = ["term_id", "key_name"]
     return _df_general
+
 
 def __process_specific_term_sheet(df: pd.DataFrame) -> pd.Series:
     _df_specific = df[1:].copy()
@@ -286,8 +289,8 @@ class ExcelInvoiceFile:
         for i, row in df.iterrows():
             if not ExcelInvoiceFile.__is_empty_row(row):
                 continue
-            if any(not ExcelInvoiceFile.__is_empty_row(r) for r in df.iloc[i+1]):
-                raise StructuredError(f"Error! Blank lines exist between lines")
+            if any(not ExcelInvoiceFile.__is_empty_row(r) for r in df.iloc[i + 1]):
+                raise StructuredError("Error! Blank lines exist between lines")
 
     @staticmethod
     def __is_empty_row(row) -> bool:
@@ -405,6 +408,19 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: Rde
     return invoice_org_filepath
 
 
+def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> Optional[dict]:
+    if key in metadata_json_obj["constant"]:
+        return metadata_json_obj["constant"]
+    elif metadata_json_obj.get("variable"):
+        _variable = metadata_json_obj["variable"]
+        if len(_variable) > 0:
+            return metadata_json_obj["variable"][0]
+        else:
+            return None
+    else:
+        return None
+
+
 def update_description_with_features(
     rde_resource: RdeOutputResourcePath,
     dst_invoice_json: Path,
@@ -445,17 +461,9 @@ def update_description_with_features(
         if not value.get("_feature"):
             continue
 
-        if key in metadata_json_obj["constant"]:
-            dscheader = metadata_json_obj["constant"]
-        elif metadata_json_obj.get("variable"):
-            _variable = metadata_json_obj["variable"]
-            if len(_variable) > 0:
-                dscheader = metadata_json_obj["variable"][0]
-            else:
-                continue
-        else:
+        dscheader = __serch_key_from_constant_variable_obj(key, metadata_json_obj)
+        if dscheader is None:
             continue
-
         if dscheader.get(key) is None:
             continue
 

@@ -37,6 +37,7 @@ def make_template_json(path: Path) -> None:
     with open(path, mode='w', encoding="utf-8") as f:
         json.dump({}, f, indent=4)
 
+
 @click.group()
 def cli():
     pass
@@ -79,9 +80,10 @@ def init() -> None:
             if dir.exists():
                 shutil.rmtree(dir)
 
+
 @click.command()
 def version():
-    click.echo(__version__ )
+    click.echo(__version__)
 
 
 cli.add_command(init)
