@@ -105,7 +105,7 @@ def test_invoice_mode_process_calls_functions(
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3\n"
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
@@ -162,7 +162,7 @@ def test_excel_invoice_mode_process_calls_functions(
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp","invoice_org.json"))
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
-    expected_description = "特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3\n"
+    expected_description = "特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
@@ -223,7 +223,7 @@ def test_multifile_mode_process_calls_functions(
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp","invoice_org.json"))
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3\n"
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
@@ -284,7 +284,7 @@ def test_rdeformat_mode_process_alls_functions(
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp","invoice_org.json"))
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3\n"
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(

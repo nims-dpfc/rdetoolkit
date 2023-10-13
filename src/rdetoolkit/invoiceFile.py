@@ -434,5 +434,8 @@ def update_description_with_features(
         else:
             description += f"\n{metadata_def_obj[key]['name']['ja']}:{dscheader[key]['value']}"
 
+        if description.startswith("\n"):
+            description = description[1:]
+
     _assignInvoiceVal(invoice_obj, "basic", "description", description, invoice_schema_obj)
     rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
