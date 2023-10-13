@@ -25,6 +25,8 @@ test-py39-module-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py39-flake8-job:
@@ -39,6 +41,8 @@ test-py39-flake8-job:
     - tox -e py39-flake8
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 
@@ -55,6 +59,8 @@ test-py39-lizard-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py39-mypy-job:
@@ -69,6 +75,8 @@ test-py39-mypy-job:
     - tox -e py39-mypy
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 
@@ -87,6 +95,8 @@ test-py39-build-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py310-module-job:
@@ -101,6 +111,8 @@ test-py310-module-job:
     - tox -e py310-module
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 
@@ -117,6 +129,8 @@ test-py310-flake8-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py310-lizard-job:
@@ -132,6 +146,8 @@ test-py310-lizard-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py310-mypy-job:
@@ -146,6 +162,8 @@ test-py310-mypy-job:
     - tox -e py310-mypy
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 
@@ -164,6 +182,8 @@ test-py310-build-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py311-module-job:
@@ -178,6 +198,8 @@ test-py311-module-job:
     - tox -e py311-module
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 
@@ -194,6 +216,8 @@ test-py311-flake8-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py311-lizard-job:
@@ -209,6 +233,8 @@ test-py311-lizard-job:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
+      when: always
 
 
 test-py311-mypy-job:
@@ -223,6 +249,8 @@ test-py311-mypy-job:
     - tox -e py311-mypy
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 
@@ -240,6 +268,8 @@ test-py311-build-job:
     - ls -l dist/*
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^develop/'
       when: always
 
 

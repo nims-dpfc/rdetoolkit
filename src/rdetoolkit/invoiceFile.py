@@ -33,23 +33,36 @@ def readExcelInvoice(excelInvoiceFilePath):
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfExcelInvoice is not None:
                 raise StructuredError("ERROR: multiple sheet in invoiceList files")
-            df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
-            hd1 = list(df.iloc[1, :].fillna(""))
-            hd2 = list(df.iloc[2, :].fillna(""))
-            df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
-            dfExcelInvoice = df.iloc[4:, :].reset_index(drop=True).copy()
+            ExcelInvoiceFile._check_intermittent_empty_rows(df)
+            dfExcelInvoice = __process_invoice_sheet(df)
         elif shName == "generalTerm":
-            dfGeneral = df[1:].copy()
-            dfGeneral.columns = ["term_id", "key_name"]
+            dfGeneral = __process_general_term_sheet(df)
         elif shName == "specificTerm":
-            dfSpecific = df[1:].copy()
-            dfSpecific.columns = ["sample_class_id", "term_id", "key_name"]
-        else:
-            pass
+            dfSpecific = __process_specific_term_sheet(df)
 
     if dfExcelInvoice is None:
         raise StructuredError("ERROR: no sheet in invoiceList files")
     return dfExcelInvoice, dfGeneral, dfSpecific
+
+
+def __process_invoice_sheet(df: pd.DataFrame) -> pd.Series:
+    df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    hd1 = list(df.iloc[1, :].fillna(""))
+    hd2 = list(df.iloc[2, :].fillna(""))
+    df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
+    return df.iloc[4:, :].reset_index(drop=True).copy()
+
+
+def __process_general_term_sheet(df: pd.DataFrame) -> pd.Series:
+    _df_general = df[1:].copy()
+    _df_general.columns = ["term_id", "key_name"]
+    return _df_general
+
+
+def __process_specific_term_sheet(df: pd.DataFrame) -> pd.Series:
+    _df_specific = df[1:].copy()
+    _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
+    return _df_specific
 
 
 def checkExistRawFiles(dfExcelInvoice, excelRawFiles):
@@ -203,24 +216,34 @@ class ExcelInvoiceFile:
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfExcelInvoice is not None:
                     raise StructuredError("ERROR: multiple sheet in invoiceList files")
-                df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
-                hd1 = list(df.iloc[1, :].fillna(""))
-                hd2 = list(df.iloc[2, :].fillna(""))
-                df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
-                dfExcelInvoice = df.iloc[4:, :].reset_index(drop=True).copy()
+                ExcelInvoiceFile._check_intermittent_empty_rows(df)
+                dfExcelInvoice = self._process_invoice_sheet(df)
             elif shName == "generalTerm":
-                dfGeneral = df[1:].copy()
-                dfGeneral.columns = ["term_id", "key_name"]
+                dfGeneral = self._process_general_term_sheet(df)
             elif shName == "specificTerm":
-                dfSpecific = df[1:].copy()
-                dfSpecific.columns = ["sample_class_id", "term_id", "key_name"]
-            else:
-                pass
+                dfSpecific = self._process_specific_term_sheet(df)
 
         if dfExcelInvoice is None:
             raise StructuredError("ERROR: no sheet in invoiceList files")
 
         return dfExcelInvoice, dfGeneral, dfSpecific
+
+    def _process_invoice_sheet(self, df: pd.DataFrame) -> pd.Series:
+        df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
+        hd1 = list(df.iloc[1, :].fillna(""))
+        hd2 = list(df.iloc[2, :].fillna(""))
+        df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
+        return df.iloc[4:, :].reset_index(drop=True).copy()
+
+    def _process_general_term_sheet(self, df: pd.DataFrame) -> pd.Series:
+        _df_general = df[1:].copy()
+        _df_general.columns = ["term_id", "key_name"]
+        return _df_general
+
+    def _process_specific_term_sheet(self, df: pd.DataFrame) -> pd.Series:
+        _df_specific = df[1:].copy()
+        _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
+        return _df_specific
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.
@@ -251,6 +274,27 @@ class ExcelInvoiceFile:
         enc = self._detect_encoding(invoice_org)
         enc = "utf_8" if enc.lower() == "ascii" else enc
         self._write_json(dist_path, invoice_obj, enc)
+
+    @staticmethod
+    def _check_intermittent_empty_rows(df: pd.DataFrame) -> None:
+        """Function to detect if there are empty rows between data rows in the ExcelInvoice (in DataFrame format).
+        If an empty row exists, an exception is raised.
+
+        Args:
+            df (pd.DataFrame): Information of Sheet 1 of ExcelInvoice.
+
+        Raises:
+            StructuredError: An exception is raised if an empty row exists.
+        """
+        for i, row in df.iterrows():
+            if not ExcelInvoiceFile.__is_empty_row(row):
+                continue
+            if any(not ExcelInvoiceFile.__is_empty_row(r) for r in df.iloc[i + 1]):
+                raise StructuredError("Error! Blank lines exist between lines")
+
+    @staticmethod
+    def __is_empty_row(row) -> bool:
+        return all(cell == '' or pd.isnull(cell) for cell in row)
 
     def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
         assign_funcs: dict[str, Callable[[str, str, dict[Any, Any], dict[Any, Any]], None]] = {
@@ -364,6 +408,19 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: Rde
     return invoice_org_filepath
 
 
+def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> Optional[dict]:
+    if key in metadata_json_obj["constant"]:
+        return metadata_json_obj["constant"]
+    elif metadata_json_obj.get("variable"):
+        _variable = metadata_json_obj["variable"]
+        if len(_variable) > 0:
+            return metadata_json_obj["variable"][0]
+        else:
+            return None
+    else:
+        return None
+
+
 def update_description_with_features(
     rde_resource: RdeOutputResourcePath,
     dst_invoice_json: Path,
@@ -397,25 +454,26 @@ def update_description_with_features(
         metadata_json_obj = json.load(f)
 
     if invoice_obj["basic"]["description"]:
-        description = invoice_obj["basic"]["description"] + "\n"
+        description = invoice_obj["basic"]["description"]
     else:
         description = ""
     for key, value in metadata_def_obj.items():
         if not value.get("_feature"):
             continue
 
-        if key in metadata_json_obj["constant"]:
-            dscheader = metadata_json_obj["constant"]
-        else:
-            dscheader = metadata_json_obj["variable"][0]
-
+        dscheader = __serch_key_from_constant_variable_obj(key, metadata_json_obj)
+        if dscheader is None:
+            continue
         if dscheader.get(key) is None:
             continue
 
         if value.get("unit"):
-            description += f"{metadata_def_obj[key]['name']['ja']}({metadata_def_obj[key]['unit']}):{dscheader[key]['value']}\n"
+            description += f"\n{metadata_def_obj[key]['name']['ja']}({metadata_def_obj[key]['unit']}):{dscheader[key]['value']}"
         else:
-            description += f"{metadata_def_obj[key]['name']['ja']}:{dscheader[key]['value']}\n"
+            description += f"\n{metadata_def_obj[key]['name']['ja']}:{dscheader[key]['value']}"
+
+        if description.startswith("\n"):
+            description = description[1:]
 
     _assignInvoiceVal(invoice_obj, "basic", "description", description, invoice_schema_obj)
     rde2util.write_to_json_file(dst_invoice_json, invoice_obj)

@@ -4,6 +4,8 @@ import shutil
 
 import click
 
+from . import __version__
+
 
 def make_main_py(path: Path) -> None:
     py_script_text = """import rdetoolkit
@@ -32,10 +34,6 @@ def make_requirements_txt(path: Path) -> None:
 
 
 def make_template_json(path: Path) -> None:
-    with open(path, mode='w', encoding="utf-8") as f:
-        json.dump({}, f, indent=4)
-
-def make__json(path: Path) -> None:
     with open(path, mode='w', encoding="utf-8") as f:
         json.dump({}, f, indent=4)
 
@@ -83,7 +81,13 @@ def init() -> None:
                 shutil.rmtree(dir)
 
 
+@click.command()
+def version():
+    click.echo(__version__)
+
+
 cli.add_command(init)
+cli.add_command(version)
 
 if __name__ == '__main__':
     cli()

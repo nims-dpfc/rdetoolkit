@@ -122,7 +122,7 @@ def inputfile_zip_with_folder_multi() ->  Generator[str, None, None]:
         shutil.rmtree("data")
 
 
-# エクセルインボイス(file mode): zipに複数フォルダ+複数タイル登録
+# エクセルインボイス(file mode): zipに複数ファイル+複数タイル登録
 EXCELINVOICE_ENTRYDATA_SHEET1_MULTI = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
@@ -179,6 +179,26 @@ EXCELINVOICE_ENTRYDATA_SHEET1_NONFILE = [
         ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
         ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
         ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
+    ]
+
+# エクセルインボイス(file mode): zipに複数ファイル+複数タイル登録、正し空行を間に含む
+EXCELINVOICE_ENTRYDATA_SHEET1_WITH_BLANKLINE = [
+        ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
+        ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
+        ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
+        ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
+        ["", "", "", "", "","", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["test_child2.txt", "N_TEST_2", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test2","test_230606_2", "desc2", "sample2", "cbf194ea-813f-4e05-b288", "1111", "sample2", "test_ref", "desc4", "testname", "Fe", "magnet", "7439-89-6", "BBB", "DDD"]
+    ]
+
+# エクセルインボイス(file mode): zipに複数ファイル+複数タイル登録、ただし、ヘッダー直後に空行を含む
+EXCELINVOICE_ENTRYDATA_SHEET1_WITH_A_SHORT_BLANKLINE_IMMEDIATELY_AFTER_HEADER = [
+        ["data_file_names", "", "", "basic", "basic", "basic", "basic", "sample", "sample", "sample", "sample", "sample", "sample", "sample.general", "sample.general", "sample.general", "sample.general", "custom", "custom"],
+        ["name", "dataset_title", "dataOwner", "dataOwnerId", "dataName", "experimentId", "referenceUrl", "description", "names", "sampleId", "ownerId", "composition", "description", "general-name", "chemical-composition", "sample-type", "cas-number", "key1", "key2"],
+        ["ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)", "データセット名\n(必須)", "データ所有者\n(NIMS User ID)", "NIMS user UUID\n(必須)", "データ名\n(必須)", "実験ID", "参考URL", "説明", "試料名\n(ローカルID)", "試料UUID\n(必須)", "試料管理者UUID", "化学式・組成式・分子式など", "試料の説明", "一般名称\n(General name)", "化学組成\n(Chemical composition)", "試料分類\n(Sample type)", "CAS番号\n(CAS Number)", "key1", "key2"],
+        ["", "", "", "", "","", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["test_child1.txt", "N_TEST_1","test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test1", "test_230606_1", "desc1", "sample1", "cbf194ea-813f-4e05-b288", "1111", "sample1", "test_ref", "desc3", "testname", "Fe", "magnet", "7439-89-6", "AAA", "CCC"],
+        ["test_child2.txt", "N_TEST_2", "test_user", "f30812c3-14bc-4274-809f-afcfaa2e4047", "test2","test_230606_2", "desc2", "sample2", "cbf194ea-813f-4e05-b288", "1111", "sample2", "test_ref", "desc4", "testname", "Fe", "magnet", "7439-89-6", "BBB", "DDD"]
     ]
 
 # エクセルインボイス: 2シート目の情報
@@ -268,6 +288,30 @@ def inputfile_single_excelinvoice() ->  Generator[str, None, None]:
     # teardown
     if os.path.exists("data"):
         shutil.rmtree("data")
+
+
+@pytest.fixture
+def inputfile_single_excelinvoice_with_blankline() ->  Generator[str, None, None]:
+    """空行を含むExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_WITH_BLANKLINE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['term_id', 'key_name'])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['sample_class_id', 'term_id', 'key_name'])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
 
 @pytest.fixture
 def inputfile_single_header_merge_excelinvoice() ->  Generator[str, None, None]:
@@ -388,6 +432,45 @@ def non_inputfile_excelinvoice() ->  Generator[str, None, None]:
     df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_NONFILE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
     df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['term_id', 'key_name'])
     df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['sample_class_id', 'term_id', 'key_name'])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+@pytest.fixture
+def empty_inputfile_excelinvoice() ->  Generator[str, None, None]:
+    """空のExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df = pd.DataFrame([[1,2,3,4]])
+    df.to_excel(test_excel_invoice)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture
+def inputfile_invalid_samesheet_excelinvoice() ->  Generator[str, None, None]:
+    """Sheet1の内容が複数シート存在するExcelInvoice"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['dummy1', 'dummy2', 'dummy3'])
 
     with pd.ExcelWriter(test_excel_invoice) as writer:
         df1.to_excel(writer, sheet_name="invoice_form", index=False)
@@ -655,7 +738,6 @@ def inputfile_multimode() ->  Generator[str, None, None]:
         shutil.rmtree("data")
 
 
-
 @pytest.fixture()
 def metadata_def_json_with_feature() ->  Generator[str, None, None]:
     """特徴量書き込み用のmetadata-def.json"""
@@ -710,6 +792,55 @@ def metadata_def_json_with_feature() ->  Generator[str, None, None]:
 
 
 @pytest.fixture()
+def metadata_def_json_none_feature() ->  Generator[str, None, None]:
+    """特徴量書き込み用のmetadata-def.json"""
+    tasksupport_dir = pathlib.Path("data", "tasksupport")
+    invoice_json_path = pathlib.Path(str(tasksupport_dir), "metadata-def.json")
+    data = {
+            "test_feature_meta1": {
+                "name": {
+                    "ja": "特徴量1",
+                    "en": "feature1"
+                },
+                "schema": {
+                    "type": "string"
+                },
+            },
+            "test_feature_meta2": {
+                "name": {
+                    "ja": "特徴量2",
+                    "en": "feature2"
+                },
+                "schema": {
+                    "type": "string"
+                },
+                "unit": "V",
+            },
+            "test_feature_meta3": {
+                "name": {
+                    "ja": "特徴量3",
+                    "en": "feature3"
+                },
+                "schema": {
+                    "type": "string"
+                },
+                "unit": "V",
+            }
+        }
+
+    # setup
+    tasksupport_dir.mkdir(parents=True, exist_ok=True)
+    with open(invoice_json_path, mode="w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    yield str(invoice_json_path)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture()
 def metadata_json() ->  Generator[str, None, None]:
     """test用のmetadata.json"""
     tasksupport_dir = pathlib.Path("data", "meta")
@@ -735,6 +866,42 @@ def metadata_json() ->  Generator[str, None, None]:
     # setup
     tasksupport_dir.mkdir(parents=True, exist_ok=True)
     with open(invoice_json_path, mode="w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    yield str(invoice_json_path)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture()
+def metadata_json_non_variable() ->  Generator[str, None, None]:
+    """test用のmetadata.json
+    variableの内容を全て削除したもの
+    """
+    tasksupport_dir = pathlib.Path("data", "meta")
+    invoice_json_path = pathlib.Path(str(tasksupport_dir), "metadata.json")
+    data = {
+            "constant":{
+                "test_feature_meta1": {
+                    "value": "test-value1"
+                },
+                "test_feature_meta2": {
+                    "value": "test-value2",
+                    "unit": "V"
+                },
+                "test_feature_meta3": {
+                    "value": "test-value3",
+                    "unit": "V"
+                }
+            },
+            "variable": []
+        }
+
+    # setup
+    tasksupport_dir.mkdir(parents=True, exist_ok=True)
+    with open(invoice_json_path, mode="w", encoding="utf-8") as f:
         json.dump(data, f)
 
     yield str(invoice_json_path)
@@ -743,6 +910,43 @@ def metadata_json() ->  Generator[str, None, None]:
     if os.path.exists("data"):
         shutil.rmtree("data")
 
+
+@pytest.fixture()
+def metadata_json_non_constat() ->  Generator[str, None, None]:
+    """test用のmetadata.json
+    variableの内容を全て削除したもの
+    """
+    tasksupport_dir = pathlib.Path("data", "meta")
+    invoice_json_path = pathlib.Path(str(tasksupport_dir), "metadata.json")
+    data = {
+            "constant": {},
+            "variable":[
+            {
+                "test_feature_meta1": {
+                    "value": "test-value1"
+                },
+                "test_feature_meta2": {
+                    "value": "test-value2",
+                    "unit": "V"
+                },
+                "test_feature_meta3": {
+                    "value": "test-value3",
+                    "unit": "V"
+                }
+            }
+        ]
+        }
+
+    # setup
+    tasksupport_dir.mkdir(parents=True, exist_ok=True)
+    with open(invoice_json_path, mode="w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    yield str(invoice_json_path)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
 
 @pytest.fixture()
 def metadata_json_missing_value() ->  Generator[str, None, None]:
@@ -768,7 +972,7 @@ def metadata_json_missing_value() ->  Generator[str, None, None]:
     # setup
     tasksupport_dir.mkdir(parents=True, exist_ok=True)
     with open(invoice_json_path, mode="w", encoding="utf-8") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
     yield str(invoice_json_path)
 
@@ -831,7 +1035,7 @@ def ivnoice_schema_json() ->  Generator[str, None, None]:
     # setup
     tasksupport_dir.mkdir(parents=True, exist_ok=True)
     with open(invoice_json_path, mode="w", encoding="utf-8") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
     yield str(invoice_json_path)
 
