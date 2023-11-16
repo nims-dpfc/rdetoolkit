@@ -91,6 +91,39 @@ def inputfile_zip_with_folder() ->  Generator[str, None, None]:
     if os.path.exists("data"):
         shutil.rmtree("data")
 
+
+@pytest.fixture
+def inputfile_mac_zip_with_folder() -> Generator[str, None, None]:
+    """mac特有のファイルを含むファイルを圧縮したzip"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_zip_filepath = pathlib.Path(input_dir, "test_input_multi")
+
+    zip_root_dirpath = pathlib.Path("compdir")
+    compressed_filepath1 = pathlib.Path(zip_root_dirpath, "test_child1.txt")
+    compressed_filepath2 = pathlib.Path(zip_root_dirpath, ".DS_Store")
+    macfolder = pathlib.Path(zip_root_dirpath, "__MACOSX")
+    macfolder.mkdir(parents=True, exist_ok=True)
+    compressed_filepath3 = pathlib.Path(macfolder, "dummy.txt")
+
+    # setup
+    zip_root_dirpath.mkdir(exist_ok=True)
+    compressed_filepath1.touch()
+    compressed_filepath2.touch()
+    compressed_filepath3.touch()
+    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
+
+    yield str(zip_file)
+
+    # teardown
+    if os.path.exists(zip_root_dirpath):
+        shutil.rmtree(zip_root_dirpath)
+    if macfolder.exists():
+        shutil.rmtree(macfolder)
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
 @pytest.fixture
 def inputfile_zip_with_folder_multi() ->  Generator[str, None, None]:
     """フォルダを複数圧縮したzip"""

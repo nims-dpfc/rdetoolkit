@@ -31,9 +31,8 @@ class TestCompressedFlatFileParser:
 
         mocker.return_value = [pathlib.Path(temp_dir, "test_child1.txt")]
         parser = CompressedFlatFileParser(xlsx_invoice)
-        files =  parser.read(inputfile_zip_with_file, temp_dir)
+        files = parser.read(inputfile_zip_with_file, temp_dir)
         assert files == expected_files
-
 
 
 class TestCompressedFolderParser:
@@ -51,6 +50,14 @@ class TestCompressedFolderParser:
         files = parser._unpacked(inputfile_zip_with_folder, temp_dir)
         assert len(files) == 2
         assert set([f.name for f in files]) == {"test_child2.txt", "test_child1.txt"}
+
+    def test_mac_unpacked(self, inputfile_mac_zip_with_folder, temp_dir):
+        # mac特有のファイルを除外できるかテスト
+        xlsx_invoice = pd.DataFrame()
+        parser = CompressedFolderParser(xlsx_invoice)
+        files = parser._unpacked(inputfile_mac_zip_with_folder, temp_dir)
+        assert len(files) == 1
+        assert set([f.name for f in files]) == {"test_child1.txt"}
 
     def test_validation_uniq_fspath(self, temp_dir):
         compressed_filepath1 = pathlib.Path("tests", "temp", "test1.txt")
