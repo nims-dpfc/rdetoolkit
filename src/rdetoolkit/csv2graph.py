@@ -12,7 +12,6 @@ __version__ = "1.0.7"
 
 import csv
 import os.path
-from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
