@@ -51,11 +51,19 @@ class TestCompressedFolderParser:
         assert len(files) == 2
         assert set([f.name for f in files]) == {"test_child2.txt", "test_child1.txt"}
 
-    def test_mac_unpacked(self, inputfile_mac_zip_with_folder, temp_dir):
+    def test_mac_specific_file_unpacked(self, inputfile_mac_zip_with_folder, temp_dir):
         # mac特有のファイルを除外できるかテスト
         xlsx_invoice = pd.DataFrame()
         parser = CompressedFolderParser(xlsx_invoice)
         files = parser._unpacked(inputfile_mac_zip_with_folder, temp_dir)
+        assert len(files) == 1
+        assert set([f.name for f in files]) == {"test_child1.txt"}
+
+    def test_microsoft_temp_file_unpacked(self, inputfile_microsoft_tempfile_zip_with_folder, temp_dir):
+        # Microfsoft特有のファイルを除外できるかテスト
+        xlsx_invoice = pd.DataFrame()
+        parser = CompressedFolderParser(xlsx_invoice)
+        files = parser._unpacked(inputfile_microsoft_tempfile_zip_with_folder, temp_dir)
         assert len(files) == 1
         assert set([f.name for f in files]) == {"test_child1.txt"}
 
@@ -100,7 +108,6 @@ class TestCompressedFolderParser:
 
             assert len(verification_files) == 1
             assert "test1.txt" in [p.name for p in verification_files["tests/temp/sample"]]
-
 
     def test_invalid_validation_uniq_fspath_file(self, temp_dir):
         # import pdb;pdb.set_trace()

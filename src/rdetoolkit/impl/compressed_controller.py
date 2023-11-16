@@ -9,6 +9,7 @@
 # coding: utf-8
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import List, Tuple, Union
@@ -57,10 +58,15 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded."""
-        excluded_patterns = ["__MACOSX", ".DS_Store", "~$*.docx", "~$*.xlsx", "~$*.pptx"]
-        for pattern in excluded_patterns:
-            if pattern in file.parts:
-                return True
+        excluded_patterns = ["__MACOSX", ".DS_Store"]
+        excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
+
+        if any(pattern in file.parts for pattern in excluded_patterns):
+            return True
+
+        if excluded_regex.search(str(file)):
+            return True
+
         return False
 
 
@@ -101,10 +107,15 @@ class CompressedFolderParser(ICompressedFileStructParser):
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded."""
-        excluded_patterns = ["__MACOSX", ".DS_Store", "~$*.docx", "~$*.xlsx", "~$*.pptx"]
-        for pattern in excluded_patterns:
-            if pattern in file.parts:
-                return True
+        excluded_patterns = ["__MACOSX", ".DS_Store"]
+        excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
+
+        if any(pattern in file.parts for pattern in excluded_patterns):
+            return True
+
+        if excluded_regex.search(str(file)):
+            return True
+
         return False
 
     def validation_uniq_fspath(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:

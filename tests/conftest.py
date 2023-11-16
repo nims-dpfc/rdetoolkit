@@ -125,6 +125,36 @@ def inputfile_mac_zip_with_folder() -> Generator[str, None, None]:
 
 
 @pytest.fixture
+def inputfile_microsoft_tempfile_zip_with_folder() -> Generator[str, None, None]:
+    """Microsoft特有のファイルを一時ファイル含むファイルを圧縮したzip"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_zip_filepath = pathlib.Path(input_dir, "test_input_multi")
+
+    zip_root_dirpath = pathlib.Path("compdir")
+    compressed_filepath1 = pathlib.Path(zip_root_dirpath, "test_child1.txt")
+    ms_temp_xlsx = pathlib.Path(zip_root_dirpath, "~$temp.xlsx")
+    ms_temp_pptx = pathlib.Path(zip_root_dirpath, "~$temp.pptx")
+    ms_temp_docx = pathlib.Path(zip_root_dirpath, "~$temp.docx")
+
+    # setup
+    zip_root_dirpath.mkdir(exist_ok=True)
+    compressed_filepath1.touch()
+    ms_temp_docx.touch()
+    ms_temp_pptx.touch()
+    ms_temp_xlsx.touch()
+    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
+
+    yield str(zip_file)
+
+    # teardown
+    if os.path.exists(zip_root_dirpath):
+        shutil.rmtree(zip_root_dirpath)
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture
 def inputfile_zip_with_folder_multi() ->  Generator[str, None, None]:
     """フォルダを複数圧縮したzip"""
     input_dir = pathlib.Path("data", "inputdata")
