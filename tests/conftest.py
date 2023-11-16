@@ -35,7 +35,7 @@ def inputfile_multi() -> Generator[list[str], None, None]:
     empty_child_file_2 = pathlib.Path(input_dir, "test_child2.txt")
     empty_child_file_2.touch()
 
-    yield [str(empty_child_file_1), str(empty_child_file_2)]
+    yield [empty_child_file_1, empty_child_file_2]
 
     # teardown
     if os.path.exists("data"):

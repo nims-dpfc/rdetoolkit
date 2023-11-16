@@ -222,7 +222,7 @@ def test_multifile_mode_process_calls_functions(
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
-    shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp","invoice_org.json"))
+    shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp", "invoice_org.json"))
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
@@ -257,6 +257,10 @@ def test_multifile_mode_process_calls_functions(
     with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
         contents_origin = json.load(f)
     assert contents_backup != contents_origin
+
+    # rawfileのバックアップが実行されたかチェック
+    for file in resource_paths.rawfiles:
+        assert os.path.exists(file)
 
     # descriptionのチェック
     with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:

@@ -76,6 +76,8 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     invoice.overwrite(invoice_dst_filepath)
 
+    copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
+
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
