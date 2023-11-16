@@ -171,6 +171,7 @@ class StorageDir:
     Note:
         In this system, the creation and support of the following folders are accommodated.
         Other folders can also be created, but they will not be reflected in the system:
+
         - invoice
         - invoice_patch
         - inputdata
@@ -240,7 +241,7 @@ class Meta:
         Returns:
             dict[str, MetadataDefJson]: Returns metadata-def.json as a dictionary.
 
-        Caution
+        Caution:
             Unclear whether the processing of actions and units after l262 is currently necessary.
         """
         if metadef_filepath:
