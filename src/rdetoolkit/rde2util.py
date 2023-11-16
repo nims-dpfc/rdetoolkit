@@ -361,7 +361,7 @@ class Meta:
             return list(map(str, value))
         return ""
 
-    @catch_exception_with_message("ERROR: failed to generate metadata.json")
+    @catch_exception_with_message(errro_message="ERROR: failed to generate metadata.json", error_code=50)
     def writeFile(self, metaFilePath, enc="utf_8"):
         outDict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
 

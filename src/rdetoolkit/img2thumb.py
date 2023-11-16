@@ -13,7 +13,7 @@ from typing import Optional
 from rdetoolkit.exceptions import catch_exception_with_message
 
 
-@catch_exception_with_message("ERROR: failed to copy image files")
+@catch_exception_with_message(errro_message="ERROR: failed to copy image files", error_code=50)
 def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, out_dir_other_img: Optional[str] = None, imgExt: str = ".png") -> None:
     """Copy the image files in the other image folder and the main image folder to the thumbnail folder
 
