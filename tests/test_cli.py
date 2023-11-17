@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import shutil
 import pytest
 import json
 from click.testing import CliRunner
@@ -22,6 +23,9 @@ rdetoolkit.run()
 """
     assert content == expected_content
     test_path.unlink()
+
+    if os.path.exists("container"):
+        shutil.rmtree("container")
 
 
 def test_make_requirements_txt():
@@ -46,6 +50,9 @@ def test_make_requirements_txt():
     assert content == expected_content
     test_path.unlink()
 
+    if os.path.exists("container"):
+        shutil.rmtree("container")
+
 
 def test_make_template_json():
     test_path = Path("test_template.json")
@@ -56,6 +63,9 @@ def test_make_template_json():
 
     assert content == {}
     test_path.unlink()
+
+    if os.path.exists("container"):
+        shutil.rmtree("container")
 
 
 def test_init_creation():
@@ -85,6 +95,9 @@ def test_init_creation():
     ]
     for file in files:
         assert file.exists()
+
+    if os.path.exists("container"):
+        shutil.rmtree("container")
 
 
 def test_init_no_overwrite():
@@ -134,5 +147,3 @@ def test_version(get_version_from_pyprojecttoml_py39_py310, get_version_from_pyp
     result = runner.invoke(version)
 
     assert v == result.output
-
-

@@ -12,7 +12,6 @@ __version__ = "1.0.7"
 
 import csv
 import os.path
-from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,11 +29,11 @@ def readOption(csvFilePath, enc="utf_8"):
     This function recognizes lines in the CSV file that start with '#' as options.
     Each option follows the format:
 
-    #title, Title
-    #dimension, x, y
-    #x, Name of x-axis, Unit of x-axis
-    #y, Name of y-axis, Unit of y-axis
-    #legend, Legend1, Legend2, ...
+    title, Title
+    dimension, x, y
+    x, Name of x-axis, Unit of x-axis
+    y, Name of y-axis, Unit of y-axis
+    legend, Legend1, Legend2, ...
 
     Args:
         csvFilePath (str): Path to the CSV file.
@@ -286,14 +285,3 @@ def main(
             graphTitleOtherImage = f"{fBaseName}_{legend}"
             fpathOtherImage = os.path.join(pngFilesOtherDir, f"{fBaseName}_{legend}.png")
             writeGraphImgFile(df, opt, graphTitleOtherImage, fpathOtherImage)
-
-
-if __name__ == "__main__":
-    csvFilePath = "C:\\horie\\nimsDB\\nimsY2022b\\RDE2.0\\GD-MS\\data\\structured\\JSS1756.csv"
-    pngFilesMainDir = "C:\\horie\\nimsDB\\nimsY2022b\\RDE2.0\\GD-MS\\data\\main_image"
-    pngFilesOtherDir = "C:\\horie\\nimsDB\\nimsY2022b\\RDE2.0\\GD-MS\\data\\other_image"
-    pngFilesThumbDir = "C:\\horie\\nimsDB\\nimsY2022b\\RDE2.0\\GD-MS\\data\\thumbnail"
-    # old(csvFilePath)
-    # otherOpt = {"axisName_x": "MassMass", "title": "test"}
-    otherOpt: dict[str, Any] = {}
-    main(csvFilePath, pngFilesMainDir, pngFilesOtherDir, pngFilesThumbDir, **otherOpt)

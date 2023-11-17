@@ -1,0 +1,73 @@
+site_name: "RdeToolKit Documentation"
+theme:
+  name: "material"
+  font:
+    text: Noto Sans JP
+  icon:
+    repo: fontawesome/brands/gitlab
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+
+nav:
+  - はじめに: index.md
+  - インストール: install.md
+  - API Document:
+    - impl:
+        - rdetoolkit/impl/compressed_controller.md
+        - rdetoolkit/impl/input_controller.md
+    - interface:
+        - rdetoolkit/interfaces/filechecker.md
+    - models:
+        - rdetoolkit/models/rde2types.md
+    - rdetoolkit/csv2graph.md
+    - rdetoolkit/img2thumb.md
+    - rdetoolkit/invoiceFile.md
+    - rdetoolkit/modeproc.md
+    - rdetoolkit/rde2util.md
+    - rdetoolkit/rdelogger.md
+    - rdetoolkit/workflows.md
+  - Contributing: contributing.md
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+  - mkdocstrings
+
+watch:
+  - src
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      use_pygments: true
+      noclasses: true
+      pygments_style: colorful
+      linenums: true
+
+repo_url: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
+repo_name: rde20/rdetoolkit
+
+extra:
+  social:
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
+  consent:
+    title: Cookie consent
+    description:
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.

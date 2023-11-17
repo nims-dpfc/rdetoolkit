@@ -9,6 +9,7 @@
 # coding: utf-8
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import List, Tuple, Union
@@ -53,7 +54,20 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         shutil.unpack_archive(zipfile, target_dir)
-        return [f for f in target_dir.glob("**/*") if f.is_file()]
+        return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
+
+    def _is_excluded(self, file: Path) -> bool:
+        """Checks a specific file pattern to determine whether it should be excluded."""
+        excluded_patterns = ["__MACOSX", ".DS_Store"]
+        excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
+
+        if any(pattern in file.parts for pattern in excluded_patterns):
+            return True
+
+        if excluded_regex.search(str(file)):
+            return True
+
+        return False
 
 
 class CompressedFolderParser(ICompressedFileStructParser):
@@ -89,7 +103,20 @@ class CompressedFolderParser(ICompressedFileStructParser):
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         shutil.unpack_archive(zipfile, target_dir)
-        return [f for f in target_dir.glob("**/*") if f.is_file()]
+        return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
+
+    def _is_excluded(self, file: Path) -> bool:
+        """Checks a specific file pattern to determine whether it should be excluded."""
+        excluded_patterns = ["__MACOSX", ".DS_Store"]
+        excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
+
+        if any(pattern in file.parts for pattern in excluded_patterns):
+            return True
+
+        if excluded_regex.search(str(file)):
+            return True
+
+        return False
 
     def validation_uniq_fspath(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:
         """Check if there are any non-unique directory names under the target directory
