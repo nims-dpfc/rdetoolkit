@@ -19,10 +19,12 @@ theme:
   features:
     - navigation.sections
     - navigation.top
+    - navigation.expand
 
 nav:
   - はじめに: index.md
   - インストール: install.md
+  - 使い方: usage.md
   - API Document:
     - impl:
         - rdetoolkit/impl/compressed_controller.md
@@ -54,8 +56,10 @@ markdown_extensions:
   - pymdownx.highlight:
       use_pygments: true
       noclasses: true
-      pygments_style: colorful
+      pygments_style: monokai
       linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
 
 repo_url: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
 repo_name: rde20/rdetoolkit
@@ -71,3 +75,6 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+
+extra_css:
+    - css/extra.css
