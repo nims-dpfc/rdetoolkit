@@ -30,7 +30,7 @@ nav:
         - rdetoolkit/impl/compressed_controller.md
         - rdetoolkit/impl/input_controller.md
     - interface:
-        - rdetoolkit/interfaces/filechecker.md
+        - rdetoolkit/interface/filechecker.md
     - models:
         - rdetoolkit/models/rde2types.md
     - rdetoolkit/csv2graph.md

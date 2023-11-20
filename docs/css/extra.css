@@ -13,8 +13,8 @@
     color: #f8f8f2;
   }
 .md-typeset .highlighttable {
-  margin-left:-20px;
-  margin-right: -20px;
+  margin-left:-5px;
+  margin-right: -5px;
   border-radius: 0;
 }
 .md-typeset .highlighttable > * {
