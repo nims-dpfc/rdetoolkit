@@ -160,8 +160,7 @@ class InvoiceFile:
 
         Args:
             dist_file_path (Path): Path to the destination file to be overwritten.
-            src_file_path (Optional[Path], optional): Path to the source invoice file. If not provided,
-                uses the path from `self.invoice_path`. Defaults to None.
+            src_file_path (Optional[Path], optional): Path to the source invoice file. If not provided, uses the path from `self.invoice_path`. Defaults to None.
 
         Raises:
             StructuredError: If the source file is not found.
@@ -170,8 +169,14 @@ class InvoiceFile:
             src_file_path = self.invoice_path
         if not os.path.exists(src_file_path):
             raise StructuredError(f"File Not Found: {src_file_path}")
-        if src_file_path != dist_file_path:
-            shutil.copy(str(src_file_path), str(dist_file_path))
+
+        json_obj = rde2util.read_from_json_file(src_file_path)
+
+        if dist_file_path.exists():
+            enc = rde2util.detect_text_file_encoding(dist_file_path)
+        else:
+            enc = "utf-8"
+        rde2util.write_to_json_file(dist_file_path, json_obj, enc=enc)
 
 
 class ExcelInvoiceFile:
