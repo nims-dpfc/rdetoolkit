@@ -7,8 +7,10 @@ from rdetoolkit import img2thumb
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features, apply_default_filename_mapping_rule
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.rde2util import read_from_json_file
+
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
@@ -178,6 +180,11 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
+
+    invoice_contents = read_from_json_file(srcpaths.invoice.joinpath("invoice.json"))
+    if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
+        replacement_rule = {"${filename}": resource_paths.rawfiles[0]}
+        apply_default_filename_mapping_rule(replacement_rule, srcpaths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
