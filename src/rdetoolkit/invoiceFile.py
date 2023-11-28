@@ -481,6 +481,7 @@ def update_description_with_features(
 
 
 class RuleBasedReplacer:
+
     def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
         self.rules: dict = {}
         self.last_apply_result: dict[str, Any] = {}
@@ -491,14 +492,15 @@ class RuleBasedReplacer:
             self.load_rules(rule_file_path)
 
     def load_rules(self, filepath: Union[str, Path]) -> None:
-        """ファイルマッピングルールを読み出す関数
-        ファイルのマッピングルールファイルはjsonファイルで入力する必要があります。
+        """Function to read file mapping rules.
+
+        The file containing the mapping rules must be in JSON format.
 
         Args:
-            filepath (Union[str, Path]): json形式のファイルマッピングファイル
+            filepath (Union[str, Path]): The file path of the JSON file containing the mapping rules.
 
         Raises:
-            StructuredError: ファイルの拡張子がjson以外の場合例外が発生します。
+            StructuredError: An exception is raised if the file extension is not json.
         """
         if isinstance(filepath, str):
             filepath = Path(filepath)
@@ -511,24 +513,24 @@ class RuleBasedReplacer:
             self.rules = data.get("filename_mapping", {})
 
     def apply_rules(self, replacements: dict[str, Any]) -> dict[str, Any]:
-        """ファイルマッピングのルールをjson形式に変換する関数
+        """Function to convert file mapping rules into a JSON format.
 
-        ファイルのマッピングルールは`.`で区切りの文字列を入力することで、辞書型に変換し、対象のJsonObjectで扱いやすい形式に処理します。
+        This function takes string mappings separated by dots ('.') and converts them into a dictionary format, making it easier to handle within a target JsonObject.
 
         Args:
-            replacements (dict[str, str]): マッピングルールが書かれたオブジェクト
+            replacements (dict[str, str]): The object containing mapping rules.
 
         Returns:
             _type_: _description_
 
-        Exsample:
-            #rule.json
-            #{
+        Example:
+            # rule.json
+            # {
             #   "filename_mapping": {
             #       "invoice.basic.dataName": "${filename}",
             #       "invoice.sample.names": ["${somedataname}"],
             #   }
-            #}
+            # }
             replacer = RuleBasedReplacer('rules.json')
             replacements = {
                 '${filename}': 'example.txt',
@@ -562,13 +564,13 @@ class RuleBasedReplacer:
         return result_container
 
     def set_rule(self, path: str, variable: str) -> None:
-        """新しいルールを設定する
+        """Sets a new rule.
 
         Args:
-            path (str): 置き換え先のターゲット先のパス
-            variable (str): 置き換え後のルール
+            path (str): The path to the target location for replacement.
+            variable (str): The rule after replacement.
 
-        Exsample:
+        Example:
             replacer = RuleBasedReplacer()
             replacer.set_rule('invoice.basic.dataName', 'filename')
             replacer.set_rule('invoice.sample.name', 'dataname')
@@ -577,19 +579,20 @@ class RuleBasedReplacer:
         self.rules[path] = variable
 
     def write_rule(self, save_file_path: Union[str, Path], *, apply_rule_result: Optional[dict[str, Any]] = None) -> str:
-        """ファイルマッピングルールを対象のjsonに書き込む関数
-        設定したマッピングルール(json形式)を対象のファイルへ書き込む
+        """Function to write file mapping rules to a target JSON file
+
+        Writes the set mapping rules (in JSON format) to the target file
 
         Args:
-            save_file_path (Union[str, Path]): 保存先のファイルパス
-            apply_rule_result (Optional[dict[str, Any]], optional): 対象のファイルに書き込むためのルールに従って値をセットしたオブジェクト. Defaults to None.
+            save_file_path (Union[str, Path]): The file path for saving.
+            apply_rule_result (Optional[dict[str, Any]], optional): An object with values set according to the rules for writing to the target file. Defaults to None.
 
         Raises:
-            StructuredError: 保存先のパスの拡張子がjson以外の場合、例外エラーが発生。
-            StructuredError: jsonに値が書き込めない場合、例外エラーが発生
+            StructuredError: An exception error occurs if the extension of the save path is not .json.
+            StructuredError: An exception error occurs if values cannot be written to the json.
 
         Returns:
-            str: 対象のjsonへ書き込んだ結果
+            str: The result of writing to the target JSON.
         """
         contents: str = ""
 
