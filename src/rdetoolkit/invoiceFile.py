@@ -627,6 +627,6 @@ def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_f
     replacer = RuleBasedReplacer()
     replacer.set_rule("invoice.basic.dataName", "${filename}")
     apply_rule_contents = replacer.apply_rules(replacement_rule)
-    replacer.write_rule(save_file_path)
+    replacer.write_rule(save_file_path, apply_rule_result=apply_rule_contents.get("invoice", {}))
 
     return apply_rule_contents
