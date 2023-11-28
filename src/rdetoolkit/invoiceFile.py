@@ -9,11 +9,12 @@
 # ---------------------------------------------------------
 # coding: utf-8
 
+import copy
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import chardet
 import pandas as pd
@@ -477,3 +478,155 @@ def update_description_with_features(
 
     _assignInvoiceVal(invoice_obj, "basic", "description", description, invoice_schema_obj)
     rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
+
+
+class RuleBasedReplacer:
+    def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
+        self.rules: dict = {}
+        self.last_apply_result: dict[str, Any] = {}
+
+        if isinstance(rule_file_path, str):
+            rule_file_path = Path(rule_file_path)
+        if rule_file_path and rule_file_path.exists():
+            self.load_rules(rule_file_path)
+
+    def load_rules(self, filepath: Union[str, Path]) -> None:
+        """ファイルマッピングルールを読み出す関数
+        ファイルのマッピングルールファイルはjsonファイルで入力する必要があります。
+
+        Args:
+            filepath (Union[str, Path]): json形式のファイルマッピングファイル
+
+        Raises:
+            StructuredError: ファイルの拡張子がjson以外の場合例外が発生します。
+        """
+        if isinstance(filepath, str):
+            filepath = Path(filepath)
+        if filepath.suffix != ".json":
+            raise StructuredError(f"Error. File format/extension is not correct: {filepath}")
+
+        enc = rde2util.detect_text_file_encoding(filepath)
+        with open(filepath, mode="r", encoding=enc) as f:
+            data = json.load(f)
+            self.rules = data.get("filename_mapping", {})
+
+    def apply_rules(self, replacements: dict[str, Any]) -> dict[str, Any]:
+        """ファイルマッピングのルールをjson形式に変換する関数
+
+        ファイルのマッピングルールは`.`で区切りの文字列を入力することで、辞書型に変換し、対象のJsonObjectで扱いやすい形式に処理します。
+
+        Args:
+            replacements (dict[str, str]): マッピングルールが書かれたオブジェクト
+
+        Returns:
+            _type_: _description_
+
+        Exsample:
+            #rule.json
+            #{
+            #   "filename_mapping": {
+            #       "invoice.basic.dataName": "${filename}",
+            #       "invoice.sample.names": ["${somedataname}"],
+            #   }
+            #}
+            replacer = RuleBasedReplacer('rules.json')
+            replacements = {
+                '${filename}': 'example.txt',
+                '${somedataname}': ['some data']
+            }
+            result = replacer.apply_rules(replacements)
+            print(result)
+            >>> {
+                "invoice": {
+                    "basic": {
+                        "dataName": "example.txt"
+                    },
+                    "sample": {
+                        "names": ["some data"]
+                    }
+                }
+            }
+        """
+        # [TODO] Correction of type definitions in version 0.1.5
+        result_container: dict[str, Any] = {}
+        for path, variable in self.rules.items():
+            value = replacements.get(variable)
+            current_work_contianer = result_container
+            if value is not None:
+                keys = path.split('.')
+                for key in keys[:-1]:
+                    current_work_contianer.setdefault(key, {})
+                    current_work_contianer = current_work_contianer[key]
+                current_work_contianer[keys[-1]] = value
+        self.last_apply_result = result_container
+        return result_container
+
+    def set_rule(self, path: str, variable: str) -> None:
+        """新しいルールを設定する
+
+        Args:
+            path (str): 置き換え先のターゲット先のパス
+            variable (str): 置き換え後のルール
+
+        Exsample:
+            replacer = RuleBasedReplacer()
+            replacer.set_rule('invoice.basic.dataName', 'filename')
+            replacer.set_rule('invoice.sample.name', 'dataname')
+            print(replacer.rules)
+        """
+        self.rules[path] = variable
+
+    def write_rule(self, save_file_path: Union[str, Path], *, apply_rule_result: Optional[dict[str, Any]] = None) -> str:
+        """ファイルマッピングルールを対象のjsonに書き込む関数
+        設定したマッピングルール(json形式)を対象のファイルへ書き込む
+
+        Args:
+            save_file_path (Union[str, Path]): 保存先のファイルパス
+            apply_rule_result (Optional[dict[str, Any]], optional): 対象のファイルに書き込むためのルールに従って値をセットしたオブジェクト. Defaults to None.
+
+        Raises:
+            StructuredError: 保存先のパスの拡張子がjson以外の場合、例外エラーが発生。
+            StructuredError: jsonに値が書き込めない場合、例外エラーが発生
+
+        Returns:
+            str: 対象のjsonへ書き込んだ結果
+        """
+        contents: str = ""
+
+        if apply_rule_result is not None:
+            data_to_write = apply_rule_result
+        else:
+            data_to_write = self.last_apply_result
+
+        if isinstance(save_file_path, str):
+            save_file_path = Path(save_file_path)
+
+        if save_file_path.suffix != ".json":
+            raise StructuredError(f"Extension error. Incorrect extension: {save_file_path}")
+
+        if save_file_path.exists():
+            enc = rde2util.detect_text_file_encoding(save_file_path)
+            with open(save_file_path, mode="r", encoding=enc) as f:
+                exists_contents: dict = json.load(f)
+            exists_contents.update(data_to_write)
+            data_to_write = copy.deepcopy(exists_contents)
+        else:
+            enc = "utf-8"
+
+        try:
+            with open(save_file_path, mode="w", encoding=enc) as f:
+                json.dump(data_to_write, f, indent=4, ensure_ascii=False)
+                contents = json.dumps({"filename_mapping": self.rules})
+        except json.JSONDecodeError:
+            raise StructuredError("Error. No write was performed on the target json")
+
+        return contents
+
+
+def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: Union[str, Path]) -> dict[str, Any]:
+    replacer = RuleBasedReplacer()
+    replacer.set_rule("invoice.basic.dataName", "${filename}")
+    apply_rule_contents = replacer.apply_rules(replacement_rule)
+    replacer.write_rule(save_file_path)
+
+    return apply_rule_contents
