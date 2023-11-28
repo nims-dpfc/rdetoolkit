@@ -183,7 +183,7 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
 
     invoice_contents = read_from_json_file(srcpaths.invoice.joinpath("invoice.json"))
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
-        replacement_rule = {"${filename}": resource_paths.rawfiles[0]}
+        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
         apply_default_filename_mapping_rule(replacement_rule, srcpaths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(

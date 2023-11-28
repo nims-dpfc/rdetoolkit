@@ -663,7 +663,7 @@ def ivnoice_json_none_sample_info() ->  Generator[str, None, None]:
     # setup
     invoice_dir.mkdir(parents=True, exist_ok=True)
     with open(invoice_json_path, mode="w", encoding="utf-8") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
     yield str(invoice_json_path)
 

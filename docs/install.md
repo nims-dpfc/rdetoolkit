@@ -8,7 +8,7 @@ rdetoolkitは、現在、NIMS所内GitLab Package Regisotryに配置されてい
 ## install
 
 ```shell
-pip install --index-url https://<access_token_name>:<access_token>@gitlab.nims.go.jp/api/v4/projects/648/packages/pypi/simple --no-deps rdetoolkit
+pip install rdetoolkit --index-url https://<access_token_name>:<access_token>@gitlab.nims.go.jp/api/v4/projects/648/packages/pypi/simple
 ```
 
 ## requirements.txt
