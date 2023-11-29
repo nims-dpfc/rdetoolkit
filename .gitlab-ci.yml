@@ -311,7 +311,7 @@ deploy_to_doc:
   image: python:3.11
   before_script:
     - cp pip.conf /etc/pip.conf
-    - python3 -m pip install --upgrade mkdocs 'mkdocstrings[crystal,python]'
+    - pip install -r requirements-dev.lock
   script:
     - mkdocs build
   artifacts:
