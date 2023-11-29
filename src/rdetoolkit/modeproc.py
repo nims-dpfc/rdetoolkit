@@ -85,10 +85,10 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
         datasets_process_function(srcpaths, resource_paths)
 
     # rewriting support for ${filename} by default
-    invoice_contents = read_from_json_file(srcpaths.invoice.joinpath("invoice.json"))
+    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
         replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-        apply_default_filename_mapping_rule(replacement_rule, srcpaths.invoice.joinpath("invoice.json"))
+        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
@@ -152,10 +152,10 @@ def excel_invoice_mode_process(
     # rewriting support for ${filename} by default
     # Excelinvoice applies to file mode only, folder mode is not supported.
     # FileMode has only one element in resource_paths.rawfiles.
-    invoice_contents = read_from_json_file(srcpaths.invoice.joinpath("invoice.json"))
+    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}" and len(resource_paths.rawfiles) == 1:
         replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-        apply_default_filename_mapping_rule(replacement_rule, srcpaths.invoice.joinpath("invoice.json"))
+        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
@@ -196,10 +196,10 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
         datasets_process_function(srcpaths, resource_paths)
 
     # rewriting support for ${filename} by default
-    invoice_contents = read_from_json_file(srcpaths.invoice.joinpath("invoice.json"))
+    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
         replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-        apply_default_filename_mapping_rule(replacement_rule, srcpaths.invoice.joinpath("invoice.json"))
+        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,

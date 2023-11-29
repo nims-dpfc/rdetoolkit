@@ -25,7 +25,7 @@ def inputfile_single() -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def inputfile_multi() -> Generator[list[str], None, None]:
+def inputfile_multi() -> Generator[list[pathlib.Path], None, None]:
     """Create multiple files temporarily for test input"""
     input_dir = pathlib.Path("data", "inputdata")
     input_dir.mkdir(parents=True, exist_ok=True)
@@ -474,6 +474,93 @@ EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE = [
         "test_user",
         "f30812c3-14bc-4274-809f-afcfaa2e4047",
         "test1",
+        "test_230606_1",
+        "desc1",
+        "sample1",
+        "cbf194ea-813f-4e05-b288",
+        "1111",
+        "sample1",
+        "test_ref",
+        "desc3",
+        "testname",
+        "Fe",
+        "magnet",
+        "7439-89-6",
+        "AAA",
+        "CCC",
+    ],
+]
+
+EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MAGIC_VARIABLE = [
+    [
+        "data_file_names",
+        "",
+        "",
+        "basic",
+        "basic",
+        "basic",
+        "basic",
+        "sample",
+        "sample",
+        "sample",
+        "sample",
+        "sample",
+        "sample",
+        "sample.general",
+        "sample.general",
+        "sample.general",
+        "sample.general",
+        "custom",
+        "custom",
+    ],
+    [
+        "name",
+        "dataset_title",
+        "dataOwner",
+        "dataOwnerId",
+        "dataName",
+        "experimentId",
+        "referenceUrl",
+        "description",
+        "names",
+        "sampleId",
+        "ownerId",
+        "composition",
+        "description",
+        "general-name",
+        "chemical-composition",
+        "sample-type",
+        "cas-number",
+        "key1",
+        "key2",
+    ],
+    [
+        "ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)",
+        "データセット名\n(必須)",
+        "データ所有者\n(NIMS User ID)",
+        "NIMS user UUID\n(必須)",
+        "データ名\n(必須)",
+        "実験ID",
+        "参考URL",
+        "説明",
+        "試料名\n(ローカルID)",
+        "試料UUID\n(必須)",
+        "試料管理者UUID",
+        "化学式・組成式・分子式など",
+        "試料の説明",
+        "一般名称\n(General name)",
+        "化学組成\n(Chemical composition)",
+        "試料分類\n(Sample type)",
+        "CAS番号\n(CAS Number)",
+        "key1",
+        "key2",
+    ],
+    [
+        "test_child1.txt",
+        "N_TEST_1",
+        "test_user",
+        "f30812c3-14bc-4274-809f-afcfaa2e4047",
+        "${filename}",
         "test_230606_1",
         "desc1",
         "sample1",
@@ -1551,6 +1638,52 @@ def inputfile_single_dummy_header_excelinvoice() -> Generator[str, None, None]:
 
 
 @pytest.fixture
+def inputfile_single_dummy_header_excelinvoice_with_magic_variable() -> Generator[str, None, None]:
+    """ExcelInvoice with magic variable: ${filename}"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MAGIC_VARIABLE,
+        columns=[
+            "invoiceList_format_id",
+            "Sample_RDE_DataSet",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    )
+    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=["dummy_id", "dummy_term"])
+    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=["dummy1", "dummy2", "dummy3"])
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture
 def inputfile_empty_excelinvoice() -> Generator[str, None, None]:
     """ExcelInvoice"""
     input_dir = pathlib.Path("data", "inputdata")
@@ -1856,6 +1989,53 @@ def ivnoice_json_none_sample_info() -> Generator[str, None, None]:
             "description": "desc1",
         },
         "custom": {"key1": "test1", "key2": "test2"},
+    }
+
+    # setup
+    invoice_dir.mkdir(parents=True, exist_ok=True)
+    with open(invoice_json_path, mode="w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+    yield str(invoice_json_path)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture()
+def ivnoice_json_magic_filename_variable() -> Generator[str, None, None]:
+    """${filename}をdataNameに追加したinvoice.json"""
+    invoice_dir = pathlib.Path("data", "invoice")
+    invoice_json_path = pathlib.Path(str(invoice_dir), "invoice.json")
+    data = {
+        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "basic": {
+            "dateSubmitted": "2023-03-14",
+            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataName": "${filename}",
+            "experimentId": "test_230606_1",
+            "description": "desc1",
+        },
+        "custom": {"key1": "test1", "key2": "test2"},
+        "sample": {
+            "sampleId": "cbf194ea-813f-4e05-b288",
+            "names": ["sample1"],
+            "composition": "sample1",
+            "referenceUrl": "test_ref",
+            "description": "desc3",
+            "generalAttributes": [
+                {"termId": "3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e", "value": "testname"},
+                {
+                    "termId": "e2d20d02-2e38-2cd3-b1b3-66fdb8a11057",
+                    "value": "7439-89-6",
+                },
+                {"termId": "0aadfff2-37de-411f-883a-38b62b2abbce", "value": "sample1"},
+                {"termId": "0444cf53-db47-b208-7b5f-54429291a140", "value": "magnet"},
+                {"termId": "0444cf53-db47-b208-7b5f-54429291a140", "value": "magnet"},
+            ],
+            "ownerId": "1111",
+        }
     }
 
     # setup
