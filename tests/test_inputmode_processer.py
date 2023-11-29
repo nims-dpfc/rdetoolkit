@@ -4,7 +4,14 @@ from pathlib import Path
 import shutil
 import pytest
 
-from rdetoolkit.modeproc import copy_input_to_rawfile, copy_input_to_rawfile_for_rdeformat, invoice_mode_process, excel_invoice_mode_process, multifile_mode_process, rdeformat_mode_process
+from rdetoolkit.modeproc import (
+    copy_input_to_rawfile,
+    copy_input_to_rawfile_for_rdeformat,
+    invoice_mode_process,
+    excel_invoice_mode_process,
+    multifile_mode_process,
+    rdeformat_mode_process,
+)
 from rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeInputDirPaths
 
 
@@ -71,7 +78,7 @@ def test_copy_input_to_rawfile_rdeformat(dummy_files_rdeformat):
         thumbnail=Path(),
         invoice=Path(),
         invoice_org=Path(),
-        invoice_schema_json=Path()
+        invoice_schema_json=Path(),
     )
 
     copy_input_to_rawfile_for_rdeformat(paths)
@@ -94,7 +101,7 @@ def test_invoice_mode_process_calls_functions(
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json
+    ivnoice_schema_json,
 ):
     """invoiceモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -105,15 +112,22 @@ def test_invoice_mode_process_calls_functions(
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    expected_description = (
+        "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    )
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
-        tasksupport=Path("data", "tasksupport"))
+        tasksupport=Path("data", "tasksupport"),
+    )
     resource_paths = RdeOutputResourcePath(
-        rawfiles=([Path(inputfile_single),]),
+        rawfiles=(
+            [
+                Path(inputfile_single),
+            ]
+        ),
         raw=Path("data", "raw"),
         main_image=Path("data", "main_image"),
         other_image=Path("data", "other_image"),
@@ -123,7 +137,7 @@ def test_invoice_mode_process_calls_functions(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path(ivnoice_json_none_sample_info),
-        invoice_schema_json=Path(ivnoice_schema_json)
+        invoice_schema_json=Path(ivnoice_schema_json),
     )
 
     # テスト対象の処理を実行
@@ -134,9 +148,69 @@ def test_invoice_mode_process_calls_functions(
     # invoiceのバックアップが実行されたかチェック
     assert os.path.exists(os.path.join("data", "invoice", "invoice.json"))
     # descriptionのチェック
-    with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
         content = json.load(f)
-    assert content['basic']['description'] == expected_description
+    assert content["basic"]["description"] == expected_description
+
+
+def test_invoice_mode_process_calls_functions_with_magic_variable(
+    mocker,
+    inputfile_single,
+    ivnoice_json_magic_filename_variable,
+    tasksupport,
+    metadata_def_json_with_feature,
+    metadata_json,
+    ivnoice_schema_json,
+):
+    """invoiceモード時、invoice上書き、データセット処理、${filename}書き換え
+    invoice.jsonに記載された${filename}が書き換えられるかテスト
+    """
+    Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "main_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "other_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "meta").mkdir(parents=True, exist_ok=True)
+    Path("data", "structured").mkdir(parents=True, exist_ok=True)
+    Path("data", "logs").mkdir(parents=True, exist_ok=True)
+    mock_datasets_process_function = mocker.Mock()
+
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+    )
+    resource_paths = RdeOutputResourcePath(
+        rawfiles=(
+            [
+                Path(inputfile_single),
+            ]
+        ),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path(ivnoice_json_magic_filename_variable),
+        invoice_schema_json=Path(ivnoice_schema_json),
+    )
+
+    # テスト対象の処理を実行
+    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+
+    # 関数が呼び出されたかどうかをチェック
+    mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
+    # invoiceのバックアップが実行されたかチェック
+    assert os.path.exists(os.path.join("data", "invoice", "invoice.json"))
+    # descriptionのチェック
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
+        content = json.load(f)
+    assert content["basic"]["dataName"] == "test_single.txt"
 
 
 def test_excel_invoice_mode_process_calls_functions(
@@ -147,7 +221,7 @@ def test_excel_invoice_mode_process_calls_functions(
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json
+    ivnoice_schema_json,
 ):
     """excelinvoiceモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -160,16 +234,26 @@ def test_excel_invoice_mode_process_calls_functions(
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
-    shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp","invoice_org.json"))
-    shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp","invoice_org.json"),
+    )
+    shutil.unpack_archive(
+        Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp")
+    )
     expected_description = "特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
-        tasksupport=Path("data", "tasksupport"))
+        tasksupport=Path("data", "tasksupport"),
+    )
     resource_paths = RdeOutputResourcePath(
-        rawfiles=([Path("data", "temp", "test_child1.txt"),]),
+        rawfiles=(
+            [
+                Path("data", "temp", "test_child1.txt"),
+            ]
+        ),
         raw=Path("data", "raw"),
         main_image=Path("data", "main_image"),
         other_image=Path("data", "other_image"),
@@ -179,28 +263,124 @@ def test_excel_invoice_mode_process_calls_functions(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
-        invoice_schema_json=Path(ivnoice_schema_json)
+        invoice_schema_json=Path(ivnoice_schema_json),
     )
 
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
-    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function)
+    excel_invoice_mode_process(
+        srcpaths,
+        resource_paths,
+        inputfile_single_dummy_header_excelinvoice,
+        0,
+        mock_datasets_process_function,
+    )
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
     # invoiceのバックアップが実行されたかチェック
     # descriptionがバックアップ後に実行されるため内容が一致しない。
-    with open(os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
+    ) as f:
         contents_backup = json.load(f)
-    with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
         contents_origin = json.load(f)
     assert contents_backup != contents_origin
     # descriptionのチェック
-    with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
         content = json.load(f)
-    assert content['basic']['description'] == expected_description
+    assert content["basic"]["description"] == expected_description
+
+
+def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
+    mocker,
+    inputfile_single_dummy_header_excelinvoice_with_magic_variable,
+    inputfile_zip_with_file,
+    ivnoice_json_magic_filename_variable,
+    tasksupport,
+    metadata_def_json_with_feature,
+    metadata_json,
+    ivnoice_schema_json,
+):
+    """excelinvoiceモード時、invoice上書き、データセット処理、${filename}の書き換え
+    ファイルモードのとき、${filename}の書き換えが実行されるか
+    """
+    # 事前準備: フィクスチャ
+    Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "main_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "other_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "meta").mkdir(parents=True, exist_ok=True)
+    Path("data", "structured").mkdir(parents=True, exist_ok=True)
+    Path("data", "logs").mkdir(parents=True, exist_ok=True)
+    Path("data", "temp").mkdir(parents=True, exist_ok=True)
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+    shutil.unpack_archive(
+        Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp")
+    )
+
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+    )
+    resource_paths = RdeOutputResourcePath(
+        rawfiles=(
+            [
+                Path("data", "temp", "test_child1.txt"),
+            ]
+        ),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path("data", "temp", "invoice_org.json"),
+        invoice_schema_json=Path(ivnoice_schema_json),
+    )
+    # 関数のモック
+    mock_datasets_process_function = mocker.Mock()
+
+    # テスト対象の関数を実行
+    excel_invoice_mode_process(
+        srcpaths,
+        resource_paths,
+        inputfile_single_dummy_header_excelinvoice_with_magic_variable,
+        0,
+        mock_datasets_process_function,
+    )
+
+    # 関数が呼び出されたかどうかをチェック
+    mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
+    # invoiceのバックアップが実行されたかチェック
+    # descriptionがバックアップ後に実行されるため内容が一致しない。
+    with open(
+        os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
+    ) as f:
+        contents_backup = json.load(f)
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
+        contents_origin = json.load(f)
+    assert contents_backup != contents_origin
+    # descriptionのチェック
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
+        content = json.load(f)
+    assert content["basic"]["dataName"] == "test_child1.txt"
 
 
 def test_multifile_mode_process_calls_functions(
@@ -210,7 +390,7 @@ def test_multifile_mode_process_calls_functions(
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json
+    ivnoice_schema_json,
 ):
     """multifile_mode_processモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -222,14 +402,20 @@ def test_multifile_mode_process_calls_functions(
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
-    shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp", "invoice_org.json"))
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+    expected_description = (
+        "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    )
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
-        tasksupport=Path("data", "tasksupport"))
+        tasksupport=Path("data", "tasksupport"),
+    )
     resource_paths = RdeOutputResourcePath(
         rawfiles=(inputfile_multi),
         raw=Path("data", "raw"),
@@ -241,7 +427,7 @@ def test_multifile_mode_process_calls_functions(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
-        invoice_schema_json=Path(ivnoice_schema_json)
+        invoice_schema_json=Path(ivnoice_schema_json),
     )
 
     # テスト対象の処理を実行
@@ -252,9 +438,13 @@ def test_multifile_mode_process_calls_functions(
 
     # invoiceのバックアップが実行されたかチェック
     # descriptionがバックアップ後に実行されるため内容が一致しない。
-    with open(os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
+    ) as f:
         contents_backup = json.load(f)
-    with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
         contents_origin = json.load(f)
     assert contents_backup != contents_origin
 
@@ -263,9 +453,130 @@ def test_multifile_mode_process_calls_functions(
         assert os.path.exists(file)
 
     # descriptionのチェック
-    with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
         content = json.load(f)
-    assert content['basic']['description'] == expected_description
+    assert content["basic"]["description"] == expected_description
+
+
+def test_multifile_mode_process_calls_functions_replace_magic_filename(
+    mocker,
+    inputfile_multi,
+    ivnoice_json_magic_filename_variable,
+    tasksupport,
+    metadata_def_json_with_feature,
+    metadata_json,
+    ivnoice_schema_json,
+):
+    """multifile_mode_processモード時、invoice上書き、データセット処理、特徴量書き込み
+    既存のdescription: desc1を含む
+    """
+    inputfile_multi.sort()
+    input1_path_lists = [
+        Path("data", "raw"),
+        Path("data", "main_image"),
+        Path("data", "other_image"),
+        Path("data", "meta"),
+        Path("data", "structured"),
+        Path("data", "logs"),
+        Path("data", "temp"),
+    ]
+    for path in input1_path_lists:
+        path.mkdir(parents=True, exist_ok=True)
+
+    # common process
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+    )
+    resource_paths1 = RdeOutputResourcePath(
+        rawfiles=(inputfile_multi[0],),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path("data", "temp", "invoice_org.json"),
+        invoice_schema_json=Path(ivnoice_schema_json),
+    )
+
+    input2_path_lists = [
+        Path("data", "divided", f"{1:04d}", "invoice"),
+        Path("data", "divided", f"{1:04d}", "raw"),
+        Path("data", "divided", f"{1:04d}", "main_image"),
+        Path("data", "divided", f"{1:04d}", "other_image"),
+        Path("data", "divided", f"{1:04d}", "meta"),
+        Path("data", "divided", f"{1:04d}", "structured"),
+        Path("data", "divided", f"{1:04d}", "logs"),
+    ]
+    for path in input2_path_lists:
+        path.mkdir(parents=True, exist_ok=True)
+
+    resource_paths2 = RdeOutputResourcePath(
+        rawfiles=(inputfile_multi[1],),
+        raw=Path("data", "divided", f"{1:04d}", "raw"),
+        main_image=Path("data", "divided", f"{1:04d}", "main_image"),
+        other_image=Path("data", "divided", f"{1:04d}", "other_image"),
+        meta=Path("data", "divided", f"{1:04d}", "meta"),
+        struct=Path("data", "divided", f"{1:04d}", "structured"),
+        logs=Path("data", "divided", f"{1:04d}", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "divided", f"{1:04d}", "invoice"),
+        invoice_org=Path("data", "temp", "invoice_org.json"),
+        invoice_schema_json=Path(ivnoice_schema_json),
+    )
+
+    expected_filename1 = "test_child1.txt"
+    expected_filename2 = "test_child2.txt"
+
+    mock_datasets_process_function = mocker.Mock()
+
+    # テスト対象の処理を実行
+    for idx in range(2):
+        if idx == 0:
+            resource_paths = resource_paths1
+            expected_filename = expected_filename1
+            invoice = Path("data", "invoice", "invoice.json")
+        else:
+            resource_paths = resource_paths2
+            expected_filename = expected_filename2
+            invoice = Path("data", "divided", f"{1:04d}", "invoice", "invoice.json")
+
+        multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+
+        # 関数が呼び出されたかどうかをチェック
+        mock_datasets_process_function.assert_called_with(srcpaths, resource_paths)
+
+        # invoiceのバックアップが実行されたかチェック
+        # descriptionがバックアップ後に実行されるため内容が一致しない。
+        with open(
+            os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
+        ) as f:
+            contents_backup = json.load(f)
+        with open(
+            os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+        ) as f:
+            contents_origin = json.load(f)
+        assert contents_backup != contents_origin
+
+        # rawfileのバックアップが実行されたかチェック
+        for file in resource_paths.rawfiles:
+            assert os.path.exists(file)
+
+        with open(invoice, mode="r", encoding="utf-8") as f:
+            content = json.load(f)
+        # ${filename}の書き換えの実行
+        assert content["basic"]["dataName"] == expected_filename
 
 
 def test_rdeformat_mode_process_alls_functions(
@@ -275,7 +586,7 @@ def test_rdeformat_mode_process_alls_functions(
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json
+    ivnoice_schema_json,
 ):
     """rdeformat_mode_processモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -287,16 +598,27 @@ def test_rdeformat_mode_process_alls_functions(
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
-    shutil.copy(Path("data", "invoice").joinpath("invoice.json"), Path("data", "temp","invoice_org.json"))
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+    expected_description = (
+        "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    )
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
-        tasksupport=Path("data", "tasksupport"))
+        tasksupport=Path("data", "tasksupport"),
+    )
     resource_paths = RdeOutputResourcePath(
-        rawfiles=([Path("data", "inputdata", "test_child1.txt"), Path("data", "inputdata", "test_child2.txt")]),
+        rawfiles=(
+            [
+                Path("data", "inputdata", "test_child1.txt"),
+                Path("data", "inputdata", "test_child2.txt"),
+            ]
+        ),
         raw=Path("data", "raw"),
         main_image=Path("data", "main_image"),
         other_image=Path("data", "other_image"),
@@ -306,7 +628,7 @@ def test_rdeformat_mode_process_alls_functions(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
-        invoice_schema_json=Path(ivnoice_schema_json)
+        invoice_schema_json=Path(ivnoice_schema_json),
     )
 
     # テスト対象の処理を実行
@@ -316,6 +638,8 @@ def test_rdeformat_mode_process_alls_functions(
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
 
     # descriptionのチェック
-    with open(os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8") as f:
+    with open(
+        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
+    ) as f:
         content = json.load(f)
-    assert content['basic']['description'] == expected_description
+    assert content["basic"]["description"] == expected_description

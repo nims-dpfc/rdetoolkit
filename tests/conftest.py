@@ -54,7 +54,9 @@ def inputfile_zip_with_file() ->  Generator[str, None, None]:
     compressed_filepath1.touch()
 
     # setup
-    with zipfile.ZipFile(str(test_zip_filepath), 'w', compression=zipfile.ZIP_DEFLATED) as z:
+    with zipfile.ZipFile(
+        str(test_zip_filepath), "w", compression=zipfile.ZIP_DEFLATED
+    ) as z:
         z.write(str(compressed_filepath1))
 
     yield str(test_zip_filepath)
@@ -81,7 +83,9 @@ def inputfile_zip_with_folder() ->  Generator[str, None, None]:
     zip_root_dirpath.mkdir(exist_ok=True)
     compressed_filepath1.touch()
     compressed_filepath2.touch()
-    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
+    zip_file = shutil.make_archive(
+        str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath
+    )
 
     yield str(zip_file)
 
@@ -111,7 +115,9 @@ def inputfile_mac_zip_with_folder() -> Generator[str, None, None]:
     compressed_filepath1.touch()
     compressed_filepath2.touch()
     compressed_filepath3.touch()
-    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
+    zip_file = shutil.make_archive(
+        str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath
+    )
 
     yield str(zip_file)
 
@@ -143,7 +149,9 @@ def inputfile_microsoft_tempfile_zip_with_folder() -> Generator[str, None, None]
     ms_temp_docx.touch()
     ms_temp_pptx.touch()
     ms_temp_xlsx.touch()
-    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
+    zip_file = shutil.make_archive(
+        str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath
+    )
 
     yield str(zip_file)
 
@@ -171,7 +179,9 @@ def inputfile_zip_with_folder_multi() ->  Generator[str, None, None]:
     zip_root_dirpath2.mkdir(exist_ok=True, parents=True)
     compressed_filepath1.touch()
     compressed_filepath2.touch()
-    zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir="pack")
+    zip_file = shutil.make_archive(
+        str(test_zip_filepath), format="zip", root_dir="pack"
+    )
     yield str(zip_file)
 
     # teardown
@@ -449,9 +459,36 @@ def inputfile_single_dummy_header_excelinvoice() ->  Generator[str, None, None]:
     input_dir.mkdir(parents=True, exist_ok=True)
     test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
 
-    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
-    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['dummy_id', 'dummy_term'])
-    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['dummy1', 'dummy2', 'dummy3'])
+    df1 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE,
+        columns=[
+            "invoiceList_format_id",
+            "Sample_RDE_DataSet",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    )
+    df2 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET2, columns=["dummy_id", "dummy_term"]
+    )
+    df3 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET3, columns=["dummy1", "dummy2", "dummy3"]
+    )
 
     with pd.ExcelWriter(test_excel_invoice) as writer:
         df1.to_excel(writer, sheet_name="invoice_form", index=False)
@@ -466,13 +503,69 @@ def inputfile_single_dummy_header_excelinvoice() ->  Generator[str, None, None]:
 
 
 @pytest.fixture
-def inputfile_empty_excelinvoice() ->  Generator[str, None, None]:
+def inputfile_single_dummy_header_excelinvoice_with_magic_variable() -> (
+    Generator[str, None, None]
+):
+    """ExcelInvoice with magic variable: ${filename}"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
+
+    df1 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_MAGIC_VARIABLE,
+        columns=[
+            "invoiceList_format_id",
+            "Sample_RDE_DataSet",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    )
+    df2 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET2, columns=["dummy_id", "dummy_term"]
+    )
+    df3 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET3, columns=["dummy1", "dummy2", "dummy3"]
+    )
+
+    with pd.ExcelWriter(test_excel_invoice) as writer:
+        df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        df2.to_excel(writer, sheet_name="generalTerm", index=False)
+        df3.to_excel(writer, sheet_name="specificTerm", index=False)
+
+    yield str(test_excel_invoice)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture
+def inputfile_empty_excelinvoice() -> Generator[str, None, None]:
     """ExcelInvoice"""
     input_dir = pathlib.Path("data", "inputdata")
     input_dir.mkdir(parents=True, exist_ok=True)
     test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
-    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=['dummy_id', 'dummy_term'])
-    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['dummy1', 'dummy2', 'dummy3'])
+    df2 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET2, columns=["dummy_id", "dummy_term"]
+    )
+    df3 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET3, columns=["dummy1", "dummy2", "dummy3"]
+    )
 
     with pd.ExcelWriter(test_excel_invoice) as writer:
         df2.to_excel(writer, sheet_name="generalTerm", index=False)
@@ -531,9 +624,57 @@ def inputfile_invalid_samesheet_excelinvoice() ->  Generator[str, None, None]:
     input_dir.mkdir(parents=True, exist_ok=True)
     test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
 
-    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
-    df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""])
-    df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=['dummy1', 'dummy2', 'dummy3'])
+    df1 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE,
+        columns=[
+            "invoiceList_format_id",
+            "Sample_RDE_DataSet",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    )
+    df2 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE,
+        columns=[
+            "invoiceList_format_id",
+            "Sample_RDE_DataSet",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    )
+    df3 = pd.DataFrame(
+        EXCELINVOICE_ENTRYDATA_SHEET3, columns=["dummy1", "dummy2", "dummy3"]
+    )
 
     with pd.ExcelWriter(test_excel_invoice) as writer:
         df1.to_excel(writer, sheet_name="invoice_form", index=False)
@@ -646,18 +787,62 @@ def ivnoice_json_none_sample_info() ->  Generator[str, None, None]:
     invoice_dir = pathlib.Path("data", "invoice")
     invoice_json_path = pathlib.Path(str(invoice_dir), "invoice.json")
     data = {
-        'datasetId': 'e751fcc4-b926-4747-b236-cab40316fc49',
-        'basic': {
-            'dateSubmitted': '2023-03-14',
-            'dataOwnerId': 'f30812c3-14bc-4274-809f-afcfaa2e4047',
-            'dataName': 'test1',
-            'experimentId': 'test_230606_1',
-            'description': 'desc1'
-            },
-        'custom': {
-            'key1': 'test1',
-            'key2': 'test2'
-        }
+        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "basic": {
+            "dateSubmitted": "2023-03-14",
+            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataName": "test1",
+            "experimentId": "test_230606_1",
+            "description": "desc1",
+        },
+        "custom": {"key1": "test1", "key2": "test2"},
+    }
+
+    # setup
+    invoice_dir.mkdir(parents=True, exist_ok=True)
+    with open(invoice_json_path, mode="w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+    yield str(invoice_json_path)
+
+    # teardown
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture()
+def ivnoice_json_magic_filename_variable() -> Generator[str, None, None]:
+    """${filename}をdataNameに追加したinvoice.json"""
+    invoice_dir = pathlib.Path("data", "invoice")
+    invoice_json_path = pathlib.Path(str(invoice_dir), "invoice.json")
+    data = {
+        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "basic": {
+            "dateSubmitted": "2023-03-14",
+            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataName": "${filename}",
+            "experimentId": "test_230606_1",
+            "description": "desc1",
+        },
+        "custom": {"key1": "test1", "key2": "test2"},
+        "sample": {
+            "sampleId": "cbf194ea-813f-4e05-b288",
+            "names": ["sample1"],
+            "composition": "sample1",
+            "referenceUrl": "test_ref",
+            "description": "desc3",
+            "generalAttributes": [
+                {"termId": "3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e", "value": "testname"},
+                {
+                    "termId": "e2d20d02-2e38-2cd3-b1b3-66fdb8a11057",
+                    "value": "7439-89-6",
+                },
+                {"termId": "0aadfff2-37de-411f-883a-38b62b2abbce", "value": "sample1"},
+                {"termId": "0444cf53-db47-b208-7b5f-54429291a140", "value": "magnet"},
+                {"termId": "0444cf53-db47-b208-7b5f-54429291a140", "value": "magnet"},
+            ],
+            "ownerId": "1111",
+        },
     }
 
     # setup
@@ -758,11 +943,17 @@ def inputfile_rdeformat_divived() ->  Generator[str, None, None]:
         for name in output_struct_dir_names:
             _dir = pathlib.Path("data", "divided", f"{idx:04}", name)
             _dir.mkdir(parents=True, exist_ok=True)
-        comp_input = pathlib.Path("data", "divided", f"{idx:04}", "inputdata", f"test_file{idx}.txt")
+        comp_input = pathlib.Path(
+            "data", "divided", f"{idx:04}", "inputdata", f"test_file{idx}.txt"
+        )
         comp_input.touch()
-        comp_raw = pathlib.Path("data", "divided", f"{idx:04}", "raw", f"test_file{idx}.txt")
+        comp_raw = pathlib.Path(
+            "data", "divided", f"{idx:04}", "raw", f"test_file{idx}.txt"
+        )
         comp_raw.touch()
-        comp_struct = pathlib.Path("data", "divided", f"{idx:04}", "structured", f"test_file{idx}.csv")
+        comp_struct = pathlib.Path(
+            "data", "divided", f"{idx:04}", "structured", f"test_file{idx}.csv"
+        )
         comp_struct.touch()
 
     zip_file = shutil.make_archive("rdeformat_pack", format="zip", root_dir="data")

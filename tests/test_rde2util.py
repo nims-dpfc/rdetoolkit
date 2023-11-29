@@ -9,7 +9,7 @@ import pytest
 from rdetoolkit.rde2util import (
     detect_text_file_encoding,
     read_from_json_file,
-    write_to_json_file
+    write_to_json_file,
 )
 
 
@@ -63,9 +63,7 @@ def meta_const_instance():
 
     with open("tests/metadata-def.json", mode="w", encoding="utf-8") as f:
         json.dump(meta_dict, f, ensure_ascii=False)
-    metadef_filepath = (
-        "tests/metadata-def.json"  # Replace with the actual file path
-    )
+    metadef_filepath = "tests/metadata-def.json"  # Replace with the actual file path
     yield Meta(metadef_filepath=metadef_filepath)
     if os.path.exists("tests/metadata-def.json"):
         os.remove("tests/metadata-def.json")
@@ -74,9 +72,7 @@ def meta_const_instance():
 
 
 def test_read_metadef_file(meta_const_instance):
-    metadef_filepath = (
-        "tests/metadata-def.json"  # Replace with the actual file path
-    )
+    metadef_filepath = "tests/metadata-def.json"  # Replace with the actual file path
     result = meta_const_instance._read_metadef_file(metadef_filepath)
     assert isinstance(result, dict)
 
@@ -148,9 +144,7 @@ def meta_variable_instance():
 
     with open("tests/metadata-def.json", mode="w", encoding="utf-8") as f:
         json.dump(meta_dict, f, ensure_ascii=False)
-    metadef_filepath = (
-        "tests/metadata-def.json"  # Replace with the actual file path
-    )
+    metadef_filepath = "tests/metadata-def.json"  # Replace with the actual file path
     yield Meta(metadef_filepath=metadef_filepath)
     if os.path.exists("tests/metadata-def.json"):
         os.remove("tests/metadata-def.json")
@@ -187,14 +181,10 @@ def test_has_variable_writeFile(meta_variable_instance):
         assert content["variable"][0]["reference"]["value"] == "sample.com"
         assert content["variable"][0]["custom.user"]["value"] == "A"
         assert content["variable"][1]["date"]["value"] == "2022-01-02"
-        assert (
-            content["variable"][1]["reference"]["value"] == "experiments.app"
-        )
+        assert content["variable"][1]["reference"]["value"] == "experiments.app"
         assert content["variable"][1]["custom.user"]["value"] == "B"
         assert content["variable"][2]["date"]["value"] == "2022-01-03"
-        assert (
-            content["variable"][2]["reference"]["value"] == "myDocuments.go.jp"
-        )
+        assert content["variable"][2]["reference"]["value"] == "myDocuments.go.jp"
         assert content["variable"][2]["custom.user"]["value"] == "C"
 
 
@@ -202,9 +192,7 @@ def test_has_variable_writeFile(meta_variable_instance):
 @pytest.fixture
 def utf_8_file():
     # テスト用の"utf_8"エンコーディングのファイルを作成する
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf_8", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf_8", delete=False) as f:
         f.write("テストファイル（UTF-8）")
         file_path = f.name
     yield file_path
@@ -214,9 +202,7 @@ def utf_8_file():
 @pytest.fixture
 def shift_jis_file():
     # テスト用の"shift_jis"エンコーディングのファイルを作成する
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="shift_jis", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="shift_jis", delete=False) as f:
         f.write("テストファイル（Shift-JIS）")
         file_path = f.name
     yield file_path
@@ -226,9 +212,7 @@ def shift_jis_file():
 @pytest.fixture
 def utf_8_sig_file():
     # テスト用の"utf_8_sig"エンコーディングのファイルを作成する
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf_8_sig", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf_8_sig", delete=False) as f:
         f.write("テストファイル（UTF-8 with BOM）")
         file_path = f.name
     yield file_path
@@ -250,23 +234,21 @@ def test_detect_text_file_encoding_utf_8_sig(utf_8_sig_file):
 # read_invoice_json_fileのテスト
 def test_read_from_json_file_valid_json_file(ivnoice_json_none_sample_info):
     expect_json = {
-        'datasetId': 'e751fcc4-b926-4747-b236-cab40316fc49',
-        'basic': {
-            'dateSubmitted': '2023-03-14',
-            'dataOwnerId': 'f30812c3-14bc-4274-809f-afcfaa2e4047',
-            'dataName': 'test1',
-            'experimentId': 'test_230606_1',
-            'description': 'desc1'
-            },
-        'custom': {
-            'key1': 'test1',
-            'key2': 'test2'
-        }
+        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "basic": {
+            "dateSubmitted": "2023-03-14",
+            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataName": "test1",
+            "experimentId": "test_230606_1",
+            "description": "desc1",
+        },
+        "custom": {"key1": "test1", "key2": "test2"},
     }
     # JSONファイルを読み込む関数を呼び出し
     result = read_from_json_file(ivnoice_json_none_sample_info)
 
     assert result == expect_json
+
 
 @pytest.fixture
 def sample_invoice():
@@ -274,9 +256,10 @@ def sample_invoice():
         "invoice_id": "12345",
         "items": [
             {"product": "apple", "quantity": 3, "price": 0.5},
-            {"product": "orange", "quantity": 1, "price": 0.8}
-        ]
+            {"product": "orange", "quantity": 1, "price": 0.8},
+        ],
     }
+
 
 def test_write_to_json_file(tmp_path, sample_invoice):
     # tmp_path is a pytest fixture that provides a temporary directory unique to the test invocation
