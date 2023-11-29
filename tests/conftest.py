@@ -57,6 +57,9 @@ def inputfile_zip_with_file() ->  Generator[str, None, None]:
     with zipfile.ZipFile(
         str(test_zip_filepath), "w", compression=zipfile.ZIP_DEFLATED
     ) as z:
+    with zipfile.ZipFile(
+        str(test_zip_filepath), "w", compression=zipfile.ZIP_DEFLATED
+    ) as z:
         z.write(str(compressed_filepath1))
 
     yield str(test_zip_filepath)
@@ -115,6 +118,9 @@ def inputfile_mac_zip_with_folder() -> Generator[str, None, None]:
     compressed_filepath1.touch()
     compressed_filepath2.touch()
     compressed_filepath3.touch()
+    zip_file = shutil.make_archive(
+        str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath
+    )
     zip_file = shutil.make_archive(
         str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath
     )
