@@ -7,15 +7,15 @@ from rdetoolkit import img2thumb
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features, apply_default_filename_mapping_rule
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.rde2util import read_from_json_file
+
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
 
-def rdeformat_mode_process(
-    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None
-):
+def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
     """Process the source data and apply specific transformations using the provided callback function.
 
     This function performs several steps, including overwriting the invoice,
@@ -56,9 +56,7 @@ def rdeformat_mode_process(
         pass
 
 
-def multifile_mode_process(
-    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None
-):
+def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
     """Processes multiple source files and applies transformations using the provided callback function.
 
     This function handles tasks related to invoices, processes datasets, and attempts
@@ -86,6 +84,12 @@ def multifile_mode_process(
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
+    # rewriting support for ${filename} by default
+    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
+    if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
+        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
+        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
+
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
         resource_paths.main_image,
@@ -99,11 +103,7 @@ def multifile_mode_process(
 
 
 def excel_invoice_mode_process(
-    srcpaths: RdeInputDirPaths,
-    resource_paths: RdeOutputResourcePath,
-    excel_invoice_file: Path,
-    idx: int,
-    datasets_process_function: Optional[_CallbackType] = None,
+    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None
 ):
     """Process invoice data from an Excel file and apply dataset transformations using the provided callback function.
 
@@ -149,6 +149,14 @@ def excel_invoice_mode_process(
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
+    # rewriting support for ${filename} by default
+    # Excelinvoice applies to file mode only, folder mode is not supported.
+    # FileMode has only one element in resource_paths.rawfiles.
+    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
+    if invoice_contents.get("basic", {}).get("dataName") == "${filename}" and len(resource_paths.rawfiles) == 1:
+        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
+        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
+
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
         resource_paths.main_image,
@@ -163,9 +171,7 @@ def excel_invoice_mode_process(
         pass
 
 
-def invoice_mode_process(
-    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None
-):
+def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
     This function first copies input data to raw files, then processes the datasets, and finally attempts
@@ -188,6 +194,12 @@ def invoice_mode_process(
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
+
+    # rewriting support for ${filename} by default
+    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
+    if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
+        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
+        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,

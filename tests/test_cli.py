@@ -25,7 +25,7 @@ def test_make_main_py():
 
     expected_content = """import rdetoolkit
 
-rdetoolkit.run()
+rdetoolkit.workflows.run()
 """
     assert content == expected_content
     test_path.unlink()

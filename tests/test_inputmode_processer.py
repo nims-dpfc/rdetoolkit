@@ -236,7 +236,7 @@ def test_excel_invoice_mode_process_calls_functions(
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     shutil.copy(
         Path("data", "invoice").joinpath("invoice.json"),
-        Path("data", "temp","invoice_org.json"),
+        Path("data", "temp", "invoice_org.json"),
     )
     shutil.unpack_archive(
         Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp")
