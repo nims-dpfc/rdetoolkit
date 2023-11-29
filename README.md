@@ -22,7 +22,7 @@ RdeToolKitの各種モジュールを使うことで、RDEへの研究・実験�
 インストールは、下記コマンドを実行してください。
 
 ```bash
-pip install --index-url https://<access_token_name>:<access_token>@gitlab.nims.go.jp/api/v4/projects/648/packages/pypi/simple --no-deps rdetoolkit
+pip install rdetoolkit --index-url https://__token__:<your_personal_token>@gitlab.nims.go.jp/api/v4/projects/648/packages/pypi/simple
 ```
 
 > <access_token_name>と<access_token>は、個人のアクセストークンもしくは、Wikiの開発者ドキュメントにインストール用のトークンを掲載しています。そちらのドキュメントを参照してインストールしてください。

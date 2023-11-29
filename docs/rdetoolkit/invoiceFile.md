@@ -56,3 +56,25 @@
 ## update_description_with_features
 
 ::: src.rdetoolkit.invoiceFile.update_description_with_features
+
+## RuleBasedReplacer
+
+マッピングルールを生成・適用するクラス。
+
+> このルールは、運用上invoiceモードの時のみ利用できます。
+
+::: src.rdetoolkit.invoiceFile.RuleBasedReplacer
+    options:
+        members:
+            - load_rules
+            - apply_rules
+            - set_rule
+            - write_rule
+
+## apply_default_filename_mapping_rule
+
+デフォルトで`invoice.baisc.dataName`に`${filename}`がある場合、対象のオブジェクトの値を書き換える
+
+> このルールは、運用上invoiceモードの時のみ利用できます。
+
+::: src.rdetoolkit.invoiceFile.apply_default_filename_mapping_rule
