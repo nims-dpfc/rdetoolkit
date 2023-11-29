@@ -9,11 +9,12 @@
 # ---------------------------------------------------------
 # coding: utf-8
 
+import copy
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import chardet
 import pandas as pd
