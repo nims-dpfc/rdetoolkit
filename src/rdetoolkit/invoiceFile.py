@@ -300,7 +300,7 @@ class ExcelInvoiceFile:
 
     @staticmethod
     def __is_empty_row(row) -> bool:
-        return all(cell == '' or pd.isnull(cell) for cell in row)
+        return all(cell == "" or pd.isnull(cell) for cell in row)
 
     def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
         assign_funcs: dict[str, Callable[[str, str, dict[Any, Any], dict[Any, Any]], None]] = {
@@ -400,16 +400,10 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: Rde
     invoice_org_filepath = StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json")
     if excel_invoice_file is not None:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
-        shutil.copy(
-            StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"),
-            invoice_org_filepath
-        )
+        shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
     elif fmt_flags.is_rdeformat_enabled or fmt_flags.is_multifile_enabled:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
-        shutil.copy(
-            StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"),
-            invoice_org_filepath
-        )
+        shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
 
     return invoice_org_filepath
 
@@ -486,7 +480,6 @@ def update_description_with_features(
 
 
 class RuleBasedReplacer:
-
     def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
         self.rules: dict = {}
         self.last_apply_result: dict[str, Any] = {}
@@ -560,7 +553,7 @@ class RuleBasedReplacer:
             value = replacements.get(variable)
             current_work_contianer = result_container
             if value is not None:
-                keys = path.split('.')
+                keys = path.split(".")
                 for key in keys[:-1]:
                     current_work_contianer.setdefault(key, {})
                     current_work_contianer = current_work_contianer[key]
