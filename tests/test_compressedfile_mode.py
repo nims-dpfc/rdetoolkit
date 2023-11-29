@@ -25,9 +25,7 @@ class TestCompressedFlatFileParser:
     @mock.patch("rdetoolkit.impl.compressed_controller.checkExistRawFiles")
     def test_read(self, mocker, inputfile_zip_with_file, temp_dir):
         xlsx_invoice = pd.DataFrame()
-        expected_files = [
-            (pathlib.Path(temp_dir, "test_child1.txt"),)
-        ]
+        expected_files = [(pathlib.Path(temp_dir, "test_child1.txt"),)]
 
         mocker.return_value = [pathlib.Path(temp_dir, "test_child1.txt")]
         parser = CompressedFlatFileParser(xlsx_invoice)
@@ -39,7 +37,9 @@ class TestCompressedFolderParser:
     def test_read(self, inputfile_zip_with_folder, temp_dir):
         xlsx_invoice = pd.DataFrame()
         parser = CompressedFolderParser(xlsx_invoice)
-        files = parser.read(pathlib.Path(inputfile_zip_with_folder), pathlib.Path(temp_dir))
+        files = parser.read(
+            pathlib.Path(inputfile_zip_with_folder), pathlib.Path(temp_dir)
+        )
 
         assert len(files) == 1
         assert len(files[0]) == 2
@@ -59,7 +59,9 @@ class TestCompressedFolderParser:
         assert len(files) == 1
         assert set([f.name for f in files]) == {"test_child1.txt"}
 
-    def test_microsoft_temp_file_unpacked(self, inputfile_microsoft_tempfile_zip_with_folder, temp_dir):
+    def test_microsoft_temp_file_unpacked(
+        self, inputfile_microsoft_tempfile_zip_with_folder, temp_dir
+    ):
         # Microfsoft特有のファイルを除外できるかテスト
         xlsx_invoice = pd.DataFrame()
         parser = CompressedFolderParser(xlsx_invoice)
@@ -75,7 +77,9 @@ class TestCompressedFolderParser:
 
         xlsx_invoice = pd.DataFrame()
         parser = CompressedFolderParser(xlsx_invoice)
-        verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
+        verification_files = parser.validation_uniq_fspath(
+            pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"]
+        )
 
         assert len(verification_files) == 1
         assert "test1.txt" in [p.name for p in verification_files["tests/temp"]]
@@ -94,8 +98,13 @@ class TestCompressedFolderParser:
             compressed_filepath2.touch()
             parser = CompressedFolderParser(xlsx_invoice)
             with pytest.raises(StructuredError) as e:
-                verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
-            assert str(e.value) == 'ERROR: folder paths and file paths stored in a zip file must always have unique names.'
+                verification_files = parser.validation_uniq_fspath(
+                    pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"]
+                )
+            assert (
+                str(e.value)
+                == "ERROR: folder paths and file paths stored in a zip file must always have unique names."
+            )
         else:
             pathlib.Path("tests", "temp", "sample").mkdir(parents=True, exist_ok=True)
             pathlib.Path("tests", "temp", "Sample").mkdir(parents=True, exist_ok=True)
@@ -104,10 +113,14 @@ class TestCompressedFolderParser:
             compressed_filepath1.touch()
             compressed_filepath2.touch()
             parser = CompressedFolderParser(xlsx_invoice)
-            verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
+            verification_files = parser.validation_uniq_fspath(
+                pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"]
+            )
 
             assert len(verification_files) == 1
-            assert "test1.txt" in [p.name for p in verification_files["tests/temp/sample"]]
+            assert "test1.txt" in [
+                p.name for p in verification_files["tests/temp/sample"]
+            ]
 
     def test_invalid_validation_uniq_fspath_file(self, temp_dir):
         # import pdb;pdb.set_trace()
@@ -122,8 +135,13 @@ class TestCompressedFolderParser:
             compressed_filepath2.touch()
             parser = CompressedFolderParser(xlsx_invoice)
             with pytest.raises(StructuredError) as e:
-                verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
-            assert str(e.value) == 'ERROR: folder paths and file paths stored in a zip file must always have unique names.'
+                verification_files = parser.validation_uniq_fspath(
+                    pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"]
+                )
+            assert (
+                str(e.value)
+                == "ERROR: folder paths and file paths stored in a zip file must always have unique names."
+            )
         else:
             pathlib.Path("tests", "temp", "sample").mkdir(parents=True, exist_ok=True)
             pathlib.Path("tests", "temp", "Sample").mkdir(parents=True, exist_ok=True)
@@ -132,7 +150,11 @@ class TestCompressedFolderParser:
             compressed_filepath1.touch()
             compressed_filepath2.touch()
             parser = CompressedFolderParser(xlsx_invoice)
-            verification_files = parser.validation_uniq_fspath(pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"])
+            verification_files = parser.validation_uniq_fspath(
+                pathlib.Path("tests/temp"), exclude_names=["invoice_org.json"]
+            )
 
             assert len(verification_files) == 1
-            assert "test1.txt" in [p.name for p in verification_files["tests/temp/sample"]]
+            assert "test1.txt" in [
+                p.name for p in verification_files["tests/temp/sample"]
+            ]

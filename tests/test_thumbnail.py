@@ -20,6 +20,7 @@ def dummy_out_dir_thumb():
     if os.path.exists(temp_dir_path):
         shutil.rmtree(temp_dir_path)
 
+
 @pytest.fixture
 def dummy_out_dir_main():
     temp_dir_path = Path("tests", "img")
@@ -32,6 +33,7 @@ def dummy_out_dir_main():
 
     if os.path.exists(temp_dir_path):
         shutil.rmtree(temp_dir_path)
+
 
 @pytest.fixture
 def dummy_out_dir_other():
@@ -47,8 +49,9 @@ def dummy_out_dir_other():
         shutil.rmtree(temp_dir_path)
 
 
-
-def test_copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
+def test_copy_images_to_thumbnail(
+    dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other
+):
     """Main画像フォルダとOther画像フォルダからサムネイルフォルダにファイルがコピーされるかテスト"""
     # ダミー画像ファイルを作成
     with open(dummy_out_dir_main.joinpath("dummy_main_img.png"), "w") as f:
@@ -60,13 +63,17 @@ def test_copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, dummy
     with open(dummy_out_dir_other.joinpath("dummy_other_img3.png"), "w") as f:
         f.write("dummy")
     # 関数を実行
-    copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, out_dir_other_img = dummy_out_dir_other)
+    copy_images_to_thumbnail(
+        dummy_out_dir_thumb, dummy_out_dir_main, out_dir_other_img=dummy_out_dir_other
+    )
 
     assert os.path.isfile(dummy_out_dir_thumb.joinpath("!_dummy_main_img.png"))
     assert len(list(dummy_out_dir_thumb.glob("*"))) == 4
 
 
-def test_copy_images_to_thumbnail_missmatch_extension(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
+def test_copy_images_to_thumbnail_missmatch_extension(
+    dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other
+):
     """拡張子が指定と違った場合、ファイルがコピーされないことを確認するテスト"""
     # ダミー画像ファイルを作成
     with open(dummy_out_dir_main.joinpath("dummy_main_img.jpg"), "w") as f:
@@ -75,4 +82,3 @@ def test_copy_images_to_thumbnail_missmatch_extension(dummy_out_dir_thumb, dummy
     copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main)
 
     assert not os.path.isfile(dummy_out_dir_thumb.joinpath("!_dummy_main_img.png"))
-

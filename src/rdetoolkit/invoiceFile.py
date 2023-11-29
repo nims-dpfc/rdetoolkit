@@ -9,11 +9,12 @@
 # ---------------------------------------------------------
 # coding: utf-8
 
+import copy
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import chardet
 import pandas as pd
@@ -294,7 +295,7 @@ class ExcelInvoiceFile:
 
     @staticmethod
     def __is_empty_row(row) -> bool:
-        return all(cell == '' or pd.isnull(cell) for cell in row)
+        return all(cell == "" or pd.isnull(cell) for cell in row)
 
     def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
         assign_funcs: dict[str, Callable[[str, str, dict[Any, Any], dict[Any, Any]], None]] = {
@@ -394,16 +395,10 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: Rde
     invoice_org_filepath = StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json")
     if excel_invoice_file is not None:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
-        shutil.copy(
-            StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"),
-            invoice_org_filepath
-        )
+        shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
     elif fmt_flags.is_rdeformat_enabled or fmt_flags.is_multifile_enabled:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
-        shutil.copy(
-            StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"),
-            invoice_org_filepath
-        )
+        shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
 
     return invoice_org_filepath
 
@@ -477,3 +472,157 @@ def update_description_with_features(
 
     _assignInvoiceVal(invoice_obj, "basic", "description", description, invoice_schema_obj)
     rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
+
+
+class RuleBasedReplacer:
+    def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
+        self.rules: dict = {}
+        self.last_apply_result: dict[str, Any] = {}
+
+        if isinstance(rule_file_path, str):
+            rule_file_path = Path(rule_file_path)
+        if rule_file_path and rule_file_path.exists():
+            self.load_rules(rule_file_path)
+
+    def load_rules(self, filepath: Union[str, Path]) -> None:
+        """Function to read file mapping rules.
+
+        The file containing the mapping rules must be in JSON format.
+
+        Args:
+            filepath (Union[str, Path]): The file path of the JSON file containing the mapping rules.
+
+        Raises:
+            StructuredError: An exception is raised if the file extension is not json.
+        """
+        if isinstance(filepath, str):
+            filepath = Path(filepath)
+        if filepath.suffix != ".json":
+            raise StructuredError(f"Error. File format/extension is not correct: {filepath}")
+
+        enc = rde2util.detect_text_file_encoding(filepath)
+        with open(filepath, mode="r", encoding=enc) as f:
+            data = json.load(f)
+            self.rules = data.get("filename_mapping", {})
+
+    def apply_rules(self, replacements: dict[str, Any]) -> dict[str, Any]:
+        """Function to convert file mapping rules into a JSON format.
+
+        This function takes string mappings separated by dots ('.') and converts them into a dictionary format, making it easier to handle within a target JsonObject.
+
+        Args:
+            replacements (dict[str, str]): The object containing mapping rules.
+
+        Returns:
+            _type_: _description_
+
+        Example:
+            # rule.json
+            # {
+            #   "filename_mapping": {
+            #       "invoice.basic.dataName": "${filename}",
+            #       "invoice.sample.names": ["${somedataname}"],
+            #   }
+            # }
+            replacer = RuleBasedReplacer('rules.json')
+            replacements = {
+                '${filename}': 'example.txt',
+                '${somedataname}': ['some data']
+            }
+            result = replacer.apply_rules(replacements)
+            print(result)
+            >>> {
+                "invoice": {
+                    "basic": {
+                        "dataName": "example.txt"
+                    },
+                    "sample": {
+                        "names": ["some data"]
+                    }
+                }
+            }
+        """
+        # [TODO] Correction of type definitions in version 0.1.5
+        result_container: dict[str, Any] = {}
+        for path, variable in self.rules.items():
+            value = replacements.get(variable)
+            current_work_contianer = result_container
+            if value is not None:
+                keys = path.split(".")
+                for key in keys[:-1]:
+                    current_work_contianer.setdefault(key, {})
+                    current_work_contianer = current_work_contianer[key]
+                current_work_contianer[keys[-1]] = value
+        self.last_apply_result = result_container
+        return result_container
+
+    def set_rule(self, path: str, variable: str) -> None:
+        """Sets a new rule.
+
+        Args:
+            path (str): The path to the target location for replacement.
+            variable (str): The rule after replacement.
+
+        Example:
+            replacer = RuleBasedReplacer()
+            replacer.set_rule('invoice.basic.dataName', 'filename')
+            replacer.set_rule('invoice.sample.name', 'dataname')
+            print(replacer.rules)
+        """
+        self.rules[path] = variable
+
+    def write_rule(self, save_file_path: Union[str, Path], *, apply_rule_result: Optional[dict[str, Any]] = None) -> str:
+        """Function to write file mapping rules to a target JSON file
+
+        Writes the set mapping rules (in JSON format) to the target file
+
+        Args:
+            save_file_path (Union[str, Path]): The file path for saving.
+            apply_rule_result (Optional[dict[str, Any]], optional): An object with values set according to the rules for writing to the target file. Defaults to None.
+
+        Raises:
+            StructuredError: An exception error occurs if the extension of the save path is not .json.
+            StructuredError: An exception error occurs if values cannot be written to the json.
+
+        Returns:
+            str: The result of writing to the target JSON.
+        """
+        contents: str = ""
+
+        if apply_rule_result is not None:
+            data_to_write = apply_rule_result
+        else:
+            data_to_write = self.last_apply_result
+
+        if isinstance(save_file_path, str):
+            save_file_path = Path(save_file_path)
+
+        if save_file_path.suffix != ".json":
+            raise StructuredError(f"Extension error. Incorrect extension: {save_file_path}")
+
+        if save_file_path.exists():
+            enc = rde2util.detect_text_file_encoding(save_file_path)
+            with open(save_file_path, mode="r", encoding=enc) as f:
+                exists_contents: dict = json.load(f)
+            exists_contents.update(data_to_write)
+            data_to_write = copy.deepcopy(exists_contents)
+        else:
+            enc = "utf-8"
+
+        try:
+            with open(save_file_path, mode="w", encoding=enc) as f:
+                json.dump(data_to_write, f, indent=4, ensure_ascii=False)
+                contents = json.dumps({"filename_mapping": self.rules})
+        except json.JSONDecodeError:
+            raise StructuredError("Error. No write was performed on the target json")
+
+        return contents
+
+
+def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: Union[str, Path]) -> dict[str, Any]:
+    replacer = RuleBasedReplacer()
+    replacer.set_rule("invoice.basic.dataName", "${filename}")
+    apply_rule_contents = replacer.apply_rules(replacement_rule)
+    replacer.write_rule(save_file_path, apply_rule_result=apply_rule_contents.get("invoice", {}))
+
+    return apply_rule_contents
