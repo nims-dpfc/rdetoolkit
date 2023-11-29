@@ -13,7 +13,9 @@ from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOut
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
 
-def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
+def rdeformat_mode_process(
+    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None
+):
     """Process the source data and apply specific transformations using the provided callback function.
 
     This function performs several steps, including overwriting the invoice,
@@ -54,7 +56,9 @@ def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
         pass
 
 
-def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
+def multifile_mode_process(
+    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None
+):
     """Processes multiple source files and applies transformations using the provided callback function.
 
     This function handles tasks related to invoices, processes datasets, and attempts
@@ -95,7 +99,11 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
 
 
 def excel_invoice_mode_process(
-    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    excel_invoice_file: Path,
+    idx: int,
+    datasets_process_function: Optional[_CallbackType] = None,
 ):
     """Process invoice data from an Excel file and apply dataset transformations using the provided callback function.
 
@@ -155,7 +163,9 @@ def excel_invoice_mode_process(
         pass
 
 
-def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
+def invoice_mode_process(
+    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None
+):
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
     This function first copies input data to raw files, then processes the datasets, and finally attempts
