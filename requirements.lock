@@ -10,7 +10,6 @@
 --trusted-host pypi.org
 --trusted-host files.pythonhosted.org
 -e file:.
-annotated-types==0.6.0
 babel==2.13.1
 build==1.0.3
 certifi==2023.7.22
@@ -49,8 +48,6 @@ pandas==2.1.0
 pathspec==0.11.2
 pillow==10.0.0
 platformdirs==4.0.0
-pydantic==2.5.2
-pydantic-core==2.14.5
 pygments==2.16.1
 pymdown-extensions==10.4
 pyparsing==3.1.1
@@ -62,7 +59,6 @@ pyyaml-env-tag==0.1
 regex==2023.10.3
 requests==2.31.0
 six==1.16.0
-sync==1.0.0
 toml==0.10.2
 tomli==2.0.1
 typing-extensions==4.8.0
