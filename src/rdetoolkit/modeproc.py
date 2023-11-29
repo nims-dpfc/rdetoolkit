@@ -7,10 +7,8 @@ from rdetoolkit import img2thumb
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features, apply_default_filename_mapping_rule
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.rde2util import read_from_json_file
-
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
@@ -84,12 +82,6 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    # rewriting support for ${filename} by default
-    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
-    if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
-        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
-
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
         resource_paths.main_image,
@@ -149,14 +141,6 @@ def excel_invoice_mode_process(
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    # rewriting support for ${filename} by default
-    # Excelinvoice applies to file mode only, folder mode is not supported.
-    # FileMode has only one element in resource_paths.rawfiles.
-    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
-    if invoice_contents.get("basic", {}).get("dataName") == "${filename}" and len(resource_paths.rawfiles) == 1:
-        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
-
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
         resource_paths.main_image,
@@ -194,12 +178,6 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
-
-    # rewriting support for ${filename} by default
-    invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
-    if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
-        replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-        apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
