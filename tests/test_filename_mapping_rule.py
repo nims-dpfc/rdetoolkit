@@ -7,11 +7,7 @@ from rdetoolkit.invoiceFile import apply_default_filename_mapping_rule
 
 @pytest.fixture
 def invoice_file_with_magic_variable():
-    contents = {
-        "basic": {
-            "dataName": "${filename}"
-        }
-    }
+    contents = {"basic": {"dataName": "${filename}"}}
 
     test_invoice_path = Path("tests/invoice.json")
     with open(test_invoice_path, mode="w", encoding="utf-8") as f:
@@ -24,11 +20,11 @@ def invoice_file_with_magic_variable():
 
 
 def test_apply_default_filename_mapping_rule(invoice_file_with_magic_variable):
-    test_overwrite_contents = {
-        "${filename}": "test_input_filename.txt"
-    }
+    test_overwrite_contents = {"${filename}": "test_input_filename.txt"}
 
-    apply_default_filename_mapping_rule(test_overwrite_contents, invoice_file_with_magic_variable)
+    apply_default_filename_mapping_rule(
+        test_overwrite_contents, invoice_file_with_magic_variable
+    )
 
     with open(invoice_file_with_magic_variable, mode="r", encoding="utf-8") as f:
         contents = json.load(f)
