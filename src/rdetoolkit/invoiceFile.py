@@ -514,33 +514,23 @@ class RuleBasedReplacer:
             replacements (dict[str, str]): The object containing mapping rules.
 
         Returns:
-            _type_: _description_
+            dict[str, Any]: dictionary type data after conversion
 
         Example:
             # rule.json
-            # {
-            #   "filename_mapping": {
-            #       "invoice.basic.dataName": "${filename}",
-            #       "invoice.sample.names": ["${somedataname}"],
-            #   }
-            # }
+            rule = {
+                "filename_mapping": {
+                    "invoice.basic.dataName": "${filename}",
+                    "invoice.sample.names": ["${somedataname}"],
+                }
+            }
             replacer = RuleBasedReplacer('rules.json')
             replacements = {
                 '${filename}': 'example.txt',
                 '${somedataname}': ['some data']
             }
-            result = replacer.apply_rules(replacements)
+            result = replacer.apply_rules(replacement_rule, save_file_path, mapping_rules = rule)
             print(result)
-            >>> {
-                "invoice": {
-                    "basic": {
-                        "dataName": "example.txt"
-                    },
-                    "sample": {
-                        "names": ["some data"]
-                    }
-                }
-            }
         """
         # [TODO] Correction of type definitions in version 0.1.6
         if mapping_rules is None:
