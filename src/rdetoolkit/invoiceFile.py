@@ -476,7 +476,7 @@ def update_description_with_features(
 
 class RuleBasedReplacer:
     def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
-        self.rules: dict = {}
+        self.rules: dict[str, str] = {}
         self.last_apply_result: dict[str, Any] = {}
 
         if isinstance(rule_file_path, str):
@@ -505,7 +505,7 @@ class RuleBasedReplacer:
             data = json.load(f)
             self.rules = data.get("filename_mapping", {})
 
-    def apply_rules(self, replacements: dict[str, Any]) -> dict[str, Any]:
+    def get_apply_rules_obj(self, replacements: dict[str, Any], source_json_obj: Optional[dict[str, Any]], *, mapping_rules: Optional[dict[str, str]] = None) -> dict[str, Any]:
         """Function to convert file mapping rules into a JSON format.
 
         This function takes string mappings separated by dots ('.') and converts them into a dictionary format, making it easier to handle within a target JsonObject.
@@ -514,47 +514,44 @@ class RuleBasedReplacer:
             replacements (dict[str, str]): The object containing mapping rules.
 
         Returns:
-            _type_: _description_
+            dict[str, Any]: dictionary type data after conversion
 
         Example:
             # rule.json
-            # {
-            #   "filename_mapping": {
-            #       "invoice.basic.dataName": "${filename}",
-            #       "invoice.sample.names": ["${somedataname}"],
-            #   }
-            # }
+            rule = {
+                "filename_mapping": {
+                    "invoice.basic.dataName": "${filename}",
+                    "invoice.sample.names": ["${somedataname}"],
+                }
+            }
             replacer = RuleBasedReplacer('rules.json')
             replacements = {
                 '${filename}': 'example.txt',
                 '${somedataname}': ['some data']
             }
-            result = replacer.apply_rules(replacements)
+            result = replacer.apply_rules(replacement_rule, save_file_path, mapping_rules = rule)
             print(result)
-            >>> {
-                "invoice": {
-                    "basic": {
-                        "dataName": "example.txt"
-                    },
-                    "sample": {
-                        "names": ["some data"]
-                    }
-                }
-            }
         """
-        # [TODO] Correction of type definitions in version 0.1.5
-        result_container: dict[str, Any] = {}
-        for path, variable in self.rules.items():
-            value = replacements.get(variable)
-            current_work_contianer = result_container
-            if value is not None:
-                keys = path.split(".")
-                for key in keys[:-1]:
-                    current_work_contianer.setdefault(key, {})
-                    current_work_contianer = current_work_contianer[key]
-                current_work_contianer[keys[-1]] = value
-        self.last_apply_result = result_container
-        return result_container
+        # [TODO] Correction of type definitions in version 0.1.6
+        if mapping_rules is None:
+            mapping_rules = self.rules
+        if source_json_obj is None:
+            source_json_obj = dict()
+
+        for key, value in self.rules.items():
+            keys = key.split(".")
+            replace_value = replacements.get(value, "")
+            current_obj: dict[str, Any] = source_json_obj
+            for k in keys[:-1]:
+                # search for the desired key in the dictionary from "xxx.xxx.xxx" ...
+                if k not in current_obj:
+                    current_obj[k] = {}
+                current_obj = current_obj[k]
+            current_obj[keys[-1]] = replace_value
+
+        self.last_apply_result = source_json_obj
+
+        return self.last_apply_result
 
     def set_rule(self, path: str, variable: str) -> None:
         """Sets a new rule.
@@ -571,14 +568,14 @@ class RuleBasedReplacer:
         """
         self.rules[path] = variable
 
-    def write_rule(self, save_file_path: Union[str, Path], *, apply_rule_result: Optional[dict[str, Any]] = None) -> str:
+    def write_rule(self, replacements_rule: dict[str, Any], save_file_path: Union[str, Path]) -> str:
         """Function to write file mapping rules to a target JSON file
 
         Writes the set mapping rules (in JSON format) to the target file
 
         Args:
+            replacements_rule (dict[str, str]): The object containing mapping rules.
             save_file_path (Union[str, Path]): The file path for saving.
-            apply_rule_result (Optional[dict[str, Any]], optional): An object with values set according to the rules for writing to the target file. Defaults to None.
 
         Raises:
             StructuredError: An exception error occurs if the extension of the save path is not .json.
@@ -588,11 +585,6 @@ class RuleBasedReplacer:
             str: The result of writing to the target JSON.
         """
         contents: str = ""
-
-        if apply_rule_result is not None:
-            data_to_write = apply_rule_result
-        else:
-            data_to_write = self.last_apply_result
 
         if isinstance(save_file_path, str):
             save_file_path = Path(save_file_path)
@@ -604,9 +596,12 @@ class RuleBasedReplacer:
             enc = rde2util.detect_text_file_encoding(save_file_path)
             with open(save_file_path, mode="r", encoding=enc) as f:
                 exists_contents: dict = json.load(f)
-            exists_contents.update(data_to_write)
+            _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
             data_to_write = copy.deepcopy(exists_contents)
         else:
+            new_contents: dict[str, Any] = dict()
+            _ = self.get_apply_rules_obj(replacements_rule, new_contents)
+            data_to_write = copy.deepcopy(new_contents)
             enc = "utf-8"
 
         try:
@@ -620,9 +615,14 @@ class RuleBasedReplacer:
 
 
 def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: Union[str, Path]) -> dict[str, Any]:
-    replacer = RuleBasedReplacer()
-    replacer.set_rule("invoice.basic.dataName", "${filename}")
-    apply_rule_contents = replacer.apply_rules(replacement_rule)
-    replacer.write_rule(save_file_path, apply_rule_result=apply_rule_contents.get("invoice", {}))
+    if isinstance(save_file_path, str):
+        basename = os.path.splitext(os.path.basename(save_file_path))[0]
+    elif isinstance(save_file_path, Path):
+        basename = save_file_path.stem
 
-    return apply_rule_contents
+    replacer = RuleBasedReplacer()
+    if basename == "invoice":
+        replacer.set_rule("basic.dataName", "${filename}")
+    replacer.write_rule(replacement_rule, save_file_path)
+
+    return replacer.last_apply_result
