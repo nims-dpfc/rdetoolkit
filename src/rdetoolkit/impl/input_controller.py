@@ -50,7 +50,7 @@ class InvoiceChechker(IInputFileChecker):
         """
         input_files = [f for f in src_dir_input.glob("*")]
         zipfiles, _, other_files = self._get_group_by_files(input_files)
-        if not zipfiles:
+        if zipfiles:
             other_files.extend(zipfiles)
         rawfiles = [tuple(other_files)]
         return rawfiles, None
