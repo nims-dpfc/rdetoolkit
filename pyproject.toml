@@ -1,6 +1,6 @@
 [project]
 name = "rdetoolkit"
-version = "0.1.5"
+version = "0.1.6"
 description = "A module that supports the workflow of the RDE2.0 dataset construction program"
 authors = [
     { name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }
@@ -15,8 +15,6 @@ dependencies = [
     "build>=1.0.3",
     "click>=8.1.7",
     "toml>=0.10.2",
-    "mkdocs-material>=9.4.8",
-    "mkdocstrings[crystal,python]>=0.24.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
@@ -74,6 +72,8 @@ dev-dependencies = [
     "tox>=4.6.4",
     "types-python-dateutil>=2.8.19.14",
     "mkdocs>=1.5.3",
+    "mkdocs-material>=9.5.1",
+    "mkdocstrings>=0.24.0",
 ]
 
 [tool.hatch.metadata]
