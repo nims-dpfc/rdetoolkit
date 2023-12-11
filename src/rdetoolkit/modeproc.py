@@ -191,15 +191,15 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
     """
     copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
-    # run custom dataset process
-    if datasets_process_function is not None:
-        datasets_process_function(srcpaths, resource_paths)
-
     # rewriting support for ${filename} by default
     invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
         replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
         apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
+
+    # run custom dataset process
+    if datasets_process_function is not None:
+        datasets_process_function(srcpaths, resource_paths)
 
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
