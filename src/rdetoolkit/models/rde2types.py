@@ -59,12 +59,30 @@ class RdeFormatFlags:
 
 @dataclass
 class RdeInputDirPaths:
+    """A data class that holds folder paths used for input in the RDE.
+    It manages the folder paths for input data necessary for the RDE.
+
+    Attributes:
+        inputdata (Path): Path to the folder where input data is stored.
+        invoice (Path): Path to the folder where invoice.json is stored.
+        tasksupport (Path): Path to the folder where task support data is stored.
+
+    Properties:
+        defualt_csv (Path): Provides the path to the 'default_value.csv' file. If `tasksupport` is specified, it uses the path under it; otherwise, it uses the default path under 'data/tasksupport'.
+    """
     inputdata: Path
     invoice: Path
     tasksupport: Path
 
     @property
     def defualt_csv(self) -> Path:
+        """Returns the path to the 'default_value.csv' file.
+        If `tasksupport` is set, this path is used.
+        If not set, the default path under 'data/tasksupport' is used.
+
+        Returns:
+            Path: Path to the 'default_value.csv' file.
+        """
         if self.tasksupport:
             tasksupport = self.tasksupport
         else:
@@ -74,6 +92,25 @@ class RdeInputDirPaths:
 
 @dataclass
 class RdeOutputResourcePath:
+    """A data class that holds folder paths used as output destinations for RDE.
+    It maintains the paths for various files used in the structuring process.
+
+    Attributes:
+        raw (Path): Path where raw data is stored.
+        rawfiles (tuple[Path, ...]): Holds a tuple of input file paths, such as those unzipped, for a single tile of data.
+        struct (Path): Path for storing structured data.
+        main_image (Path): Path for storing the main image file.
+        other_image (Path): Path for storing other image files.
+        meta (Path): Path for storing metadata files.
+        thumbnail (Path): Path for storing thumbnail image files.
+        logs (Path): Path for storing log files.
+        invoice (Path): Path for storing invoice files.
+        invoice_schema_json (Path): Path for the invoice.schema.json file.
+        invoice_org (Path): Path for storing the backup of invoice.json.
+        temp (Optional[Path]): Path for storing temporary files.
+        invoice_patch (Optional[Path]): Path for storing modified invoice files.
+        attachment (Optional[Path]): Path for storing attachment files.
+"""
     raw: Path
     rawfiles: tuple[Path, ...]
     struct: Path
