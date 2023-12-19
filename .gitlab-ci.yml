@@ -318,6 +318,8 @@ deploy_to_pypi_package:
     - pip install -r requirements-dev.lock
     - python3 -m pip install --upgrade build twine
   script:
+    - mkdir stubs
+    - stubgen src/rdetoolkit/ -o stubs
     - python3 -m build
     - python3 -m twine upload --skip-existing -u ${TWINE_USERNAME} -p ${TWINE_PASSWORD} --repository-url https://gitlab.nims.go.jp/api/v4/projects/648/packages/pypi dist/*
   rules:
