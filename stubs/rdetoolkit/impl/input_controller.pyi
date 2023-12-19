@@ -1,0 +1,29 @@
+from _typeshed import Incomplete
+from pathlib import Path
+from rdetoolkit.exceptions import StructuredError as StructuredError
+from rdetoolkit.impl import compressed_controller as compressed_controller
+from rdetoolkit.interfaces.filechecker import IInputFileChecker as IInputFileChecker
+from rdetoolkit.invoiceFile import readExcelInvoice as readExcelInvoice
+from rdetoolkit.models.rde2types import ExcelInvoicePathList as ExcelInvoicePathList, InputFilesGroup as InputFilesGroup, OtherFilesPathList as OtherFilesPathList, RawFiles as RawFiles, ZipFilesPathList as ZipFilesPathList
+from typing import Optional
+
+class InvoiceChechker(IInputFileChecker):
+    out_dir_temp: Incomplete
+    def __init__(self, unpacked_dir_basename: Path) -> None: ...
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]: ...
+
+class ExcelInvoiceChecker(IInputFileChecker):
+    out_dir_temp: Incomplete
+    def __init__(self, unpacked_dir_basename: Path) -> None: ...
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]: ...
+    def get_index(self, paths, sort_items): ...
+
+class RDEFormatChecker(IInputFileChecker):
+    out_dir_temp: Incomplete
+    def __init__(self, unpacked_dir_basename: Path) -> None: ...
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]: ...
+
+class MultiFileChecker(IInputFileChecker):
+    out_dir_temp: Incomplete
+    def __init__(self, unpacked_dir_basename: Path) -> None: ...
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]: ...
