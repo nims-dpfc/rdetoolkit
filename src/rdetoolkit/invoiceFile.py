@@ -66,20 +66,31 @@ def __process_specific_term_sheet(df: pd.DataFrame) -> pd.Series:
     return _df_specific
 
 
-def checkExistRawFiles(dfExcelInvoice, excelRawFiles):
-    # インデックスとして指定されたrawFilePathの存在チェック
-    # 逆に、rawFileListがExcelInvoiceのincdexに全て存在している事をチェック
-    fileSetGlob = set([f.name for f in excelRawFiles])
-    fileSetInvoice = set(dfExcelInvoice["data_file_names/name"])
-    if fileSetGlob == fileSetInvoice:
+def checkExistRawFiles(dfExcelInvoice: pd.DataFrame, excelRawFiles: list[Path]) -> list[Path]:
+    """Checks for the existence of raw file paths listed in a DataFrame against a list of file Paths.
+
+    This function compares a set of file names extracted from the 'data_file_names/name' column of the provided DataFrame (dfExcelInvoice) with the names of files in the excelRawFiles list.
+    If there are file names in the DataFrame that are not present in the excelRawFiles list, it raises a StructuredError with a message indicating the missing file.
+    If all file names in the DataFrame are present in the excelRawFiles list, it returns a list of Path objects from excelRawFiles, sorted in the order they appear in the DataFrame.
+
+    Args:
+        dfExcelInvoice (pd.DataFrame): A DataFrame containing file names in the 'data_file_names/name' column.
+        excelRawFiles (list[Path]): A list of Path objects representing file paths.
+
+    Raises:
+        tructuredError: If any file name in dfExcelInvoice is not found in excelRawFiles.
+
+    Returns:
+        list[Path]: A list of Path objects corresponding to the file names in dfExcelInvoice, ordered as they appear in the DataFrame.
+    """
+    file_set_group = set([f.name for f in excelRawFiles])
+    file_set_invoice = set(dfExcelInvoice["data_file_names/name"])
+    if file_set_invoice - file_set_group:
+        raise StructuredError(f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}")
+    else:
         # excelRawFilesを、インボイス出現順に並び替える
-        dctTmp = {f.name: f for f in excelRawFiles}
-        return [dctTmp[f] for f in dfExcelInvoice["data_file_names/name"]]
-    elif fileSetGlob - fileSetInvoice:
-        raise StructuredError(f"ERROR: unused raw file: {(fileSetGlob-fileSetInvoice).pop()}")
-    elif fileSetInvoice - fileSetGlob:
-        raise StructuredError(f"ERROR: raw file not found: {(fileSetInvoice-fileSetGlob).pop()}")
-    raise StructuredError("ERROR: unknown error")  # ここには来ない
+        _tmp = {f.name: f for f in excelRawFiles}
+        return [_tmp[f] for f in dfExcelInvoice["data_file_names/name"]]
 
 
 def _assignInvoiceVal(invoiceObj, key1, key2, valObj, invoiceSchemaObj):
