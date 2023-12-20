@@ -9,6 +9,7 @@ from rdetoolkit.invoiceFile import (
     InvoiceFile,
     update_description_with_features,
     readExcelInvoice,
+    checkExistRawFiles
 )
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 import pandas as pd
@@ -70,7 +71,7 @@ def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
     assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
-def test_read_none_sample_excel_invoice_file(
+def test_read_none_sample_excel_invoice_file_blankline(
     inputfile_single_excelinvoice_with_blankline,
 ):
     """Excelinvoiceの行間に空行がある場合のテスト
@@ -210,7 +211,7 @@ def test_update_description_with_features_missing_target_key(
     assert result_contents["basic"]["description"] == expect_message
 
 
-def test_update_description_with_features_missing_target_key(
+def test_update_description_with_features_missing_target_key_none_result_metadata(
     rde_resource,
     ivnoice_schema_json,
     metadata_def_json_with_feature,
@@ -383,3 +384,53 @@ def test_invalid_excelinvoice_readExcelInvoice(
     with pytest.raises(StructuredError) as e:
         _, _, _ = readExcelInvoice(inputfile_invalid_samesheet_excelinvoice)
     assert str(e.value) == "ERROR: multiple sheet in invoiceList files"
+
+
+def test_check_exist_rawfiles(inputfile_multi_excelinvoice):
+    """excelinvoiceに記述されたファイル名通りにファイルの並び替えが実行されるかテスト
+
+    inputfile_multi_excelinvoiceには、テスト用のエクセルインボイスのパスが格納
+    """
+    expect_rtn = [Path("test_child1.txt"), Path("test_child2.txt")]
+
+    # テスト用エクセルインボイス前処理
+    df_excelinvoice = pd.read_excel(inputfile_multi_excelinvoice, sheet_name="invoice_form", dtype=str, header=None, index_col=None)
+    df = df_excelinvoice.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    hd1 = list(df.iloc[1, :].fillna(""))
+    hd2 = list(df.iloc[2, :].fillna(""))
+    df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
+    df_excelinvoice = df.iloc[4:, :].reset_index(drop=True).copy()
+
+    test_excel_raw_files = [
+        Path("test_child2.txt"),
+        Path("test_child1.txt"),
+        Path("test_child3.txt"),
+        Path("test_child9.txt"),
+        Path("test_child10.txt")
+    ]
+    rtn = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
+
+    assert expect_rtn == rtn
+
+
+def test_error_check_exist_rawfiles(inputfile_multi_excelinvoice):
+    """excelinvoiceに記述されたファイル名がtempフォルダリストに格納されていないとき、エラーが正しく出力されるかテスト
+
+    inputfile_multi_excelinvoiceには、テスト用のエクセルインボイスのパスが格納
+    """
+
+    # テスト用エクセルインボイス前処理
+    df_excelinvoice = pd.read_excel(inputfile_multi_excelinvoice, sheet_name="invoice_form", dtype=str, header=None, index_col=None)
+    df = df_excelinvoice.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    hd1 = list(df.iloc[1, :].fillna(""))
+    hd2 = list(df.iloc[2, :].fillna(""))
+    df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
+    df_excelinvoice = df.iloc[4:, :].reset_index(drop=True).copy()
+
+    # テスト用rawファイル群
+    test_excel_raw_files = [Path("test_child1.txt")]
+
+    with pytest.raises(StructuredError) as e:
+        _ = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
+
+    assert str(e.value) == "ERROR: raw file not found: test_child2.txt"
