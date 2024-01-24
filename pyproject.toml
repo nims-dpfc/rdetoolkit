@@ -1,6 +1,6 @@
 [project]
 name = "rdetoolkit"
-version = "0.1.8"
+version = "0.1.9"
 description = "A module that supports the workflow of the RDE2.0 dataset construction program"
 authors = [
     { name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }
@@ -35,7 +35,7 @@ select = [
     "I", # isort
     "D", # pydocstyle
 ]
-ignore = []
+ignore = ["D100", "D104", "D107"]
 exclude = [
     "bzr",
     ".direnv",
@@ -64,16 +64,19 @@ exclude = [
     "site-packages",
     "venv",
 ]
-line-length = 150
-indent-style = "space"
+# 1行の最大文字数は問わないとチーム内で合意
+line-length = 250
 indent-width = 4
+
+[tool.ruff.format]
+indent-style = "space"
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.per-file-ignores]
 # __init__.pyは未使用インポートを許容
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401", "F403"]
 
 [tool.mypy]
 show_error_context = true
