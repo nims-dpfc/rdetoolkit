@@ -27,14 +27,6 @@ requires-python = ">= 3.9"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.flake8]
-max-line-length = 250
-ignore = "W503,I201,E203"
-exclude = ".venv,.git,__pycache__,__init__.py"
-
-[tool.isort]
-profile = "black"
-
 [tool.mypy]
 show_error_context = true
 show_column_numbers = true
@@ -74,6 +66,8 @@ dev-dependencies = [
     "mkdocs>=1.5.3",
     "mkdocs-material>=9.5.1",
     "mkdocstrings[crystal,python]>=0.24.0",
+    "ruff>=0.1.14",
+    "pre-commit>=3.6.0",
 ]
 
 [tool.hatch.metadata]
