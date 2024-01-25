@@ -18,6 +18,7 @@ dependencies = [
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
+package_data = {"rdetoolkit" = ["py.typed"]}
 
 [project.urls]
 "Homepage" = "https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit"
