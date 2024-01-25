@@ -11,17 +11,15 @@ repos:
     rev: v1.33.0
     hooks:
       - id: yamllint
+        description: A linter (and pre-commit hook) for YAML files that checks syntax and quality.
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.0
     hooks:
       - id: pyupgrade
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.971
-    hooks:
-      - id: mypy
-        name: mypy
+        description: A tool (and pre-commit hook) to automatically upgrade syntax for newer versions of Python.
+        language: python
+        types_or: [python, pyi]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.14
