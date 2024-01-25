@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from rdetoolkit.__main__ import (
+from rdetoolkit.cli import (
     init,
     make_main_py,
     make_requirements_txt,
