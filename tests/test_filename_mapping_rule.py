@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-import pytest
 
+import pytest
 from rdetoolkit.invoiceFile import apply_default_filename_mapping_rule
 
 
@@ -22,11 +22,9 @@ def invoice_file_with_magic_variable():
 def test_apply_default_filename_mapping_rule(invoice_file_with_magic_variable):
     test_overwrite_contents = {"${filename}": "test_input_filename.txt"}
 
-    apply_default_filename_mapping_rule(
-        test_overwrite_contents, invoice_file_with_magic_variable
-    )
+    apply_default_filename_mapping_rule(test_overwrite_contents, invoice_file_with_magic_variable)
 
-    with open(invoice_file_with_magic_variable, mode="r", encoding="utf-8") as f:
+    with open(invoice_file_with_magic_variable, encoding="utf-8") as f:
         contents = json.load(f)
 
     result_key_word = contents.get("basic", {}).get("dataName")

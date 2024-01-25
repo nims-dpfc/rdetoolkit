@@ -1,5 +1,4 @@
-"""
-main::generate_folder_paths_iterator()の生成物か正しいか確認する
+"""main::generate_folder_paths_iterator()の生成物か正しいか確認する
 
 テストスイート
 1 通常のフォルダ構成を作成する
@@ -17,14 +16,11 @@ from rdetoolkit.models.rde2types import RdeOutputResourcePath
 from rdetoolkit.workflows import generate_folder_paths_iterator
 
 
-def test_standard_output_dir_structured(
-    ivnoice_json_with_sample_info, inputfile_single
-):
+def test_standard_output_dir_structured(ivnoice_json_with_sample_info, inputfile_single):
     """1 通常のフォルダ構成を作成する
     RDEに登録するための標準的なフォルダ構成
     送り状モード・1ファイル入力の場合などが対象
     """
-
     expect_dir_names = (
         "raw",
         "meta",
@@ -36,18 +32,14 @@ def test_standard_output_dir_structured(
 
     input_files = [(Path("data/inputdata/test_single.txt"),)]
     input_invoice_schema_json = Path("data", "tasksupport", "invoice.schema.json")
-    result_generator_obj = generate_folder_paths_iterator(
-        input_files, ivnoice_json_with_sample_info, input_invoice_schema_json
-    )
+    result_generator_obj = generate_folder_paths_iterator(input_files, ivnoice_json_with_sample_info, input_invoice_schema_json)
 
     assert isinstance(list(result_generator_obj)[0], RdeOutputResourcePath)
     for name in expect_dir_names:
         assert os.path.exists(Path("data", name))
 
 
-def test_excel_invoice_output_dir_structured(
-    inputfile_zip_with_folder, inputfile_multi_excelinvoice
-):
+def test_excel_invoice_output_dir_structured(inputfile_zip_with_folder, inputfile_multi_excelinvoice):
     """2 ExcelInvoice
     ExcelInvoiceを使った時のRDEフォルダ構成
     Excelinvoiceモードの場合などが対象
@@ -83,9 +75,7 @@ def test_excel_invoice_output_dir_structured(
     invoice_org_json = Path("data", "temp", "invoice_org.json")
     input_invoice_schema_json = Path("data", "tasksupport", "invoice.schema.json")
 
-    result_generator_obj = generate_folder_paths_iterator(
-        input_files, invoice_org_json, input_invoice_schema_json
-    )
+    result_generator_obj = generate_folder_paths_iterator(input_files, invoice_org_json, input_invoice_schema_json)
 
     for output in result_generator_obj:
         assert isinstance(output, RdeOutputResourcePath)
@@ -112,9 +102,7 @@ def test_rdeformat_output_dir_structured(inputfile_rdeformat_divived):
     ]
     invoice_org_json = Path("data", "temp", "invoice_org.json")
     input_invoice_schema_json = Path("data", "tasksupport", "invoice.schema.json")
-    result_generator_obj = generate_folder_paths_iterator(
-        input_files, invoice_org_json, input_invoice_schema_json
-    )
+    result_generator_obj = generate_folder_paths_iterator(input_files, invoice_org_json, input_invoice_schema_json)
 
     for output in result_generator_obj:
         assert isinstance(output, RdeOutputResourcePath)

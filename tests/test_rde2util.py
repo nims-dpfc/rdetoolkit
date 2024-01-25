@@ -1,12 +1,11 @@
 import json
 import os
-
-import pytest
-from rdetoolkit.rde2util import Meta, _split_value_unit
 import tempfile
 
 import pytest
 from rdetoolkit.rde2util import (
+    Meta,
+    _split_value_unit,
     detect_text_file_encoding,
     read_from_json_file,
     write_to_json_file,
@@ -101,14 +100,14 @@ def test_empty_writeFile(meta_const_instance):
 
 
 def test_has_contents_writeFile(meta_const_instance):
-    """write the metadata to metadata.json"""
+    """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {"date": "2022-01-01", "reference": "sample.com"}
     meta_const_instance.assignVals(entry_dict_meta)
     meta_const_instance.writeFile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
-    with open(metafilepath, mode="r", encoding="utf-8") as f:
+    with open(metafilepath, encoding="utf-8") as f:
         content = json.load(f)
         assert content["constant"]["date"]["value"] == "2022-01-01"
         assert content["constant"]["reference"]["value"] == "sample.com"
@@ -164,7 +163,7 @@ def test_assignVals_variable_exsit_key(meta_variable_instance):
 
 
 def test_has_variable_writeFile(meta_variable_instance):
-    """write the metadata to metadata.json"""
+    """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {
         "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
@@ -175,7 +174,7 @@ def test_has_variable_writeFile(meta_variable_instance):
     meta_variable_instance.writeFile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
-    with open(metafilepath, mode="r", encoding="utf-8") as f:
+    with open(metafilepath, encoding="utf-8") as f:
         content = json.load(f)
         assert content["variable"][0]["date"]["value"] == "2022-01-01"
         assert content["variable"][0]["reference"]["value"] == "sample.com"
@@ -270,7 +269,7 @@ def test_write_to_json_file(tmp_path, sample_invoice):
     assert file_path.exists()
 
     # Read the file and check its content
-    with open(file_path, "r", encoding="utf_8") as f:
+    with open(file_path, encoding="utf_8") as f:
         data = json.load(f)
 
     assert data == sample_invoice

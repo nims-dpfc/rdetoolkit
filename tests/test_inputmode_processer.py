@@ -1,18 +1,18 @@
 import json
 import os
-from pathlib import Path
 import shutil
-import pytest
+from pathlib import Path
 
+import pytest
+from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.modeproc import (
     copy_input_to_rawfile,
     copy_input_to_rawfile_for_rdeformat,
-    invoice_mode_process,
     excel_invoice_mode_process,
+    invoice_mode_process,
     multifile_mode_process,
     rdeformat_mode_process,
 )
-from rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeInputDirPaths
 
 
 @pytest.fixture
@@ -112,9 +112,7 @@ def test_invoice_mode_process_calls_functions(
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
-    expected_description = (
-        "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
-    )
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
@@ -148,9 +146,7 @@ def test_invoice_mode_process_calls_functions(
     # invoiceのバックアップが実行されたかチェック
     assert os.path.exists(os.path.join("data", "invoice", "invoice.json"))
     # descriptionのチェック
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
 
@@ -206,9 +202,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     # invoiceのバックアップが実行されたかチェック
     assert os.path.exists(os.path.join("data", "invoice", "invoice.json"))
     # descriptionのチェック
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["dataName"] == "test_single.txt"
 
@@ -238,9 +232,7 @@ def test_excel_invoice_mode_process_calls_functions(
         Path("data", "invoice").joinpath("invoice.json"),
         Path("data", "temp", "invoice_org.json"),
     )
-    shutil.unpack_archive(
-        Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp")
-    )
+    shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     srcpaths = RdeInputDirPaths(
@@ -282,19 +274,13 @@ def test_excel_invoice_mode_process_calls_functions(
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
     # invoiceのバックアップが実行されたかチェック
     # descriptionがバックアップ後に実行されるため内容が一致しない。
-    with open(
-        os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
         contents_backup = json.load(f)
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         contents_origin = json.load(f)
     assert contents_backup != contents_origin
     # descriptionのチェック
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
 
@@ -324,9 +310,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
         Path("data", "invoice").joinpath("invoice.json"),
         Path("data", "temp", "invoice_org.json"),
     )
-    shutil.unpack_archive(
-        Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp")
-    )
+    shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
@@ -366,19 +350,13 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
     # invoiceのバックアップが実行されたかチェック
     # descriptionがバックアップ後に実行されるため内容が一致しない。
-    with open(
-        os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
         contents_backup = json.load(f)
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         contents_origin = json.load(f)
     assert contents_backup != contents_origin
     # descriptionのチェック
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["dataName"] == "test_child1.txt"
 
@@ -406,9 +384,7 @@ def test_multifile_mode_process_calls_functions(
         Path("data", "invoice").joinpath("invoice.json"),
         Path("data", "temp", "invoice_org.json"),
     )
-    expected_description = (
-        "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
-    )
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
@@ -438,13 +414,9 @@ def test_multifile_mode_process_calls_functions(
 
     # invoiceのバックアップが実行されたかチェック
     # descriptionがバックアップ後に実行されるため内容が一致しない。
-    with open(
-        os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
         contents_backup = json.load(f)
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         contents_origin = json.load(f)
     assert contents_backup != contents_origin
 
@@ -453,9 +425,7 @@ def test_multifile_mode_process_calls_functions(
         assert os.path.exists(file)
 
     # descriptionのチェック
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
 
@@ -559,13 +529,9 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
 
         # invoiceのバックアップが実行されたかチェック
         # descriptionがバックアップ後に実行されるため内容が一致しない。
-        with open(
-            os.path.join("data", "temp", "invoice_org.json"), mode="r", encoding="utf-8"
-        ) as f:
+        with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
             contents_backup = json.load(f)
-        with open(
-            os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-        ) as f:
+        with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
             contents_origin = json.load(f)
         assert contents_backup != contents_origin
 
@@ -573,7 +539,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         for file in resource_paths.rawfiles:
             assert os.path.exists(file)
 
-        with open(invoice, mode="r", encoding="utf-8") as f:
+        with open(invoice, encoding="utf-8") as f:
             content = json.load(f)
         # ${filename}の書き換えの実行
         assert content["basic"]["dataName"] == expected_filename
@@ -602,9 +568,7 @@ def test_rdeformat_mode_process_alls_functions(
         Path("data", "invoice").joinpath("invoice.json"),
         Path("data", "temp", "invoice_org.json"),
     )
-    expected_description = (
-        "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
-    )
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
     srcpaths = RdeInputDirPaths(
@@ -638,8 +602,6 @@ def test_rdeformat_mode_process_alls_functions(
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
 
     # descriptionのチェック
-    with open(
-        os.path.join("data", "invoice", "invoice.json"), mode="r", encoding="utf-8"
-    ) as f:
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
