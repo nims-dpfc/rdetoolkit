@@ -17,6 +17,9 @@ def make_main_py(path: Path) -> None:
 
 rdetoolkit.workflows.run()
 """
+    if Path(path).exists():
+        return None
+
     with open(path, mode="w", encoding="utf-8") as f:
         f.write(py_script_text)
 
@@ -39,6 +42,9 @@ def make_requirements_txt(path: Path) -> None:
 # pandas==2.0.3
 # numpy
 """
+    if Path(path).exists():
+        return None
+
     with open(path, mode="w", encoding="utf-8") as f:
         f.write(package_text)
 
@@ -49,6 +55,9 @@ def make_template_json(path: Path) -> None:
     Args:
         path (Path): Destination file path
     """
+    if Path(path).exists():
+        return None
+
     with open(path, mode="w", encoding="utf-8") as f:
         json.dump({}, f, indent=4)
 
@@ -68,24 +77,16 @@ def cli():
 def init() -> None:
     """Initialize the project."""
     directorys = [Path("container/modules"), Path("container/data/inputdata"), Path("container/data/invoice"), Path("container/data/tasksupport")]
+
+    for dir in directorys:
+        dir.mkdir(parents=True, exist_ok=True)
+
     try:
-        for dir in directorys:
-            dir.mkdir(parents=True, exist_ok=True)
-
-        if not Path("container/main.py").exists():
-            make_main_py(Path("container/main.py"))
-
-        if not Path("container/requirements.txt").exists():
-            make_requirements_txt(Path("container/requirements.txt"))
-
-        if not Path("container/data/invoice/invoice.json").exists():
-            make_template_json(Path("container/data/invoice/invoice.json"))
-
-        if not Path("container/data/tasksupport/invoice.schema.json").exists():
-            make_template_json(Path("container/data/tasksupport/invoice.schema.json"))
-
-        if not Path("container/data/tasksupport/meatadata-def.json").exists():
-            make_template_json(Path("container/data/tasksupport/metadata-def.json"))
+        make_main_py(Path("container/main.py"))
+        make_requirements_txt(Path("container/requirements.txt"))
+        make_template_json(Path("container/data/invoice/invoice.json"))
+        make_template_json(Path("container/data/tasksupport/invoice.schema.json"))
+        make_template_json(Path("container/data/tasksupport/metadata-def.json"))
 
         click.echo(click.style("Ready to develop a structured program for RDE.", fg="green"))
         click.echo("\nCheck the folder you created: container\n")
