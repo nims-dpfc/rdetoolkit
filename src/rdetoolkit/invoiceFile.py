@@ -20,12 +20,30 @@ import chardet
 import pandas as pd
 
 from rdetoolkit import rde2util
-from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.models.rde2types import RdeOutputResourcePath, RdeFormatFlags
+from rdetoolkit.models.rde2types import RdeFormatFlags, RdeOutputResourcePath
+from rdetoolkit.rde2util import StorageDir
 
 
 def readExcelInvoice(excelInvoiceFilePath):
+    """Reads an ExcelInvoice and processes each sheet into a dataframe.
+
+    This function reads an ExcelInvoice file and processes various sheets within the file,
+    specifically looking for sheets named 'invoiceList_format_id', 'generalTerm', and
+    'specificTerm'. These sheets are converted into pandas dataframes and returned as output.
+
+    Args:
+        excelInvoiceFilePath (str): The file path of the Excel invoice file.
+
+    Returns:
+        tuple: A tuple containing dataframes for the invoice list, general terms, and specific terms.
+            If any of these sheets are missing or if there are multiple invoice list sheets,
+            a StructuredError is raised.
+
+    Raises:
+        StructuredError: If there are multiple sheets with 'invoiceList_format_id' in the ExcelInvoice,
+                        or if no sheets are present in the ExcelInvoice.
+    """
     dctSheets = pd.read_excel(excelInvoiceFilePath, sheet_name=None, dtype=str, header=None, index_col=None)
     dfExcelInvoice = None
     dfGeneral = None
@@ -83,7 +101,7 @@ def checkExistRawFiles(dfExcelInvoice: pd.DataFrame, excelRawFiles: list[Path]) 
     Returns:
         list[Path]: A list of Path objects corresponding to the file names in dfExcelInvoice, ordered as they appear in the DataFrame.
     """
-    file_set_group = set([f.name for f in excelRawFiles])
+    file_set_group = {f.name for f in excelRawFiles}
     file_set_invoice = set(dfExcelInvoice["data_file_names/name"])
     if file_set_invoice - file_set_group:
         raise StructuredError(f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}")
@@ -94,9 +112,7 @@ def checkExistRawFiles(dfExcelInvoice: pd.DataFrame, excelRawFiles: list[Path]) 
 
 
 def _assignInvoiceVal(invoiceObj, key1, key2, valObj, invoiceSchemaObj):
-    """
-    代入先の先頭であるkeys1が"custom"の時、valObjはinvoiceSchemaObjに従ってキャストされる。それ以外の場合はvalObjの型をそのまま変更せずに代入する
-    """
+    """When the destination key, which is the first key 'keys1', is 'custom', valObj is cast according to the invoiceSchemaObj. In all other cases, valObj is assigned without changing its type."""
     if key1 == "custom":
         dctSchema = invoiceSchemaObj["properties"][key1]["properties"][key2]
         try:
@@ -108,6 +124,14 @@ def _assignInvoiceVal(invoiceObj, key1, key2, valObj, invoiceSchemaObj):
 
 
 def overwriteInvoiceFileforDPFTerm(invoiceObj, invoiceDstFilePath, invoiceSchemaFilePath, invoiceInfo):
+    """A function to overwrite DPF metadata into an invoice file.
+
+    Args:
+        invoiceObj (object): The object of invoice.json.
+        invoiceDstFilePath (pathlib.Path): The file path for the destination invoice.json.
+        invoiceSchemaFilePath (pathlib.Path): The file path of invoice.schema.json.
+        invoiceInfo (object): Information about the invoice file.
+    """
     enc = chardet.detect(open(invoiceSchemaFilePath, "rb").read())["encoding"]
     with open(invoiceSchemaFilePath, encoding=enc) as f:
         invoiceSchemaObj = json.load(f)
@@ -118,20 +142,35 @@ def overwriteInvoiceFileforDPFTerm(invoiceObj, invoiceDstFilePath, invoiceSchema
 
 
 def checkExistRawFiles_for_folder(dfExcelInvoice, rawFilesTpl):
-    # インデックスとして指定されたrawFilesTplの存在チェック
-    # 逆に、rawFilesTplがExcelInvoiceのincdexに全て存在している事をチェック
-    dctTpl = {str(tpl[0].parent.name): tpl for tpl in rawFilesTpl}  # 末端フォルダ名は一意であると想定
+    """Function to check the existence of rawFilesTpl specified for a folder.
+
+    It checks whether rawFilesTpl, specified as an index, exists in all indexes of ExcelInvoice.
+    Assumes that the names of the terminal folders are unique and checks for the existence of rawFilesTpl.
+
+    Args:
+        dfExcelInvoice (DataFrame): The dataframe of ExcelInvoice.
+        rawFilesTpl (tuple): Tuple of raw files.
+
+    Returns:
+        list: A list of rawFilesTpl sorted in the order they appear in the invoice.
+
+    Raises:
+        StructuredError: If rawFilesTpl does not exist in all indexes of ExcelInvoice, or if there are unused raw data.
+    """
+    # Check for the existence of rawFilesTpl specified as an index
+    # Conversely, check that all rawFilesTpl are present in the ExcelInvoice index
+    dctTpl = {str(tpl[0].parent.name): tpl for tpl in rawFilesTpl}  # Assuming terminal folder names are unique
     dirSetGlob = set(dctTpl.keys())
     dirSetInvoice = set(dfExcelInvoice["data_folder"])
     if dirSetGlob == dirSetInvoice:
-        # rawFilesTplを、インボイス出現順に並び替える
+        # Reorder rawFilesTpl according to the order of appearance in the invoice
         return [dctTpl[d] for d in dfExcelInvoice["data_folder"]]
     elif dirSetGlob - dirSetInvoice:
         raise StructuredError(f"ERROR: unused raw data: {(dirSetGlob-dirSetInvoice).pop()}")
     elif dirSetInvoice - dirSetGlob:
         raise StructuredError(f"ERROR: raw data not found: {(dirSetInvoice-dirSetGlob).pop()}")
 
-    raise StructuredError("ERROR: unknown error")  # ここには来ない
+    raise StructuredError("ERROR: unknown error")  # This line should never be reached
 
 
 class InvoiceFile:
@@ -266,7 +305,6 @@ class ExcelInvoiceFile:
             invoice_schema_path (Path): Path to the invoice schema.
             idx (int): Index of the target row in the invoice dataframe.
         """
-
         invoice_schema_obj = self._load_json(invoice_schema_path)
         invoice_obj = self._load_json(invoice_org)
 
@@ -290,6 +328,7 @@ class ExcelInvoiceFile:
     @staticmethod
     def _check_intermittent_empty_rows(df: pd.DataFrame) -> None:
         """Function to detect if there are empty rows between data rows in the ExcelInvoice (in DataFrame format).
+
         If an empty row exists, an exception is raised.
 
         Args:
@@ -392,6 +431,7 @@ class ExcelInvoiceFile:
 
 def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: RdeFormatFlags) -> Path:
     """Backs up invoice files and retrieves paths based on the mode specified in the input.
+
     For excelinvoice and rdeformat modes, it backs up invoice.json as the original file in the temp directory in multifile mode.
     For other modes, it treats the files in the invoice directory as the original files.
     After backing up, it returns the file paths for invoice_org.json and invoice.schema.json.
@@ -432,13 +472,14 @@ def update_description_with_features(
     dst_invoice_json: Path,
     metadata_def_json: Path,
 ):
-    """Writes the provided features to the description field RDE
+    """Writes the provided features to the description field RDE.
+
     This function takes a dictionary of features and formats them to be written
     into the description field(to invoice.json)
 
     Args:
         rde_resource (RdeOutputResourcePath): Path object containing resource paths needed for RDE processing.
-        invoice_json (Path): Path to the invoice.json file where the features will be written.
+        dst_invoice_json (Path): Path to the invoice.json file where the features will be written.
         metadata_def_json (Path): Path to the metadata list JSON file, which may include definitions or schema information.
 
     Returns:
@@ -486,6 +527,19 @@ def update_description_with_features(
 
 
 class RuleBasedReplacer:
+    """A class for changing the rules of data naming.
+
+    This class is used to manage and apply file name mapping rules. It reads rules from a JSON format
+    rule file, sets rules, and performs file name transformations and replacements based on those rules.
+
+    Attributes:
+        rules (dict[str, str]): Dictionary holding the mapping rules.
+        last_apply_result (dict[str, Any]): The result of the last applied rules.
+
+    Args:
+        rule_file_path (Optional[Union[str, Path]]): Path to the rule file. If specified, rules are loaded from this path.
+    """
+
     def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
         self.rules: dict[str, str] = {}
         self.last_apply_result: dict[str, Any] = {}
@@ -512,7 +566,7 @@ class RuleBasedReplacer:
             raise StructuredError(f"Error. File format/extension is not correct: {filepath}")
 
         enc = rde2util.detect_text_file_encoding(filepath)
-        with open(filepath, mode="r", encoding=enc) as f:
+        with open(filepath, encoding=enc) as f:
             data = json.load(f)
             self.rules = data.get("filename_mapping", {})
 
@@ -523,6 +577,8 @@ class RuleBasedReplacer:
 
         Args:
             replacements (dict[str, str]): The object containing mapping rules.
+            source_json_obj (Optional[dict[str, Any]]): Objects of key and value to which you want to apply the rule
+            mapping_rules (Optional[dict[str, str]], optional): Rules for mapping key and value. Defaults to None.
 
         Returns:
             dict[str, Any]: dictionary type data after conversion
@@ -580,7 +636,7 @@ class RuleBasedReplacer:
         self.rules[path] = variable
 
     def write_rule(self, replacements_rule: dict[str, Any], save_file_path: Union[str, Path]) -> str:
-        """Function to write file mapping rules to a target JSON file
+        """Function to write file mapping rules to a target JSON file.
 
         Writes the set mapping rules (in JSON format) to the target file
 
@@ -605,7 +661,7 @@ class RuleBasedReplacer:
 
         if save_file_path.exists():
             enc = rde2util.detect_text_file_encoding(save_file_path)
-            with open(save_file_path, mode="r", encoding=enc) as f:
+            with open(save_file_path, encoding=enc) as f:
                 exists_contents: dict = json.load(f)
             _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
             data_to_write = copy.deepcopy(exists_contents)
@@ -626,6 +682,22 @@ class RuleBasedReplacer:
 
 
 def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: Union[str, Path]) -> dict[str, Any]:
+    """Applies a default filename mapping rule based on the basename of the save file path.
+
+    This function creates an instance of RuleBasedReplacer and applies a default mapping rule. If the basename
+    of the save file path is 'invoice', it sets a specific rule for 'basic.dataName'. After setting the rule,
+    it writes the mapping rule to the specified file path and returns the result of the last applied rules.
+
+    Args:
+        replacement_rule (dict[str, Any]): The replacement rules to be applied.
+        save_file_path (Union[str, Path]): The file path where the replacement rules are saved.
+
+    Returns:
+        dict[str, Any]: The result of the last applied replacement rules.
+
+    The function assumes the existence of certain structures in the replacement rules and file paths, and it
+    specifically checks for a basename of 'invoice' to apply a predefined rule.
+    """
     if isinstance(save_file_path, str):
         basename = os.path.splitext(os.path.basename(save_file_path))[0]
     elif isinstance(save_file_path, Path):

@@ -11,15 +11,14 @@ import pathlib
 import re
 import zipfile
 from copy import deepcopy
-from typing import Optional, Union, cast
+from typing import Any, Optional, TypedDict, Union, cast
 
 import chardet  # for following failure cases
-from charset_normalizer import detect
 import dateutil.parser
-from typing import Any, TypedDict
+from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
-from rdetoolkit.models.rde2types import MetadataDefJson, RdeFsPath, ValueUnitPair, MetaType, RepeatedMetaType, MetaItem
+from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
 
 
 class _ChardetType(TypedDict):
@@ -29,6 +28,18 @@ class _ChardetType(TypedDict):
 
 
 def get_default_values(defaultValsFilePath):
+    """Reads default values from a default_value.csv file and returns them as a dictionary.
+
+    This function opens a file specified by 'defaultValsFilePath', detects its encoding,
+    and reads its content as a CSV. Each row in the CSV file should have 'key' and 'value' columns.
+    The function constructs and returns a dictionary mapping keys to their corresponding values.
+
+    Args:
+        defaultValsFilePath (str | Path): The file path to the CSV file containing default values.
+
+    Returns:
+        dict: A dictionary containing the keys and their corresponding default values.
+    """
     dctDefaultVals = {}
     enc = chardet.detect(open(defaultValsFilePath, "rb").read())["encoding"]
     with open(defaultValsFilePath, encoding=enc) as fIn:
@@ -38,14 +49,13 @@ def get_default_values(defaultValsFilePath):
 
 
 def detect_text_file_encoding(text_filepath: RdeFsPath) -> str:
-    """
-    Detect the encoding of a given text file.
+    """Detect the encoding of a given text file.
 
     This function attempts to detect the encoding of a text file. If the initially
     detected encoding isn't one of the usual ones, it uses chardet for a more thorough detection.
 
     Args:
-        txtFilePath (RdeFsPath): Path to the text file to be analyzed.
+        text_filepath (RdeFsPath): Path to the text file to be analyzed.
 
     Returns:
         str: The detected encoding of the text file.
@@ -74,7 +84,7 @@ def detect_text_file_encoding(text_filepath: RdeFsPath) -> str:
 
 
 def _split_value_unit(tgtStr: str) -> ValueUnitPair:  # pragma: no cover
-    """Split units and values from input characters
+    """Split units and values from input characters.
 
     Args:
         tgtStr (str): String combining values and units
@@ -162,6 +172,7 @@ def write_to_json_file(invoiceFilePath: RdeFsPath, invoiceObj: dict[str, Any], e
 
 class StorageDir:
     """A class to handle storage directory operations.
+
     It provides methods to generate and create
     directories for storing data, with support for dividing data into specific indexes.
 
@@ -193,6 +204,18 @@ class StorageDir:
 
     @classmethod
     def get_datadir(cls, is_mkdir: bool, idx: int = 0):
+        """Generates a data directory path based on an index and optionally creates it.
+
+        This method generates a directory path under 'data' or 'data/divided' based on the provided index.
+        If `is_mkdir` is True, the directory is created.
+
+        Args:
+            is_mkdir (bool): Flag to indicate whether to create the directory.
+            idx (int): The index for the divided data. Default is 0, which refers to the base 'data' directory.
+
+        Returns:
+            str: The path of the generated data directory.
+        """
         dir_basename = "data" if idx == 0 else os.path.join("data", "divided", f"{idx:0{cls.__nDigit}d}")
         if is_mkdir:
             os.makedirs(dir_basename, exist_ok=True)
@@ -200,6 +223,19 @@ class StorageDir:
 
     @classmethod
     def _make_data_basedir(cls, is_mkdir: bool, idx: int, dir_basename: str) -> pathlib.Path:
+        """Creates and returns the path to a specified data base directory.
+
+        This internal method is used to generate and optionally create a base directory for specific data types,
+        such as 'invoice', 'logs', etc., under the data directory.
+
+        Args:
+            is_mkdir (bool): Flag to indicate whether to create the directory.
+            idx (int): The index for the divided data.
+            dir_basename (str): The base name of the directory to be created.
+
+        Returns:
+            pathlib.Path: The path of the created base directory.
+        """
         target_dir = os.path.join(cls.get_datadir(is_mkdir, idx), dir_basename)
         if is_mkdir:
             os.makedirs(target_dir, exist_ok=True)
@@ -207,22 +243,54 @@ class StorageDir:
 
     @classmethod
     def get_specific_outputdir(cls, is_mkdir: bool, dir_basename: str, idx: int = 0):
+        """Generates and optionally creates a specific output directory based on a base name and index.
+
+        This method facilitates creating directories for specific outputs like 'invoice_patch', 'temp', etc.,
+        within the structured data directories.
+
+        Args:
+            is_mkdir (bool): Flag to indicate whether to create the directory.
+            dir_basename (str): The base name of the specific output directory.
+            idx (int): The index for the divided data. Default is 0.
+
+        Returns:
+            pathlib.Path: The path of the specific output directory.
+        """
         return cls._make_data_basedir(is_mkdir, idx, dir_basename)
 
 
 class Meta:
+    """This class initializes metadata from a definition file, with existing metadata loading not currently supported."""
+
     def __init__(
         self,
         metadef_filepath: RdeFsPath,
         *,
         metafilepath: Optional[RdeFsPath] = None,
     ):
-        """
-        Arg:
-            metafilepathを指定していると、既存のメタデータの読み込みに対応予定
-            metaDefFilePathを指定していると、新規のメタデータ作成に対応
-        Memo:
-            metaDefFilterFunc: 現在使用していないため削除
+        """Initializes the Meta class.
+
+        This method supports either loading existing metadata (if `metafilepath` is specified)
+        or creating new metadata (if `metaDefFilePath` is specified). Currently, the functionality
+        to load existing metadata is not supported and will raise an error.
+
+        Args:
+            metadef_filepath (RdeFsPath): The file path for metadata definition, used for creating new metadata.
+            metafilepath (Optional[RdeFsPath]): The file path for existing metadata, intended for future support
+                                                in loading existing metadata. Currently not supported.
+
+        Raises:
+            StructuredError: If `metafilepath` is not None, as loading existing metadata is not supported yet.
+
+        Note:
+            The `metaDefFilterFunc` attribute is currently not in use and has been removed.
+
+        Attributes:
+            metaConst (dict[str, MetaItem]): A dictionary for constant metadata.
+            metaVar (list[dict[str, MetaItem]]): A list of dictionaries for variable metadata.
+            actions (list[str]): A list of actions.
+            referedmap (dict[str, Optional[Union[str, list]]]): A dictionary mapping references.
+            metaDef (dict[str, MetadataDefJson]): A dictionary for metadata definition, read from the metadata definition file.
         """
         self.metaConst: dict[str, MetaItem] = {}
         self.metaVar: list[dict[str, MetaItem]] = []
@@ -288,7 +356,6 @@ class Meta:
         Caution!
         / Items with a metadata value of None to be registered are excluded from assignment.
         """
-
         ret = {"assigned": set()}  # type: ignore[var-annotated]
 
         # actionやrefered unit用に被参照値テーブルに登録(raw名)
@@ -364,6 +431,26 @@ class Meta:
 
     @catch_exception_with_message(errro_message="ERROR: failed to generate metadata.json", error_code=50)
     def writeFile(self, metaFilePath, enc="utf_8"):
+        """Writes the metadata to a file after processing units and actions.
+
+        This method serializes the metadata into JSON format and writes it to the specified file.
+        It processes units and actions for each metadata entry, sorts items according to 'metaDef',
+        and outputs the sorted data to a file.
+
+        The method also returns a list of keys from 'metaDef' that were not assigned values in the output.
+
+        Args:
+            metaFilePath (str): The file path where the metadata will be written.
+            enc (str, optional): The encoding for the output file. Default is "utf_8".
+
+        Returns:
+            dict: A dictionary with keys 'assigned' and 'unknown'.
+                'assigned' contains the set of keys that were assigned values,
+                and 'unknown' contains the set of keys from 'metaDef' that were not used.
+
+        Raises:
+            CustomException: If the metadata generation fails, with a custom error message and error code.
+        """
         outDict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
 
         for idx, kvDict in [(None, outDict["constant"])] + list(enumerate(outDict["variable"])):
@@ -391,15 +478,21 @@ class Meta:
         return ret
 
     def __registerd_refered_table(self, key: str, value: Union[str, list[str]]) -> None:  # pragma: no cover
-        """actionやrefered unit用に被参照値テーブルに登録(raw名)
-        Register the referenced value in the referred value table for actions and referred units (using the raw name).
+        """Registers the referenced value in the referred value table for actions and referred units, using the raw name.
+
+        This method updates the referred value table with the provided key and value. If the key already exists in the table,
+        its value is replaced. If the key does not exist and is found within any of the actions, it is added to the table.
 
         Args:
-            key(str): The key to be registered in the referred value table.
-            value(EntryMetaData.values): The value to be registered in the referred value table.
+            key (str): The key to be registered in the referred value table. Typically represents an action or unit name.
+            value (Union[str, list[str]]): The value to be registered in the referred value table. This can be a single string or a list of strings,
+                representing the raw names to be associated with the key.
 
         Returns:
-            None
+            None: This method does not return anything. It updates the referredmap attribute of the class.
+
+        Note:
+            This method is intended for internal use and not covered by automated testing (as indicated by 'pragma: no cover').
         """
         if key in self.referedmap:
             self.referedmap[key] = deepcopy(value)
@@ -450,7 +543,8 @@ class Meta:
         orgType: Optional[str],
         outUnit: Optional[str],
     ) -> "dict[str, Union[bool, int, float, str]]":  # pragma: no cover
-        """Casts the input metadata to the specified format and performs validation to check
+        """Casts the input metadata to the specified format and performs validation to check.
+
         if it can be cast to the specified data type. The formats for various metadata are described in metadata-def.json.
 
         Args:
@@ -607,10 +701,32 @@ def castVal(valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union
     raise StructuredError("ERROR: failed to cast metaDef value")
 
 
-def dict2meta(metaDefFilePath, metaOutFilePath, constInfo, valInfo):
-    metaObj = Meta(metaDefFilePath)
-    metaObj.assignVals(constInfo)
-    metaObj.assignVals(valInfo)
+def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, const_info: MetaType, val_info: MetaType) -> dict[str, set[Any]]:
+    """Converts dictionary data into metadata and writes it to a specified file.
 
-    ret = metaObj.writeFile(metaOutFilePath)
+    This function takes metadata definitions and dictionary information for constants and variables,
+    then creates a Meta object to process and write this data to a metadata output file.
+
+    Args:
+        metadef_filepath (pathlib.Path): The file path to the metadata definition file.
+                                        This file defines the structure and expected types of the metadata.
+        metaout_filepath (pathlib.Path): The file path where the processed metadata should be written.
+        const_info (MetaType): A dictionary containing constant metadata information.
+                                This should match the structure defined in the metadef_filepath.
+        val_info (MetaType): A dictionary containing variable metadata information.
+                            This too should align with the structure defined in the metadef_filepath.
+
+    Returns:
+        dict: A dictionary containing information about the assigned and unknown metadata fields.
+                The 'assigned' key contains a set of fields that were successfully assigned values,
+                while the 'unknown' key contains a set of fields defined in the metadata definition but not present in the input dictionaries.
+
+    Note:
+        MetaType is expected to be a dictionary or a similar structure containing metadata information.
+    """
+    metaObj = Meta(metadef_filepath)
+    metaObj.assignVals(const_info)
+    metaObj.assignVals(val_info)
+
+    ret = metaObj.writeFile(metaout_filepath)
     return ret
