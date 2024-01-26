@@ -88,8 +88,7 @@ strict_optional = true
 ignore_missing_imports = true
 no_implicit_optional = true
 show_error_codes = true
-files = ["src/rdetoolkit/**/*.py"]
-exclude = ["tests"]
+exclude = ["tests", "src/rdetoolkit/stubs"]
 
 [tool.coverage.run]
 omit = ["tests/*", "interfaces/*"]
