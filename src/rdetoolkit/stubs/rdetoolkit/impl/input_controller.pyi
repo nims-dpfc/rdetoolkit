@@ -12,7 +12,7 @@ from rdetoolkit.models.rde2types import OtherFilesPathList as OtherFilesPathList
 from rdetoolkit.models.rde2types import RawFiles as RawFiles
 from rdetoolkit.models.rde2types import ZipFilesPathList as ZipFilesPathList
 
-class InvoiceChechker(IInputFileChecker):
+class InvoiceChecke(IInputFileChecker):
     out_dir_temp: Incomplete
     def __init__(self, unpacked_dir_basename: Path) -> None: ...
     def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]: ...
