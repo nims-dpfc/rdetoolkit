@@ -429,7 +429,7 @@ class Meta:
             return list(map(str, value))
         return ""
 
-    @catch_exception_with_message(errro_message="ERROR: failed to generate metadata.json", error_code=50)
+    @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
     def writeFile(self, metaFilePath, enc="utf_8"):
         """Writes the metadata to a file after processing units and actions.
 

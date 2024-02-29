@@ -5,7 +5,7 @@ from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
 def test_catch_exception_with_message_Exception():
     error_message = "Error: test error"
 
-    @catch_exception_with_message(errro_message=error_message)
+    @catch_exception_with_message(error_message=error_message)
     def test_func(has_raise):
         if has_raise:
             raise Exception("This is an internal error!")
@@ -22,7 +22,7 @@ def test_catch_exception_with_message_StructuredError():
     error_message = "Error: test error"
     error_code = 20
 
-    @catch_exception_with_message(errro_message=error_message, error_code=error_code)
+    @catch_exception_with_message(error_message=error_message, error_code=error_code)
     def test_func(has_raise):
         if has_raise:
             raise StructuredError("This is an internal error!")

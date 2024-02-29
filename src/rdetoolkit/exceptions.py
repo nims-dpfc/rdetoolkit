@@ -30,14 +30,14 @@ class StructuredError(Exception):
         self.eObj = eObj
 
 
-def catch_exception_with_message(*, errro_message: Optional[str] = None, error_code: Optional[int] = None):
+def catch_exception_with_message(*, error_message: Optional[str] = None, error_code: Optional[int] = None):
     """A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.
 
     This decorator catches StructuredError thrown within the function and re-raises it with a specified error message
     and error code. If a StructuredError is not raised, it still re-raises other exceptions as a standard Exception.
 
     Args:
-        errro_message (Optional[str]): Customized message to be used in case of an error.
+        error_message (Optional[str]): Customized message to be used in case of an error.
         error_code (Optional[int]): Error code to be used in case of an error. Defaults to None.
 
     Returns:
@@ -50,8 +50,8 @@ def catch_exception_with_message(*, errro_message: Optional[str] = None, error_c
             try:
                 return func(*args, **kwargs)
             except StructuredError as e:
-                if errro_message is not None:
-                    msg = errro_message
+                if error_message is not None:
+                    msg = error_message
                 else:
                     msg = str(e)
 
@@ -63,8 +63,8 @@ def catch_exception_with_message(*, errro_message: Optional[str] = None, error_c
                 raise StructuredError(msg, eCode=eCode, eObj=e)
 
             except Exception as e:
-                if errro_message is not None:
-                    msg = errro_message
+                if error_message is not None:
+                    msg = error_message
                 else:
                     msg = str(e)
                 raise Exception(msg)
