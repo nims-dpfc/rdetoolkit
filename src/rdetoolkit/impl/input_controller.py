@@ -21,7 +21,7 @@ from rdetoolkit.invoiceFile import readExcelInvoice
 from rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
 
 
-class InvoiceChechker(IInputFileChecker):
+class InvoiceChecker(IInputFileChecker):
     """A checker class to determine and parse the invoice mode.
 
     This class groups and checks invoice files, specifically identifying zip files, Excel invoice files,
