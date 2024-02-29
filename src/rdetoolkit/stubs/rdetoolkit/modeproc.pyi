@@ -4,7 +4,7 @@ from typing import Optional
 from rdetoolkit import img2thumb as img2thumb
 from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.impl.input_controller import ExcelInvoiceChecker as ExcelInvoiceChecker
-from rdetoolkit.impl.input_controller import InvoiceChechker as InvoiceChechker
+from rdetoolkit.impl.input_controller import InvoiceChecker as InvoiceChecker
 from rdetoolkit.impl.input_controller import MultiFileChecker as MultiFileChecker
 from rdetoolkit.impl.input_controller import RDEFormatChecker as RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker as IInputFileChecker

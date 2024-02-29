@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 from rdetoolkit import img2thumb
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
+from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChecker, MultiFileChecker, RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, apply_default_filename_mapping_rule, update_description_with_features
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
@@ -278,4 +278,4 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     elif excel_invoice_files:
         return ExcelInvoiceChecker(unpacked_dir_path)
     else:
-        return InvoiceChechker(unpacked_dir_path)
+        return InvoiceChecker(unpacked_dir_path)

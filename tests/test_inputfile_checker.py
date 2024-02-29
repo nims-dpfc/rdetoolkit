@@ -22,7 +22,7 @@ from pathlib import Path
 
 from rdetoolkit.impl.input_controller import (
     ExcelInvoiceChecker,
-    InvoiceChechker,
+    InvoiceChecker,
     MultiFileChecker,
     RDEFormatChecker,
 )
@@ -41,7 +41,7 @@ class TestInvoiceChecker:
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
-        checker = InvoiceChechker(unpacked_dir_basename)
+        checker = InvoiceChecker(unpacked_dir_basename)
         rawfiles, _ = checker.parse(src_dir_input)
 
         assert len(rawfiles) == 1
@@ -52,7 +52,7 @@ class TestInvoiceChecker:
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
-        checker = InvoiceChechker(unpacked_dir_basename)
+        checker = InvoiceChecker(unpacked_dir_basename)
         rawfiles, excelinvoice = checker.parse(src_dir_input)
 
         assert len(rawfiles[0]) == 2
@@ -64,7 +64,7 @@ class TestInvoiceChecker:
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
-        checker = InvoiceChechker(unpacked_dir_basename)
+        checker = InvoiceChecker(unpacked_dir_basename)
         rawfiles, excelinvoice = checker.parse(src_dir_input)
 
         assert len(rawfiles[0]) == 0
@@ -267,4 +267,4 @@ def test_selected_input_checker_invoice(inputfile_single):
     )
     unpacked_dir_path = Path("data/temp")
     fmtflags = RdeFormatFlags()
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), InvoiceChechker)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), InvoiceChecker)
