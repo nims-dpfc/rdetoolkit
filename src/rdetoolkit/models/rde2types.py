@@ -111,7 +111,7 @@ class RdeInputDirPaths:
         tasksupport (Path): Path to the folder where task support data is stored.
 
     Properties:
-        defualt_csv (Path): Provides the path to the 'default_value.csv' file. If `tasksupport` is specified, it uses the path under it; otherwise,
+        default_csv (Path): Provides the path to the 'default_value.csv' file. If `tasksupport` is specified, it uses the path under it; otherwise,
         it uses the default path under 'data/tasksupport'.
     """
 
@@ -120,7 +120,7 @@ class RdeInputDirPaths:
     tasksupport: Path
 
     @property
-    def defualt_csv(self) -> Path:
+    def default_csv(self) -> Path:
         """Returns the path to the 'default_value.csv' file.
 
         If `tasksupport` is set, this path is used.
