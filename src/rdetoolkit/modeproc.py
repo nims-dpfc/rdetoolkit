@@ -5,12 +5,11 @@ from typing import Callable, Optional
 
 from rdetoolkit import img2thumb
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChechker, MultiFileChecker, RDEFormatChecker
+from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChecker, MultiFileChecker, RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, update_description_with_features, apply_default_filename_mapping_rule
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, apply_default_filename_mapping_rule, update_description_with_features
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.rde2util import read_from_json_file
-
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
@@ -102,9 +101,7 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
         pass
 
 
-def excel_invoice_mode_process(
-    srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None
-):
+def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None):
     """Process invoice data from an Excel file and apply dataset transformations using the provided callback function.
 
     This function handles tasks such as overwriting Excel invoices, copying input to raw files,
@@ -164,9 +161,7 @@ def excel_invoice_mode_process(
     )
 
     try:
-        update_description_with_features(
-            resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json")
-        )
+        update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
     except Exception:
         pass
 
@@ -208,9 +203,7 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
         apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
     try:
-        update_description_with_features(
-            resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json")
-        )
+        update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
     except Exception:
         pass
 
@@ -285,4 +278,4 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     elif excel_invoice_files:
         return ExcelInvoiceChecker(unpacked_dir_path)
     else:
-        return InvoiceChechker(unpacked_dir_path)
+        return InvoiceChecker(unpacked_dir_path)

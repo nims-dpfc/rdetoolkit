@@ -21,8 +21,8 @@ from rdetoolkit.invoiceFile import readExcelInvoice
 from rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
 
 
-class InvoiceChechker(IInputFileChecker):
-    """A checker class to determine and parse the invoice mode
+class InvoiceChecker(IInputFileChecker):
+    """A checker class to determine and parse the invoice mode.
 
     This class groups and checks invoice files, specifically identifying zip files, Excel invoice files,
     and other types of files.
@@ -63,7 +63,7 @@ class InvoiceChechker(IInputFileChecker):
 
 
 class ExcelInvoiceChecker(IInputFileChecker):
-    """A checker class to determine and parse the ExcelInvoice mode
+    """A checker class to determine and parse the ExcelInvoice mode.
 
     This class is used to identify, group, and validate the files in ExcelInvoice mode. The primary focus is on
     determining the presence and validity of ZIP files, Excel Invoice files, and other file types.
@@ -80,8 +80,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
         self.out_dir_temp = unpacked_dir_basename
 
     def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
-        """Parse the source input directory, group files by their type, validate the groups,
-        and return the raw files and Excel Invoice file.
+        """Parse the source input directory, group files by their type, validate the groups, and return the raw files and Excel Invoice file.
 
         Args:
             src_dir_input (Path): Source directory containing the input files.
@@ -121,15 +120,22 @@ class ExcelInvoiceChecker(IInputFileChecker):
         # the same file so that the number of decompressed files matches
         # the number of "filename" columns in the data frame.
         if len(_parse) == 1 and len(_parse) != len(df_excel_invoice[df_excel_invoice.columns[0]]):
-            return sorted(
-                [_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]], key=lambda paths: self.get_index(paths[0], original_sort_items)
-            )
+            return sorted([_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]], key=lambda paths: self.get_index(paths[0], original_sort_items))
         elif len(_parse) == len(df_excel_invoice[df_excel_invoice.columns[0]]):
             return sorted(_parse, key=lambda paths: self.get_index(paths[0], original_sort_items))
         else:
             raise StructuredError("Error! The input file and the description in the ExcelInvoice are not consistent.")
 
     def get_index(self, paths, sort_items):
+        """Retrieves the index of the 'divided' folder.
+
+        Args:
+            paths (pathlib.Path): Directory path of the raw files.
+            sort_items (Sequence): A list of files sorted in the order described in the Excel invoice.
+
+        Returns:
+            int: The index number.
+        """
         for idx, item in enumerate(sort_items):
             if item in paths.parts:
                 return idx
@@ -154,7 +160,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
 
 class RDEFormatChecker(IInputFileChecker):
-    """A checker class to identify and parse the RDE Format
+    """A checker class to identify and parse the RDE Format.
 
     This class is designed to handle files in the RDE Format. It checks the presence of ZIP files,
     unpacks them, and retrieves raw files from the unpacked content.
@@ -167,8 +173,7 @@ class RDEFormatChecker(IInputFileChecker):
         self.out_dir_temp = unpacked_dir_basename
 
     def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
-        """Parse the source input directory, identify ZIP files, unpack the ZIP file,
-        and return the raw files.
+        """Parse the source input directory, identify ZIP files, unpack the ZIP file, and return the raw files.
 
         Args:
             src_dir_input (Path): Source directory containing the input files.
@@ -223,8 +228,7 @@ class MultiFileChecker(IInputFileChecker):
         self.out_dir_temp = unpacked_dir_basename
 
     def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
-        """Parse the source input directory, group ZIP files and other files,
-        and return the raw files.
+        """Parse the source input directory, group ZIP files and other files, and return the raw files.
 
         Args:
             src_dir_input (Path): Source directory containing the input files.

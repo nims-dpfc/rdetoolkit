@@ -29,7 +29,7 @@ test-py39-module-job:
       when: always
 
 
-test-py39-flake8-job:
+test-py39-ruff-job:
   stage: test-py39
   image: python:3.9
   tags:
@@ -38,7 +38,7 @@ test-py39-flake8-job:
     - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
-    - tox -e py39-flake8
+    - tox -e py39-ruff
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
@@ -116,7 +116,7 @@ test-py310-module-job:
       when: always
 
 
-test-py310-flake8-job:
+test-py310-ruff-job:
   stage: test-py310
   image: python:3.10
   tags:
@@ -125,7 +125,7 @@ test-py310-flake8-job:
     - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
-    - tox -e py310-flake8
+    - tox -e py310-ruff
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always
@@ -203,7 +203,7 @@ test-py311-module-job:
       when: always
 
 
-test-py311-flake8-job:
+test-py311-ruff-jobs:
   stage: test-py311
   image: python:3.11
   tags:
@@ -212,7 +212,7 @@ test-py311-flake8-job:
     - cp pip.conf /etc/pip.conf
     - pip install tox
   script:
-    - tox -e py311-flake8
+    - tox -e py311-ruff
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^test/'
       when: always

@@ -7,17 +7,16 @@
 #     Hayato Sonokawa
 # ---------------------------------------------------------
 # coding: utf-8
-from pathlib import Path
 import sys
 import traceback
+from pathlib import Path
 from typing import Generator, Optional
 
-from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.modeproc import selected_input_checker
-from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoiceFile import backup_invoice_json_files
-from rdetoolkit.modeproc import excel_invoice_mode_process, invoice_mode_process, multifile_mode_process, rdeformat_mode_process, _CallbackType
+from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process, invoice_mode_process, multifile_mode_process, rdeformat_mode_process, selected_input_checker
+from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 
 logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
@@ -25,8 +24,6 @@ logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, 
 
 def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tuple[list[tuple[Path, ...]], Optional[Path]]:
     """Classify input files to determine if the input pattern is appropriate.
-    In accordance with two input modes and the file type of the data to be registered,
-    the following input pattern classification is performed.
 
     1. Invoice
         1. File mode (e.g. sample.txt)
@@ -75,10 +72,9 @@ def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tup
     return rawfiles, excelinvoice
 
 
-def generate_folder_paths_iterator(
-    raw_files_group: list[tuple[Path, ...]], invoice_org_filepath: Path, invoice_schema_filepath: Path
-) -> Generator[RdeOutputResourcePath, None, None]:
-    """Generates iterator for RDE output folder paths
+def generate_folder_paths_iterator(raw_files_group: list[tuple[Path, ...]], invoice_org_filepath: Path, invoice_schema_filepath: Path) -> Generator[RdeOutputResourcePath, None, None]:
+    """Generates iterator for RDE output folder paths.
+
     Create data folders for registration in the RDE system.
     Excel invoice: Create divided folders according to the number of registered data.
 
@@ -121,7 +117,8 @@ def generate_folder_paths_iterator(
 
 
 def run(*, custom_dataset_function: Optional[_CallbackType] = None):  # pragma: no cover
-    """RDE Structuring Processing Function
+    """RDE Structuring Processing Function.
+
     If you want to implement custom processing for the input data, please pass a user-defined function as an argument.
     The function passed as an argument should accept the data class RdeInputDirPaths, parsed internally by RDE,
     and the data class RdeOutputResourcePath, which stores the output directory paths used by RDE.

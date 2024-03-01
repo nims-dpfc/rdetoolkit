@@ -19,16 +19,12 @@ def test_backup_invoice_json_files_with_excel_invoice_file(
     """
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     fmt_flags = RdeFormatFlags()
-    result = backup_invoice_json_files(
-        inputfile_single_header_merge_excelinvoice, fmt_flags
-    )
+    result = backup_invoice_json_files(inputfile_single_header_merge_excelinvoice, fmt_flags)
 
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
 
-def test_backup_invoice_json_files_with_rdeformat_enabled(
-    inputfile_rdeformat, ivnoice_json_with_sample_info, ivnoice_schema_json
-):
+def test_backup_invoice_json_files_with_rdeformat_enabled(inputfile_rdeformat, ivnoice_json_with_sample_info, ivnoice_schema_json):
     """RDEformatモードでのinvoice.jsonのバックアップ処理テスト
 
     引数(フィクスチャ):
@@ -46,9 +42,7 @@ def test_backup_invoice_json_files_with_rdeformat_enabled(
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
 
-def test_backup_invoice_json_files_with_multifile_enabled(
-    inputfile_multimode, ivnoice_json_with_sample_info, ivnoice_schema_json
-):
+def test_backup_invoice_json_files_with_multifile_enabled(inputfile_multimode, ivnoice_json_with_sample_info, ivnoice_schema_json):
     """RDEformatモードでのinvoice.jsonのバックアップ処理テスト
 
     引数(フィクスチャ):
@@ -66,9 +60,7 @@ def test_backup_invoice_json_files_with_multifile_enabled(
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
 
-def test_backup_invoice_json_files_with_no_modes(
-    inputfile_single, ivnoice_json_with_sample_info, ivnoice_schema_json
-):
+def test_backup_invoice_json_files_with_no_modes(inputfile_single, ivnoice_json_with_sample_info, ivnoice_schema_json):
     """RDEformatモードでのinvoice.jsonのバックアップ処理テスト
 
     引数(フィクスチャ):

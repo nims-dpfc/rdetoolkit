@@ -1,5 +1,4 @@
-"""
-test_inputfile_checker.py
+"""test_inputfile_checker.py
 (test_checkfiles_input_pattern.pyの互換テスト)
 
 main::checkFiles()の入力パターンとその出力をテストする
@@ -23,12 +22,12 @@ from pathlib import Path
 
 from rdetoolkit.impl.input_controller import (
     ExcelInvoiceChecker,
-    InvoiceChechker,
+    InvoiceChecker,
     MultiFileChecker,
     RDEFormatChecker,
 )
-from rdetoolkit.modeproc import selected_input_checker
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
+from rdetoolkit.modeproc import selected_input_checker
 
 
 class TestInvoiceChecker:
@@ -42,7 +41,7 @@ class TestInvoiceChecker:
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
-        checker = InvoiceChechker(unpacked_dir_basename)
+        checker = InvoiceChecker(unpacked_dir_basename)
         rawfiles, _ = checker.parse(src_dir_input)
 
         assert len(rawfiles) == 1
@@ -53,7 +52,7 @@ class TestInvoiceChecker:
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
-        checker = InvoiceChechker(unpacked_dir_basename)
+        checker = InvoiceChecker(unpacked_dir_basename)
         rawfiles, excelinvoice = checker.parse(src_dir_input)
 
         assert len(rawfiles[0]) == 2
@@ -65,7 +64,7 @@ class TestInvoiceChecker:
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
-        checker = InvoiceChechker(unpacked_dir_basename)
+        checker = InvoiceChecker(unpacked_dir_basename)
         rawfiles, excelinvoice = checker.parse(src_dir_input)
 
         assert len(rawfiles[0]) == 0
@@ -107,11 +106,8 @@ class TestExcelInvoiceChecker:
         assert isinstance(rawfiles[0], tuple)
         assert all(isinstance(file, Path) for file in rawfiles[0])
 
-    def test_parse_multi_folder(
-        self, inputfile_zip_with_folder_multi, inputfile_multi_folder_excelinvoice
-    ):
+    def test_parse_multi_folder(self, inputfile_zip_with_folder_multi, inputfile_multi_folder_excelinvoice):
         """sortを考慮したテスト"""
-
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
 
@@ -136,9 +132,7 @@ class TestExcelInvoiceChecker:
         assert len(rawfiles) == 0
         assert excelinvoice is not None
 
-    def test_parse_only_singlefile_with_zip_multiline(
-        self, inputfile_zip_with_file, excelinvoice_single_input_multiline
-    ):
+    def test_parse_only_singlefile_with_zip_multiline(self, inputfile_zip_with_file, excelinvoice_single_input_multiline):
         """zipに1ファイルのみ+Excelinvoiceに書かれた全ての行に同じデータを登録する"""
         unpacked_dir_basename = Path("data/temp")
         src_dir_input = Path("data/inputdata")
@@ -236,9 +230,7 @@ def test_selected_input_checker_rde_format():
     unpacked_dir_path = Path("data/temp")
     fmtflags = RdeFormatFlags()
     fmtflags.is_rdeformat_enabled = True
-    assert isinstance(
-        selected_input_checker(src_paths, unpacked_dir_path, fmtflags), RDEFormatChecker
-    )
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), RDEFormatChecker)
 
 
 def test_selected_input_checker_multi_file():
@@ -250,14 +242,10 @@ def test_selected_input_checker_multi_file():
     unpacked_dir_path = Path("data/temp")
     fmtflags = RdeFormatFlags()
     fmtflags.is_multifile_enabled = True
-    assert isinstance(
-        selected_input_checker(src_paths, unpacked_dir_path, fmtflags), MultiFileChecker
-    )
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), MultiFileChecker)
 
 
-def test_selected_input_checker_excelinvoice(
-    inputfile_zip_with_file, inputfile_single_excelinvoice
-):
+def test_selected_input_checker_excelinvoice(inputfile_zip_with_file, inputfile_single_excelinvoice):
     src_paths = RdeInputDirPaths(
         inputdata=Path("data/inputdata"),
         invoice=Path("data/invoice"),
@@ -279,6 +267,4 @@ def test_selected_input_checker_invoice(inputfile_single):
     )
     unpacked_dir_path = Path("data/temp")
     fmtflags = RdeFormatFlags()
-    assert isinstance(
-        selected_input_checker(src_paths, unpacked_dir_path, fmtflags), InvoiceChechker
-    )
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), InvoiceChecker)

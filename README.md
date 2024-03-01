@@ -15,6 +15,7 @@ RdeToolKitの各種モジュールを使うことで、RDEへの研究・実験�
 
 変更を加える場合、以下のドキュメントを一読お願いします。
 
+- [CONTRIBUTING.md](CONTRIBUTING.md)
 - [RdeToolKitを変更する - RDE開発者ドキュメント](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/sample_project/-/wikis/base/RdeToolKit%E3%82%92%E5%A4%89%E6%9B%B4%E3%81%99%E3%82%8B)
 
 ## Install
@@ -140,11 +141,3 @@ container/
         ├── invoice.schema.json
         └── invoice.json
 ```
-
-## Contributing
-
-1. Fork it (https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit)
-2. Create your feature branch (`git checkout -b feature/newFeature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin feature/newFeature`)
-5. Create a new Merge Request

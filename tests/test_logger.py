@@ -3,7 +3,6 @@ import os
 import pathlib
 import shutil
 
-import pytest
 from rdetoolkit.rdelogger import get_logger
 
 

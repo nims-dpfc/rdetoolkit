@@ -1,5 +1,4 @@
-"""
-テストスイート
+"""テストスイート
 1 送り状
     1-1 ファイル(ex: sample.txt)
     1-2 フォルダ(ex: sample1.txt, sample2.txt)
@@ -21,9 +20,7 @@ from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.workflows import check_files
 
 
-def test_check_files_single(
-    inputfile_single, ivnoice_json_none_sample_info, tasksupport
-):
+def test_check_files_single(inputfile_single, ivnoice_json_none_sample_info, tasksupport):
     """テスト1-1: 入力形式: 送り状 / 入力ファイルタイプ: ファイル / ファイル数: 1ファイル
     inputfile_single: data/inputdata/test_single.txt
     ivnoice_json_with_sample_info: data/invoice/invoice.json
@@ -47,9 +44,7 @@ def test_check_files_multi(tasksupport, ivnoice_json_with_sample_info, inputfile
     inputfile_multi: data/inputdata/test_child1.txt, data/inputdata/test_child2.txt
     ivnoice_json_with_sample_info: data/invoice/invoice.json
     """
-    expect_rawfiles = [
-        (Path("data/inputdata/test_child1.txt"), Path("data/inputdata/test_child2.txt"))
-    ]
+    expect_rawfiles = [(Path("data/inputdata/test_child1.txt"), Path("data/inputdata/test_child2.txt"))]
 
     format_flags = RdeFormatFlags()
     srcpaths = RdeInputDirPaths(
@@ -94,7 +89,6 @@ def test_check_files_excelinvoice_zip_with_file(
     """テスト2-1: 入力形式: エクセルインボイス / 入力ファイルタイプ: ファイル / ファイル数: 1ファイル
     inputfile_zip_with_file: "test_child1.txt"圧縮
     """
-
     expect_rawfiles = [(Path("data/temp/test_child1.txt"),)]
     expect_excelinvoice = Path("data/inputdata/test_excel_invoice.xlsx")
 
@@ -119,7 +113,6 @@ def test_check_files_excelinvoice_zip_with_folder(
     """テスト2-2: 入力形式: エクセルインボイス / 入力ファイルタイプ: フォルダ (フォルダ圧縮.zip) / ファイル数: 複数ファイル
     inputfile_zip_with_file: test_input_multi/test_child1.txt, test_input_multi/test_child2.txt圧縮
     """
-
     expect_rawfiles = [
         (Path("data/temp/test_child1.txt"),),
         (Path("data/temp/test_child2.txt"),),
@@ -138,11 +131,8 @@ def test_check_files_excelinvoice_zip_with_folder(
     assert excel_invoice_files == expect_excelinvoice
 
 
-def test_check_files_excelinvoice_non_file(
-    tasksupport, ivnoice_json_with_sample_info, non_inputfile_excelinvoice
-):
+def test_check_files_excelinvoice_non_file(tasksupport, ivnoice_json_with_sample_info, non_inputfile_excelinvoice):
     """テスト2-3: 入力形式: エクセルインボイス / 入力ファイルタイプ: なし"""
-
     expect_rawfiles = []
     expect_excelinvoice = Path("data/inputdata/test_excel_invoice.xlsx")
 
@@ -158,9 +148,7 @@ def test_check_files_excelinvoice_non_file(
     assert excel_invoice_files == expect_excelinvoice
 
 
-def test_check_files_rdeformat_single(
-    inputfile_rdeformat_divived, tasksupport, ivnoice_json_with_sample_info
-):
+def test_check_files_rdeformat_single(inputfile_rdeformat_divived, tasksupport, ivnoice_json_with_sample_info):
     """テスト3: 入力形式: RDEformat / 入力ファイルタイプ: *.zip, tasksupport/rdeformat.txt)"""
     expect_rawfiles = [
         (
@@ -195,14 +183,11 @@ def test_check_files_rdeformat_single(
     assert excel_invoice_files == expect_excelinvoice
 
 
-def test_check_files_invoice_multiformat(
-    tasksupport, ivnoice_json_with_sample_info, inputfile_multi, inputfile_multimode
-):
+def test_check_files_invoice_multiformat(tasksupport, ivnoice_json_with_sample_info, inputfile_multi, inputfile_multimode):
     """テスト4: 入力形式: 送り状 / 入力ファイルタイプ: マルチモード / ファイル数: 複数ファイル
     inputfile_multi: data/inputdata/test_child1.txt, data/inputdata/test_child2.txt
     ivnoice_json_with_sample_info: data/invoice/invoice.json
     """
-
     expect_rawfiles = [
         (Path("data/inputdata/test_child1.txt"),),
         (Path("data/inputdata/test_child2.txt"),),
