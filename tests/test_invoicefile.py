@@ -2,18 +2,12 @@ import json
 import os
 from pathlib import Path
 
-import pytest
-from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import (
-    ExcelInvoiceFile,
-    InvoiceFile,
-    update_description_with_features,
-    readExcelInvoice,
-    checkExistRawFiles
-)
-from rdetoolkit.models.rde2types import RdeOutputResourcePath
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
+from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, readExcelInvoice, update_description_with_features
+from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
 def test_invoicefile_read_method(ivnoice_json_none_sample_info):
@@ -39,9 +33,7 @@ def test_overwrite_method(ivnoice_json_none_sample_info):
     invoice_file = InvoiceFile(ivnoice_json_none_sample_info)
     invoice_file.overwrite(dist_file_path)
 
-    with open(ivnoice_json_none_sample_info, "rb") as src_file, open(
-        dist_file_path, "rb"
-    ) as dist_file:
+    with open(ivnoice_json_none_sample_info, "rb") as src_file, open(dist_file_path, "rb") as dist_file:
         assert src_file.read() == dist_file.read()
     if os.path.exists(dist_file_path):
         os.remove(dist_file_path)
@@ -86,9 +78,7 @@ def test_read_none_sample_excel_invoice_file_blankline(
     assert str(e.value) == "Error! Blank lines exist between lines"
 
 
-def test_excelinvoice_overwrite(
-    inputfile_multi_excelinvoice, ivnoice_json_with_sample_info, ivnoice_schema_json
-):
+def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_sample_info, ivnoice_schema_json):
     """試料情報ありの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -98,20 +88,16 @@ def test_excelinvoice_overwrite(
     excel_invoice_path = Path(inputfile_multi_excelinvoice)
 
     excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
-    excel_invoice_file.overwrite(
-        ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json, 0
-    )
+    excel_invoice_file.overwrite(ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json, 0)
 
-    with open(dist_path, mode="r", encoding="utf-8") as f:
+    with open(dist_path, encoding="utf-8") as f:
         contents = json.load(f)
 
     assert contents["custom"]["key1"] == "AAA"
     assert contents["custom"]["key2"] == "CCC"
 
 
-def test_excelinvoice_overwrite_none_sample(
-    excelinvoice_non_sampleinfo, ivnoice_json_none_sample_info, ivnoice_schema_json
-):
+def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice_json_none_sample_info, ivnoice_schema_json):
     """試料情報なしの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -121,11 +107,9 @@ def test_excelinvoice_overwrite_none_sample(
     excel_invoice_path = Path(excelinvoice_non_sampleinfo)
 
     excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
-    excel_invoice_file.overwrite(
-        ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json, 0
-    )
+    excel_invoice_file.overwrite(ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json, 0)
 
-    with open(dist_path, mode="r", encoding="utf-8") as f:
+    with open(dist_path, encoding="utf-8") as f:
         contents = json.load(f)
 
     assert contents["custom"]["key1"] == "AAA"
@@ -175,12 +159,10 @@ def test_update_description_with_features(
     expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     # 検証
-    update_description_with_features(
-        rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature
-    )
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
 
     # 書き込み結果を比較
-    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+    with open(ivnoice_json_none_sample_info, encoding="utf-8") as f:
         result_contents = json.load(f)
 
     assert result_contents["basic"]["description"] == expect_message
@@ -200,12 +182,10 @@ def test_update_description_with_features_missing_target_key(
     expect_message = "desc1\n特徴量1:test-value1\n特徴量3(V):test-value3"
 
     # 検証
-    update_description_with_features(
-        rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature
-    )
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
 
     # 書き込み結果を比較
-    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+    with open(ivnoice_json_none_sample_info, encoding="utf-8") as f:
         result_contents = json.load(f)
 
     assert result_contents["basic"]["description"] == expect_message
@@ -225,12 +205,10 @@ def test_update_description_with_features_missing_target_key_none_result_metadat
     expect_message = "desc1\n特徴量1:test-value1\n特徴量3(V):test-value3"
 
     # 検証
-    update_description_with_features(
-        rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature
-    )
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
 
     # 書き込み結果を比較
-    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+    with open(ivnoice_json_none_sample_info, encoding="utf-8") as f:
         result_contents = json.load(f)
 
     assert result_contents["basic"]["description"] == expect_message
@@ -249,12 +227,10 @@ def test_update_description_with_features_none_variable(
     expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     # 検証
-    update_description_with_features(
-        rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature
-    )
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
 
     # 書き込み結果を比較
-    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+    with open(ivnoice_json_none_sample_info, encoding="utf-8") as f:
         result_contents = json.load(f)
 
     assert result_contents["basic"]["description"] == expect_message
@@ -273,12 +249,10 @@ def test_update_description_with_features_none_constant(
     expect_message = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     # 検証
-    update_description_with_features(
-        rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature
-    )
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_with_feature)
 
     # 書き込み結果を比較
-    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+    with open(ivnoice_json_none_sample_info, encoding="utf-8") as f:
         result_contents = json.load(f)
 
     assert result_contents["basic"]["description"] == expect_message
@@ -297,11 +271,9 @@ def test_update_description_none_features_none_variable(
     expect_message = "desc1"
 
     # 検証
-    update_description_with_features(
-        rde_resource, ivnoice_json_none_sample_info, metadata_def_json_none_feature
-    )
+    update_description_with_features(rde_resource, ivnoice_json_none_sample_info, metadata_def_json_none_feature)
     # 書き込み結果を比較
-    with open(ivnoice_json_none_sample_info, mode="r", encoding="utf-8") as f:
+    with open(ivnoice_json_none_sample_info, encoding="utf-8") as f:
         result_contents = json.load(f)
 
     assert result_contents["basic"]["description"] == expect_message
@@ -359,9 +331,7 @@ def test_readExcelInvoice(inputfile_single_excelinvoice):
         ],
     )
 
-    dfExcelInvoice, dfGeneral, dfSpecific = readExcelInvoice(
-        inputfile_single_excelinvoice
-    )
+    dfExcelInvoice, dfGeneral, dfSpecific = readExcelInvoice(inputfile_single_excelinvoice)
 
     assert_frame_equal(dfExcelInvoice, df1)
     assert isinstance(dfGeneral, pd.DataFrame)
@@ -401,13 +371,7 @@ def test_check_exist_rawfiles(inputfile_multi_excelinvoice):
     df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
     df_excelinvoice = df.iloc[4:, :].reset_index(drop=True).copy()
 
-    test_excel_raw_files = [
-        Path("test_child2.txt"),
-        Path("test_child1.txt"),
-        Path("test_child3.txt"),
-        Path("test_child9.txt"),
-        Path("test_child10.txt")
-    ]
+    test_excel_raw_files = [Path("test_child2.txt"), Path("test_child1.txt"), Path("test_child3.txt"), Path("test_child9.txt"), Path("test_child10.txt")]
     rtn = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
 
     assert expect_rtn == rtn
@@ -418,7 +382,6 @@ def test_error_check_exist_rawfiles(inputfile_multi_excelinvoice):
 
     inputfile_multi_excelinvoiceには、テスト用のエクセルインボイスのパスが格納
     """
-
     # テスト用エクセルインボイス前処理
     df_excelinvoice = pd.read_excel(inputfile_multi_excelinvoice, sheet_name="invoice_form", dtype=str, header=None, index_col=None)
     df = df_excelinvoice.dropna(axis=0, how="all").dropna(axis=1, how="all")

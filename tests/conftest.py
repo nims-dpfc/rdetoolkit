@@ -1544,9 +1544,7 @@ def excelinvoice_non_sampleinfo() -> Generator[str, None, None]:
     input_dir.mkdir(parents=True, exist_ok=True)
     test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
 
-    df1 = pd.DataFrame(
-        EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_NON_SAMPLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", ""]
-    )
+    df1 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE_NON_SAMPLE, columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", ""])
     df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=["term_id", "key_name"])
     df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=["sample_class_id", "term_id", "key_name"])
 

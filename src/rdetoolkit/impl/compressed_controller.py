@@ -36,8 +36,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         self.xlsx_invoice = xlsx_invoice
 
     def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
-        """Extracts the contents of the zipfile to the target path and checks their existence
-        against the Excelinvoice.
+        """Extracts the contents of the zipfile to the target path and checks their existence against the Excelinvoice.
 
         Args:
             zipfile (Path): Path to the compressed flat file to be read.
@@ -119,7 +118,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
         return False
 
     def validation_uniq_fspath(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:
-        """Check if there are any non-unique directory names under the target directory
+        """Check if there are any non-unique directory names under the target directory.
 
         Args:
             target_path (Union[str, Path]): The directory path to scan

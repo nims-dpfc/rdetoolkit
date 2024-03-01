@@ -6,27 +6,28 @@ from rdetoolkit.rde2util import StorageDir
 
 
 def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
-    """Pythonのloggingモジュールを使用してロガーを作成します。ロガーはログメッセージを生成し、処理を追跡し、デバッグを行うためのツールです。
+    """Creates a logger using Python's logging module.
+
+    The logger is a tool for generating log messages, tracking processes, and facilitating debugging.
 
     Args:
-        name (str): Identifier's name. Usually the module name is specified (__name__)
-        file_path (Optional[str], optional): Path of the log file. If this parameter is
+        name (str): The identifier's name, usually the module name is specified (__name__).
+        file_path (Optional[str], optional): The path of the log file. If this parameter is
         specified, the log messages will be written to this file. If not specified,
         the log messages will be sent to the standard output. Defaults to None.
 
     Returns:
-        logging.Logger: Configured logger object
+        logging.Logger: A configured logger object.
 
-    Exsample:
+    Example:
         from rdetoolkit import rdelogger
 
-        logger = rdelogger.get_logger(__name__, data/log/rdesys.log)
+        logger = rdelogger.get_logger(__name__, "data/log/rdesys.log")
 
         # If you want to output a debug message, add the following code
-        logger.debug('This is an debug message.')
-        >>> 2023-01-01 00:00:00,111 - [rdetoolkit.rde2util](DEBUG) - This is an debug message.
+        logger.debug('This is a debug message.')
+        >>> 2023-01-01 00:00:00,111 - [rdetoolkit.rde2util](DEBUG) - This is a debug message.
     """
-
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - [%(name)s](%(levelname)s) - %(message)s")
@@ -52,8 +53,7 @@ def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
 
 
 def write_job_errorlog_file(code: int, message: str, *, filename: str = "job.failed") -> None:
-    """
-    Write the error log to a file.
+    """Write the error log to a file.
 
     This function writes the given error code and message to a specified file.
     The file will be saved in a directory determined by `StorageDir.get_datadir(False)`.

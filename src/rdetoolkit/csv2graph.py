@@ -23,8 +23,7 @@ maxTitleLen = 35
 
 
 def readOption(csvFilePath, enc="utf_8"):
-    """
-    Parses specific options from a CSV file and returns them as a dictionary.
+    """Parses specific options from a CSV file and returns them as a dictionary.
 
     This function recognizes lines in the CSV file that start with '#' as options.
     Each option follows the format:
@@ -51,7 +50,7 @@ def readOption(csvFilePath, enc="utf_8"):
     """
     ret = {}
     axis = []
-    for tokens in csv.reader(open(csvFilePath, "r", encoding=enc)):
+    for tokens in csv.reader(open(csvFilePath, encoding=enc)):
         if len(tokens) == 0:
             continue
         if len(tokens[0]) == 0:
@@ -84,8 +83,7 @@ def readOption(csvFilePath, enc="utf_8"):
 
 
 def _writeGraphImgFile_impl(df, opt, graphTitleShort, showLegend, pngFilePath):
-    """
-    Generates a graph from the provided dataframe and saves it as an image file.
+    """Generates a graph from the provided dataframe and saves it as an image file.
 
     This function creates a graph based on the data from the dataframe `df` and various options
     provided in the `opt` dictionary. The graph is then saved to the specified file path `pngFilePath`.
@@ -172,6 +170,24 @@ def _writeGraphImgFile_impl(df, opt, graphTitleShort, showLegend, pngFilePath):
 
 
 def writeGraphImgFile(df, opt, graphTitleOrg, pngFilePath):
+    """Writes a graph image file from a dataframe with specified options and a title.
+
+    This function takes a pandas dataframe, various graphing options, an original graph title,
+    and a path for the output PNG file. It processes the graph title to ensure it doesn't exceed
+    a maximum length, determines whether to show a legend based on the options provided and
+    the number of columns in the dataframe, and then calls an implementation function to
+    actually write the graph image file.
+
+    Args:
+        df (DataFrame): The pandas dataframe containing the data to be plotted.
+        opt (dict): A dictionary of options for graphing (e.g., showLegend).
+        graphTitleOrg (str): The original title of the graph.
+        pngFilePath (str): The file path where the PNG image of the graph will be saved.
+
+    The function checks if the graph title exceeds a maximum length and shortens it if necessary.
+    It also determines whether to display a legend in the graph. The actual graph rendering
+    is handled by the '_writeGraphImgFile_impl' function.
+    """
     if len(graphTitleOrg) > maxTitleLen:  # タイトルは最大文字列長以上は省略する
         graphTitleShort = graphTitleOrg[:maxTitleLen] + "..."
     else:
@@ -194,8 +210,7 @@ def main(
     makeOtherImages="auto",
     **explicitOptions,
 ):
-    """
-    Generates main and other images based on provided CSV files and options.
+    """Generates main and other images based on provided CSV files and options.
 
     This function creates a primary graph image using the data from the concatenated CSV files
     and saves it to the specified directory `pngFilesMainDir`. If `makeOtherImages` is set to True,

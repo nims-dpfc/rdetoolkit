@@ -24,20 +24,20 @@ nav:
   - はじめに: index.md
   - インストール: install.md
   - API Document:
-    - impl:
-        - rdetoolkit/impl/compressed_controller.md
-        - rdetoolkit/impl/input_controller.md
-    - interface:
-        - rdetoolkit/interfaces/filechecker.md
-    - models:
-        - rdetoolkit/models/rde2types.md
-    - rdetoolkit/csv2graph.md
-    - rdetoolkit/img2thumb.md
-    - rdetoolkit/invoiceFile.md
-    - rdetoolkit/modeproc.md
-    - rdetoolkit/rde2util.md
-    - rdetoolkit/rdelogger.md
-    - rdetoolkit/workflows.md
+      - impl:
+          - rdetoolkit/impl/compressed_controller.md
+          - rdetoolkit/impl/input_controller.md
+      - interface:
+          - rdetoolkit/interfaces/filechecker.md
+      - models:
+          - rdetoolkit/models/rde2types.md
+      - rdetoolkit/csv2graph.md
+      - rdetoolkit/img2thumb.md
+      - rdetoolkit/invoiceFile.md
+      - rdetoolkit/modeproc.md
+      - rdetoolkit/rde2util.md
+      - rdetoolkit/rdelogger.md
+      - rdetoolkit/workflows.md
   - Contributing: contributing.md
 
 plugins:

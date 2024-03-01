@@ -9,9 +9,9 @@ RDEには、入力ファイルに応じて、以下の4つのモードが存在�
 - RDEフォーマットモード
 - マルチファイルモード
 
-## InvoiceChechker
+## InvoiceChecke
 
-::: src.rdetoolkit.impl.input_controller.InvoiceChechker
+::: src.rdetoolkit.impl.input_controller.InvoiceChecke
     options:
         members:
             - parse

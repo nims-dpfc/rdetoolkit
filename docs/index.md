@@ -133,4 +133,3 @@ container/
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin feature/newFeature`)
 5. Create a new Merge Request
-
