@@ -295,20 +295,20 @@ coverage-job:
     - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH'
       when: always
 
-deploy_to_doc:
-  stage: deploy
-  image: python:3.11
-  before_script:
-    - cp pip.conf /etc/pip.conf
-    - pip install -r requirements-dev.lock
-  script:
-    - mkdocs build
-  artifacts:
-    paths:
-      - site/
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
-      when: always
+# deploy_to_doc:
+#   stage: deploy
+#   image: python:3.11
+#   before_script:
+#     - cp pip.conf /etc/pip.conf
+#     - pip install -r requirements-dev.lock
+#   script:
+#     - mkdocs build
+#   artifacts:
+#     paths:
+#       - site/
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH =~ $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
+#       when: always
 
 deploy_to_pypi_package:
   stage: deploy
