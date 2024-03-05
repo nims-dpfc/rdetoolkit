@@ -66,7 +66,41 @@ def test_copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, dummy
     assert len(list(dummy_out_dir_thumb.glob("*"))) == 4
 
 
-def test_copy_images_to_thumbnail_missmatch_extension(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
+def test_only_one_representative_image_exists(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
+    """thumbnailフォルダに代表画像となる画像(ファイル名!_とついたファイル名)が1枚しかないかチェックするテスト"""
+    # ダミー画像ファイルを作成
+    with open(dummy_out_dir_main.joinpath("dummy_main_img.png"), "w") as f:
+        f.write("dummy")
+    with open(dummy_out_dir_other.joinpath("dummy_other_img.png"), "w") as f:
+        f.write("dummy")
+    with open(dummy_out_dir_other.joinpath("dummy_other_img2.png"), "w") as f:
+        f.write("dummy")
+    with open(dummy_out_dir_other.joinpath("dummy_other_img3.png"), "w") as f:
+        f.write("dummy")
+    # 関数を実行
+    copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, out_dir_other_img=dummy_out_dir_other)
+
+    representative_imgs = list(dummy_out_dir_thumb.glob("!_*"))
+    assert len(representative_imgs) == 1
+
+
+def test_only_one_file_copied_as_representative_rest_as_thumbnails(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
+    """mainフォルダに複数の場合、一つファイル代表画像にコピー・残りのファイルはサムネイルにコピーされるかテスト"""
+    # ダミー画像ファイルを作成
+    with open(dummy_out_dir_main.joinpath("dummy_main_img.png"), "w") as f:
+        f.write("dummy")
+    with open(dummy_out_dir_main.joinpath("dummy_other_img.png"), "w") as f:
+        f.write("dummy")
+    with open(dummy_out_dir_other.joinpath("dummy_other_img2.png"), "w") as f:
+        f.write("dummy")
+    with open(dummy_out_dir_other.joinpath("dummy_other_img3.png"), "w") as f:
+        f.write("dummy")
+    # 関数を実行
+    copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, out_dir_other_img=dummy_out_dir_other)
+    assert len(list(dummy_out_dir_thumb.glob("*"))) == 4
+
+
+def test_copy_images_to_thumbnail_mismatch_extension(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
     """拡張子が指定と違った場合、ファイルがコピーされないことを確認するテスト"""
     # ダミー画像ファイルを作成
     with open(dummy_out_dir_main.joinpath("dummy_main_img.jpg"), "w") as f:
