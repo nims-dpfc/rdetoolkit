@@ -62,12 +62,13 @@ def test_copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, dummy
     # 関数を実行
     copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, out_dir_other_img=dummy_out_dir_other)
 
-    assert os.path.isfile(dummy_out_dir_thumb.joinpath("!_dummy_main_img.png"))
     assert len(list(dummy_out_dir_thumb.glob("*"))) == 4
 
 
 def test_only_one_representative_image_exists(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
-    """thumbnailフォルダに代表画像となる画像(ファイル名!_とついたファイル名)が1枚しかないかチェックするテスト"""
+    """thumbnailフォルダにファイル名!_とついたファイル数が0かチェックするテスト
+    RDE v5に伴う仕様の変更により、!_をファイルの先頭に付与する必要がなくなったため
+    """
     # ダミー画像ファイルを作成
     with open(dummy_out_dir_main.joinpath("dummy_main_img.png"), "w") as f:
         f.write("dummy")
@@ -81,7 +82,7 @@ def test_only_one_representative_image_exists(dummy_out_dir_thumb, dummy_out_dir
     copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main, out_dir_other_img=dummy_out_dir_other)
 
     representative_imgs = list(dummy_out_dir_thumb.glob("!_*"))
-    assert len(representative_imgs) == 1
+    assert len(representative_imgs) == 0
 
 
 def test_only_one_file_copied_as_representative_rest_as_thumbnails(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
