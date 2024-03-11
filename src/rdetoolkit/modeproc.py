@@ -89,11 +89,7 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
         replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
         apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
-    img2thumb.copy_images_to_thumbnail(
-        resource_paths.thumbnail,
-        resource_paths.main_image,
-        out_dir_other_img=resource_paths.other_image,
-    )
+    img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     try:
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
@@ -154,11 +150,7 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
         replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
         apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
 
-    img2thumb.copy_images_to_thumbnail(
-        resource_paths.thumbnail,
-        resource_paths.main_image,
-        out_dir_other_img=resource_paths.other_image,
-    )
+    img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     try:
         update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
@@ -190,11 +182,7 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    img2thumb.copy_images_to_thumbnail(
-        resource_paths.thumbnail,
-        resource_paths.main_image,
-        out_dir_other_img=resource_paths.other_image,
-    )
+    img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     # rewriting support for ${filename} by default
     invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
