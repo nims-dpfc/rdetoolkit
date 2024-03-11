@@ -423,7 +423,7 @@ class Meta:
 
     def __convert_to_str(self, value: Union[str, int, float, list]) -> Union[str, list[str]]:
         """Convert the given value to string or list of strings."""
-        if isinstance(value, (str, int, float)):
+        if isinstance(value, (str, int, float, bool)):
             return str(value)
         if isinstance(value, list):
             return list(map(str, value))
