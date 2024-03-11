@@ -1,5 +1,5 @@
 # ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform Center, NIMS
+# Copyright (c) 2023, Materials Data Platform, NIMS
 #
 # This software is released under the MIT License.
 #
