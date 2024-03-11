@@ -30,37 +30,39 @@ def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: Union[str, lis
         shutil.copy(path, thumb_img_path)
 
 
+def __find_img_path(dirname: str, target_name: str) -> str:
+    search_pattern = os.path.join(dirname, "**", target_name)
+    matching_files = [f for f in glob(search_pattern, recursive=True)]
+    if matching_files:
+        return matching_files[0]
+    else:
+        return ""
+
+
 @catch_exception_with_message(error_message="ERROR: failed to copy image files", error_code=50)
-def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, out_dir_other_img: Optional[str] = None, imgExt: Optional[str] = None) -> None:
+def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, target_image_name: Optional[str] = None, imgExt: Optional[str] = None) -> None:
     """Copy the image files in the other image folder and the main image folder to the thumbnail folder.
 
     Args:
         out_dir_thumb_img (str): directory path where thumbnail image is saved
         out_dir_main_img (str): directory path where main image is saved
-        out_dir_other_img (str, optional): directory path where other images are saved. Defaults to None.
+        target_image_name (str, optional): Specify the name of the image file to be copied to the thumbnail folder.
         imgExt (str, optional): image file extension.
     """
     if imgExt is None:
         img_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"]
+    else:
+        img_exts = [imgExt]
 
     img_paths_main = [glob(os.path.join(out_dir_main_img, "*" + ext)) for ext in img_exts]
     img_path_main = list(itertools.chain.from_iterable(img_paths_main))
 
     # When there are multiple images in the main image folder, copy one at the leading index as the representative image.
     __main_img_path: str = ""
-    __other_from_main_img: list[str] = []
-    if len(img_path_main) > 1:
-        __main_img_path, __other_from_main_img = img_path_main[0], img_path_main[1:]
-    elif len(img_path_main) == 1:
-        __other_from_main_img = []
+    if target_image_name is not None:
+        __main_img_path = __find_img_path(out_dir_main_img, target_image_name)
+    elif len(img_path_main) >= 1:
         __main_img_path = img_path_main[0]
 
     if __main_img_path:
         __copy_img_to_thumb(out_dir_thumb_img, __main_img_path)
-    if __other_from_main_img:
-        __copy_img_to_thumb(out_dir_thumb_img, __other_from_main_img)
-
-    if out_dir_other_img:
-        __img_paths_other = [glob(os.path.join(out_dir_other_img, "*" + ext)) for ext in img_exts]
-        img_paths_other = list(itertools.chain.from_iterable(__img_paths_other))
-        __copy_img_to_thumb(out_dir_thumb_img, img_paths_other)
