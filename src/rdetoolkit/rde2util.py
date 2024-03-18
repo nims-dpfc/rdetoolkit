@@ -15,6 +15,7 @@ from typing import Any, Optional, TypedDict, Union, cast
 
 import chardet  # for following failure cases
 import dateutil.parser
+from chardet.universaldetector import UniversalDetector
 from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
@@ -48,39 +49,72 @@ def get_default_values(defaultValsFilePath):
     return dctDefaultVals
 
 
-def detect_text_file_encoding(text_filepath: RdeFsPath) -> str:
-    """Detect the encoding of a given text file.
+class CharDecEncoding:
+    """A class to handle character encoding detection and conversion for text files."""
 
-    This function attempts to detect the encoding of a text file. If the initially
-    detected encoding isn't one of the usual ones, it uses chardet for a more thorough detection.
+    USUAL_ENCs = ("ascii", "shift_jis", "utf_8", "utf_8_sig", "euc_jp")
 
-    Args:
-        text_filepath (RdeFsPath): Path to the text file to be analyzed.
+    @classmethod
+    def detect_text_file_encoding(cls, text_filepath: RdeFsPath) -> str:
+        """Detect the encoding of a given text file.
 
-    Returns:
-        str: The detected encoding of the text file.
+        This function attempts to detect the encoding of a text file. If the initially
+        detected encoding isn't one of the usual ones, it uses chardet for a more thorough detection.
 
-    Raises:
-        FileNotFoundError: If the given file path does not exist.
-    """
-    if isinstance(text_filepath, pathlib.Path):
-        text_filepath = str(text_filepath)
+        Args:
+            text_filepath (RdeFsPath): Path to the text file to be analyzed.
 
-    USUAL_ENC = ["ascii", "shift_jis", "utf_8", "utf_8_sig", "euc_jp"]
-    byteAr = open(text_filepath, "rb").read()
-    _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(byteAr))
-    if _cast_detect_ret["encoding"] is not None:
-        enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
-    else:
-        enc = ""
+        Returns:
+            str: The detected encoding of the text file.
 
-    if enc not in USUAL_ENC:
-        ret = chardet.detect(byteAr)
-        if ret["encoding"] is not None:
-            enc = ret["encoding"].replace("-", "_").lower()
-    if enc == "shift_jis":
-        enc = "cp932"
-    return enc
+        Raises:
+            FileNotFoundError: If the given file path does not exist.
+        """
+        if isinstance(text_filepath, pathlib.Path):
+            text_filepath = str(text_filepath)
+
+        byteAr = open(text_filepath, "rb").read()
+        _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(byteAr))
+        if _cast_detect_ret["encoding"] is not None:
+            enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
+        else:
+            enc = ""
+
+        if enc not in cls.USUAL_ENCs:
+            enc = cls.__detect(text_filepath)
+        if enc == "shift_jis":
+            enc = "cp932"
+        return enc
+
+    @classmethod
+    def __detect(cls, text_filepath: str) -> str:
+        """Detect the encoding of a given text file using chardet.
+
+        Args:
+            text_filepath (str): Path to the text file to be analyzed.
+
+        Returns:
+            str: The detected encoding of the text file.
+        """
+        detector = UniversalDetector()
+
+        try:
+            with open(text_filepath, mode="rb") as f:
+                while True:
+                    binary = f.readline()
+                    if binary == b"":
+                        break
+                    detector.feed(binary)
+                    if detector.done:
+                        break
+        finally:
+            detector.close()
+
+        ret = detector.result["encoding"]
+        if ret:
+            return ret.replace("-", "_").lower()
+        else:
+            return ""
 
 
 def _split_value_unit(tgtStr: str) -> ValueUnitPair:  # pragma: no cover
@@ -152,7 +186,7 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
     Returns:
         dict[str, Any]: The parsed json object.
     """
-    enc = detect_text_file_encoding(invoice_file_path)
+    enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
     with open(invoice_file_path, encoding=enc) as f:
         invoiceObj = json.load(f)
     return invoiceObj
@@ -313,7 +347,7 @@ class Meta:
             Unclear whether the processing of actions and units after l262 is currently necessary.
         """
         if metadef_filepath:
-            enc = detect_text_file_encoding(metadef_filepath)
+            enc = CharDecEncoding.detect_text_file_encoding(metadef_filepath)
             with open(metadef_filepath, encoding=enc) as f:
                 _tmp_metadef = json.load(f)
         else:

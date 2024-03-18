@@ -6,7 +6,7 @@ import pytest
 from rdetoolkit.rde2util import (
     Meta,
     _split_value_unit,
-    detect_text_file_encoding,
+    CharDecEncoding,
     read_from_json_file,
     write_to_json_file,
 )
@@ -219,15 +219,15 @@ def utf_8_sig_file():
 
 
 def test_detect_text_file_encoding(utf_8_file):
-    assert detect_text_file_encoding(utf_8_file) == "utf_8"
+    assert CharDecEncoding.detect_text_file_encoding(utf_8_file) == "utf_8"
 
 
 def test_detect_text_file_encoding_shift_jis(shift_jis_file):
-    assert detect_text_file_encoding(shift_jis_file) == "cp932"
+    assert CharDecEncoding.detect_text_file_encoding(shift_jis_file) == "cp932"
 
 
 def test_detect_text_file_encoding_utf_8_sig(utf_8_sig_file):
-    assert detect_text_file_encoding(utf_8_sig_file) == "utf_8_sig"
+    assert CharDecEncoding.detect_text_file_encoding(utf_8_sig_file) == "utf_8_sig"
 
 
 # read_invoice_json_fileのテスト
