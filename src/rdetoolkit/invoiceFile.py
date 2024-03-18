@@ -22,7 +22,7 @@ import pandas as pd
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeOutputResourcePath
-from rdetoolkit.rde2util import StorageDir
+from rdetoolkit.rde2util import CharDecEncoding, StorageDir
 
 
 def readExcelInvoice(excelInvoiceFilePath):
@@ -181,7 +181,7 @@ class InvoiceFile:
         invoice_obj (dict): Dictionary representation of the invoice JSON file.
 
     Note:
-        - The class uses an external utility `rde2util.detect_text_file_encoding` to detect the encoding of the file.
+        - The class uses an external utility `rde2util.CharDecEncoding.detect_text_file_encoding` to detect the encoding of the file.
     """
 
     def __init__(self, invoice_path: Path):
@@ -200,7 +200,8 @@ class InvoiceFile:
         """
         if target_path is None:
             target_path = self.invoice_path
-        enc = rde2util.detect_text_file_encoding(target_path)
+
+        enc = CharDecEncoding.detect_text_file_encoding(target_path)
         with open(target_path, encoding=enc) as f:
             self.invoice_json = json.load(f)
         return self.invoice_json
@@ -403,7 +404,7 @@ class ExcelInvoiceFile:
         invoice_obj["sample"] = {"sampleId": sampleId_value, **invoice_obj["sample"]}
 
     def _detect_encoding(self, file_path: Path):
-        return rde2util.detect_text_file_encoding(file_path)
+        return CharDecEncoding.detect_text_file_encoding(file_path)
 
     def _load_json(self, file_path: Path):
         enc = self._detect_encoding(file_path)
@@ -565,7 +566,7 @@ class RuleBasedReplacer:
         if filepath.suffix != ".json":
             raise StructuredError(f"Error. File format/extension is not correct: {filepath}")
 
-        enc = rde2util.detect_text_file_encoding(filepath)
+        enc = CharDecEncoding.detect_text_file_encoding(filepath)
         with open(filepath, encoding=enc) as f:
             data = json.load(f)
             self.rules = data.get("filename_mapping", {})
@@ -660,7 +661,7 @@ class RuleBasedReplacer:
             raise StructuredError(f"Extension error. Incorrect extension: {save_file_path}")
 
         if save_file_path.exists():
-            enc = rde2util.detect_text_file_encoding(save_file_path)
+            enc = CharDecEncoding.detect_text_file_encoding(save_file_path)
             with open(save_file_path, encoding=enc) as f:
                 exists_contents: dict = json.load(f)
             _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
