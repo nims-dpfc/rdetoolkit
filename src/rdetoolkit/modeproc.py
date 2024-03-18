@@ -46,7 +46,6 @@ def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     img2thumb.copy_images_to_thumbnail(
         resource_paths.thumbnail,
         resource_paths.main_image,
-        out_dir_other_img=resource_paths.other_image,
     )
 
     try:
