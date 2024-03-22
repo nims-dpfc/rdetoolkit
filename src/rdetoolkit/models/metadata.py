@@ -9,6 +9,7 @@ class Variable(BaseModel):
     variable: dict[str, Any]
 
     @field_validator("variable")
+    @classmethod
     def check_value_size(cls, v):
         """Validator that verifies that the size of the 'variable' type metadata value does not exceed 1024 bytes.
 
@@ -33,6 +34,7 @@ class MetaValue(BaseModel):
     unit: Optional[str] = None
 
     @field_validator("value")
+    @classmethod
     def check_value_size(cls, v):
         """Validator that verifies that the size of the 'value' does not exceed 1024 bytes if it is a string.
 
@@ -49,7 +51,17 @@ class MetaValue(BaseModel):
         return v
 
 
-ValidableItems = RootModel[list[dict[str, MetaValue]]]
+class ValidableItems(RootModel):
+    """A class representing validatable items of metadata.
+
+    This class inherits from `RootModel`, and the `root` attribute holds a list of dictionaries,
+    where each dictionary has a string as a key and a `MetaValue` as a value.
+
+    Attributes:
+        root (list[dict[str, MetaValue]]): A list of validatable items of metadata.
+    """
+
+    root: list[dict[str, MetaValue]]
 
 
 class MetadataDefItem(BaseModel):
