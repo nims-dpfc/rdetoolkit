@@ -1,0 +1,114 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://rde.nims.go.jp/rde/dataset-templates/dataset_template_custom_sample/invoice.schema.json",
+    "description": "RDEデータセットテンプレートテスト用ファイル",
+    "type": "object",
+    "required": [
+        "custom",
+        "sample"
+    ],
+    "properties": {
+        "custom": {
+            "type": "object",
+            "label": {
+                "ja": "固有情報",
+                "en": "Custom Information"
+            },
+            "required": [
+                "sample1",
+                "sample2"
+            ],
+            "properties": {
+                "samplefaild1": {
+                    "label": {
+                        "ja": "サンプル失敗１",
+                        "en": "samplefaild1"
+                    },
+                    "type": "string",
+                    "format": "date",
+                    "description": "AAA",
+                    "examples": "S1",
+                    "default": "S1",
+                    "const": "A1",
+                    "options": {
+                        "unit": "A",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    },
+                    "maxLength": 10000,
+                    "minLength": 1000,
+                    "pattern": "sdvk"
+                },
+                "sample2": {
+                    "label": {
+                        "ja": "サンプル２",
+                        "en": "sample2"
+                    },
+                    "type": "number",
+                    "description": "BB",
+                    "examples": 1.0,
+                    "default": 1.0,
+                    "options": {
+                        "unit": "b",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    },
+                    "maximum": 100.0,
+                    "exclusiveMaximum": 100.0,
+                    "minimum": 100.0,
+                    "exclusiveMinimum": 100.0
+                },
+                "sample3": {
+                    "label": {
+                        "ja": "サンプル３",
+                        "en": "sample3"
+                    },
+                    "type": "integer",
+                    "description": "CC",
+                    "examples": 1,
+                    "default": 1,
+                    "options": {
+                        "unit": "c",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample4": {
+                    "label": {
+                        "ja": "サンプル４",
+                        "en": "sample4"
+                    },
+                    "type": "string",
+                    "format": "time",
+                    "description": "DD",
+                    "examples": "S4",
+                    "default": "S4",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample5": {
+                    "label": {
+                        "ja": "サンプル５",
+                        "en": "sample5"
+                    },
+                    "type": "string",
+                    "format": "uri",
+                    "description": "EE",
+                    "examples": "S5",
+                    "default": "S5",
+                    "const": "A1"
+                }
+            }
+        }
+    }
+}
