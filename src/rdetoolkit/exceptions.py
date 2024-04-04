@@ -30,6 +30,14 @@ class StructuredError(Exception):
         self.eObj = eObj
 
 
+class MetadataDefValidationError(Exception):
+    """Raised when a validation error occurs."""
+
+    def __init__(self, message="Validation error"):
+        self.message = message
+        super().__init__(self.message)
+
+
 def catch_exception_with_message(*, error_message: Optional[str] = None, error_code: Optional[int] = None):
     """A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.
 
