@@ -30,6 +30,14 @@ class StructuredError(Exception):
         self.eObj = eObj
 
 
+class InvoiceSchemaValidationError(Exception):
+    """Raised when a validation error occurs."""
+
+    def __init__(self, message="Validation error"):
+        self.message = message
+        super().__init__(self.message)
+
+
 class MetadataDefValidationError(Exception):
     """Raised when a validation error occurs."""
 
