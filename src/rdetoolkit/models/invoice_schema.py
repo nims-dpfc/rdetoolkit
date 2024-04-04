@@ -34,10 +34,10 @@ class Options(BaseModel):
         placeholder (Optional[Placeholder]): The placeholder text for the widget. Defaults to None.
     """
 
-    widget: Optional[Literal["textarea"]] = None
-    rows: Optional[int] = None
-    unit: Optional[str] = None
-    placeholder: Optional[Placeholder] = None
+    widget: Optional[Literal["textarea"]] = Field(default=None)
+    rows: Optional[int] = Field(default=None)
+    unit: Optional[str] = Field(default=None)
+    placeholder: Optional[Placeholder] = Field(default=None)
 
     @model_validator(mode="after")
     def __check_row_for_widget_textarea(self):
@@ -73,9 +73,35 @@ class MetaProperty(BaseModel):
 
     label: LangLabels
     value_type: Literal["boolean", "integer", "number", "string"] = Field(..., alias="type")
-    description: Optional[str]
-    examples: Optional[str]
-    default: Optional[Union[bool, int, float, str]]
+    description: Optional[str] = Field(default=None)
+    examples: Optional[Union[bool, int, float, str]] = Field(default=None)
+    default: Optional[Union[bool, int, float, str]] = Field(default=None)
+    const: Optional[Union[bool, int, float, str]] = Field(default=None)
+    enum: Optional[list[Union[bool, int, float, str]]] = Field(default=None)
+    maximum: Optional[int] = Field(default=None, description="Declare that the number is less than or equal to the specified value. Only applicable when the type is a numeric type (integer, number).")
+    exclusiveMaximum: Optional[int] = Field(default=None, description="Declare that the number is less than the specified value. Only applicable when the type is a numeric type (integer, number).")
+    minimum: Optional[int] = Field(default=None, description="Declare that the number is greater than or equal to the specified value. Only applicable when the type is a numeric type (integer, number).")
+    exclusiveMinimum: Optional[int] = Field(default=None, description="Declare that the number is greater than the specified value. Only applicable when the type is a numeric type (integer, number).")
+    maxLength: Optional[int] = Field(default=None, description="Specify the maximum length of the string.")
+    minLength: Optional[int] = Field(default=None, description="Specify the minimum length of the string. Must be 0 or more.")
+    pattern: Optional[str] = Field(default=None, description="Declare that it has a pattern specified by a regular expression.")
+    format: Optional[Literal["date", "time", "uri", "uuid", "markdown"]] = Field(default=None, description="Specify the format of the string. Refer to date, time, uri, uuid, markdown for possible values.")
+
+    @model_validator(mode="after")
+    def __check_filed_type(self):
+        if self.const is not None:
+            # If the value of 'const' is different from 'value_type', raise an error.
+            if not isinstance(self.value_type, type(self.const)):
+                raise ValueError("Custom Validation: The two objects are of different types.")
+        if self.maximum or self.exclusiveMaximum or self.minimum or self.exclusiveMinimum:
+            # If any of the maximum, exclusiveMaximum, minimum, or exclusiveMinimum fields are set, the value_type must be either integer or number.
+            if self.value_type not in ["integer", "number"]:
+                raise ValueError("Custom Validation: The field must be of type integer or number.")
+        if self.maxLength or self.minLength:
+            # If the maxLength or minLength fields are set, the value_type must be string.
+            if self.value_type != "string":
+                raise ValueError("Custom Validation: The field must be of type string.")
+        return self
 
 
 class CustomItems(RootModel):
@@ -109,25 +135,53 @@ class CustomField(BaseModel):
 
 
 class TermId(BaseModel):
+    """Represents a term identifier.
+
+    `properties.sample.properties.generalAtttirbutes.items.properties.termId` is an instance of this class.
+    """
+
     const: str
 
 
 class ClassId(BaseModel):
+    """Represents the ClassId for an invoice.
+
+    `properties.sample.properties.specificAttributes.items.properties.classId` is an instance of this class.
+    """
+
     const: str
 
 
 class GeneralChildProperty(BaseModel):
+    """Represents a general child property.
+
+    `properties.sample.properties.generalAtttirbutes.items.properties` is an instance of this class.
+    """
+
     term_id: TermId = Field(..., alias="termId")
 
 
 class GeneralProperty(BaseModel):
-    object_type: Literal["object"]
+    """Represents a general property in the invoice schema.
+
+    `properties.sample.properties.generalAtttirbutes.items` is an instance of this class.
+    """
+
+    object_type: Literal["object"] = Field(..., alias="type")
     required: list[Literal["termId", "value"]]
     properties: GeneralChildProperty
 
 
 class SampleGeneralItems(RootModel):
-    root: list[GeneralProperty]
+    """Represents a sample general item.
+
+    This class is used as the instance for `properties.sample.properties.generalAtttirbutes.items`.
+
+    Attributes:
+        root (Optional[list[GeneralProperty]]): The list of general properties. Defaults to None.
+    """
+
+    root: Optional[list[GeneralProperty]] = Field(default=None)
 
 
 class GeneralAttribute(BaseModel):
@@ -141,17 +195,32 @@ class GeneralAttribute(BaseModel):
 
 
 class SpecificChildProperty(BaseModel):
+    """Represents a specificAttirbutes child property.
+
+    `properties.sample.properties.specificAttributes.items.properties` is an instance of this class.
+    """
+
     term_id: TermId = Field(..., alias="termId")
     class_id: ClassId = Field(..., alias="classId")
 
 
 class SpecificProperty(BaseModel):
-    object_type: Literal["object"]
+    """Represents a specificAttirbutes child property.
+
+    `properties.sample.properties.specificAttributes.itemss` is an instance of this class.
+    """
+
+    object_type: Literal["object"] = Field(..., alias="type")
     required: list[Literal["classId", "termId", "value"]]
     properties: SpecificChildProperty
 
 
 class SampleSpecificItems(RootModel):
+    """Represents a specificAttirbutes child property.
+
+    `properties.sample.properties.specificAttributes.itemss` is an instance of this class.
+    """
+
     root: list[SpecificProperty]
 
 
@@ -165,18 +234,42 @@ class SpecificAttribute(BaseModel):
     items: SampleSpecificItems
 
 
-class SampleProperties(BaseModel):
+class BasicItemsValue(BaseModel):
+    value_type: Union[str, list, None] = Field(default=None, alias="type")
+    format: Optional[Literal["date"]] = Field(default=None)
+    pattern: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
+class SamplePropertiesWhenAdding(BaseModel):
     """Represents the properties of a sample.
 
     `properties.sample.properties` is an instance of this class.
-
-    Attributes:
-        general_attribute (Optional[GeneralAttribute]): The general attribute of the sample.
-        specific_attribute (Optional[SpecificAttribute]): The Category-specific items of the sample.
     """
 
-    general_attribute: Optional[GeneralAttribute] = Field(..., alias="generalAttribute")
-    specific_attribute: Optional[SpecificAttribute] = Field(..., alias="specificAttribute")
+    sample_id: Optional[str] = Field(default=None, alias="sampleId")
+    ownerId: str = Field(pattern="^([0-9a-zA-Z]{56})$", description="sample ownere id", alias="ownerId")
+    composition: Optional[str] = Field(default=None, alias="composition")
+    referenceUrl: Optional[str] = Field(default=None, alias="referenceUrl")
+    description: Optional[str] = Field(default=None, alias="description")
+    generalAttributes: Optional[GeneralAttribute] = Field(default=None, alias="generalAttributes")
+    specificAttributes: Optional[SpecificAttribute] = Field(default=None, alias="specificAttributes")
+
+
+class SamplePropertiesRef(BaseModel):
+    """Represents the properties of a sample.
+
+    `properties.sample.properties` is an instance of this class.
+    """
+
+    sampleId: Optional[str] = Field(default=None, alias="sampleId")
+    names: Optional[list] = Field(default=None)
+    ownerId: str = Field(pattern="^([0-9a-zA-Z]{56})$", description="sample ownere id", alias="ownerId")
+    composition: Optional[str] = Field(default=None, alias="composition")
+    referenceUrl: Optional[str] = Field(default=None, alias="referenceUrl")
+    description: Optional[str] = Field(default=None, alias="description")
+    generalAttributes: Optional[GeneralAttribute] = Field(default=None, alias="generalAttributes")
+    specificAttributes: Optional[SpecificAttribute] = Field(default=None, alias="specificAttributes")
 
 
 class SampleField(BaseModel):
@@ -187,7 +280,31 @@ class SampleField(BaseModel):
 
     obj_type: Literal["object"] = Field(..., alias="type")
     label: LangLabels
-    properties: SampleProperties
+    required: list[Literal["names", "sampleId"]] = Field(default=["names", "sampleId"])
+    properties: Union[SamplePropertiesRef, SamplePropertiesWhenAdding]
+
+
+class BasicItems(BaseModel):
+    """Represents the basic items of an invoice.
+
+    `properties.basic` is an instance of this class.
+    """
+
+    dateSubmitted: BasicItemsValue = Field(default=BasicItemsValue(type="string", format="date"))
+    dataOwnerId: BasicItemsValue = Field(default=BasicItemsValue(type="string", pattern="^([0-9a-zA-Z]{56})$"))
+    dateName: BasicItemsValue = Field(default=BasicItemsValue(type="string", pattern="^([0-9a-zA-Z]{56})$"))
+    instrumentId: Optional[BasicItemsValue] = Field(default=BasicItemsValue(type="string", pattern="^$|^([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})$"))
+    experimentId: Optional[BasicItemsValue] = Field(default=None)
+    description: Optional[BasicItemsValue] = Field(default=None)
+
+
+class DatasetId(BaseModel):
+    """Represents the dataset ID for an invoice.
+
+    `properties.datasetId` is an instance of this class.
+    """
+
+    value_type: str = Field(default="string", alias="type")
 
 
 class Properties(BaseModel):
@@ -200,29 +317,49 @@ class Properties(BaseModel):
         sample (Optional[str]): A sample field of the invoice.
     """
 
-    custom: Optional[CustomField]
-    sample: Optional[str]
+    custom: Optional[CustomField] = Field(default=None)
+    sample: Optional[SampleField] = Field(default=None)
 
 
 class InvoiceSchemaJson(BaseModel):
-    """Invoice schema class."""
+    """Invoice schema class.
+
+    Usage:
+
+        To generate invoice.schema.json from the model, do as follows:
+        ```python
+        obj = InvoiceSchemaJson(
+            version="https://json-schema.org/draft/2020-12/schema",
+            schema_id="https://rde.nims.go.jp/rde/dataset-templates/dataset_template_custom_sample/invoice.schema.json",
+            description="RDEデータセットテンプレートテスト用ファイル",
+            type="object",
+            properties=Properties()
+        )
+        print(obj.model_dump_json())
+        ```
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
 
     version: str = Field(default="https://json-schema.org/draft/2020-12/schema", alias="$schema")
-    schema_id: str = Field(..., alias="$id")
-    description: str
-    value_type: str
-    required: Optional[list[Literal["custom", "sample"]]]
+    schema_id: str = Field(default="https://rde.nims.go.jp/rde/dataset-templates/", alias="$id")
+    description: Optional[str] = Field(default=None)
+    value_type: Literal["object"] = Field(default="object", alias="type")
+    required: Optional[list[Literal["custom", "sample", "basic", "datasetId"]]] = Field(default=None)
     properties: Properties
 
     @model_validator(mode="after")
     def check_custom_not_none(self):
         """Custom is required but is None."""
-        if "custom" in self.required and self.properties.custom is None:
-            raise ValueError("custom is required but is None")
-        elif "sample" in self.required and self.properties.sample is None:
-            raise ValueError("sample is required but is None")
-        elif "custom" not in self.required and self.properties.custom:
-            raise ValueError("custom is required but is None")
-        elif "sample" not in self.required and self.properties.sample:
-            raise ValueError("sample is required but is None")
+        if self.required is not None:
+            if "custom" in self.required and self.properties.custom is None:
+                raise ValueError("custom is required but is None")
+            elif "sample" in self.required and self.properties.sample is None:
+                raise ValueError("sample is required but is None")
+        if self.properties.custom:
+            if "custom" not in self.required:
+                raise ValueError("custom is required but is None")
+        if self.properties.sample:
+            if "sample" not in self.required:
+                raise ValueError("sample is required but is None")
         return self
