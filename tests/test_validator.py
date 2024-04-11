@@ -9,7 +9,7 @@ from rdetoolkit.exceptions import MetadataDefValidationError
 
 
 @pytest.fixture
-def json_file():
+def metadata_def_json_file():
     Path("temp").mkdir(parents=True, exist_ok=True)
     json_path = Path("temp").joinpath("test_metadata_def.json")
     json_data = {
@@ -63,7 +63,7 @@ def json_file():
 
 
 @pytest.fixture
-def invalid_json_file():
+def invalid_metadata_def_json_file():
     Path("temp").mkdir(parents=True, exist_ok=True)
     json_path = Path("temp").joinpath("test_metadata_def.json")
     json_data = {
@@ -87,16 +87,22 @@ def invalid_json_file():
         shutil.rmtree("temp")
 
 
-def test_metadata_def_json_validation(json_file):
+def test_metadata_def_json_validation(metadata_def_json_file):
     instance = MetadataDefValidator()
-    obj = instance.validate(path=json_file)
+    obj = instance.validate(path=metadata_def_json_file)
     assert isinstance(obj, dict)
 
 
-def test_invliad_metadata_def_json_validation(invalid_json_file):
+def test_metadata_def_empty_json_validation():
+    instance = MetadataDefValidator()
+    obj = instance.validate(json_obj={})
+    assert isinstance(obj, dict)
+
+
+def test_invliad_metadata_def_json_validation(invalid_metadata_def_json_file):
     with pytest.raises(MetadataDefValidationError):
         instance = MetadataDefValidator()
-        _ = instance.validate(path=invalid_json_file)
+        _ = instance.validate(path=invalid_metadata_def_json_file)
 
 
 def test_none_argments_metadata_def_json_validation():
@@ -106,11 +112,11 @@ def test_none_argments_metadata_def_json_validation():
     assert str(e.value) == "At least one of 'path' or 'json_obj' must be provided"
 
 
-def test_two_argments_metadata_def_json_validation(invalid_json_file):
+def test_two_argments_metadata_def_json_validation(invalid_metadata_def_json_file):
     data = {}
     with pytest.raises(ValueError) as e:
         instance = MetadataDefValidator()
-        _ = instance.validate(path=invalid_json_file, json_obj=data)
+        _ = instance.validate(path=invalid_metadata_def_json_file, json_obj=data)
     assert str(e.value) == "Both 'path' and 'json_obj' cannot be provided at the same time"
 
 
