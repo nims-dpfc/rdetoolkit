@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from typing import Any, Optional, Union
 
+from jsonschema import Draft7Validator, FormatChecker, validate
 from jsonschema import ValidationError as SchemaValidationError
-from jsonschema import validate
 from pydantic import ValidationError
 
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataDefValidationError
@@ -118,10 +118,11 @@ class InvoiceValidator:
         except SchemaValidationError:
             raise InvoiceSchemaValidationError("Error in validating system standard item in invoice.schema.json")
 
-        try:
-            validate(instance=data, schema=self.schema)
-        except SchemaValidationError as e:
-            raise InvoiceSchemaValidationError(f"Error in validating invoice.schema.json: {e.message}")
+        validator = Draft7Validator(self.schema, format_checker=FormatChecker())
+        errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
+        for error in errors:
+            print(error.message)
+            raise InvoiceSchemaValidationError("Error in validating invoice.schema.json")
 
         return data
 
@@ -204,3 +205,18 @@ def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):
         validator.validate(path=path)
     except ValidationError:
         raise InvoiceSchemaValidationError()
+
+
+if __name__ == "__main__":
+    schema_path = Path("tests/samplefile/invoice.schema.json")
+    invoice_path = Path("tests/samplefile/invoice.json")
+    if not schema_path.exists():
+        raise FileNotFoundError(f"File not found: {schema_path}")
+    iv = InvoiceValidator(schema_path)
+    try:
+        # import cerberus
+        # vc = cerberus.Validator(read_from_json_file(schema_path))
+        # v.validate(read_from_json_file(invoice_path))
+        iv.validate(path=invoice_path)
+    except Exception as e:
+        print(e)
