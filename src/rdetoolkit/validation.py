@@ -159,7 +159,6 @@ class InvoiceValidator:
             - The modifications are temporary and only affect the current instance of the schema.
             - If the 'sample' property does not exist in the schema, the method returns the original schema without any modifications.
         """
-        rule_keyword = "oneOf"
         if not self.schema.get("properties", {}).get("sample", {}):
             return self.schema
 
@@ -167,15 +166,17 @@ class InvoiceValidator:
         if __generalattr_item:
             __ref = self.schema["properties"]["sample"]["properties"]["generalAttributes"]
             __temp_generalattr_item = copy.deepcopy(__ref)
-            __ref["items"] = {}
-            __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
+            __ref["prefixItems"] = __temp_generalattr_item["items"]
+            del __ref["items"]
+            # __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
 
         __specificattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("specificAttributes")
         if __specificattr_item:
             __ref = self.schema["properties"]["sample"]["properties"]["specificAttributes"]
             __temp_specificattr_item = copy.deepcopy(__ref)
-            __ref["items"] = {}
-            __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
+            __ref["prefixItems"] = __temp_specificattr_item["items"]
+            del __ref["items"]
+            # __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
 
 
 def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):
