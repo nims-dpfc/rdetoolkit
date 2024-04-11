@@ -9,10 +9,10 @@
         "description": null
     },
     "custom": {
-        "sample1": "2023/01/01",
+        "sample1": "2023-01-01",
         "sample2": 1.0,
         "sample3": 1,
-        "sample4": "20:20:39+00:00",
+        "sample4": "20:20:39",
         "sample5": "https://sample.co",
         "sample6": "1d8008a5-b8f0-410b-a230-d058129822df",
         "sample7": "#h1",
