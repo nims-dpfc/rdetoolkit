@@ -11,10 +11,9 @@ from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, MetaProperty, La
 @pytest.fixture
 def invoice_schema_json_full():
     parent_path = Path(__file__).parent
-    test_invoice_schema_json = Path(parent_path, "samplefile", "invoice.schema.json")
+    test_invoice_schema_json = Path(parent_path, "samplefile", "invoice.schema.full.json")
     with open(test_invoice_schema_json) as f:
         data = json.load(f)
-
     yield data
 
 
@@ -24,7 +23,33 @@ def invoice_schema_json_none_sample():
     test_invoice_schema_json = Path(parent_path, "samplefile", "invoice.schema_none_sample.json")
     with open(test_invoice_schema_json) as f:
         data = json.load(f)
+    yield data
 
+
+@pytest.fixture
+def invoice_schema_json_none_custom():
+    parent_path = Path(__file__).parent
+    test_invoice_schema_json = Path(parent_path, "samplefile", "invoice.schema_none_custom.json")
+    with open(test_invoice_schema_json) as f:
+        data = json.load(f)
+    yield data
+
+
+@pytest.fixture
+def invoice_schema_json_none_generalAttributes():
+    parent_path = Path(__file__).parent
+    test_invoice_schema_json = Path(parent_path, "samplefile", "invoice.schema_none_generalAttributes.json")
+    with open(test_invoice_schema_json) as f:
+        data = json.load(f)
+    yield data
+
+
+@pytest.fixture
+def invoice_schema_json_none_specificAttributes():
+    parent_path = Path(__file__).parent
+    test_invoice_schema_json = Path(parent_path, "samplefile", "invoice.schema_none_specificAttributes.json")
+    with open(test_invoice_schema_json) as f:
+        data = json.load(f)
     yield data
 
 
@@ -39,6 +64,24 @@ def test_invoice_scheam_json_none_sample(invoice_schema_json_none_sample):
     with pytest.raises(ValidationError) as e:
         _ = InvoiceSchemaJson(**invoice_schema_json_none_sample)
     assert "Value error, sample is required but is None" in str(e.value)
+
+
+def test_invoice_scheam_json_none_custom(invoice_schema_json_none_custom):
+    """Test case for creating an InvoiceSchemaJson object with None custom fields."""
+    obj = InvoiceSchemaJson(**invoice_schema_json_none_custom)
+    assert isinstance(obj, InvoiceSchemaJson)
+
+
+def test_invoice_scheam_json_none_generalAttributes(invoice_schema_json_none_generalAttributes):
+    """Test case for creating an InvoiceSchemaJson object with None generalAttributes."""
+    obj = InvoiceSchemaJson(**invoice_schema_json_none_generalAttributes)
+    assert isinstance(obj, InvoiceSchemaJson)
+
+
+def test_invoice_scheam_json_none_specificAttributes(invoice_schema_json_none_specificAttributes):
+    """Test case for creating an InvoiceSchemaJson object with None specificAttributes."""
+    obj = InvoiceSchemaJson(**invoice_schema_json_none_specificAttributes)
+    assert isinstance(obj, InvoiceSchemaJson)
 
 
 def test_oprions_textare_row():
@@ -77,14 +120,3 @@ def test_create_invoice_schema_json():
         properties=Properties()
     )
     assert isinstance(obj.model_dump_json(), str)
-
-
-if __name__ == "__main__":
-
-    from cerberus import Validator
-    with open("tests/samplefile/invoice.schema.json", encoding='utf-8') as f:
-        obj = json.load(f)
-    schema_obj = InvoiceSchemaJson(**obj)
-    obj_ = json.loads(schema_obj.model_dump_json())
-    v = Validator(obj_)
-    print(v)

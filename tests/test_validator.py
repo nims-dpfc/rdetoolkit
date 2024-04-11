@@ -3,10 +3,9 @@ import shutil
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
-from rdetoolkit.models.metadata import MetadataDefItem
-from rdetoolkit.validation import metadata_def_json_validator
+from rdetoolkit.validation import InvoiceValidator, MetadataDefValidator
+from rdetoolkit.exceptions import MetadataDefValidationError
 
 
 @pytest.fixture
@@ -89,25 +88,29 @@ def invalid_json_file():
 
 
 def test_metadata_def_json_validation(json_file):
-    obj = metadata_def_json_validator(path=json_file)
-    assert isinstance(obj, MetadataDefItem)
+    instance = MetadataDefValidator()
+    obj = instance.validate(path=json_file)
+    assert isinstance(obj, dict)
 
 
 def test_invliad_metadata_def_json_validation(invalid_json_file):
-    with pytest.raises(ValidationError):
-        metadata_def_json_validator(path=invalid_json_file)
+    with pytest.raises(MetadataDefValidationError):
+        instance = MetadataDefValidator()
+        _ = instance.validate(path=invalid_json_file)
 
 
 def test_none_argments_metadata_def_json_validation():
     with pytest.raises(ValueError) as e:
-        metadata_def_json_validator()
+        instance = MetadataDefValidator()
+        _ = instance.validate()
     assert str(e.value) == "At least one of 'path' or 'json_obj' must be provided"
 
 
 def test_two_argments_metadata_def_json_validation(invalid_json_file):
     data = {}
     with pytest.raises(ValueError) as e:
-        metadata_def_json_validator(path=invalid_json_file, json_obj=data)
+        instance = MetadataDefValidator()
+        _ = instance.validate(path=invalid_json_file, json_obj=data)
     assert str(e.value) == "Both 'path' and 'json_obj' cannot be provided at the same time"
 
 
@@ -158,17 +161,41 @@ def test_char_too_long_metadata_def_json_validation(case, longchar):
         ]
     }
 
+    instance = MetadataDefValidator()
     if case == 'success':
-        obj = metadata_def_json_validator(json_obj=json_data)
-        assert isinstance(obj, MetadataDefItem)
+        obj = instance.validate(json_obj=json_data)
+        assert isinstance(obj, dict)
     else:
-        with pytest.raises(ValidationError) as e:
-            metadata_def_json_validator(json_obj=json_data)
-        assert e.value.errors()[0]["msg"] == "Value error, Value size exceeds 1024 bytes"
+        with pytest.raises(MetadataDefValidationError) as e:
+            obj = instance.validate(json_obj=json_data)
+        assert "Value error, Value size exceeds 1024 bytes" in str(e.value)
 
 
-if __name__ == "__main__":
-    import os
-    os.chdir(os.path.dirname(__file__))
-    test_json = "metadata.json"
-    metadata_def_json_validator(path=test_json)
+@pytest.fixture
+def validator_instance():
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    yield InvoiceValidator(schema_path)
+
+
+def test_validate_none_path_obj():
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    iv = InvoiceValidator(schema_path)
+
+    with pytest.raises(ValueError) as e:
+        iv.validate()
+    assert str(e.value) == "At least one of 'path' or 'obj' must be provided"
+
+
+def test_validate_both_path_obj():
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    iv = InvoiceValidator(schema_path)
+
+    with pytest.raises(ValueError) as e:
+        iv.validate(obj={}, path="dummy")
+    assert str(e.value) == "Both 'path' and 'obj' cannot be provided at the same time"
+
+
+def test_validate_json(validator_instance):
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice.json")
+    obj = validator_instance.validate(path=invoice_path)
+    assert isinstance(obj, dict)
