@@ -10,6 +10,7 @@ from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, apply_default_filename_mapping_rule, update_description_with_features
 from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.rde2util import read_from_json_file
+from rdetoolkit.validation import invoice_validate, metadata_def_validate
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
@@ -53,6 +54,13 @@ def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     except Exception:
         pass
 
+    # validate metadata-def.json
+    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+
+    # validate metadata-def.json
+    schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
+    invoice_validate(invoice_dst_filepath, schema_path)
+
 
 def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
     """Processes multiple source files and applies transformations using the provided callback function.
@@ -94,6 +102,13 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
     except Exception:
         pass
+
+    # validate metadata-def.json
+    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+
+    # validate metadata-def.json
+    schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
+    invoice_validate(invoice_dst_filepath, schema_path)
 
 
 def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None):
@@ -156,6 +171,13 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
     except Exception:
         pass
 
+    # validate metadata-def.json
+    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+
+    # validate metadata-def.json
+    schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
+    invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
+
 
 def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None):
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
@@ -193,6 +215,13 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
         update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
     except Exception:
         pass
+
+    # validate metadata-def.json
+    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+
+    # validate metadata-def.json
+    schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
+    invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
 
 def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath):
