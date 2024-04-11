@@ -47,11 +47,34 @@ class MetadataDefValidator:
         else:
             raise ValueError("Unexpected error")
 
-        try:
-            MetadataDefItem(**__data)
-        except ValidationError as e:
-            raise MetadataDefValidationError(f"Error in validating metadata_def.json: {e}")
+        MetadataDefItem(**__data)
         return __data
+
+
+def metadata_def_validate(path: Union[str, Path]):
+    """Validate metadata-def.json file.
+
+    This function validates the metadata definition file specified by the given path.
+    It checks if the file exists and then uses a validator to validate the file against a schema.
+
+    Args:
+        path (Union[str, Path]): The path to the metadata definition file.
+
+    Raises:
+        FileNotFoundError: If the schema and path do not exist.
+        MetadataDefValidationError: If there is an error in validating the metadata definition file.
+    """
+    if isinstance(path, str):
+        path = Path(path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"The schema and path do not exist: {path.name}")
+
+    validator = MetadataDefValidator()
+    try:
+        validator.validate(path=path)
+    except ValidationError as e:
+        raise MetadataDefValidationError(f"Error in validating metadata_def.json: {e}")
 
 
 class InvoiceValidator:
@@ -92,8 +115,8 @@ class InvoiceValidator:
             basic_info = json.load(f)
         try:
             validate(instance=data, schema=basic_info)
-        except SchemaValidationError as e:
-            raise InvoiceSchemaValidationError(f"Error in validating system standard item in 'invoice.schema.json': {e}")
+        except SchemaValidationError:
+            raise InvoiceSchemaValidationError("Error in validating system standard item in invoice.schema.json")
 
         try:
             validate(instance=data, schema=self.schema)
@@ -116,7 +139,6 @@ class InvoiceValidator:
         if __path.name == "invoice.schema.json":
             try:
                 InvoiceSchemaJson(**data)
-                self.other_schema = InvoiceSchemaJson.model_json_schema()
             except ValidationError:
                 raise InvoiceSchemaValidationError("Error in schema validation")
             except ValueError:
@@ -153,3 +175,32 @@ class InvoiceValidator:
             __temp_specificattr_item = copy.deepcopy(__ref)
             __ref["items"] = {}
             __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
+
+
+def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):
+    """invoice.json validation function.
+
+    Args:
+        path (Union[str, Path]): invoice.json file path
+        schema (Union[str, Path]): invoice.schema.json file path
+
+    Raises:
+        FileNotFoundError: If the provided schema file does not exist.
+        FileNotFoundError: If the provided invoice.json file does not exist.
+        InvoiceSchemaValidationError: If the invoice.json file fails to validate against the schema.
+    """
+    if isinstance(schema, str):
+        schema = Path(schema)
+    if isinstance(path, str):
+        path = Path(path)
+
+    if not schema.exists():
+        raise FileNotFoundError(f"The schema and path do not exist: {schema.name}")
+    if not path.exists():
+        raise FileNotFoundError(f"The schema and path do not exist: {path.name}")
+
+    validator = InvoiceValidator(schema)
+    try:
+        validator.validate(path=path)
+    except ValidationError:
+        raise InvoiceSchemaValidationError()
