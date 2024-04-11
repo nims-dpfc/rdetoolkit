@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ from pydantic import ValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataDefValidationError
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson
 from rdetoolkit.models.metadata import MetadataDefItem
+from rdetoolkit.rde2util import read_from_json_file
 
 
 class MetadataDefValidator:
@@ -90,6 +92,26 @@ class InvoiceValidator:
     def __init__(self, schema_path: Union[str, Path]):
         self.schema_path = schema_path
         self.schema = self.__pre_validate()
+        self.__temporarily_modify_json_schema()
+
+    def __temporarily_modify_json_schema(self):
+        rule_keyword = "oneOf"
+        if not self.schema.get("properties", {}).get("sample", {}):
+            return self.schema
+
+        __generalattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("generalAttributes")
+        if __generalattr_item:
+            __ref = self.schema["properties"]["sample"]["properties"]["generalAttributes"]
+            __temp_generalattr_item = copy.deepcopy(__ref)
+            __ref["items"] = {}
+            __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
+
+        __specificattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("specificAttributes")
+        if __specificattr_item:
+            __ref = self.schema["properties"]["sample"]["properties"]["specificAttributes"]
+            __temp_specificattr_item = copy.deepcopy(__ref)
+            __ref["items"] = {}
+            __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
 
     def __pre_validate(self) -> dict[str, Any]:
         if isinstance(self.schema_path, str):
@@ -100,14 +122,16 @@ class InvoiceValidator:
         if __path.suffix != ".json":
             raise ValueError("The schema file must be a json file")
 
-        with open(__path, encoding="utf-8") as f:
-            data = json.load(f)
+        data = read_from_json_file(__path)
 
         if __path.name == "invoice.schema.json":
             try:
                 InvoiceSchemaJson(**data)
-            except Exception:
-                raise ValidationError("Error in schema validation")
+                self.other_schema = InvoiceSchemaJson.model_json_schema()
+            except ValidationError:
+                raise InvoiceSchemaValidationError("Error in schema validation")
+            except ValueError:
+                raise InvoiceSchemaValidationError("Error in schema validation")
             return data
         else:
             return data
@@ -132,9 +156,10 @@ class InvoiceValidator:
             raise ValueError("Both 'path' and 'obj' cannot be provided at the same time")
 
         if path is not None:
-            with open(path, encoding="utf-8") as f:
-                data = json.load(f)
+            data = read_from_json_file(path)
         else:
+            if obj is None:
+                raise ValueError("Unexpected error")
             data = obj
 
         with open(self.pre_basic_info_schema, encoding="utf-8") as f:
@@ -150,3 +175,15 @@ class InvoiceValidator:
             raise InvoiceSchemaValidationError(f"Error in validating invoice.schema.json: {e.message}")
 
         return data
+
+
+if __name__ == "__main__":
+    schema_path = Path("tests/samplefile/invoice.schema.json")
+    invoice_path = Path("tests/samplefile/invoice.json")
+    if not schema_path.exists():
+        raise FileNotFoundError(f"File not found: {schema_path}")
+    iv = InvoiceValidator(schema_path)
+    try:
+        iv.validate(path=invoice_path)
+    except Exception as e:
+        print(e)
