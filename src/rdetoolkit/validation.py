@@ -54,38 +54,6 @@ class MetadataDefValidator:
         return __data
 
 
-def validator(*, path: Optional[str] = None, json_obj: Optional[dict[str, Any]] = None) -> "MetadataDefItem":
-    """Validator for metadata_def.json.
-
-    Args:
-        path (str, optional): File path of metadata_def.json. Defaults to None.
-        json_obj (dict[str, Any], optional): Json Object of metadata_def.json. Defaults to None.
-
-    Retrun:
-        MetadataDefItem: The validated metadata_def.json object.
-
-    Raises:
-        ValueError: If neither 'path' nor 'json_obj' is provided, or if both are provided.
-
-    Note:
-        Either 'path' or 'json_obj' must be provided, but not both.
-    """
-    if path is None and json_obj is None:
-        raise ValueError("At least one of 'path' or 'json_obj' must be provided")
-    elif path is not None and json_obj is not None:
-        raise ValueError("Both 'path' and 'json_obj' cannot be provided at the same time")
-
-    if path is not None:
-        with open(path, encoding="utf-8") as f:
-            __data = json.load(f)
-    elif json_obj is not None:
-        __data = json_obj
-    else:
-        raise ValueError("Unexpected error")
-
-    return MetadataDefItem(**__data)
-
-
 class InvoiceValidator:
     pre_basic_info_schema = os.path.join(os.path.dirname(__file__), "static", "invoice_basic_and_sample.schema_.json")
 
@@ -93,48 +61,6 @@ class InvoiceValidator:
         self.schema_path = schema_path
         self.schema = self.__pre_validate()
         self.__temporarily_modify_json_schema()
-
-    def __temporarily_modify_json_schema(self):
-        rule_keyword = "oneOf"
-        if not self.schema.get("properties", {}).get("sample", {}):
-            return self.schema
-
-        __generalattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("generalAttributes")
-        if __generalattr_item:
-            __ref = self.schema["properties"]["sample"]["properties"]["generalAttributes"]
-            __temp_generalattr_item = copy.deepcopy(__ref)
-            __ref["items"] = {}
-            __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
-
-        __specificattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("specificAttributes")
-        if __specificattr_item:
-            __ref = self.schema["properties"]["sample"]["properties"]["specificAttributes"]
-            __temp_specificattr_item = copy.deepcopy(__ref)
-            __ref["items"] = {}
-            __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
-
-    def __pre_validate(self) -> dict[str, Any]:
-        if isinstance(self.schema_path, str):
-            __path = Path(self.schema_path)
-        else:
-            __path = self.schema_path
-
-        if __path.suffix != ".json":
-            raise ValueError("The schema file must be a json file")
-
-        data = read_from_json_file(__path)
-
-        if __path.name == "invoice.schema.json":
-            try:
-                InvoiceSchemaJson(**data)
-                self.other_schema = InvoiceSchemaJson.model_json_schema()
-            except ValidationError:
-                raise InvoiceSchemaValidationError("Error in schema validation")
-            except ValueError:
-                raise InvoiceSchemaValidationError("Error in schema validation")
-            return data
-        else:
-            return data
 
     def validate(self, *, path: Optional[Union[str, Path]] = None, obj: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Validate the provided JSON data against the schema.
@@ -176,14 +102,54 @@ class InvoiceValidator:
 
         return data
 
+    def __pre_validate(self) -> dict[str, Any]:
+        if isinstance(self.schema_path, str):
+            __path = Path(self.schema_path)
+        else:
+            __path = self.schema_path
 
-if __name__ == "__main__":
-    schema_path = Path("tests/samplefile/invoice.schema.json")
-    invoice_path = Path("tests/samplefile/invoice.json")
-    if not schema_path.exists():
-        raise FileNotFoundError(f"File not found: {schema_path}")
-    iv = InvoiceValidator(schema_path)
-    try:
-        iv.validate(path=invoice_path)
-    except Exception as e:
-        print(e)
+        if __path.suffix != ".json":
+            raise ValueError("The schema file must be a json file")
+
+        data = read_from_json_file(__path)
+
+        if __path.name == "invoice.schema.json":
+            try:
+                InvoiceSchemaJson(**data)
+                self.other_schema = InvoiceSchemaJson.model_json_schema()
+            except ValidationError:
+                raise InvoiceSchemaValidationError("Error in schema validation")
+            except ValueError:
+                raise InvoiceSchemaValidationError("Error in schema validation")
+            return data
+        else:
+            return data
+
+    def __temporarily_modify_json_schema(self):
+        """Temporarily modifies the structure of the schema to validate invoice.json using invoice.schema.json.
+
+        This method modifies the 'generalAttributes' and 'specificAttributes' sections of the schema by replacing
+        the 'items' with a new dictionary that has 'oneOf' as the key and the original 'items' as the value.
+        This allows the schema to validate invoice.json using invoice.schema.json.
+
+        Note:
+            - The modifications are temporary and only affect the current instance of the schema.
+            - If the 'sample' property does not exist in the schema, the method returns the original schema without any modifications.
+        """
+        rule_keyword = "oneOf"
+        if not self.schema.get("properties", {}).get("sample", {}):
+            return self.schema
+
+        __generalattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("generalAttributes")
+        if __generalattr_item:
+            __ref = self.schema["properties"]["sample"]["properties"]["generalAttributes"]
+            __temp_generalattr_item = copy.deepcopy(__ref)
+            __ref["items"] = {}
+            __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
+
+        __specificattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("specificAttributes")
+        if __specificattr_item:
+            __ref = self.schema["properties"]["sample"]["properties"]["specificAttributes"]
+            __temp_specificattr_item = copy.deepcopy(__ref)
+            __ref["items"] = {}
+            __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
