@@ -3,9 +3,10 @@ import shutil
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
-from rdetoolkit.validation import InvoiceValidator, MetadataDefValidator
-from rdetoolkit.exceptions import MetadataDefValidationError
+from rdetoolkit.validation import InvoiceValidator, MetadataDefValidator, invoice_validate, metadata_def_validate
+from rdetoolkit.exceptions import MetadataDefValidationError, InvoiceSchemaValidationError
 
 
 @pytest.fixture
@@ -100,7 +101,7 @@ def test_metadata_def_empty_json_validation():
 
 
 def test_invliad_metadata_def_json_validation(invalid_metadata_def_json_file):
-    with pytest.raises(MetadataDefValidationError):
+    with pytest.raises(ValidationError):
         instance = MetadataDefValidator()
         _ = instance.validate(path=invalid_metadata_def_json_file)
 
@@ -172,7 +173,7 @@ def test_char_too_long_metadata_def_json_validation(case, longchar):
         obj = instance.validate(json_obj=json_data)
         assert isinstance(obj, dict)
     else:
-        with pytest.raises(MetadataDefValidationError) as e:
+        with pytest.raises(ValueError) as e:
             obj = instance.validate(json_obj=json_data)
         assert "Value error, Value size exceeds 1024 bytes" in str(e.value)
 
@@ -205,3 +206,56 @@ def test_validate_json(validator_instance):
     invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice.json")
     obj = validator_instance.validate(path=invoice_path)
     assert isinstance(obj, dict)
+
+
+def test_metadata_def_validate(metadata_def_json_file):
+    metadata_def_validate(metadata_def_json_file)
+
+
+def test_invalid_metadata_def_validate(invalid_metadata_def_json_file):
+    with pytest.raises(MetadataDefValidationError) as e:
+        metadata_def_validate(invalid_metadata_def_json_file)
+    assert "Error in validating metadata_def.json" in str(e.value)
+
+
+def test_invoice_path_metadata_def_validate():
+    path = "dummy.metadata-def.json"
+    with pytest.raises(FileNotFoundError) as e:
+        metadata_def_validate(path)
+    assert "The schema and path do not exist" in str(e.value)
+
+
+def test_invoice_validate():
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice.json")
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    invoice_validate(invoice_path, schema_path)
+
+
+def test_invalid_invoice_validate():
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid.json")
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    with pytest.raises(InvoiceSchemaValidationError) as e:
+        invoice_validate(invoice_path, schema_path)
+    assert "Error in validating invoice.schema.json: None is not of type 'string'" == str(e.value)
+
+
+def test_invalid_basic_info_invoice_validate():
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid_none_basic.json")
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    with pytest.raises(InvoiceSchemaValidationError) as e:
+        invoice_validate(invoice_path, schema_path)
+    assert "Error in validating system standard item in invoice.schema.json" in str(e.value)
+
+
+def test_invalid_filepath_invoice_json():
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid_none_basic.json")
+    schema_path = "dummy_invoice.schema.json"
+    with pytest.raises(FileNotFoundError) as e:
+        invoice_validate(invoice_path, schema_path)
+    assert "The schema and path do not exist" in str(e.value)
+
+    invoice_path = "dummy_invoice.json"
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    with pytest.raises(FileNotFoundError) as e:
+        invoice_validate(invoice_path, schema_path)
+    assert "The schema and path do not exist" in str(e.value)
