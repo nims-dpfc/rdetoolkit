@@ -74,7 +74,7 @@ class MetaProperty(BaseModel):
     label: LangLabels
     value_type: Literal["boolean", "integer", "number", "string"] = Field(..., alias="type")
     description: Optional[str] = Field(default=None)
-    examples: Optional[Union[bool, int, float, str]] = Field(default=None)
+    examples: Optional[list[Union[bool, int, float, str]]] = Field(default=None)
     default: Optional[Union[bool, int, float, str]] = Field(default=None)
     const: Optional[Union[bool, int, float, str]] = Field(default=None)
     enum: Optional[list[Union[bool, int, float, str]]] = Field(default=None)
@@ -256,18 +256,12 @@ class SamplePropertiesWhenAdding(BaseModel):
     specificAttributes: Optional[SpecificAttribute] = Field(default=None, alias="specificAttributes")
 
 
-class SamplePropertiesRef(BaseModel):
+class SampleProperties(BaseModel):
     """Represents the properties of a sample.
 
     `properties.sample.properties` is an instance of this class.
     """
 
-    sampleId: Optional[str] = Field(default=None, alias="sampleId")
-    names: Optional[list] = Field(default=None)
-    ownerId: str = Field(pattern="^([0-9a-zA-Z]{56})$", description="sample ownere id", alias="ownerId")
-    composition: Optional[str] = Field(default=None, alias="composition")
-    referenceUrl: Optional[str] = Field(default=None, alias="referenceUrl")
-    description: Optional[str] = Field(default=None, alias="description")
     generalAttributes: Optional[GeneralAttribute] = Field(default=None, alias="generalAttributes")
     specificAttributes: Optional[SpecificAttribute] = Field(default=None, alias="specificAttributes")
 
@@ -281,7 +275,7 @@ class SampleField(BaseModel):
     obj_type: Literal["object"] = Field(..., alias="type")
     label: LangLabels
     required: list[Literal["names", "sampleId"]] = Field(default=["names", "sampleId"])
-    properties: Union[SamplePropertiesRef, SamplePropertiesWhenAdding]
+    properties: SampleProperties
 
 
 class BasicItems(BaseModel):
@@ -345,7 +339,7 @@ class InvoiceSchemaJson(BaseModel):
     schema_id: str = Field(default="https://rde.nims.go.jp/rde/dataset-templates/", alias="$id")
     description: Optional[str] = Field(default=None)
     value_type: Literal["object"] = Field(default="object", alias="type")
-    required: Optional[list[Literal["custom", "sample", "basic", "datasetId"]]] = Field(default=None)
+    required: Optional[list[Literal["custom", "sample"]]] = Field(default=None)
     properties: Properties
 
     @model_validator(mode="after")
