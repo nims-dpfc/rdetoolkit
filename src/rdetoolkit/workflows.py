@@ -14,7 +14,7 @@ from typing import Generator, Optional
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoiceFile import backup_invoice_json_files
-from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.models.rde2types import RawFiles, RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process, invoice_mode_process, multifile_mode_process, rdeformat_mode_process, selected_input_checker
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
@@ -22,7 +22,7 @@ from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
 
 
-def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tuple[list[tuple[Path, ...]], Optional[Path]]:
+def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tuple[RawFiles, Optional[Path]]:
     """Classify input files to determine if the input pattern is appropriate.
 
     1. Invoice
@@ -72,7 +72,7 @@ def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tup
     return rawfiles, excelinvoice
 
 
-def generate_folder_paths_iterator(raw_files_group: list[tuple[Path, ...]], invoice_org_filepath: Path, invoice_schema_filepath: Path) -> Generator[RdeOutputResourcePath, None, None]:
+def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepath: Path, invoice_schema_filepath: Path) -> Generator[RdeOutputResourcePath, None, None]:
     """Generates iterator for RDE output folder paths.
 
     Create data folders for registration in the RDE system.
@@ -112,6 +112,7 @@ def generate_folder_paths_iterator(raw_files_group: list[tuple[Path, ...]], invo
             invoice_schema_json=invoice_schema_filepath,
             invoice_org=invoice_org_filepath,
             temp=StorageDir.get_specific_outputdir(True, "temp", idx),
+            nonshared_raw=StorageDir.get_specific_outputdir(True, "nonshared_raw", idx),
         )
         yield rdeoutput_resource_path
 
