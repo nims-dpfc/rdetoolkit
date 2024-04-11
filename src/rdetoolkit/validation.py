@@ -18,11 +18,11 @@ class MetadataDefValidator:
     def __init__(self) -> None:
         self.schema = MetadataDefItem
 
-    def validate(self, *, path: Optional[str] = None, json_obj: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    def validate(self, *, path: Optional[Union[str, Path]] = None, json_obj: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Validates the provided JSON data against the MetadataDefItem schema.
 
         Args:
-            path (str, optional): The path to the JSON file to be validated. Defaults to None.
+            path (Union[str, Path], optional): The path to the JSON file to be validated. Defaults to None.
             json_obj (dict[str, Any], optional): The JSON object to be validated. Defaults to None.
 
         Returns:
