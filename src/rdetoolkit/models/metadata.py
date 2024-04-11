@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel, RootModel, field_validator
+from pydantic import BaseModel, Field, RootModel, field_validator
 
 
 class Variable(BaseModel):
@@ -67,5 +67,5 @@ class ValidableItems(RootModel):
 class MetadataDefItem(BaseModel):
     """metadata-def.json class."""
 
-    constant: dict[str, MetaValue]
-    variable: ValidableItems
+    constant: Optional[dict[str, MetaValue]] = Field(default=None)
+    variable: ValidableItems = Field(default=None)
