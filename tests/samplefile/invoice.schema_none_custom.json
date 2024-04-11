@@ -4,123 +4,9 @@
     "description": "RDEデータセットテンプレートサンプル固有情報invoice",
     "type": "object",
     "required": [
-        "custom",
         "sample"
     ],
     "properties": {
-        "custom": {
-            "type": "object",
-            "label": {
-                "ja": "固有情報",
-                "en": "Custom Information"
-            },
-            "required": [
-                "sample1",
-                "sample2"
-            ],
-            "properties": {
-                "sample1": {
-                    "label": {
-                        "ja": "サンプル１",
-                        "en": "sample1"
-                    },
-                    "type": "string",
-                    "format": "date",
-                    "options": {
-                        "unit": "A"
-                    }
-                },
-                "sample2": {
-                    "label": {
-                        "ja": "サンプル２",
-                        "en": "sample2"
-                    },
-                    "type": "number",
-                    "options": {
-                        "unit": "b"
-                    }
-                },
-                "sample3": {
-                    "label": {
-                        "ja": "サンプル３",
-                        "en": "sample3"
-                    },
-                    "type": "integer",
-                    "options": {
-                        "unit": "c",
-                        "placeholder": {
-                            "ja": "Please Enter text",
-                            "en": "Please Enter text"
-                        }
-                    }
-                },
-                "sample4": {
-                    "label": {
-                        "ja": "サンプル４",
-                        "en": "sample4"
-                    },
-                    "type": "string",
-                    "format": "time"
-                },
-                "sample5": {
-                    "label": {
-                        "ja": "サンプル５",
-                        "en": "sample5"
-                    },
-                    "type": "string",
-                    "format": "uri"
-                },
-                "sample6": {
-                    "label": {
-                        "ja": "サンプル６",
-                        "en": "sample6"
-                    },
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "sample7": {
-                    "label": {
-                        "ja": "サンプル７",
-                        "en": "sample7"
-                    },
-                    "type": "string",
-                    "format": "markdown"
-                },
-                "sample8": {
-                    "label": {
-                        "ja": "サンプル８",
-                        "en": "sample8"
-                    },
-                    "type": "string",
-                    "description": "select item",
-                    "examples": ["S8"],
-                    "default": "S8",
-                    "enum": [
-                        "itemA",
-                        "itemB",
-                        "itemC",
-                        "itemD",
-                        "itemE"
-                    ]
-                },
-                "sample9": {
-                    "label": {
-                        "ja": "サンプル９",
-                        "en": "sample9"
-                    },
-                    "type": "string"
-                },
-                "sample10": {
-                    "label": {
-                        "ja": "サンプル１０",
-                        "en": "sample10"
-                    },
-                    "type": "string",
-                    "default": "S10",
-                    "const": "S10"
-                }
-            }
-        },
         "sample": {
             "type": "object",
             "label": {
@@ -160,7 +46,7 @@
                             ],
                             "properties": {
                                 "termId": {
-                                    "const": "efcf34e7-4308-c195-6691-6f4d28ffc9bb"
+                                    "const": "7cc57dfb-8b70-4b3a-5315-fbce4cbf73d0"
                                 }
                             }
                         },

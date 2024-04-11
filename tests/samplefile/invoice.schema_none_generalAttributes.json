@@ -26,9 +26,20 @@
                     },
                     "type": "string",
                     "format": "date",
+                    "description": "AAA",
+                    "examples": ["S1"],
+                    "default": "S1",
+                    "const": "A1",
                     "options": {
-                        "unit": "A"
-                    }
+                        "unit": "A",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    },
+                    "maxLength": 10000,
+                    "minLength": 1000,
+                    "pattern": "sdvk"
                 },
                 "sample2": {
                     "label": {
@@ -36,9 +47,20 @@
                         "en": "sample2"
                     },
                     "type": "number",
+                    "description": "BB",
+                    "examples": [1.0],
+                    "default": 1.0,
                     "options": {
-                        "unit": "b"
-                    }
+                        "unit": "b",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    },
+                    "maximum": 100.0,
+                    "exclusiveMaximum": 100.0,
+                    "minimum": 100.0,
+                    "exclusiveMinimum": 100.0
                 },
                 "sample3": {
                     "label": {
@@ -46,6 +68,9 @@
                         "en": "sample3"
                     },
                     "type": "integer",
+                    "description": "CC",
+                    "examples": [1],
+                    "default": 1,
                     "options": {
                         "unit": "c",
                         "placeholder": {
@@ -60,7 +85,16 @@
                         "en": "sample4"
                     },
                     "type": "string",
-                    "format": "time"
+                    "format": "time",
+                    "description": "DD",
+                    "examples": ["S4"],
+                    "default": "S4",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 },
                 "sample5": {
                     "label": {
@@ -68,7 +102,17 @@
                         "en": "sample5"
                     },
                     "type": "string",
-                    "format": "uri"
+                    "format": "uri",
+                    "description": "EE",
+                    "examples": ["S5"],
+                    "default": "S5",
+                    "const": "A1",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 },
                 "sample6": {
                     "label": {
@@ -76,7 +120,16 @@
                         "en": "sample6"
                     },
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "FF",
+                    "examples": ["S6"],
+                    "default": "S6",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 },
                 "sample7": {
                     "label": {
@@ -84,7 +137,18 @@
                         "en": "sample7"
                     },
                     "type": "string",
-                    "format": "markdown"
+                    "format": "markdown",
+                    "description": "GG",
+                    "examples": ["S7"],
+                    "default": "S7",
+                    "options": {
+                        "widget": "textarea",
+                        "rows": 10,
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 },
                 "sample8": {
                     "label": {
@@ -92,23 +156,39 @@
                         "en": "sample8"
                     },
                     "type": "string",
-                    "description": "select item",
+                    "description": "HH",
                     "examples": ["S8"],
                     "default": "S8",
                     "enum": [
-                        "itemA",
-                        "itemB",
-                        "itemC",
-                        "itemD",
-                        "itemE"
-                    ]
+                        "A",
+                        "B",
+                        "C",
+                        "D",
+                        "E"
+                    ],
+                    "options": {
+                        "unit": "r",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 },
                 "sample9": {
                     "label": {
                         "ja": "サンプル９",
                         "en": "sample9"
                     },
-                    "type": "string"
+                    "type": "string",
+                    "description": "II",
+                    "examples": ["S9"],
+                    "default": "S9",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 },
                 "sample10": {
                     "label": {
@@ -116,8 +196,15 @@
                         "en": "sample10"
                     },
                     "type": "string",
+                    "description": "JJ",
+                    "examples": ["S10"],
                     "default": "S10",
-                    "const": "S10"
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 }
             }
         },
@@ -128,88 +215,6 @@
                 "en": "Sample Information"
             },
             "properties": {
-                "generalAttributes": {
-                    "type": "array",
-                    "items": [
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e"
-                                }
-                            }
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "e2d20d02-2e38-2cd3-b1b3-66fdb8a11057"
-                                }
-                            }
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "efcf34e7-4308-c195-6691-6f4d28ffc9bb"
-                                }
-                            }
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "1e70d11d-cbdd-bfd1-9301-9612c29b4060"
-                                }
-                            }
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "5e166ac4-bfcd-457a-84bc-8626abe9188f"
-                                }
-                            }
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "0d0417a3-3c3b-496a-b0fb-5a26f8a74166"
-                                }
-                            }
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "termId"
-                            ],
-                            "properties": {
-                                "termId": {
-                                    "const": "efc6a0d5-313e-1871-190c-baaff7d1bf6c"
-                                }
-                            }
-                        }
-                    ]
-                },
                 "specificAttributes": {
                     "type": "array",
                     "items": [

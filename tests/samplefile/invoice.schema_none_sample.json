@@ -27,7 +27,7 @@
                     "type": "string",
                     "format": "date",
                     "description": "AAA",
-                    "examples": "S1",
+                    "examples": ["S1"],
                     "default": "S1",
                     "const": "A1",
                     "options": {
@@ -48,7 +48,7 @@
                     },
                     "type": "number",
                     "description": "BB",
-                    "examples": 1.0,
+                    "examples": [1.0],
                     "default": 1.0,
                     "options": {
                         "unit": "b",
@@ -69,7 +69,7 @@
                     },
                     "type": "integer",
                     "description": "CC",
-                    "examples": 1,
+                    "examples": [1],
                     "default": 1,
                     "options": {
                         "unit": "c",
@@ -87,7 +87,7 @@
                     "type": "string",
                     "format": "time",
                     "description": "DD",
-                    "examples": "S4",
+                    "examples": ["S4"],
                     "default": "S4",
                     "options": {
                         "placeholder": {
@@ -104,7 +104,7 @@
                     "type": "string",
                     "format": "uri",
                     "description": "EE",
-                    "examples": "S5",
+                    "examples": ["S5"],
                     "default": "S5",
                     "const": "A1"
                 }

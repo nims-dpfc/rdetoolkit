@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://rde.nims.go.jp/rde/dataset-templates/dataset_template_custom_sample/invoice.schema.json",
-    "description": "RDEデータセットテンプレートテスト用ファイル",
+    "description": "RDEデータセットテンプレートサンプル固有情報invoice",
     "type": "object",
     "required": [
         "custom",
@@ -27,7 +27,7 @@
                     "type": "string",
                     "format": "date",
                     "description": "AAA",
-                    "examples": "S1",
+                    "examples": ["S1"],
                     "default": "S1",
                     "const": "A1",
                     "options": {
@@ -48,7 +48,7 @@
                     },
                     "type": "number",
                     "description": "BB",
-                    "examples": 1.0,
+                    "examples": [1.0],
                     "default": 1.0,
                     "options": {
                         "unit": "b",
@@ -61,6 +61,150 @@
                     "exclusiveMaximum": 100.0,
                     "minimum": 100.0,
                     "exclusiveMinimum": 100.0
+                },
+                "sample3": {
+                    "label": {
+                        "ja": "サンプル３",
+                        "en": "sample3"
+                    },
+                    "type": "integer",
+                    "description": "CC",
+                    "examples": [1],
+                    "default": 1,
+                    "options": {
+                        "unit": "c",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample4": {
+                    "label": {
+                        "ja": "サンプル４",
+                        "en": "sample4"
+                    },
+                    "type": "string",
+                    "format": "time",
+                    "description": "DD",
+                    "examples": ["S4"],
+                    "default": "S4",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample5": {
+                    "label": {
+                        "ja": "サンプル５",
+                        "en": "sample5"
+                    },
+                    "type": "string",
+                    "format": "uri",
+                    "description": "EE",
+                    "examples": ["S5"],
+                    "default": "S5",
+                    "const": "A1",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample6": {
+                    "label": {
+                        "ja": "サンプル６",
+                        "en": "sample6"
+                    },
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "FF",
+                    "examples": ["S6"],
+                    "default": "S6",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample7": {
+                    "label": {
+                        "ja": "サンプル７",
+                        "en": "sample7"
+                    },
+                    "type": "string",
+                    "format": "markdown",
+                    "description": "GG",
+                    "examples": ["S7"],
+                    "default": "S7",
+                    "options": {
+                        "widget": "textarea",
+                        "rows": 10,
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample8": {
+                    "label": {
+                        "ja": "サンプル８",
+                        "en": "sample8"
+                    },
+                    "type": "string",
+                    "description": "HH",
+                    "examples": ["S8"],
+                    "default": "S8",
+                    "enum": [
+                        "A",
+                        "B",
+                        "C",
+                        "D",
+                        "E"
+                    ],
+                    "options": {
+                        "unit": "r",
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample9": {
+                    "label": {
+                        "ja": "サンプル９",
+                        "en": "sample9"
+                    },
+                    "type": "string",
+                    "description": "II",
+                    "examples": ["S9"],
+                    "default": "S9",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
+                },
+                "sample10": {
+                    "label": {
+                        "ja": "サンプル１０",
+                        "en": "sample10"
+                    },
+                    "type": "string",
+                    "description": "JJ",
+                    "examples": ["S10"],
+                    "default": "S10",
+                    "options": {
+                        "placeholder": {
+                            "ja": "Please Enter text",
+                            "en": "Please Enter text"
+                        }
+                    }
                 }
             }
         },
