@@ -18,7 +18,13 @@ from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoiceFile import readExcelInvoice
-from rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
+from rdetoolkit.models.rde2types import (
+    ExcelInvoicePathList,
+    InputFilesGroup,
+    OtherFilesPathList,
+    RawFiles,
+    ZipFilesPathList,
+)
 
 
 class InvoiceChecker(IInputFileChecker):
@@ -241,7 +247,7 @@ class MultiFileChecker(IInputFileChecker):
         input_files = [f for f in src_dir_input.glob("*")]
         other_files = self._get_group_by_files(input_files)
         _rawfiles: list[Tuple[Path, ...]] = [(f,) for f in other_files]
-        return _rawfiles, None
+        return sorted(_rawfiles, key=lambda path: str(path)), None
 
     def _get_group_by_files(self, input_files: List[Path]) -> OtherFilesPathList:
         excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", "xlsx"] and f.stem.endswith("_excel_invoice")]
