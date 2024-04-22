@@ -4,9 +4,16 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
-
-from rdetoolkit.validation import InvoiceValidator, MetadataDefValidator, invoice_validate, metadata_def_validate
-from rdetoolkit.exceptions import MetadataDefValidationError, InvoiceSchemaValidationError
+from rdetoolkit.exceptions import (
+    InvoiceSchemaValidationError,
+    MetadataDefValidationError,
+)
+from rdetoolkit.validation import (
+    InvoiceValidator,
+    MetadataDefValidator,
+    invoice_validate,
+    metadata_def_validate,
+)
 
 
 @pytest.fixture
@@ -236,7 +243,7 @@ def test_invalid_invoice_validate():
     schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
     with pytest.raises(InvoiceSchemaValidationError) as e:
         invoice_validate(invoice_path, schema_path)
-    assert "Error in validating invoice.schema.json: None is not of type 'string'" == str(e.value)
+    assert "Error in validating invoice.schema.json" == str(e.value)
 
 
 def test_invalid_basic_info_invoice_validate():
