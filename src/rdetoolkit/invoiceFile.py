@@ -21,7 +21,7 @@ import pandas as pd
 
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.models.rde2types import RdeFormatFlags, RdeOutputResourcePath
+from rdetoolkit.models.rde2types import RdeOutputResourcePath
 from rdetoolkit.rde2util import CharDecEncoding, StorageDir
 
 
@@ -430,7 +430,7 @@ class ExcelInvoiceFile:
                     value[item] = None
 
 
-def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: RdeFormatFlags) -> Path:
+def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional[str]) -> Path:
     """Backs up invoice files and retrieves paths based on the mode specified in the input.
 
     For excelinvoice and rdeformat modes, it backs up invoice.json as the original file in the temp directory in multifile mode.
@@ -439,16 +439,18 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], fmt_flags: Rde
 
     Args:
         excel_invoice_file (Optional[Path]): File path for excelinvoice mode
-        fmt_flags (RdeFormatFlags): Object containing mode flags
+        mode (str): mode flags
 
     Returns:
         tuple[Path, Path]: File paths for invoice.json and invoice.schema.json
     """
+    if mode is None:
+        mode = ""
     invoice_org_filepath = StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json")
     if excel_invoice_file is not None:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
         shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
-    elif fmt_flags.is_rdeformat_enabled or fmt_flags.is_multifile_enabled:
+    elif mode in ["rdeformat", "multifile"]:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
         shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
 
