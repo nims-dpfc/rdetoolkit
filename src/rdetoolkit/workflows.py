@@ -12,9 +12,10 @@ import traceback
 from pathlib import Path
 from typing import Generator, Optional
 
+from rdetoolkit.config import Config, find_config_files, parse_config_file
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoiceFile import backup_invoice_json_files
-from rdetoolkit.models.rde2types import RawFiles, RdeFormatFlags, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process, invoice_mode_process, multifile_mode_process, rdeformat_mode_process, selected_input_checker
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
@@ -22,7 +23,7 @@ from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
 
 
-def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tuple[RawFiles, Optional[Path]]:
+def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[RawFiles, Optional[Path]]:
     """Classify input files to determine if the input pattern is appropriate.
 
     1. Invoice
@@ -66,7 +67,9 @@ def check_files(srcpaths: RdeInputDirPaths, *, fmt_flags: RdeFormatFlags) -> tup
         excelinvoice: /data/temp/<registered_files>
     """
     out_dir_temp = StorageDir.get_specific_outputdir(True, "temp")
-    input_checker = selected_input_checker(srcpaths, out_dir_temp, fmt_flags)
+    if mode is None:
+        mode = ""
+    input_checker = selected_input_checker(srcpaths, out_dir_temp, mode)
     rawfiles, excelinvoice = input_checker.parse(srcpaths.inputdata)
 
     return rawfiles, excelinvoice
@@ -117,18 +120,23 @@ def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepa
         yield rdeoutput_resource_path
 
 
-def run(*, custom_dataset_function: Optional[_CallbackType] = None):  # pragma: no cover
+def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Optional[Config] = None):  # pragma: no cover
     """RDE Structuring Processing Function.
 
-    If you want to implement custom processing for the input data, please pass a user-defined function as an argument.
-    The function passed as an argument should accept the data class RdeInputDirPaths, parsed internally by RDE,
-    and the data class RdeOutputResourcePath, which stores the output directory paths used by RDE.
+    This function executes the structuring process for RDE data. If you want to implement custom processing for the input data,
+    you can pass a user-defined function as an argument. The function should accept the data class `RdeInputDirPaths`, which is
+    internally parsed by RDE, and the data class `RdeOutputResourcePath`, which stores the output directory paths used by RDE.
 
     Args:
         custom_dataset_function (Optional[_CallbackType], optional): User-defined structuring function. Defaults to None.
+        config (Optional[Config], optional): Configuration class for the structuring process. If not specified, default values are loaded automatically. Defaults to None.
+
+    Note:
+        If `extendeds_mode` is specified, the evaluation of the execution mode is performed in the order of `extendeds_mode -> excelinvoice -> invoice`,
+        and the structuring process is executed.
 
     Example:
-        ```
+        ```python
         ### custom.py
         def custom_dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath) -> None:
             ...(original process)...
@@ -139,26 +147,42 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None):  # pragma: 
 
         workflow.run(custom_dataset) # Execute structuring process
         ```
+
+        If options are specified (setting the mode to "RDEformat"):
+
+        ```python
+        ### main.py
+        from rdetoolkit.config import Config
+        from rdetoolkit import workflow
+        from custom import custom_dataset # User-defined structuring processing function
+
+        cfg = Config(extendeds_mode="rdeformat", save_raw=True, save_main_image=False, save_thumbnail_image=False, magic_variable=False)
+        workflow.run(custom_dataset, config=cfg) # Execute structuring process
+        ```
     """
     try:
         # Enabling mode flag and validating input file
-        format_flags = RdeFormatFlags()
         srcpaths = RdeInputDirPaths(
             inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
             invoice=StorageDir.get_specific_outputdir(False, "invoice"),
             tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
         )
-        raw_files_group, excel_invoice_files = check_files(srcpaths, fmt_flags=format_flags)
+        if config is not None:
+            __config = config
+        else:
+            for cfg_file in find_config_files(srcpaths):
+                __config = parse_config_file(path=cfg_file)
+        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extendeds_mode)
 
         # Backup of invoice.json
-        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, format_flags)
+        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.extendeds_mode)
         invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if format_flags.is_rdeformat_enabled:
+            if __config.extendeds_mode == "rdefotmat":
                 rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
-            elif format_flags.is_multifile_enabled:
+            elif __config.extendeds_mode == "multifile":
                 multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
                 excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
