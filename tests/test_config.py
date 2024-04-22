@@ -1,10 +1,11 @@
+import os
 from pathlib import Path
+
 import pytest
 import yaml
-from rdetoolkit.config import parse_config_file, is_toml, is_yaml, Config
-
-from tomlkit.toml_file import TOMLFile
+from rdetoolkit.config import Config, is_toml, is_yaml, parse_config_file
 from tomlkit import document, table
+from tomlkit.toml_file import TOMLFile
 
 
 def test_is_toml():
@@ -26,7 +27,6 @@ def config_yaml():
     data = {
         "extendeds_mode": "rdeformat",
         "save_raw": True,
-        "save_main_image": True,
         "magic_variable": False,
         "save_thumbnail_image": True
     }
@@ -42,7 +42,7 @@ def config_yaml():
 
 @pytest.fixture
 def test_pyproject_toml():
-    test_file = "samplefile/pyproject.toml"
+    test_file = os.path.join(os.path.dirname(__file__), "samplefile/pyproject.toml")
     toml = TOMLFile(test_file)
     doc = document()
     doc["tool"] = table()
@@ -81,7 +81,6 @@ def test_parse_config_file(config_yaml):
     assert isinstance(config, Config)
     assert config.extendeds_mode == 'rdeformat'
     assert config.save_raw is True
-    assert config.save_main_image is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
 
@@ -91,7 +90,6 @@ def test_parse_config_file_specificaton_pyprojecttoml(test_pyproject_toml):
     assert isinstance(config, Config)
     assert config.extendeds_mode == 'rdeformat'
     assert config.save_raw is True
-    assert config.save_main_image is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
 
@@ -101,6 +99,5 @@ def test_parse_config_file_current_project_pyprojecttoml(test_cwd_pyproject_toml
     assert isinstance(config, Config)
     assert config.extendeds_mode == 'multifile'
     assert config.save_raw is True
-    assert config.save_main_image is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
