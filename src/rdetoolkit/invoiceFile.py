@@ -450,7 +450,7 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional
     if excel_invoice_file is not None:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
         shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
-    elif mode in ["rdeformat", "multifile"]:
+    elif mode.extendeds_mode in ["rdeformat", "multifile"]:
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
         shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
 
