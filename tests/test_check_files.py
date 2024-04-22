@@ -16,7 +16,7 @@ Note:
 from pathlib import Path
 
 from rdetoolkit.config import Config
-from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
+from rdetoolkit.models.rde2types import RdeInputDirPaths
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.workflows import check_files
 
