@@ -6,9 +6,19 @@ from typing import Callable, Optional
 from rdetoolkit import img2thumb
 from rdetoolkit.config import Config
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.impl.input_controller import ExcelInvoiceChecker, InvoiceChecker, MultiFileChecker, RDEFormatChecker
+from rdetoolkit.impl.input_controller import (
+    ExcelInvoiceChecker,
+    InvoiceChecker,
+    MultiFileChecker,
+    RDEFormatChecker,
+)
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, apply_default_filename_mapping_rule, update_description_with_features
+from rdetoolkit.invoiceFile import (
+    ExcelInvoiceFile,
+    InvoiceFile,
+    apply_default_filename_mapping_rule,
+    update_description_with_features,
+)
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.rde2util import read_from_json_file
 from rdetoolkit.validation import invoice_validate, metadata_def_validate
@@ -105,7 +115,8 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     invoice.overwrite(invoice_dst_filepath)
 
-    copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
+    if config.save_raw:
+        copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
     if datasets_process_function is not None:
