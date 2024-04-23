@@ -88,19 +88,24 @@ class MetaProperty(BaseModel):
     format: Optional[Literal["date", "time", "uri", "uuid", "markdown"]] = Field(default=None, description="Specify the format of the string. Refer to date, time, uri, uuid, markdown for possible values.")
 
     @model_validator(mode="after")
-    def __check_filed_type(self):
+    def __check_numeric_type(self):
+        # If any of the maximum, exclusiveMaximum, minimum, or exclusiveMinimum fields are set, the value_type must be either integer or number.
+        if (self.maximum or self.exclusiveMaximum or self.minimum or self.exclusiveMinimum) and self.value_type not in ["integer", "number"]:
+            raise ValueError("Custom Validation: The field must be of type integer or number.")
+        return self
+
+    @model_validator(mode="after")
+    def __check_string_type(self):
+        if (self.maxLength or self.minLength) and self.value_type != "string":
+            raise ValueError("Custom Validation: The field must be of type string.")
+        return self
+
+    @model_validator(mode="after")
+    def __check_const_type(self):
         if self.const is not None:
             # If the value of 'const' is different from 'value_type', raise an error.
             if not isinstance(self.value_type, type(self.const)):
                 raise ValueError("Custom Validation: The two objects are of different types.")
-        if self.maximum or self.exclusiveMaximum or self.minimum or self.exclusiveMinimum:
-            # If any of the maximum, exclusiveMaximum, minimum, or exclusiveMinimum fields are set, the value_type must be either integer or number.
-            if self.value_type not in ["integer", "number"]:
-                raise ValueError("Custom Validation: The field must be of type integer or number.")
-        if self.maxLength or self.minLength:
-            # If the maxLength or minLength fields are set, the value_type must be string.
-            if self.value_type != "string":
-                raise ValueError("Custom Validation: The field must be of type string.")
         return self
 
 
@@ -343,17 +348,27 @@ class InvoiceSchemaJson(BaseModel):
     properties: Properties
 
     @model_validator(mode="after")
-    def check_custom_not_none(self):
-        """Custom is required but is None."""
-        if self.required is not None:
-            if "custom" in self.required and self.properties.custom is None:
-                raise ValueError("custom is required but is None")
-            elif "sample" in self.required and self.properties.sample is None:
-                raise ValueError("sample is required but is None")
-        if self.properties.custom:
-            if "custom" not in self.required:
-                raise ValueError("custom is required but is None")
-        if self.properties.sample:
-            if "sample" not in self.required:
-                raise ValueError("sample is required but is None")
+    def __check_required_fields(self):
+        if self.required is None:
+            return self
+        if "custom" in self.required and self.properties.custom is None:
+            raise ValueError("custom is required but is None")
+        elif "sample" in self.required and self.properties.sample is None:
+            raise ValueError("sample is required but is None")
+        return self
+
+    @model_validator(mode="after")
+    def __check_custom_fields(self):
+        if not self.properties.custom:
+            return self
+        if "custom" not in self.required:
+            raise ValueError("custom is required but is None")
+        return self
+
+    @model_validator(mode="after")
+    def __check_smaple_field(self):
+        if not self.properties.sample:
+            return self
+        if "sample" not in self.required:
+            raise ValueError("sample is required but is None")
         return self
