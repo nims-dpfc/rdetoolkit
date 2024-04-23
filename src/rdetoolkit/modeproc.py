@@ -304,11 +304,12 @@ def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath):
         "meta": resource_paths.meta,
         "structured": resource_paths.struct,
         "logs": resource_paths.logs,
+        "nonshared_raw": resource_paths.nonshared_raw,
     }
     for f in resource_paths.rawfiles:
         for dir_name, directory in directories.items():
             if dir_name in f.parts:
-                shutil.copy(f, os.path.join(directory, f.name))
+                shutil.copy(f, os.path.join(str(directory), f.name))
                 break
 
 

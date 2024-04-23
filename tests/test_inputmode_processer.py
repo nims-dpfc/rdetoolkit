@@ -33,7 +33,7 @@ def dummy_files_tuple():
 
 @pytest.fixture
 def dummy_files_rdeformat():
-    dirnames = ["raw", "main_image", "other_image", "meta", "structured", "logs"]
+    dirnames = ["raw", "main_image", "other_image", "meta", "structured", "logs", "nonshared_raw"]
     rawfiles = []
     for name in dirnames:
         raw = Path("tests", name)
@@ -84,7 +84,7 @@ def test_copy_input_to_rawfile(dummy_files_tuple):
 def test_copy_input_to_rawfile_rdeformat(dummy_files_rdeformat):
     temp_raw_file_dirname = Path("tests", "result")
     temp_raw_file_dirname.mkdir(parents=True, exist_ok=True)
-    dirnames = ["raw", "main_image", "other_image", "meta", "structured", "logs"]
+    dirnames = ["raw", "main_image", "other_image", "meta", "structured", "logs", "nonshared_raw"]
     for name in dirnames:
         raw = Path("tests", "result", name)
         raw.mkdir(exist_ok=True)
@@ -101,6 +101,7 @@ def test_copy_input_to_rawfile_rdeformat(dummy_files_rdeformat):
         invoice=Path(),
         invoice_org=Path(),
         invoice_schema_json=Path(),
+        nonshared_raw=Path("tests", "result", "nonshared_raw")
     )
 
     copy_input_to_rawfile_for_rdeformat(paths)
