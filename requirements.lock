@@ -42,6 +42,7 @@ rpds-py==0.18.0
 six==1.16.0
 toml==0.10.2
 tomli==2.0.1
+tomlkit==0.12.4
 typing-extensions==4.10.0
 tzdata==2023.3
 zipp==3.16.2

@@ -17,6 +17,7 @@ dependencies = [
     "toml>=0.10.2",
     "pydantic>=2.6.3",
     "jsonschema>=4.21.1",
+    "tomlkit>=0.12.4",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
