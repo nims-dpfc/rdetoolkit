@@ -125,6 +125,7 @@ dev-dependencies = [
     "mkdocstrings[crystal,python]>=0.24.0",
     "ruff>=0.1.14",
     "pre-commit>=3.6.0",
+    "types-PyYAML>=6.0.12.20240311",
 ]
 
 [tool.hatch.metadata]
