@@ -37,7 +37,7 @@ def test_backup_invoice_json_files_with_rdeformat_enabled(inputfile_rdeformat, i
     input_excel_invoice_path = None
 
     mode = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=False, magic_variable=False)
-    result = backup_invoice_json_files(input_excel_invoice_path, mode)
+    result = backup_invoice_json_files(input_excel_invoice_path, mode.extendeds_mode)
 
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
@@ -55,7 +55,7 @@ def test_backup_invoice_json_files_with_multifile_enabled(inputfile_multimode, i
     input_excel_invoice_path = None
 
     mode = Config(extendeds_mode='multifile', save_raw=True, save_thumbnail_image=False, magic_variable=False)
-    result = backup_invoice_json_files(input_excel_invoice_path, mode)
+    result = backup_invoice_json_files(input_excel_invoice_path, mode.extendeds_mode)
 
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
