@@ -62,9 +62,9 @@ def test_pyproject_toml():
 @pytest.fixture
 def test_cwd_pyproject_toml():
     test_file = "pyproject.toml"
+    backup_path = Path(test_file).with_suffix(Path(test_file).suffix + ".bak")
     if Path(test_file).exists():
         # backup
-        backup_path = Path(test_file).with_suffix(Path(test_file).suffix + ".bak")
         shutil.copy(Path(test_file), backup_path)
     doc = document()
     doc["tool"] = table()
@@ -79,6 +79,7 @@ def test_cwd_pyproject_toml():
 
     if Path(test_file).exists():
         Path(test_file).unlink()
+    if Path(backup_path).exists():
         shutil.copy(backup_path, test_file)
         Path(backup_path).unlink()
 
