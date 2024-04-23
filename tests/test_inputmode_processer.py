@@ -13,6 +13,7 @@ from rdetoolkit.modeproc import (
     multifile_mode_process,
     rdeformat_mode_process,
 )
+from rdetoolkit.config import Config
 
 
 @pytest.fixture
@@ -46,6 +47,27 @@ def dummy_files_rdeformat():
     for name in dirnames:
         if os.path.exists(Path("tests", name)):
             shutil.rmtree(Path("tests", name))
+
+
+@pytest.fixture
+def invoice_json_with_desc():
+    Path("data", "invoice").mkdir(parents=True, exist_ok=True)
+    test_invoice_file = Path("data", "invoice").joinpath("invoice.json")
+    shutil.copy(os.path.join(os.path.dirname(__file__), "samplefile", "invoice.json"), test_invoice_file)
+    yield test_invoice_file
+
+    if test_invoice_file.exists():
+        test_invoice_file.unlink()
+
+
+@pytest.fixture
+def invoice_shcema_json_full():
+    test_shcema_invoice_file = Path("data", "tasksupport").joinpath("invoice.schema.json")
+    shutil.copy(os.path.join(os.path.dirname(__file__), "samplefile", "invoice.schema.json"), test_shcema_invoice_file)
+    yield test_shcema_invoice_file
+
+    if test_shcema_invoice_file.exists():
+        test_shcema_invoice_file.unlink()
 
 
 def test_copy_input_to_rawfile(dummy_files_tuple):
@@ -101,7 +123,7 @@ def test_invoice_mode_process_calls_functions(
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json,
+    ivnoice_schema_json_none_sample,
 ):
     """invoiceモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -135,11 +157,12 @@ def test_invoice_mode_process_calls_functions(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path(ivnoice_json_none_sample_info),
-        invoice_schema_json=Path(ivnoice_schema_json),
+        invoice_schema_json=Path(ivnoice_schema_json_none_sample),
     )
 
     # テスト対象の処理を実行
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    config = Config(extendeds_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -195,7 +218,8 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     )
 
     # テスト対象の処理を実行
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    config = Config(extendeds_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -215,7 +239,7 @@ def test_excel_invoice_mode_process_calls_functions(
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json,
+    ivnoice_schema_json_none_specificAttributes,
 ):
     """excelinvoiceモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -233,7 +257,7 @@ def test_excel_invoice_mode_process_calls_functions(
         Path("data", "temp", "invoice_org.json"),
     )
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
-    expected_description = "特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
@@ -255,8 +279,9 @@ def test_excel_invoice_mode_process_calls_functions(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
-        invoice_schema_json=Path(ivnoice_schema_json),
+        invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
     )
+    config = Config(extendeds_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
 
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
@@ -268,6 +293,7 @@ def test_excel_invoice_mode_process_calls_functions(
         inputfile_single_dummy_header_excelinvoice,
         0,
         mock_datasets_process_function,
+        config=config
     )
 
     # 関数が呼び出されたかどうかをチェック
@@ -289,11 +315,11 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     mocker,
     inputfile_single_dummy_header_excelinvoice_with_magic_variable,
     inputfile_zip_with_file,
-    ivnoice_json_magic_filename_variable,
+    ivnoice_json_none_sample_info,
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json,
+    ivnoice_schema_json_none_sample,
 ):
     """excelinvoiceモード時、invoice上書き、データセット処理、${filename}の書き換え
     ファイルモードのとき、${filename}の書き換えが実行されるか
@@ -332,18 +358,20 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
         thumbnail=Path(),
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
-        invoice_schema_json=Path(ivnoice_schema_json),
+        invoice_schema_json=Path(ivnoice_schema_json_none_sample),
     )
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
+    config = Config(extendeds_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     excel_invoice_mode_process(
         srcpaths,
         resource_paths,
         inputfile_single_dummy_header_excelinvoice_with_magic_variable,
         0,
         mock_datasets_process_function,
+        config=config
     )
 
     # 関数が呼び出されたかどうかをチェック
@@ -364,7 +392,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
 def test_multifile_mode_process_calls_functions(
     mocker,
     inputfile_multi,
-    ivnoice_json_none_sample_info,
+    ivnoice_json_magic_filename_variable,
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
@@ -407,7 +435,8 @@ def test_multifile_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    config = Config(extendeds_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -522,7 +551,8 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
             expected_filename = expected_filename2
             invoice = Path("data", "divided", f"{1:04d}", "invoice", "invoice.json")
 
-        multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+        config = Config(extendeds_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+        multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
         # 関数が呼び出されたかどうかをチェック
         mock_datasets_process_function.assert_called_with(srcpaths, resource_paths)
@@ -547,12 +577,12 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
 
 def test_rdeformat_mode_process_alls_functions(
     mocker,
-    inputfile_multi,
-    ivnoice_json_none_sample_info,
+    inputfile_rdeformat,
+    invoice_json_with_desc,
     tasksupport,
     metadata_def_json_with_feature,
     metadata_json,
-    ivnoice_schema_json,
+    invoice_shcema_json_full,
 ):
     """rdeformat_mode_processモード時、invoice上書き、データセット処理、特徴量書き込み
     既存のdescription: desc1を含む
@@ -564,39 +594,40 @@ def test_rdeformat_mode_process_alls_functions(
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
+    Path("data", "thumbnail").mkdir(parents=True, exist_ok=True)
+    zip_path = Path("data", "inputdata") / Path(inputfile_rdeformat).name
+    shutil.unpack_archive(zip_path, Path("data", "temp"))
+
     shutil.copy(
         Path("data", "invoice").joinpath("invoice.json"),
         Path("data", "temp", "invoice_org.json"),
     )
-    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    Path("data/main_image/dummy_file.png").touch()
+    expected_description = "特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
+    raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
     )
     resource_paths = RdeOutputResourcePath(
-        rawfiles=(
-            [
-                Path("data", "inputdata", "test_child1.txt"),
-                Path("data", "inputdata", "test_child2.txt"),
-            ]
-        ),
+        rawfiles=raw_files,
         raw=Path("data", "raw"),
         main_image=Path("data", "main_image"),
         other_image=Path("data", "other_image"),
         meta=Path("data", "meta"),
         struct=Path("data", "structured"),
         logs=Path("data", "logs"),
-        thumbnail=Path(),
+        thumbnail=Path("data", "thumbnail"),
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
-        invoice_schema_json=Path(ivnoice_schema_json),
+        invoice_schema_json=invoice_shcema_json_full,
     )
-
+    config = Config(extendeds_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
     # テスト対象の処理を実行
-    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -605,3 +636,9 @@ def test_rdeformat_mode_process_alls_functions(
     with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
+
+    # rawフォルダにコピーされたかチェック
+    assert len(list(Path("data", "raw").glob("*"))) == 1
+
+    # thumbnailフォルダにコピーされたかチェック
+    assert len(list(Path("data", "thumbnail").glob("*"))) == 1
