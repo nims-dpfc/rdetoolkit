@@ -1176,7 +1176,7 @@ def inputfile_single_excelinvoice() -> Generator[str, None, None]:
 
     df1 = pd.DataFrame(
         EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE,
-        columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
     )
     df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=["term_id", "key_name"])
     df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=["sample_class_id", "term_id", "key_name"])
@@ -1477,6 +1477,11 @@ def inputfile_invalid_samesheet_excelinvoice() -> Generator[str, None, None]:
             "",
             "",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
         ],
     )
     df2 = pd.DataFrame(
@@ -1484,6 +1489,11 @@ def inputfile_invalid_samesheet_excelinvoice() -> Generator[str, None, None]:
         columns=[
             "invoiceList_format_id",
             "Sample_RDE_DataSet",
+            "",
+            "",
+            "",
+            "",
+            "",
             "",
             "",
             "",

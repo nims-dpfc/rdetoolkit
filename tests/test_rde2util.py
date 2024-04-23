@@ -233,10 +233,10 @@ def test_detect_text_file_encoding_utf_8_sig(utf_8_sig_file):
 # read_invoice_json_fileのテスト
 def test_read_from_json_file_valid_json_file(ivnoice_json_none_sample_info):
     expect_json = {
-        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "datasetId": "1s1199df4-0d1v-41b0-1dea-23bf4dh09g12",
         "basic": {
             "dateSubmitted": "2023-03-14",
-            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataOwnerId": "0c233ef274f28e611de4074638b4dc43e737ab993132343532343430",
             "dataName": "test1",
             "experimentId": "test_230606_1",
             "description": "desc1",

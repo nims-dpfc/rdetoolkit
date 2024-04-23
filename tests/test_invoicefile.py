@@ -14,10 +14,10 @@ def test_invoicefile_read_method(ivnoice_json_none_sample_info):
     """テストケース: InvoiceFileのread"""
     invoice_file = InvoiceFile(ivnoice_json_none_sample_info)
     expect_data = {
-        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "datasetId": "1s1199df4-0d1v-41b0-1dea-23bf4dh09g12",
         "basic": {
             "dateSubmitted": "2023-03-14",
-            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataOwnerId": "0c233ef274f28e611de4074638b4dc43e737ab993132343532343430",
             "dataName": "test1",
             "experimentId": "test_230606_1",
             "description": "desc1",
@@ -78,7 +78,7 @@ def test_read_none_sample_excel_invoice_file_blankline(
     assert str(e.value) == "Error! Blank lines exist between lines"
 
 
-def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_sample_info, ivnoice_schema_json):
+def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_sample_info, ivnoice_schema_json_none_specificAttributes):
     """試料情報ありの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -88,7 +88,7 @@ def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_
     excel_invoice_path = Path(inputfile_multi_excelinvoice)
 
     excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
-    excel_invoice_file.overwrite(ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json, 0)
+    excel_invoice_file.overwrite(ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json_none_specificAttributes, 0)
 
     with open(dist_path, encoding="utf-8") as f:
         contents = json.load(f)
@@ -97,7 +97,7 @@ def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_
     assert contents["custom"]["key2"] == "CCC"
 
 
-def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice_json_none_sample_info, ivnoice_schema_json):
+def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice_json_none_sample_info, ivnoice_schema_json_none_sample):
     """試料情報なしの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -107,7 +107,7 @@ def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice
     excel_invoice_path = Path(excelinvoice_non_sampleinfo)
 
     excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
-    excel_invoice_file.overwrite(ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json, 0)
+    excel_invoice_file.overwrite(ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json_none_sample, 0)
 
     with open(dist_path, encoding="utf-8") as f:
         contents = json.load(f)
@@ -288,19 +288,24 @@ def test_readExcelInvoice(inputfile_single_excelinvoice):
             "test_child1.txt",
             "N_TEST_1",
             "test_user",
-            "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439",
             "test1",
+            "ee17c7b3-f0ff-5126-831c-2d519f481055",
             "test_230606_1",
+            "https://sample.com",
             "desc1",
             "sample1",
-            "cbf194ea-813f-4e05-b288",
-            "1111",
+            "de17c7b3-f0ff-5126-831c-2d519f481055",
+            "de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439",
             "sample1",
-            "test_ref",
+            "https://sample.com",
             "desc3",
             "testname",
             "Fe",
             "magnet",
+            "7439-89-6",
+            "7439-89-6",
+            "7439-89-6",
             "7439-89-6",
             "AAA",
             "CCC",
@@ -314,24 +319,32 @@ def test_readExcelInvoice(inputfile_single_excelinvoice):
             "dataOwner",
             "basic/dataOwnerId",
             "basic/dataName",
+            "basic/instrumentId",
             "basic/experimentId",
             "basic/referenceUrl",
-            "sample/description",
+            "basic/description",
             "sample/names",
             "sample/sampleId",
             "sample/ownerId",
             "sample/composition",
+            "sample/referenceUrl",
             "sample/description",
             "sample.general/general-name",
-            "sample.general/chemical-composition",
-            "sample.general/sample-type",
             "sample.general/cas-number",
+            "sample.general/crystal-structure",
+            "sample.general/purchase-date",
+            "sample.general/lot-number-or-product-number-etc",
+            "sample.general/smiles-string",
+            "sample.general/supplier",
             "custom/key1",
             "custom/key2",
         ],
     )
 
     dfExcelInvoice, dfGeneral, dfSpecific = readExcelInvoice(inputfile_single_excelinvoice)
+
+    print(dfExcelInvoice)
+    print(df1)
 
     assert_frame_equal(dfExcelInvoice, df1)
     assert isinstance(dfGeneral, pd.DataFrame)
