@@ -1,12 +1,7 @@
 from pathlib import Path
-from rdetoolkit import img2thumb as img2thumb
 from rdetoolkit.config import Config as Config
-from rdetoolkit.exceptions import StructuredError as StructuredError
-from rdetoolkit.impl.input_controller import ExcelInvoiceChecker as ExcelInvoiceChecker, InvoiceChecker as InvoiceChecker, MultiFileChecker as MultiFileChecker, RDEFormatChecker as RDEFormatChecker
 from rdetoolkit.interfaces.filechecker import IInputFileChecker as IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile as ExcelInvoiceFile, InvoiceFile as InvoiceFile, apply_magic_variable as apply_magic_variable, update_description_with_features as update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths as RdeInputDirPaths, RdeOutputResourcePath as RdeOutputResourcePath
-from rdetoolkit.validation import invoice_validate as invoice_validate, metadata_def_validate as metadata_def_validate
 from typing import Optional
 
 def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = ..., config: Optional[Config] = ...): ...

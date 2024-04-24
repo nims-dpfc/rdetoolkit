@@ -1,16 +1,13 @@
 import pandas as pd
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from pathlib import Path
-from rdetoolkit import rde2util as rde2util
-from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.models.rde2types import RdeOutputResourcePath as RdeOutputResourcePath
-from rdetoolkit.rde2util import CharDecEncoding as CharDecEncoding, StorageDir as StorageDir, read_from_json_file as read_from_json_file
 from typing import Any, Optional, Union
 
-def readExcelInvoice(excelInvoiceFilePath): ...
+def readExcelInvoice(excelInvoiceFilePath) -> None: ...
 def checkExistRawFiles(dfExcelInvoice: pd.DataFrame, excelRawFiles: list[Path]) -> list[Path]: ...
 def overwriteInvoiceFileforDPFTerm(invoiceObj, invoiceDstFilePath, invoiceSchemaFilePath, invoiceInfo) -> None: ...
-def checkExistRawFiles_for_folder(dfExcelInvoice, rawFilesTpl): ...
+def checkExistRawFiles_for_folder(dfExcelInvoice, rawFilesTpl) -> None: ...
 
 class InvoiceFile:
     invoice_path: Incomplete

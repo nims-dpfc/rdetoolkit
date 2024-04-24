@@ -1,7 +1,6 @@
 import logging
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from logging import Logger
-from rdetoolkit.rde2util import StorageDir as StorageDir
 from typing import Optional
 
 pp: Incomplete
@@ -14,4 +13,4 @@ class CustomLog:
     def __init__(self, name: str = ...) -> None: ...
     def get_logger(self, needLogs: bool = ...) -> Logger: ...
 
-def log_decorator(): ...
+def log_decorator() -> None: ...
