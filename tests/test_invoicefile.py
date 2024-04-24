@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, readExcelInvoice, update_description_with_features
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, readExcelInvoice, update_description_with_features, apply_magic_variable
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
@@ -410,3 +410,16 @@ def test_error_check_exist_rawfiles(inputfile_multi_excelinvoice):
         _ = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
 
     assert str(e.value) == "ERROR: raw file not found: test_child2.txt"
+
+
+def test_apply_magic_variable_inputfile_check(ivnoice_json_magic_filename_variable):
+    """${filename}が置換できるかテスト
+
+    conftest.pyよりfixsture: ivnoice_json_magic_filename_variableを取得
+    """
+    invoice_path = ivnoice_json_magic_filename_variable
+    rawfile_path = "/test/dummy/dymmy_replace_filename.txt"
+
+    result = apply_magic_variable(invoice_path, rawfile_path)
+
+    assert result["basic"]["dataName"] == "dymmy_replace_filename.txt"

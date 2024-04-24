@@ -13,14 +13,8 @@ from rdetoolkit.impl.input_controller import (
     RDEFormatChecker,
 )
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import (
-    ExcelInvoiceFile,
-    InvoiceFile,
-    apply_default_filename_mapping_rule,
-    update_description_with_features,
-)
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.rde2util import read_from_json_file
 from rdetoolkit.validation import invoice_validate, metadata_def_validate
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
@@ -124,10 +118,7 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
 
     # rewriting support for ${filename} by default
     if config.magic_variable:
-        invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
-        if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
-            replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-            apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
+        apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     if config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
@@ -205,10 +196,7 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
     # Excelinvoice applies to file mode only, folder mode is not supported.
     # FileMode has only one element in resource_paths.rawfiles.
     if config.magic_variable:
-        invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
-        if invoice_contents.get("basic", {}).get("dataName") == "${filename}" and len(resource_paths.rawfiles) == 1:
-            replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-            apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
+        apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     if config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
@@ -266,10 +254,7 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
 
     # rewriting support for ${filename} by default
     if config.magic_variable:
-        invoice_contents = read_from_json_file(resource_paths.invoice.joinpath("invoice.json"))
-        if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
-            replacement_rule = {"${filename}": str(resource_paths.rawfiles[0].name)}
-            apply_default_filename_mapping_rule(replacement_rule, resource_paths.invoice.joinpath("invoice.json"))
+        apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     try:
         update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))

@@ -22,7 +22,7 @@ import pandas as pd
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
-from rdetoolkit.rde2util import CharDecEncoding, StorageDir
+from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
 
 
 def readExcelInvoice(excelInvoiceFilePath):
@@ -712,3 +712,32 @@ def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_f
     replacer.write_rule(replacement_rule, save_file_path)
 
     return replacer.last_apply_result
+
+
+def apply_magic_variable(invoice_path: Union[str, Path], rawfile_path: Union[str, Path], *, save_filepath: Optional[Union[str, Path]] = None) -> dict[str, Any]:
+    """Converts the magic variable ${filename}.
+
+    If ${filename} is present in basic.dataName of invoice.json, it is replaced with the filename of rawfile_path.
+
+    Args:
+        invoice_path (Union[str, Path]): The file path of invoice.json.
+        rawfile_path (Union[str, Path]): The file path of the input data.
+        save_filepath (Optional[Union[str, Path]], optional): The file path to save to. Defaults to None.
+
+    Returns:
+        dict[str, Any]: The content of invoice.json after replacement.
+    """
+    contents: dict[str, Any] = {}
+    if isinstance(invoice_path, str):
+        invoice_path = Path(invoice_path)
+    if isinstance(rawfile_path, str):
+        rawfile_path = Path(rawfile_path)
+    if save_filepath is None:
+        save_filepath = invoice_path
+
+    invoice_contents = read_from_json_file(invoice_path)
+    if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
+        replacement_rule = {"${filename}": str(rawfile_path.name)}
+        contents = apply_default_filename_mapping_rule(replacement_rule, save_filepath)
+
+    return contents
