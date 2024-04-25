@@ -1,4 +1,3 @@
-import json
 import os
 import platform
 import shutil
@@ -9,23 +8,46 @@ import pytest
 from click.testing import CliRunner
 from rdetoolkit.cli import (
     init,
-    make_main_py,
-    make_requirements_txt,
-    make_template_json,
     version,
 )
+from rdetoolkit.cmd.command import DockerfileGenerator, MainScriptGenerator, RequirementsTxtGenerator, InvoiceJsonGenerator, InvoiceSchemaJsonGenerator, MetadataDefJsonGenerator
 
 
 def test_make_main_py():
     test_path = Path("test_main.py")
-    make_main_py(test_path)
+    gen = MainScriptGenerator(test_path)
+    gen.generate()
 
     with open(test_path, encoding="utf-8") as f:
         content = f.read()
 
-    expected_content = """import rdetoolkit
+    expected_content = """# The following script is a template for the source code.
 
-rdetoolkit.workflows.run()
+import rdetoolkit
+from modules.dataset_process import custom_func
+
+rdetoolkit.workflows.run(custom_dataset_function=custom_func)
+"""
+    assert content == expected_content
+    test_path.unlink()
+
+    if os.path.exists("container"):
+        shutil.rmtree("container")
+
+
+def test_make_dockerfile():
+    test_path = Path("Dockerfile")
+    gen = DockerfileGenerator(test_path)
+    gen.generate()
+
+    with open(test_path, encoding="utf-8") as f:
+        content = f.read()
+
+    expected_content = """FROM python:3.9-slim-buster
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
 """
     assert content == expected_content
     test_path.unlink()
@@ -36,7 +58,8 @@ rdetoolkit.workflows.run()
 
 def test_make_requirements_txt():
     test_path = Path("test_requirements.txt")
-    make_requirements_txt(test_path)
+    gen = RequirementsTxtGenerator(test_path)
+    gen.generate()
 
     with open(test_path, encoding="utf-8") as f:
         content = f.read()
@@ -52,6 +75,7 @@ def test_make_requirements_txt():
 # ex.
 # pandas==2.0.3
 # numpy
+rdetoolkit==0.2.0
 """
     assert content == expected_content
     test_path.unlink()
@@ -62,12 +86,34 @@ def test_make_requirements_txt():
 
 def test_make_template_json():
     test_path = Path("test_template.json")
-    make_template_json(test_path)
+    gen = InvoiceJsonGenerator(test_path)
+    gen.generate()
 
-    with open(test_path, encoding="utf-8") as f:
-        content = json.load(f)
+    assert test_path.exists()
+    test_path.unlink()
 
-    assert content == {}
+    if os.path.exists("container"):
+        shutil.rmtree("container")
+
+
+def test_make_schema_json():
+    test_path = Path("test_template.json")
+    gen = InvoiceSchemaJsonGenerator(test_path)
+    gen.generate()
+
+    assert test_path.exists()
+    test_path.unlink()
+
+    if os.path.exists("container"):
+        shutil.rmtree("container")
+
+
+def test_make_metadata_def_json():
+    test_path = Path("test_template.json")
+    gen = MetadataDefJsonGenerator(test_path)
+    gen.generate()
+
+    assert test_path.exists()
     test_path.unlink()
 
     if os.path.exists("container"):
@@ -88,6 +134,9 @@ def test_init_creation():
         Path("container/data/inputdata"),
         Path("container/data/invoice"),
         Path("container/data/tasksupport"),
+        Path("input/invoice"),
+        Path("input/inputdata"),
+        Path("templates/tasksupport"),
     ]
     for dir in dirs:
         assert dir.exists()
@@ -98,6 +147,9 @@ def test_init_creation():
         Path("container/data/invoice/invoice.json"),
         Path("container/data/tasksupport/invoice.schema.json"),
         Path("container/data/tasksupport/metadata-def.json"),
+        Path("input/invoice/invoice.json"),
+        Path("templates/tasksupport/invoice.schema.json"),
+        Path("templates/tasksupport/metadata-def.json"),
     ]
     for file in files:
         assert file.exists()
