@@ -1,10 +1,8 @@
 [project]
 name = "rdetoolkit"
-version = "0.1.2"
+version = "0.2.0"
 description = "A module that supports the workflow of the RDE2.0 dataset construction program"
-authors = [
-    { name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }
-]
+authors = [{ name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }]
 dependencies = [
     "chardet>=5.2.0",
     "charset-normalizer>=3.2.0",
@@ -18,10 +16,11 @@ dependencies = [
     "pydantic>=2.6.3",
     "jsonschema>=4.21.1",
     "tomlkit>=0.12.4",
+    "PyYAML>=6.0.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
-package_data = {"rdetoolkit" = ["py.typed"]}
+package_data = { "rdetoolkit" = ["py.typed"] }
 
 [project.urls]
 "Homepage" = "https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit"
@@ -68,7 +67,7 @@ exclude = [
     "site-packages",
     "venv",
     "tests",
-    "stubs"
+    "stubs",
 ]
 # 1行の最大文字数は問わないとチーム内で合意
 line-length = 250
@@ -105,7 +104,7 @@ exclude_also = [
     "if 0:",
     "if __name__ == .__main__.:",
     "@(abc\\.)?abstractmethod",
-    ]
+]
 
 [tool.rye]
 managed = true
