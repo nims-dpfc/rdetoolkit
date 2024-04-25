@@ -6,7 +6,8 @@ These are the contributors to this project!
 - Hiroko Nagao
 - Hiroshi Shinotsuka
 - Yasuhiro Takada
+- Fujima Jum
 - Junya SAKURAI
-- Hiroaki TOSAKA
-- Hitoshi ENAMI
-- Kumiko SASAJIMA
+- Hiroaki Tosaka
+- Hitoshi Enami
+- Kumiko Sasajima
