@@ -15,6 +15,6 @@ class MetaValue(BaseModel):
 class ValidableItems(RootModel):
     root: list[dict[str, MetaValue]]
 
-class MetadataDefItem(BaseModel):
+class MetadataItem(BaseModel):
     constant: Optional[dict[str, MetaValue]]
     variable: ValidableItems

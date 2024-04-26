@@ -10,16 +10,16 @@ from pydantic import ValidationError
 
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataDefValidationError
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson
-from rdetoolkit.models.metadata import MetadataDefItem
+from rdetoolkit.models.metadata import MetadataItem
 from rdetoolkit.rde2util import read_from_json_file
 
 
 class MetadataDefValidator:
     def __init__(self) -> None:
-        self.schema = MetadataDefItem
+        self.schema = MetadataItem
 
     def validate(self, *, path: Optional[Union[str, Path]] = None, json_obj: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-        """Validates the provided JSON data against the MetadataDefItem schema.
+        """Validates the provided JSON data against the MetadataItem schema.
 
         Args:
             path (Union[str, Path], optional): The path to the JSON file to be validated. Defaults to None.
@@ -47,7 +47,7 @@ class MetadataDefValidator:
         else:
             raise ValueError("Unexpected error")
 
-        MetadataDefItem(**__data)
+        MetadataItem(**__data)
         return __data
 
 

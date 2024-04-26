@@ -2,7 +2,7 @@ from _typeshed import Incomplete
 from pathlib import Path
 from rdetoolkit.exceptions import InvoiceSchemaValidationError as InvoiceSchemaValidationError, MetadataDefValidationError as MetadataDefValidationError
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson as InvoiceSchemaJson
-from rdetoolkit.models.metadata import MetadataDefItem as MetadataDefItem
+from rdetoolkit.models.metadata import MetadataItem as MetadataItem
 from rdetoolkit.rde2util import read_from_json_file as read_from_json_file
 from typing import Any, Optional, Union
 

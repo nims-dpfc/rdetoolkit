@@ -64,8 +64,15 @@ class ValidableItems(RootModel):
     root: list[dict[str, MetaValue]]
 
 
-class MetadataDefItem(BaseModel):
-    """metadata-def.json class."""
+class MetadataItem(BaseModel):
+    """metadata-def.json class.
+
+    Stores metadata extracted by the data structuring process.
+
+    Attributes:
+        constant (Optional[dict[str, MetaValue]]): A set of metadata common to all measurements.
+        variable (ValidableItems): An array of metadata sets that vary with each measurement.
+    """
 
     constant: Optional[dict[str, MetaValue]] = Field(default=None)
     variable: ValidableItems = Field(default=None)

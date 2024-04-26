@@ -1,4 +1,5 @@
 import os
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence, TypedDict, Union
@@ -25,6 +26,9 @@ class RdeFormatFlags:
     Additionally, properties and setters are used to get and modify the values of these attributes.
     However, it is not allowed for both attributes to be True simultaneously.
 
+    Warning:
+        Currently, this class is not used because the `data/tasksupport/rdeformat.txt` and `data/tasksupport/multifile.txt` files are not used. It is scheduled to be deleted in the next update.
+
     Attributes:
         _is_rdeformat_enabled (bool): Flag indicating whether RDE format is enabled
         _is_multifile_enabled (bool): Flag indicating whether multi-file support is enabled
@@ -32,6 +36,9 @@ class RdeFormatFlags:
 
     _is_rdeformat_enabled: bool = False
     _is_multifile_enabled: bool = False
+
+    def __init__(self):
+        warnings.warn("The RdeFormatFlags class is scheduled to be deleted in the next update.", FutureWarning)
 
     def __post_init__(self):
         """Method called after object initialization.
@@ -101,8 +108,8 @@ class RdeInputDirPaths:
         tasksupport (Path): Path to the folder where task support data is stored.
 
     Properties:
-        default_csv (Path): Provides the path to the 'default_value.csv' file. If `tasksupport` is specified, it uses the path under it; otherwise,
-        it uses the default path under 'data/tasksupport'.
+        default_csv (Path): Provides the path to the `default_value.csv` file. If `tasksupport` is specified, it uses the path under it; otherwise,
+        it uses the default path under `data/tasksupport`.
     """
 
     inputdata: Path
