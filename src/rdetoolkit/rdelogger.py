@@ -1,12 +1,9 @@
 import logging
 import os
-import pprint
 from logging import DEBUG, INFO, FileHandler, Formatter, Logger, NullHandler, StreamHandler, getLogger
 from typing import Optional
 
 from rdetoolkit.rde2util import StorageDir
-
-pp = pprint.PrettyPrinter(indent=4)
 
 
 def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
