@@ -1,13 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2024, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
-
 import os
 from dataclasses import dataclass
 from pathlib import Path

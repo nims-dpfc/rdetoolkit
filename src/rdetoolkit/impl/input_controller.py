@@ -1,13 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
-
 import re
 import shutil
 from collections import defaultdict

@@ -1,13 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
-
 import os
 import re
 import shutil
@@ -25,7 +15,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
     """Parser for compressed flat files, providing functionality to read and extract the contents.
 
     This parser specifically deals with flat files that are compressed. It extracts the files
-    and ensures they match the expected structure described in an xlsx invoice.
+    and ensures they match the expected structure described in an excelinvoice.
 
     Attributes:
         xlsx_invoice (pd.DataFrame): DataFrame representing the expected structure or content description
@@ -56,7 +46,24 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
 
     def _is_excluded(self, file: Path) -> bool:
-        """Checks a specific file pattern to determine whether it should be excluded."""
+        """Checks a specific file pattern to determine whether it should be excluded.
+
+        This method checks if the file matches any of the predefined excluded patterns or regex.
+        The excluded patterns are `__MACOSX` and `.DS_Store`.
+        The excluded regex matches any file that starts with `~$` and ends with `.docx`, `.xlsx`, or `.pptx`.
+
+        Args:
+            file (Path): The file to check.
+
+        Returns:
+            bool: True if the file should be excluded, False otherwise.
+
+        Rules:
+            Specifically, the files to be excluded are:
+
+            - Files containing "__MACOSX" or ".DS_Store" in their paths.
+            - Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".
+        """
         excluded_patterns = ["__MACOSX", ".DS_Store"]
         excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
 
@@ -105,7 +112,24 @@ class CompressedFolderParser(ICompressedFileStructParser):
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
 
     def _is_excluded(self, file: Path) -> bool:
-        """Checks a specific file pattern to determine whether it should be excluded."""
+        """Checks a specific file pattern to determine whether it should be excluded.
+
+        This method checks if the file matches any of the predefined excluded patterns or regex.
+        The excluded patterns are `__MACOSX` and `.DS_Store`.
+        The excluded regex matches any file that starts with `~$` and ends with `.docx`, `.xlsx`, or `.pptx`.
+
+        Args:
+            file (Path): The file to check.
+
+        Returns:
+            bool: True if the file should be excluded, False otherwise.
+
+        Rules:
+            Specifically, the files to be excluded are:
+
+            - Files containing "__MACOSX" or ".DS_Store" in their paths.
+            - Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".
+        """
         excluded_patterns = ["__MACOSX", ".DS_Store"]
         excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
 

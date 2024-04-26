@@ -1,12 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
 import sys
 import traceback
 from pathlib import Path

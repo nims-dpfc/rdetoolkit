@@ -1,13 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional, Tuple

@@ -1,15 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2024, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-#
-#  Contributor:
-#       Hiroshi Shinotsuka
-# ---------------------------------------------------------
-# coding: utf-8
-
-__version__ = "1.0.7"
-
 import csv
 import os.path
 

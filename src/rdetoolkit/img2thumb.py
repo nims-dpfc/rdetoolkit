@@ -1,10 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2024, Materials Data Platform, NIMS
-#
-# This software is released under the MIT License.
-# ---------------------------------------------------------
-# coding: utf-8
-
 import itertools
 import os
 import shutil

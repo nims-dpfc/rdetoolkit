@@ -323,8 +323,7 @@ class Properties(BaseModel):
 class InvoiceSchemaJson(BaseModel):
     """Invoice schema class.
 
-    Usage:
-
+    Example:
         To generate invoice.schema.json from the model, do as follows:
         ```python
         obj = InvoiceSchemaJson(
