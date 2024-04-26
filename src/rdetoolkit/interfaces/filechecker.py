@@ -45,9 +45,7 @@ class IInputFileHelper(ABC):
 class IInputFileChecker(ABC):
     """An abstract interface for checking and parsing input files.
 
-    This interface is designed to define the structure for classes that handle the parsing
-    of source input files. It's responsible for validating and extracting necessary information
-    from these files.
+    This interface is designed to define the structure for classes that handle the parsing of source input files. It's responsible for validating and extracting necessary information from these files.
     """
 
     @abstractmethod
@@ -71,16 +69,14 @@ class ICompressedFileStructParser(ABC):
     """An abstract interface for parsing the structure of compressed files.
 
     This interface defines the expected operations for classes that are responsible for
-    reading and understanding the structure of compressed files (like zip files), especially
-    focusing on how these files are organized internally.
+    reading and understanding the structure of compressed files (like zip files), especially focusing on how these files are organized internally.
     """
 
     @abstractmethod
     def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
         """Reads and parses the structure of the compressed file.
 
-        This method should open and inspect the contents of a compressed file, extracting
-        information about its internal structure, such as file paths and organization.
+        This method should open and inspect the contents of a compressed file, extracting information about its internal structure, such as file paths and organization.
 
         Args:
             zipfile (Path): The path to the compressed file to be read.

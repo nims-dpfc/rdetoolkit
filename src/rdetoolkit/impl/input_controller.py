@@ -41,6 +41,7 @@ class InvoiceChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: A list of tuples where each tuple contains file paths grouped as 'other files'.
                 - Optional[Path]: This is always None for this implementation.
         """
@@ -85,6 +86,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: Path to the Excel Invoice file.
         """
@@ -125,7 +127,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
             raise StructuredError("Error! The input file and the description in the ExcelInvoice are not consistent.")
 
     def get_index(self, paths, sort_items):
-        """Retrieves the index of the 'divided' folder.
+        """Retrieves the index of the `divided` folder.
 
         Args:
             paths (pathlib.Path): Directory path of the raw files.
@@ -178,6 +180,7 @@ class RDEFormatChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: This will always return None for this implementation.
         """
@@ -233,6 +236,7 @@ class MultiFileChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: This will always return None for this implementation.
         """
