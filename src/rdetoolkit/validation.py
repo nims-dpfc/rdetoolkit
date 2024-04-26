@@ -121,7 +121,6 @@ class InvoiceValidator:
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
         errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
         for error in errors:
-            print(error.message)
             raise InvoiceSchemaValidationError("Error in validating invoice.schema.json")
 
         return data

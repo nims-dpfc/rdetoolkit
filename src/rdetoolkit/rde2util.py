@@ -130,7 +130,6 @@ def _split_value_unit(tgtStr: str) -> ValueUnitPair:  # pragma: no cover
         valLeft = valLeft[r1.end() :]
         r2 = re.match(ptn2, valLeft)
         if r2:
-            print(r2)
             _v += r2.group()
             valpair.value = _v
             valpair.unit = valLeft[r2.end() :]

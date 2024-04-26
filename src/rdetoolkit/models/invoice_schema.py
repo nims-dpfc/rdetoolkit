@@ -371,14 +371,3 @@ class InvoiceSchemaJson(BaseModel):
         if "sample" not in self.required:
             raise ValueError("sample is required but is None")
         return self
-
-
-if __name__ == "__main__":
-    obj = InvoiceSchemaJson(
-        version="https://json-schema.org/draft/2020-12/schema",
-        schema_id="https://rde.nims.go.jp/rde/dataset-templates/dataset_template_custom_sample/invoice.schema.json",
-        description="RDEデータセットテンプレートテスト用ファイル",
-        type="object",
-        properties=Properties(),
-    )
-    print(obj.model_dump())
