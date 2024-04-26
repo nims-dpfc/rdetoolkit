@@ -17,7 +17,7 @@ class Config(BaseModel):
     """The configuration class used in RDEToolKit.
 
     Attributes:
-        extendeds_mode (Optional[str]): The mode to run the RDEtoolkit in. It can be either 'rdeformat' or 'multifile'. If not specified, it defaults to None.
+        extendeds_mode (Optional[str]): The mode to run the RDEToolKit in. It can be either 'rdeformat' or 'multifile'. If not specified, it defaults to None.
         save_raw (bool): A boolean flag that indicates whether to automatically save raw data to the raw directory. It defaults to True.
         save_thumbnail_image (bool): A boolean flag that indicates whether to automatically save the main image to the thumbnail directory. It defaults to False.
         magic_variable (bool): A boolean flag that indicates whether to use the feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name. It defaults to False.
