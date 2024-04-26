@@ -1,4 +1,4 @@
-site_name: "RdeToolKit Documentation"
+site_name: "RDEToolKit Documentation"
 theme:
   name: "material"
   font:
@@ -17,8 +17,8 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.sections
     - navigation.top
+    - toc.integrate
 
 nav:
   - はじめに: index.md
@@ -28,22 +28,31 @@ nav:
           - rdetoolkit/impl/compressed_controller.md
           - rdetoolkit/impl/input_controller.md
       - interface:
-          - rdetoolkit/interfaces/filechecker.md
+          - rdetoolkit/interface/filechecker.md
       - models:
+          - rdetoolkit/models/invoice_schema.md
+          - rdetoolkit/models/metadata.md
           - rdetoolkit/models/rde2types.md
-      - rdetoolkit/csv2graph.md
-      - rdetoolkit/img2thumb.md
+      - rdetoolkit/config.md
+      - rdetoolkit/workflows.md
+      - rdetoolkit/rde2util.md
       - rdetoolkit/invoiceFile.md
       - rdetoolkit/modeproc.md
-      - rdetoolkit/rde2util.md
+      - rdetoolkit/img2thumb.md
       - rdetoolkit/rdelogger.md
-      - rdetoolkit/workflows.md
+      - rdetoolkit/csv2graph.md
   - Contributing: contributing.md
 
 plugins:
   - search:
       separator: '[\s\-\.]+'
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_inheritance_diagram: true
+            heading_level: 3
+            show_root_toc_entry: false
 
 watch:
   - src
@@ -71,3 +80,6 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10.9.0/dist/mermaid.min.js
