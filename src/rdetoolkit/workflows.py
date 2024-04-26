@@ -158,6 +158,9 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
             invoice=StorageDir.get_specific_outputdir(False, "invoice"),
             tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
         )
+
+        # Loading configuration file
+        __config = Config()
         if config is not None:
             __config = config
         else:
