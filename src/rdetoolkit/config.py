@@ -14,7 +14,14 @@ CONFIG_FILES = CONFIG_FILE + PYPROJECT_CONFIG_FILES
 
 
 class Config(BaseModel):
-    """Configuration class for the RDEtoolkit."""
+    """The configuration class used in RDEToolKit.
+
+    Attributes:
+        extendeds_mode (Optional[str]): The mode to run the RDEtoolkit in. It can be either 'rdeformat' or 'multifile'. If not specified, it defaults to None.
+        save_raw (bool): A boolean flag that indicates whether to automatically save raw data to the raw directory. It defaults to True.
+        save_thumbnail_image (bool): A boolean flag that indicates whether to automatically save the main image to the thumbnail directory. It defaults to False.
+        magic_variable (bool): A boolean flag that indicates whether to use the feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name. It defaults to False.
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -52,7 +59,7 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
         - If the specified configuration file does not exist or is not in the correct format, an empty Config object will be returned.
 
     Example:
-        >>> parse_config_file(path="config.yaml")
+        parse_config_file(path="config.yaml")
 
     """
     config_data: dict[str, Any] = {}
@@ -70,7 +77,6 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
         config_data = __read_pyproject_toml(str(pyproject_toml))
     else:
         return Config()
-    print(config_data)
     return Config(**config_data)
 
 
