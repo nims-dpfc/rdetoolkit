@@ -56,3 +56,21 @@
 ## update_description_with_features
 
 ::: src.rdetoolkit.invoiceFile.update_description_with_features
+
+## RuleBasedReplacer
+
+::: src.rdetoolkit.invoiceFile.RuleBasedReplacer
+    options:
+        members:
+            - load_rules
+            - get_apply_rules_obj
+            - set_rule
+            - write_rule
+
+## apply_default_filename_mapping_rule
+
+::: src.rdetoolkit.invoiceFile.apply_default_filename_mapping_rule
+
+## apply_magic_variable
+
+::: src.rdetoolkit.invoiceFile.apply_magic_variable

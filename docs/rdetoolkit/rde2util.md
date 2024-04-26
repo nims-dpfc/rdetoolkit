@@ -28,9 +28,12 @@
 
 ::: src.rdetoolkit.rde2util.get_default_values
 
-## detect_text_file_encoding
+## CharDecEncoding
 
-::: src.rdetoolkit.rde2util.detect_text_file_encoding
+::: src.rdetoolkit.rde2util.CharDecEncoding
+    options:
+        members:
+            - detect_text_file_encoding
 
 ## unzip_japanese_zip
 
