@@ -21,7 +21,7 @@ def temp_dir():
 
 
 class TestCompressedFlatFileParser:
-    @mock.patch("rdetoolkit.impl.compressed_controller.checkExistRawFiles")
+    @mock.patch("rdetoolkit.impl.compressed_controller.check_exist_rawfiles")
     def test_read(self, mocker, inputfile_zip_with_file, temp_dir):
         xlsx_invoice = pd.DataFrame()
         expected_files = [(pathlib.Path(temp_dir, "test_child1.txt"),)]

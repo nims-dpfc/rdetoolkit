@@ -8,7 +8,7 @@ import pandas as pd
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser
-from rdetoolkit.invoicefile import checkExistRawFiles
+from rdetoolkit.invoicefile import check_exist_rawfiles
 
 
 class CompressedFlatFileParser(ICompressedFileStructParser):
@@ -37,7 +37,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
             represents files from the compressed archive that matched the xlsx_invoice structure.
         """
         _extracted_files = self._unpacked(zipfile, target_path)
-        return [(f,) for f in checkExistRawFiles(self.xlsx_invoice, _extracted_files)]
+        return [(f,) for f in check_exist_rawfiles(self.xlsx_invoice, _extracted_files)]
 
     def _unpacked(self, zipfile: Union[Path, str], target_dir: Union[Path, str]):
         if isinstance(target_dir, str):

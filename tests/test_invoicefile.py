@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, read_excelinvoice, update_description_with_features, apply_magic_variable
+from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, check_exist_rawfiles, read_excelinvoice, update_description_with_features, apply_magic_variable
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
@@ -385,7 +385,7 @@ def test_check_exist_rawfiles(inputfile_multi_excelinvoice):
     df_excelinvoice = df.iloc[4:, :].reset_index(drop=True).copy()
 
     test_excel_raw_files = [Path("test_child2.txt"), Path("test_child1.txt"), Path("test_child3.txt"), Path("test_child9.txt"), Path("test_child10.txt")]
-    rtn = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
+    rtn = check_exist_rawfiles(df_excelinvoice, test_excel_raw_files)
 
     assert expect_rtn == rtn
 
@@ -407,7 +407,7 @@ def test_error_check_exist_rawfiles(inputfile_multi_excelinvoice):
     test_excel_raw_files = [Path("test_child1.txt")]
 
     with pytest.raises(StructuredError) as e:
-        _ = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
+        _ = check_exist_rawfiles(df_excelinvoice, test_excel_raw_files)
 
     assert str(e.value) == "ERROR: raw file not found: test_child2.txt"
 
