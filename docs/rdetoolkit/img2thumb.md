@@ -1,6 +1,6 @@
 # img2thumb
 
-`img2thumb`では、代表画像(サムネイル画像)に関する処理が定義されています。
+In img2thumb, processes related to representative images (thumbnail images) are defined.
 
 ## copy_images_to_thumbnail
 

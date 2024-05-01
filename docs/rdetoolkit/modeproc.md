@@ -1,6 +1,6 @@
 # modeproc
 
-`modeproc.py`では、構造化処理の入力モードごとの処理が定義されています。
+In `modeproc.py`, processes for each input mode of the structuring process are defined.
 
 ## invoice_mode_process
 

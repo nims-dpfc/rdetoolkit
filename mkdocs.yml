@@ -18,7 +18,7 @@ theme:
         name: Switch to light mode
   features:
     - navigation.top
-    - toc.integrate
+    # - toc.integrate
 
 nav:
   - はじめに: index.md
@@ -36,11 +36,12 @@ nav:
       - rdetoolkit/config.md
       - rdetoolkit/workflows.md
       - rdetoolkit/rde2util.md
-      - rdetoolkit/invoiceFile.md
+      - rdetoolkit/invoicefile.md
       - rdetoolkit/modeproc.md
       - rdetoolkit/img2thumb.md
       - rdetoolkit/rdelogger.md
       - rdetoolkit/csv2graph.md
+      - rdetoolkit/exceptions.md
   - Contributing: contributing.md
 
 plugins:

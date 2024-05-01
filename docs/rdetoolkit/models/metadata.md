@@ -1,10 +1,10 @@
 # metadata
 
-`metadata`では、RDEで使用するmetadata.jsonのバリデーション用モデルが定義されています。
+In `metadata`, models for validating metadata.json used in RDE are defined.
 
-## MetadataDefItem
+## MetadataItem
 
-::: src.rdetoolkit.models.metadata.MetadataDefItem
+::: src.rdetoolkit.models.metadata.MetadataItem
 
 ### ValidableItems
 

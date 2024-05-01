@@ -1,6 +1,6 @@
 # rdelogger
 
-`rdelogger`では、構造化処理の実行ログを収集するために使用されます。
+`rdelogger `is used to collect execution logs of the structuring process.
 
 ## get_logger
 

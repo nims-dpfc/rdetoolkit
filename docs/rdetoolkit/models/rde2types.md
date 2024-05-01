@@ -1,6 +1,6 @@
 # rde2types
 
-`rde2types`では、RDEで使用する各種データクラスと独自の型が定義されています。
+In `rde2types`, various data classes and custom types used in RDE are defined.
 
 ## RdeFormatFlags
 
