@@ -18,7 +18,7 @@ RdeFsPath = Union[str, Path]
 
 
 @dataclass
-class RdeFormatFlags:
+class RdeFormatFlags:  # pragma: no cover
     """Class for managing flags used in RDE.
 
     This class has two private attributes: _is_rdeformat_enabled and _is_multifile_enabled.
