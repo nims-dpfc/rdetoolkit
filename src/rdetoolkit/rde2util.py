@@ -185,15 +185,15 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
     return invoiceObj
 
 
-def write_to_json_file(invoiceFilePath: RdeFsPath, invoiceObj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
+def write_to_json_file(invoicefile_path: RdeFsPath, invoiceObj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
     """Writes an content to a JSON file.
 
     Args:
-        invoiceFilePath (RdeFsPath): Path to the destination JSON file.
+        invoicefile_path (RdeFsPath): Path to the destination JSON file.
         invoiceObj (dict[str, Any]): Invoice object to be serialized and written.
         enc (str): Encoding to use when writing the file. Defaults to "utf_8".
     """
-    with open(invoiceFilePath, "w", encoding=enc) as f:
+    with open(invoicefile_path, "w", encoding=enc) as f:
         json.dump(invoiceObj, f, indent=4, ensure_ascii=False)
 
 
