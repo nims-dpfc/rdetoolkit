@@ -17,21 +17,18 @@ from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
 def read_excelinvoice(excelInvoiceFilePath):
     """Reads an ExcelInvoice and processes each sheet into a dataframe.
 
-    This function reads an ExcelInvoice file and processes various sheets within the file,
-    specifically looking for sheets named 'invoiceList_format_id', 'generalTerm', and
-    'specificTerm'. These sheets are converted into pandas dataframes and returned as output.
+    This function reads an ExcelInvoice file and processes various sheets within the file, specifically looking for sheets named `invoiceList_format_id`,`generalTerm`, and `specificTerm`.
+
+    These sheets are converted into pandas dataframes and returned as output.
 
     Args:
         excelInvoiceFilePath (str): The file path of the Excel invoice file.
 
     Returns:
-        tuple: A tuple containing dataframes for the invoice list, general terms, and specific terms.
-            If any of these sheets are missing or if there are multiple invoice list sheets,
-            a StructuredError is raised.
+        tuple: A tuple containing dataframes for the invoice list, general terms, and specific terms.If any of these sheets are missing or if there are multiple invoice list sheets, a StructuredError is raised.
 
     Raises:
-        StructuredError: If there are multiple sheets with 'invoiceList_format_id' in the ExcelInvoice,
-                        or if no sheets are present in the ExcelInvoice.
+        StructuredError: If there are multiple sheets with `invoiceList_format_id` in the ExcelInvoice, or if no sheets are present in the ExcelInvoice.
     """
     dctSheets = pd.read_excel(excelInvoiceFilePath, sheet_name=None, dtype=str, header=None, index_col=None)
     dfExcelInvoice = None
@@ -73,10 +70,10 @@ def __process_specific_term_sheet(df: pd.DataFrame) -> pd.Series:
     return _df_specific
 
 
-def checkExistRawFiles(dfExcelInvoice: pd.DataFrame, excelRawFiles: list[Path]) -> list[Path]:
+def check_exist_rawfiles(dfExcelInvoice: pd.DataFrame, excelRawFiles: list[Path]) -> list[Path]:
     """Checks for the existence of raw file paths listed in a DataFrame against a list of file Paths.
 
-    This function compares a set of file names extracted from the 'data_file_names/name' column of the provided DataFrame (dfExcelInvoice) with the names of files in the excelRawFiles list.
+    This function compares a set of file names extracted from the `data_file_names/name` column of the provided DataFrame (dfExcelInvoice) with the names of files in the excelRawFiles list.
     If there are file names in the DataFrame that are not present in the excelRawFiles list, it raises a StructuredError with a message indicating the missing file.
     If all file names in the DataFrame are present in the excelRawFiles list, it returns a list of Path objects from excelRawFiles, sorted in the order they appear in the DataFrame.
 
@@ -130,7 +127,7 @@ def overwriteInvoiceFileforDPFTerm(invoiceObj, invoiceDstFilePath, invoiceSchema
         json.dump(invoiceObj, fOut, indent=4, ensure_ascii=False)
 
 
-def checkExistRawFiles_for_folder(dfExcelInvoice, rawFilesTpl):
+def check_exist_rawfiles_for_folder(dfExcelInvoice, rawFilesTpl):
     """Function to check the existence of rawFilesTpl specified for a folder.
 
     It checks whether rawFilesTpl, specified as an index, exists in all indexes of ExcelInvoice.
