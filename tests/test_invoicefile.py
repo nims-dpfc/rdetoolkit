@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, read_excelinvoice, update_description_with_features, apply_magic_variable
+from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, read_excelinvoice, update_description_with_features, apply_magic_variable
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
-from rdetoolkit.invoiceFile import apply_default_filename_mapping_rule
+from rdetoolkit.invoicefile import apply_default_filename_mapping_rule
 
 
 @pytest.fixture

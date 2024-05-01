@@ -13,7 +13,7 @@ from rdetoolkit.impl.input_controller import (
     RDEFormatChecker,
 )
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
+from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.validation import invoice_validate, metadata_def_validate
 

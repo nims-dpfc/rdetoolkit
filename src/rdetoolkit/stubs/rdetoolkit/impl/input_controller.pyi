@@ -3,7 +3,7 @@ from pathlib import Path
 from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.impl import compressed_controller as compressed_controller
 from rdetoolkit.interfaces.filechecker import IInputFileChecker as IInputFileChecker
-from rdetoolkit.invoiceFile import read_excelinvoice as read_excelinvoice
+from rdetoolkit.invoicefile import read_excelinvoice as read_excelinvoice
 from rdetoolkit.models.rde2types import ExcelInvoicePathList as ExcelInvoicePathList, InputFilesGroup as InputFilesGroup, OtherFilesPathList as OtherFilesPathList, RawFiles as RawFiles, ZipFilesPathList as ZipFilesPathList
 from typing import Optional
 

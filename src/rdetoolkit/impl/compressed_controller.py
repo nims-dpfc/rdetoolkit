@@ -8,7 +8,7 @@ import pandas as pd
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser
-from rdetoolkit.invoiceFile import checkExistRawFiles
+from rdetoolkit.invoicefile import checkExistRawFiles
 
 
 class CompressedFlatFileParser(ICompressedFileStructParser):

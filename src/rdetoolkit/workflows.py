@@ -5,7 +5,7 @@ from typing import Generator, Optional
 
 from rdetoolkit.config import Config, find_config_files, parse_config_file
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import backup_invoice_json_files
+from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process, invoice_mode_process, multifile_mode_process, rdeformat_mode_process, selected_input_checker
 from rdetoolkit.rde2util import StorageDir

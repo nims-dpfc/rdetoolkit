@@ -3,7 +3,7 @@ from _typeshed import Incomplete
 from pathlib import Path
 from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser as ICompressedFileStructParser
-from rdetoolkit.invoiceFile import checkExistRawFiles as checkExistRawFiles
+from rdetoolkit.invoicefile import checkExistRawFiles as checkExistRawFiles
 from typing import List, Tuple, Union
 
 class CompressedFlatFileParser(ICompressedFileStructParser):

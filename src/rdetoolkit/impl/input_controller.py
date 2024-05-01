@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import read_excelinvoice
+from rdetoolkit.invoicefile import read_excelinvoice
 from rdetoolkit.models.rde2types import (
     ExcelInvoicePathList,
     InputFilesGroup,
