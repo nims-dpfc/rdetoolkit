@@ -21,13 +21,15 @@ def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
         logging.Logger: A configured logger object.
 
     Example:
+        ```python
         from rdetoolkit import rdelogger
 
         logger = rdelogger.get_logger(__name__, "data/log/rdesys.log")
 
         # If you want to output a debug message, add the following code
         logger.debug('This is a debug message.')
-        >>> 2023-01-01 00:00:00,111 - [rdetoolkit.rde2util](DEBUG) - This is a debug message.
+        > 2023-01-01 00:00:00,111 - [rdetoolkit.rde2util](DEBUG) - This is a debug message.
+        ```
     """
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
@@ -66,7 +68,9 @@ def write_job_errorlog_file(code: int, message: str, *, filename: str = "job.fai
             Defaults to "job.failed".
 
     Example:
-        >>> write_job_errorlog_file(404, 'Not Found', filename='error.log')
+        ```python
+        write_job_errorlog_file(404, 'Not Found', filename='error.log')
+        ```
     """
     with open(
         os.path.join(StorageDir.get_datadir(False), filename),
@@ -87,14 +91,14 @@ class CustomLog:
         logger: A logger instance for writing logs. If `False` is passed to `get_log`, the logger will not write any logs.
 
     Example:
-    ```python
-    logger = CustomLog(__name__).get_log()
+        ```python
+        logger = CustomLog(__name__).get_log()
 
-    # If you do not want to write a log, pass `False` as an argument to the `get_log` method.
-    logger = CustomLog(__name__).get_log(False)
+        # If you do not want to write a log, pass `False` as an argument to the `get_log` method.
+        logger = CustomLog(__name__).get_log(False)
 
-    #In the above code, a logger is generated, but no log is written.
-    ```
+        #In the above code, a logger is generated, but no log is written.
+        ```
     """
 
     def __init__(self, name: str = "rdeuser"):
@@ -151,7 +155,6 @@ def log_decorator():
         @log_decorator()
         def my_function():
             print("Hello, World!")
-
         my_function()
         # Output:
         # my_function     --> Start

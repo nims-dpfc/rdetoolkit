@@ -84,7 +84,7 @@ def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepa
         StructuredError: Occurs when the structured process fails to process correctly.
 
     Example:
-        ```
+        ```python
         rawFilesTplList = [(Path('data/temp/samle1.txt'),), (Path('data/temp/sample2.txt'),), (Path('data/temp/sample3.txt'),)]
 
         excel_invoice_files = Path("data/inputdata/sample_excel_invoice.xlsx")
