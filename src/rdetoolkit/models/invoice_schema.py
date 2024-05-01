@@ -40,18 +40,14 @@ class Options(BaseModel):
     placeholder: Optional[Placeholder] = Field(default=None)
 
     @model_validator(mode="after")
-    def __check_row_for_widget_textarea(self):
+    def __check_row_for_widget_textarea(self) -> "Options":
         """Validates that the 'row' field is set when the 'widget' field is set to 'textarea'.
-
-        Args:
-            v (Optional[int]): The value of the 'row' field to be validated. This value must not be None if the widget is set to 'textarea'.
-            values (dict): A dictionary containing the values of other fields in the instance. Specifically, the value of the 'widget' field is retrieved from this dictionary.
 
         Raises:
             ValueError: If the widget is set to 'textarea' and the 'row' is not set (None or not provided).
 
         Returns:
-            Optional[int]: The validated value of the 'row' field. Returns the input value (v) if there are no issues.
+            Options: The validated value of the 'row' field. Returns the input value (v) if there are no issues.
         """
         if self.rows is None and self.widget is not None:
             raise ValueError('rows must be set when widget is "textarea"')

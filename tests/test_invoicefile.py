@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, readExcelInvoice, update_description_with_features, apply_magic_variable
+from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, read_excelinvoice, update_description_with_features, apply_magic_variable
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
@@ -279,8 +279,8 @@ def test_update_description_none_features_none_variable(
     assert result_contents["basic"]["description"] == expect_message
 
 
-def test_readExcelInvoice(inputfile_single_excelinvoice):
-    """readExcelInvoiceのテスト
+def test_read_excelinvoice(inputfile_single_excelinvoice):
+    """read_excelinvoiceのテスト
     dfExcelInvoice, dfGeneral, dfSpecificが正しい値で返ってくるかテスト
     """
     expect_sheet1 = [
@@ -341,7 +341,7 @@ def test_readExcelInvoice(inputfile_single_excelinvoice):
         ],
     )
 
-    dfExcelInvoice, dfGeneral, dfSpecific = readExcelInvoice(inputfile_single_excelinvoice)
+    dfExcelInvoice, dfGeneral, dfSpecific = read_excelinvoice(inputfile_single_excelinvoice)
 
     print(dfExcelInvoice)
     print(df1)
@@ -353,19 +353,19 @@ def test_readExcelInvoice(inputfile_single_excelinvoice):
     assert dfSpecific.columns.to_list() == ["sample_class_id", "term_id", "key_name"]
 
 
-def test_empty_excelinvoice_readExcelInvoice(empty_inputfile_excelinvoice):
+def test_empty_excelinvoice_read_excelinvoice(empty_inputfile_excelinvoice):
     """空のエクセルインボイスを入れた時に例外をキャッチできるかテスト"""
     with pytest.raises(StructuredError) as e:
-        _, _, _ = readExcelInvoice(empty_inputfile_excelinvoice)
+        _, _, _ = read_excelinvoice(empty_inputfile_excelinvoice)
     assert str(e.value) == "ERROR: no sheet in invoiceList files"
 
 
-def test_invalid_excelinvoice_readExcelInvoice(
+def test_invalid_excelinvoice_read_excelinvoice(
     inputfile_invalid_samesheet_excelinvoice,
 ):
     """sheet1の内容が複数あるエクセルインボイスを入れた時に例外をキャッチできるかテスト"""
     with pytest.raises(StructuredError) as e:
-        _, _, _ = readExcelInvoice(inputfile_invalid_samesheet_excelinvoice)
+        _, _, _ = read_excelinvoice(inputfile_invalid_samesheet_excelinvoice)
     assert str(e.value) == "ERROR: multiple sheet in invoiceList files"
 
 

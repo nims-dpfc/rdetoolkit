@@ -14,7 +14,7 @@ from rdetoolkit.models.rde2types import RdeOutputResourcePath
 from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
 
 
-def readExcelInvoice(excelInvoiceFilePath):
+def read_excelinvoice(excelInvoiceFilePath):
     """Reads an ExcelInvoice and processes each sheet into a dataframe.
 
     This function reads an ExcelInvoice file and processes various sheets within the file,

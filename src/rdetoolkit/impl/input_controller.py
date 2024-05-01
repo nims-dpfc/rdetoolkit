@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import readExcelInvoice
+from rdetoolkit.invoiceFile import read_excelinvoice
 from rdetoolkit.models.rde2types import (
     ExcelInvoicePathList,
     InputFilesGroup,
@@ -108,7 +108,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
         return zipfiles, excel_invoice_files, other_files
 
     def _get_rawfiles(self, zipfile: Optional[Path], excel_invoice_file: Path) -> List[Tuple[Path, ...]]:
-        df_excel_invoice, _, _ = readExcelInvoice(excel_invoice_file)
+        df_excel_invoice, _, _ = read_excelinvoice(excel_invoice_file)
         original_sort_items = df_excel_invoice.iloc[:, 0].to_list()
         if zipfile is None:
             return [() for _ in range(len(df_excel_invoice["basic/dataName"]))]

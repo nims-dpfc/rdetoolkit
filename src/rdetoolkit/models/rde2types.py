@@ -50,7 +50,7 @@ class RdeFormatFlags:
         self.is_multifile_enabled = os.path.exists("data/tasksupport/multifile.txt")
 
     @property
-    def is_rdeformat_enabled(self):
+    def is_rdeformat_enabled(self) -> bool:
         """Property returning whether the RDE format is enabled.
 
         Returns:
@@ -73,7 +73,7 @@ class RdeFormatFlags:
         self._is_rdeformat_enabled = value
 
     @property
-    def is_multifile_enabled(self):
+    def is_multifile_enabled(self) -> bool:
         """Property returning whether multi-file support is enabled.
 
         Returns:
