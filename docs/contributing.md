@@ -80,7 +80,7 @@ rdetoolkitのドキュメントは、本リポジトリの`docs`フォルダに�
 以下のURLより、RDEToolKitのリポジトリにアクセスし、issueを発行してください。
 この時、ラベルは`Type:documentation`というラベルを付与してください。
 
-> [RDEToolKit - gitlab.nims.go.jp](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit)
+> [RDEToolKit - github.com](https://github.com/nims-dpfc/RDEToolKit/issues)
 
 ### ローカル環境で変更する
 
@@ -102,11 +102,25 @@ git push origin <対象のブランチ名>
 
 ### ドキュメントをWeb上で確認する
 
-ドキュメントをWebで確認する場合、ドキュメントの変更が完了し、マージリクエストを発行した時点でCIのワークフローが実行され、問題なくビルドが完了すると、ドキュメントが`artifacts`に追加されます。RDEToolKitのリポジトリページより、[Pipline](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit/-/pipelines)にアクセスし、`Download artifact`ボタンをクリックし、zipファイルをダウンロードしてください。zipファイルを展開すると、HTMLファイル群があるため、そのファイルをブラウザ上で確認してください。
+ドキュメントをWebで確認する場合、以下の手順でドキュメントサーバーを起動して確認してください。
+
+#### ryeをインストールしている場合
+
+```bash
+rye sync
+mkdocs serve
+```
+
+#### ryeをインストールしていない場合
+
+```bash
+pip install -r requirements.lock
+mkdocs serve
+```
 
 ### ドキュメントをmainブランチにマージする
 
-ドキュメントを追加しマージリクエストを作成します。管理者が確認し、問題がなければマージします。
+ドキュメントを追加しプルリクエストを作成します。管理者が確認し、問題がなければマージします。
 
 ## 機能バグレポートと機能拡張のリクエスト
 
@@ -114,7 +128,7 @@ git push origin <対象のブランチ名>
 
 - 上記リポジトリのissueで、Issueを作成し新機能、問題や不具合を報告する
 - 変更を実際に加える場合、ローカルで新規にブランチを作成し、変更を加える。
-- CIテストを実行し、マージリクエストを出す
+- CIテストを実行し、プルリクエストを出す
 - CIテストが全てパス、レビューが完了したら、マージする
 - Releaseページを作成する
 
@@ -124,7 +138,7 @@ git push origin <対象のブランチ名>
 
 問題や不具合が発生した場合、以下のisuueへ起票お願いします。この時、ラベルは`Type:improvement`, `Type: new feature`のどちらかの付与をお願いします。
 
-> <https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/boards>
+> <https://github.com/nims-dpfc/RDEToolKit/issues>
 
 ### ブランチの作成
 
@@ -173,7 +187,7 @@ git push origin develop-v<x.y.z>-<先ほどつけた名称>
 
 ### 変更リクエスト (Merge Request)
 
-:warning: **この時、`main`ブランチにマージリクエストを発行してないでください。**
+:warning: **この時、`main`ブランチにプルリクエストを発行してないでください。**
 
 変更が完了したら、GitHub等のプラットフォームを使用して変更リクエスト (PR) を作成します。
 この時、レビューを受け、必ずCIテストが全てパスすることを確認してください。
@@ -186,7 +200,7 @@ git push origin develop-v<x.y.z>-<先ほどつけた名称>
 
 また、全ての開発がfixしたら、mainブランチにマージしてください。mainブランチにマージ後、デプロイが正しく実行できたら、tagの作成とReleaseページを作成してください。
 
-> Releaseページ: <https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/releases>
+> Releaseページ: <https://github.com/nims-dpfc/RDEToolKit/releases>
 
 ## 関連ページ
 

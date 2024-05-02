@@ -33,24 +33,31 @@ def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[Raw
         Registered data file path group, presence of Excel invoice file
 
     Example:
-        ### MODE: Invoice / Mode: File / Input: single file
-            >>> check_files(srcpaths, fmt_flags=format_flags)
-            tuple([(Path('data/inputdata/sample.txt'),)], None)
-        ### MODE: Invoice / Mode: Folder / Input: multi files
-            >>> check_files(srcpaths, fmt_flags=format_flags)
-            tuple([(Path('data/inputdata/sample1.txt'), (Path('data/inputdata/sample2.txt'))], None)
-        ### MODE: Invoice / Mode: None / Input: no files
-            >>> check_files(srcpaths, fmt_flags=format_flags)
-            tuple([()], None)
-        ### MODE: ExcelInvoice / Mode: File / Input: zip + *_excel_invoice.xlsx
-            >>> check_files(srcpaths, fmt_flags=format_flags)
-            tuple([(Path('data/inputdata/sample.txt'),)], Path("data/inputdata/dataset_excel_invoice.xlsx"))
-        ### MODE: ExcelInvoice / Mode: Folder / Input: zip + *_excel_invoice.xlsx
-            >>> checkFiles(srcpaths, fmt_flags=format_flags)
-            tuple([(Path('data/inputdata/sample1.txt'), (Path('data/inputdata/sample2.txt'))], Path("data/inputdata/dataset_excel_invoice.xlsx"))
-        ### MODE: ExcelInvoice / Mode: None / Input: *_excel_invoice.xlsx
-            >>> check_files(srcpaths, fmt_flags=format_flags)
-            tuple([], Path("data/inputdata/dataset_excel_invoice.xlsx"))
+        ```python
+        # MODE: Invoice / Mode: File / Input: single file
+        check_files(srcpaths, fmt_flags=format_flags)
+        tuple([(Path('data/inputdata/sample.txt'),)], None)
+
+        # MODE: Invoice / Mode: Folder / Input: multi files
+        check_files(srcpaths, fmt_flags=format_flags)
+        tuple([(Path('data/inputdata/sample1.txt'), (Path('data/inputdata/sample2.txt'))], None)
+
+        # MODE: Invoice / Mode: None / Input: no files
+        check_files(srcpaths, fmt_flags=format_flags)
+        tuple([()], None)
+
+        # MODE: ExcelInvoice / Mode: File / Input: zip + *_excel_invoice.xlsx
+        check_files(srcpaths, fmt_flags=format_flags)
+        tuple([(Path('data/inputdata/sample.txt'),)], Path("data/inputdata/dataset_excel_invoice.xlsx"))
+
+        # MODE: ExcelInvoice / Mode: Folder / Input: zip + *_excel_invoice.xlsx
+        checkFiles(srcpaths, fmt_flags=format_flags)
+        tuple([(Path('data/inputdata/sample1.txt'), (Path('data/inputdata/sample2.txt'))], Path("data/inputdata/dataset_excel_invoice.xlsx"))
+
+        # MODE: ExcelInvoice / Mode: None / Input: *_excel_invoice.xlsx
+        check_files(srcpaths, fmt_flags=format_flags)
+        tuple([], Path("data/inputdata/dataset_excel_invoice.xlsx"))
+        ```
 
     Note:
         The destination paths for reading input files are different for the shipping label and ExcelInvoice.

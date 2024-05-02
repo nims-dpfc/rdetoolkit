@@ -3,8 +3,6 @@ theme:
   name: "material"
   font:
     text: Noto Sans JP
-  icon:
-    repo: fontawesome/brands/gitlab
   palette:
     - scheme: default
       primary: indigo
@@ -19,11 +17,19 @@ theme:
   features:
     - navigation.top
     # - toc.integrate
+    - navigation.tabs
+    - navigation.tabs.sticky
 
 nav:
-  - はじめに: index.md
-  - インストール: install.md
-  - API Document:
+  - Getting started: index.md
+  - Installation: install.md
+  - User Guide:
+      - Quick Start: quickstart.md
+      - Configuration: config.md
+      - Run Mode: mode.md
+      - File Mode / Folder Mode: file_folder_mode.md
+      - Magic Variable: magic_variable.md
+  - API Documentation:
       - impl:
           - rdetoolkit/impl/compressed_controller.md
           - rdetoolkit/impl/input_controller.md
@@ -42,11 +48,12 @@ nav:
       - rdetoolkit/rdelogger.md
       - rdetoolkit/csv2graph.md
       - rdetoolkit/exceptions.md
-  - Contributing: contributing.md
+  - Development: contributing.md
 
 plugins:
   - search:
       separator: '[\s\-\.]+'
+      lang: 'ja'
   - mkdocstrings:
       handlers:
         python:
@@ -67,13 +74,13 @@ markdown_extensions:
       pygments_style: colorful
       linenums: true
 
-repo_url: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
-repo_name: rde20/rdetoolkit
+repo_url: https://github.com/nims-dpfc/RDEToolKit
+repo_name: nims-dpfc/RDEToolKit
 
 extra:
   social:
-    - icon: fontawesome/brands/gitlab
-      link: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
+    - icon: fontawesome/brands/github
+      link: https://github.com/nims-dpfc/RDEToolKit
   consent:
     title: Cookie consent
     description:
