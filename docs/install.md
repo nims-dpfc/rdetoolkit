@@ -13,5 +13,5 @@ pip install rdetoolkit
 Githubリポジトリから直接インストールしたい場合や、開発版のパッケージをインストールする場合、リポジトリから直接インストールしてください。
 
 ```bash
-pip install rdetoolkit@git+https://github.com/nims-dpfc/RDEToolKit.git
+pip install rdetoolkit@git+https://github.com/nims-dpfc/rdetoolkit.git
 ```

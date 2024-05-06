@@ -1,11 +1,11 @@
 # RDEToolKit
 
-[![Latest Release](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/badges/release.svg)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/releases)
-[![pipeline status](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/badges/main/pipeline.svg)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/commits/main)
+[![GitHub release](https://img.shields.io/github/v/release/nims-dpfc/RDEToolKit.svg)](https://github.com/nims-dpfc/RDEToolKit/releases)
+![pipeline status](https://github.com/nims-dpfc/RDEToolKit/actions/workflows/main.yml/badge.svg)
 [![coverage report](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/badges/main/coverage.svg)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/commits/main)
 [![python.org](https://img.shields.io/badge/Python-3.9%7C3.10%7C3.11-%233776AB?logo=python)](https://www.python.org/downloads/release/python-3917/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/blob/main/LICENSE)
-[![Issue](https://img.shields.io/badge/issue_tracking-gitlab-orange)](https://github.com/nims-dpfc/RDEToolKit/issues)
+[![Issue](https://img.shields.io/badge/issue_tracking-gitlab-orange)](https://github.com/nims-dpfc/rdetoolkit/issues)
 
 
 RDEToolKitは、RDE2.0構造化プログラムのワークフローを作成するための基本的なPythonパッケージです。
@@ -14,14 +14,14 @@ RDEToolKitの各種モジュールを使うことで、RDEへの研究・実験�
 
 ## Usage
 
-[クイックスタート](docs/quickstart.md) を参照してください。
+[クイックスタート](quickstart.md) を参照してください。
 
 ## API Documentation
 
-[API Documentation](docs/rdetoolkit/impl/compressed_controller) を参照してください。
+[API Documentation](rdetoolkit/impl/compressed_controller) を参照してください。
 
 ## Contributing
 
 RDEToolKitへのコントリビュートをしていただくには、以下のドキュメントを参照してください。
 
-[Contributing](docs/contributing.md)
+[Contributing](contribute/home.md)
