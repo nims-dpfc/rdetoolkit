@@ -48,7 +48,10 @@ nav:
       - rdetoolkit/rdelogger.md
       - rdetoolkit/csv2graph.md
       - rdetoolkit/exceptions.md
-  - Development: contributing.md
+  - Development:
+      - Top: contribute/home.md
+      - Documents: contribute/documents_contributing.md
+      - Source Code: contribute/sourcecode_contributing.md
 
 plugins:
   - search:
@@ -73,14 +76,18 @@ markdown_extensions:
       noclasses: true
       pygments_style: colorful
       linenums: true
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 
-repo_url: https://github.com/nims-dpfc/RDEToolKit
-repo_name: nims-dpfc/RDEToolKit
+repo_url: https://github.com/nims-dpfc/rdetoolkit
+repo_name: nims-dpfc/rdetoolkit
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/nims-dpfc/RDEToolKit
+      link: https://github.com/nims-dpfc/rdetoolkit
   consent:
     title: Cookie consent
     description:
