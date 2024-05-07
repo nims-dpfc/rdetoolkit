@@ -23,8 +23,8 @@ requires-python = ">= 3.9"
 package_data = { "rdetoolkit" = ["py.typed"] }
 
 [project.urls]
-"Homepage" = "https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit"
-"Bug Tracker" = "https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/issues"
+"Homepage" = "https://github.com/nims-dpfc/rdetoolkit"
+"Bug Tracker" = "https://github.com/nims-dpfc/rdetoolkit"
 
 [build-system]
 requires = ["hatchling"]
