@@ -96,7 +96,7 @@ jobs:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [build, coverage]
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -142,7 +142,6 @@ jobs:
         run: >-
           gh release create ${{ github.ref_name }}
           --repo '${{ github.repository }}'
-          --notes "Release ${{ github.ref }}"
           --target main
       - name: Upload artifact signatures to GitHub Release
         env:
