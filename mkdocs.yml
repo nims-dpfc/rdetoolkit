@@ -24,11 +24,13 @@ nav:
   - Getting started: index.md
   - Installation: install.md
   - User Guide:
-      - Quick Start: quickstart.md
-      - Configuration: config.md
-      - Run Mode: mode.md
-      - File Mode / Folder Mode: file_folder_mode.md
-      - Magic Variable: magic_variable.md
+      - Quick Start: usage/quickstart.md
+      - 構造化処理: usage/structured.md
+      - 設定ファイル: usage/config.md
+      - 起動モード: usage/mode.md
+      - 説明欄の自動記述: usage/feature_description.md
+      - File Mode / Folder Mode: usage/file_folder_mode.md
+      - Magic Variable: usage/magic_variable.md
   - API Documentation:
       - impl:
           - rdetoolkit/impl/compressed_controller.md
@@ -57,6 +59,7 @@ plugins:
   - search:
       separator: '[\s\-\.]+'
       lang: 'ja'
+  - mermaid2
   - mkdocstrings:
       handlers:
         python:
@@ -70,12 +73,19 @@ watch:
 
 markdown_extensions:
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+        # make exceptions to highlighting of code:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
   - pymdownx.highlight:
       use_pygments: true
       noclasses: true
       pygments_style: colorful
       linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
   - attr_list
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
