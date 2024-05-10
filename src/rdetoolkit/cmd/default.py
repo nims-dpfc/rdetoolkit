@@ -1,20 +1,20 @@
-custom_fields = {
+CUSTOM_FIELDS = {
     "type": "object",
     "label": {"ja": "固有情報", "en": "Custom Information"},
     "required": [
-        "sample1",
+        "toy_data1",
     ],
-    "properties": {"sample1": {"label": {"ja": "サンプル１", "en": "sample1"}, "type": "string"}, "sample2": {"label": {"ja": "サンプル２", "en": "sample2"}, "type": "number"}},
+    "properties": {"toy_data1": {"label": {"ja": "トイデータ１", "en": "toy_data1"}, "type": "string"}, "sample2": {"label": {"ja": "トイデータ２", "en": "toy_data2"}, "type": "number"}},
 }
 
-sample_fields = {"type": "object", "label": {"ja": "試料情報", "en": "Sample Information"}, "properties": {}}
+SAMPLE_FIELDS = {"type": "object", "label": {"ja": "試料情報", "en": "Sample Information"}, "properties": {}}
 
-propaties = {"custom": custom_fields, "sample": sample_fields}
+PROPATIES = {"custom": CUSTOM_FIELDS, "sample": SAMPLE_FIELDS}
 
 
-invoice_json = {
+INVOICE_JSON = {
     "datasetId": "3f976089-7b0b-4c66-a035-f48773b018e6",
-    "basic": {"dateSubmitted": "", "dataOwnerId": "dummy!7e4792d1a8440bcfa08925d35e9d92b234a963449f03df449e", "dataName": "toy dataset", "instrumentId": None, "experimentId": None, "description": None},
+    "basic": {"dateSubmitted": "", "dataOwnerId": "7e4792d1a8440bcfa08925d35e9d92b234a963449f03df441234569e", "dataName": "toy dataset", "instrumentId": None, "experimentId": None, "description": None},
     "custom": {"toy_data1": "2023-01-01", "toy_data2": 1.0},
     "sample": {
         "sampleId": "",
@@ -24,6 +24,6 @@ invoice_json = {
         "description": None,
         "generalAttributes": [],
         "specificAttributes": [],
-        "ownerId": "dummy!7e4792d1a8440bcfa08925d35e9d92b234a963449f03df449e",
+        "ownerId": "1234567e4792d1a8440bcfa08925d35e9d92b234a963449f03df449e",
     },
 }

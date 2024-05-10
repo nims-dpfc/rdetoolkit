@@ -5,7 +5,7 @@ from typing import Any, Union
 
 import click
 from rdetoolkit import __version__
-from rdetoolkit.cmd.default import invoice_json, propaties
+from rdetoolkit.cmd.default import INVOICE_JSON, PROPATIES
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, Properties
 
 
@@ -233,7 +233,7 @@ class InvoiceSchemaJsonGenerator:
         )
         cvt_obj = obj.model_dump()
         cvt_obj["required"] = ["custom", "sample"]
-        cvt_obj["properties"] = propaties
+        cvt_obj["properties"] = PROPATIES
 
         with open(invoice_schema_path, mode="w", encoding="utf-8") as f:
             json.dump(cvt_obj, f, indent=4, ensure_ascii=False)
@@ -280,9 +280,9 @@ class InvoiceJsonGenerator:
             invoice_path = self.path
 
         with open(invoice_path, mode="w", encoding="utf-8") as f:
-            json.dump(invoice_json, f, indent=4, ensure_ascii=False)
+            json.dump(INVOICE_JSON, f, indent=4, ensure_ascii=False)
 
-        return invoice_json
+        return INVOICE_JSON
 
 
 class MainScriptGenerator:
