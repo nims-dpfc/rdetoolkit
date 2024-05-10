@@ -127,6 +127,8 @@ def find_config_files(input_files: RdeInputDirPaths) -> list[str]:
     """
     files: list[str] = []
     tasksupport_dir = input_files.tasksupport
+    if not tasksupport_dir:
+        return files
     existing_files = os.listdir(tasksupport_dir)
     for config_file in CONFIG_FILES:
         if config_file in existing_files:
