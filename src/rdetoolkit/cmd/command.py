@@ -59,7 +59,7 @@ class InitCommand:
 
     def __make_template_json(self, path: Path) -> None:
         if Path(path).exists():
-            self._error_msg(f"Skip: {path} already exists.")
+            self._info_msg(f"Skip: {path} already exists.")
             return None
 
         generator = InvoiceSchemaJsonGenerator(path)
