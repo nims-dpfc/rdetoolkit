@@ -24,9 +24,8 @@ def test_make_main_py():
     expected_content = """# The following script is a template for the source code.
 
 import rdetoolkit
-from modules.dataset_process import custom_func
 
-rdetoolkit.workflows.run(custom_dataset_function=custom_func)
+rdetoolkit.workflows.run()
 """
     assert content == expected_content
     test_path.unlink()

@@ -301,9 +301,8 @@ class MainScriptGenerator:
             main_path = self.path
 
         contents = [
-            "# The following script is a template for the source code.\n\n" "import rdetoolkit",
-            "from modules.dataset_process import custom_func\n",
-            "rdetoolkit.workflows.run(custom_dataset_function=custom_func)\n",
+            "# The following script is a template for the source code.\n\n" "import rdetoolkit\n",
+            "rdetoolkit.workflows.run()\n",
         ]
 
         with open(main_path, "w", encoding="utf-8") as f:
