@@ -156,6 +156,12 @@ def test_init_creation():
     if os.path.exists("container"):
         shutil.rmtree("container")
 
+    if os.path.exists("input"):
+        shutil.rmtree("input")
+
+    if os.path.exists("templates"):
+        shutil.rmtree("templates")
+
 
 def test_init_no_overwrite():
     """initを実行して既存のファイルが上書きされないことをテスト"""
