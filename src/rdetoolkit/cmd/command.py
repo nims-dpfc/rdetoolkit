@@ -236,7 +236,7 @@ class InvoiceSchemaJsonGenerator:
         cvt_obj["properties"] = propaties
 
         with open(invoice_schema_path, mode="w", encoding="utf-8") as f:
-            json.dump(cvt_obj, f, indent=4)
+            json.dump(cvt_obj, f, indent=4, ensure_ascii=False)
 
         return cvt_obj
 
@@ -259,7 +259,7 @@ class MetadataDefJsonGenerator:
         obj: dict[str, Any] = {"constant": {}, "variable": []}
 
         with open(matadata_def_path, mode="w", encoding="utf-8") as f:
-            json.dump(obj, f, indent=4)
+            json.dump(obj, f, indent=4, ensure_ascii=False)
 
         return obj
 
@@ -280,7 +280,7 @@ class InvoiceJsonGenerator:
             invoice_path = self.path
 
         with open(invoice_path, mode="w", encoding="utf-8") as f:
-            json.dump(invoice_json, f, indent=4)
+            json.dump(invoice_json, f, indent=4, ensure_ascii=False)
 
         return invoice_json
 
