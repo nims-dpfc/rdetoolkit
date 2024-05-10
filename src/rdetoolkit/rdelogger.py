@@ -13,9 +13,7 @@ def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
 
     Args:
         name (str): The identifier's name, usually the module name is specified (__name__).
-        file_path (Optional[str], optional): The path of the log file. If this parameter is
-        specified, the log messages will be written to this file. If not specified,
-        the log messages will be sent to the standard output. Defaults to None.
+        file_path (Optional[str], optional): The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.
 
     Returns:
         logging.Logger: A configured logger object.
@@ -34,12 +32,6 @@ def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - [%(name)s](%(levelname)s) - %(message)s")
-
-    # handler = logging.FileHandler(file_path)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
 
     if file_path is None:
         return logger
