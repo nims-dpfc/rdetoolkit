@@ -128,7 +128,7 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         config (Optional[Config], optional): Configuration class for the structuring process. If not specified, default values are loaded automatically. Defaults to None.
 
     Note:
-        If `extendeds_mode` is specified, the evaluation of the execution mode is performed in the order of `extendeds_mode -> excelinvoice -> invoice`,
+        If `extended_mode` is specified, the evaluation of the execution mode is performed in the order of `extended_mode -> excelinvoice -> invoice`,
         and the structuring process is executed.
 
     Example:
@@ -152,8 +152,8 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         from rdetoolkit import workflow
         from custom import custom_dataset # User-defined structuring processing function
 
-        cfg = Config(extendeds_mode="rdeformat", save_raw=True, save_main_image=False, save_thumbnail_image=False, magic_variable=False)
-        workflow.run(custom_dataset, config=cfg) # Execute structuring process
+        cfg = Config(extended_mode="rdeformat", save_raw=True, save_main_image=False, save_thumbnail_image=False, magic_variable=False)
+        workflow.run(custom_dataset_function=custom_dataset, config=cfg) # Execute structuring process
         ```
     """
     logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
@@ -173,17 +173,17 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         else:
             __config = get_config(srcpaths.tasksupport)
             __config = config if __config is None else __config
-        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extendeds_mode)
+        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
 
         # Backup of invoice.json
-        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.extendeds_mode)
+        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.extended_mode)
         invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if __config.extendeds_mode == "rdefotmat":
+            if __config.extended_mode == "rdefotmat":
                 rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
-            elif __config.extendeds_mode == "multifile":
+            elif __config.extended_mode == "multifile":
                 multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
                 excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
