@@ -11,8 +11,6 @@ from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process, invoi
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 
-logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
-
 
 def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[RawFiles, Optional[Path]]:
     """Classify input files to determine if the input pattern is appropriate.
@@ -158,6 +156,8 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         workflow.run(custom_dataset, config=cfg) # Execute structuring process
         ```
     """
+    logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
+
     try:
         # Enabling mode flag and validating input file
         srcpaths = RdeInputDirPaths(
