@@ -239,11 +239,19 @@ def test_invoice_validate():
 
 
 def test_invalid_invoice_validate():
+    """input file: invoice_invalid.json
+        "custom": {
+            "sample1": null,
+            "sample2": null,
+            ....
+        }
+    """
     invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid.json")
     schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    expected_value = "Error in validating invoice.schema.json:\nNone is not of type 'string'\n{'label': {'ja': 'サンプル１', 'en': 'sample1'}, 'type': 'string', 'format': 'date', 'options': {'unit': 'A'}}"
     with pytest.raises(InvoiceSchemaValidationError) as e:
         invoice_validate(invoice_path, schema_path)
-    assert "Error in validating invoice.schema.json" == str(e.value)
+    assert expected_value == str(e.value)
 
 
 def test_invalid_basic_info_invoice_validate():
