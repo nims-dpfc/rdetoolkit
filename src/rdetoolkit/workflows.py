@@ -173,6 +173,8 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         else:
             for cfg_file in find_config_files(srcpaths):
                 __config = parse_config_file(path=cfg_file)
+                if __config is not None:
+                    break
         raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extendeds_mode)
 
         # Backup of invoice.json
