@@ -28,13 +28,13 @@ def test_check_files_single(inputfile_single, ivnoice_json_none_sample_info, tas
     """
     expect_rawfiles = [(Path("data", "inputdata", "test_single.txt"),)]
 
-    format_flags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     assert raw_files_group == expect_rawfiles
     assert excel_invoice_files is None
@@ -47,13 +47,13 @@ def test_check_files_multi(tasksupport, ivnoice_json_with_sample_info, inputfile
     """
     expect_rawfiles = [(Path("data/inputdata/test_child1.txt"), Path("data/inputdata/test_child2.txt"))]
 
-    format_flags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     # The order of appearance of the contents of the tuples is
     # not relevant to the content of the test
@@ -67,13 +67,13 @@ def test_check_files_invoice_non_file(tasksupport, ivnoice_json_with_sample_info
     """
     expect_rawfiles = [()]
 
-    format_flags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     assert raw_files_group == expect_rawfiles
     assert excel_invoice_files is None
@@ -93,13 +93,13 @@ def test_check_files_excelinvoice_zip_with_file(
     expect_rawfiles = [(Path("data/temp/test_child1.txt"),)]
     expect_excelinvoice = Path("data/inputdata/test_excel_invoice.xlsx")
 
-    format_flags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     assert raw_files_group == expect_rawfiles
     assert excel_invoice_files == expect_excelinvoice
@@ -120,13 +120,13 @@ def test_check_files_excelinvoice_zip_with_folder(
     ]
     expect_excelinvoice = Path("data/inputdata/test_excel_invoice.xlsx")
 
-    format_flags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     assert raw_files_group == expect_rawfiles
     assert excel_invoice_files == expect_excelinvoice
@@ -137,13 +137,13 @@ def test_check_files_excelinvoice_non_file(tasksupport, ivnoice_json_with_sample
     expect_rawfiles = []
     expect_excelinvoice = Path("data/inputdata/test_excel_invoice.xlsx")
 
-    format_flags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     assert raw_files_group == expect_rawfiles
     assert excel_invoice_files == expect_excelinvoice
@@ -170,13 +170,13 @@ def test_check_files_rdeformat_single(inputfile_rdeformat_divived, tasksupport, 
     ]
     expect_excelinvoice = None
 
-    format_flags = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
     assert set(raw_files_group[0]) == set(expect_rawfiles[0])
     assert set(raw_files_group[1]) == set(expect_rawfiles[1])
@@ -195,12 +195,12 @@ def test_check_files_invoice_multiformat(tasksupport, ivnoice_json_with_sample_i
     ]
     expect_excelinvoice = None
 
-    format_flags = Config(extendeds_mode='multifile', save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode='multifile', save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
     )
-    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extendeds_mode)
+    raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
     assert set(raw_files_group) == set(expect_rawfiles)
     assert excel_invoice_files == expect_excelinvoice

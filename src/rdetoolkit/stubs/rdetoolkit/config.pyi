@@ -9,7 +9,7 @@ CONFIG_FILES: Incomplete
 
 class Config(BaseModel):
     model_config: Incomplete
-    extendeds_mode: Optional[str]
+    extended_mode: Optional[str]
     save_raw: bool
     save_thumbnail_image: bool
     magic_variable: bool

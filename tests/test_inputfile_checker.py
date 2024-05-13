@@ -229,8 +229,8 @@ def test_selected_input_checker_rde_format():
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = Config(extendeds_mode="rdeformat", save_raw=True, save_thumbnail_image=False)
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extendeds_mode), RDEFormatChecker)
+    fmtflags = Config(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), RDEFormatChecker)
 
 
 def test_selected_input_checker_multi_file():
@@ -240,8 +240,8 @@ def test_selected_input_checker_multi_file():
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = Config(extendeds_mode="multifile", save_raw=True, save_thumbnail_image=False)
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extendeds_mode), MultiFileChecker)
+    fmtflags = Config(extended_mode="multifile", save_raw=True, save_thumbnail_image=False)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), MultiFileChecker)
 
 
 def test_selected_input_checker_excelinvoice(inputfile_zip_with_file, inputfile_single_excelinvoice):
@@ -251,9 +251,9 @@ def test_selected_input_checker_excelinvoice(inputfile_zip_with_file, inputfile_
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False)
+    fmtflags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False)
     assert isinstance(
-        selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extendeds_mode),
+        selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode),
         ExcelInvoiceChecker,
     )
 
@@ -265,5 +265,5 @@ def test_selected_input_checker_invoice(inputfile_single):
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False)
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extendeds_mode), InvoiceChecker)
+    fmtflags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), InvoiceChecker)

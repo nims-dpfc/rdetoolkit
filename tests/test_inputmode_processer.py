@@ -162,7 +162,7 @@ def test_invoice_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    config = Config(extendeds_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
     invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
@@ -219,7 +219,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     )
 
     # テスト対象の処理を実行
-    config = Config(extendeds_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
@@ -282,7 +282,7 @@ def test_excel_invoice_mode_process_calls_functions(
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
     )
-    config = Config(extendeds_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
 
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
@@ -365,7 +365,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
-    config = Config(extendeds_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     excel_invoice_mode_process(
         srcpaths,
         resource_paths,
@@ -436,7 +436,7 @@ def test_multifile_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    config = Config(extendeds_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(extended_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
     multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
@@ -552,7 +552,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
             expected_filename = expected_filename2
             invoice = Path("data", "divided", f"{1:04d}", "invoice", "invoice.json")
 
-        config = Config(extendeds_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+        config = Config(extended_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
         multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
         # 関数が呼び出されたかどうかをチェック
@@ -626,7 +626,7 @@ def test_rdeformat_mode_process_alls_functions(
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=invoice_shcema_json_full,
     )
-    config = Config(extendeds_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
     # テスト対象の処理を実行
     rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 

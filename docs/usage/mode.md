@@ -4,8 +4,8 @@ RDEの構造化処理でサポートしているモードは、以下4つのモ�
 | --- | --- |
 | invoiceモード | デフォルトで起動 |
 | Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチファイルモード | 設定ファイルに`extendeds_mode: 'multifile'`を追加 |
-| RDEフォーマットモード | 設定ファイルに`extendeds_mode: 'rdeformat'`を追加 |
+| マルチファイルモード | 設定ファイルに`extended_mode: 'multifile'`を追加 |
+| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
 
 ここでは、各種モードの説明と実行例をまとめました。
 

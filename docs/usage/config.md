@@ -33,18 +33,18 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 !!! Reference
     参考: [Run Mode](mode.md)
 
-このうち、マルチファイルモードとRDEフォーマットモードは拡張モード(`extendeds_mode`)であるため、上記2つのモードを利用する場合、`mode_type`の指定が必要です。`mode_type`を指定しない場合、デフォルトでinvoiceモードとなります。
+このうち、マルチファイルモードとRDEフォーマットモードは拡張モード(`extended_mode`)であるため、上記2つのモードを利用する場合、`mode_type`の指定が必要です。`mode_type`を指定しない場合、デフォルトでinvoiceモードとなります。
 
 === "マルチファイルモード"
 
     ```yaml
-    extendeds_mode: 'multifile'
+    extended_mode: 'multifile'
     ```
 
 === "RDEフォーマットモード"
 
     ```yaml
-    extendeds_mode: 'rdeformat'
+    extended_mode: 'rdeformat'
     ```
 
 #### 起動条件
@@ -53,8 +53,8 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 | --- | --- |
 | invoiceモード | デフォルトで起動 |
 | Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチファイルモード | 設定ファイルに`extendeds_mode: 'multifile'`を追加 |
-| RDEフォーマットモード | 設定ファイルに`extendeds_mode: 'rdeformat'`を追加 |
+| マルチファイルモード | 設定ファイルに`extended_mode: 'multifile'`を追加 |
+| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
 
 ### 入力ファイルの自動保存
 
@@ -112,7 +112,7 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 === ".rdeconfig.yml"
 
     ```yaml
-    extendeds_mode: 'multifile'
+    extended_mode: 'multifile'
     save_raw: true
     magic_variable: false
     save_thumbnail_image: true
@@ -122,7 +122,7 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 
     ```toml
     [tool.rdetoolkit]
-    extendeds_mode = 'multifile'
+    extended_mode = 'multifile'
     save_raw = true
     magic_variable = false
     save_thumbnail_image = true

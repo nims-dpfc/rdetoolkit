@@ -26,7 +26,7 @@ def test_is_yaml():
 @pytest.fixture()
 def config_yaml():
     data = {
-        "extendeds_mode": "rdeformat",
+        "extended_mode": "rdeformat",
         "save_raw": True,
         "magic_variable": False,
         "save_thumbnail_image": True
@@ -44,7 +44,7 @@ def config_yaml():
 @pytest.fixture()
 def dot_config_yaml():
     data = {
-        "extendeds_mode": "rdeformat",
+        "extended_mode": "rdeformat",
         "save_raw": True,
         "magic_variable": False,
         "save_thumbnail_image": True
@@ -64,7 +64,7 @@ def config_yml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
     data = {
-        "extendeds_mode": "rdeformat",
+        "extended_mode": "rdeformat",
         "save_raw": True,
         "magic_variable": False,
         "save_thumbnail_image": True
@@ -86,7 +86,7 @@ def dot_config_yml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
     data = {
-        "extendeds_mode": "rdeformat",
+        "extended_mode": "rdeformat",
         "save_raw": True,
         "magic_variable": False,
         "save_thumbnail_image": True
@@ -108,7 +108,7 @@ def invalid_config_yaml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
     data = {
-        "extendeds_mode": "rdeformat",
+        "extended_mode": "rdeformat",
         "save_raw": True,
         "magic_variable": False,
         "save_thumbnail_image": True
@@ -132,7 +132,7 @@ def test_pyproject_toml():
     doc = document()
     doc["tool"] = table()
     doc["tool"]["rdetoolkit"] = table()
-    doc["tool"]["rdetoolkit"]["extendeds_mode"] = "rdeformat"
+    doc["tool"]["rdetoolkit"]["extended_mode"] = "rdeformat"
     doc["tool"]["rdetoolkit"]["save_raw"] = True
     doc["tool"]["rdetoolkit"]["magic_variable"] = False
     doc["tool"]["rdetoolkit"]["save_thumbnail_image"] = True
@@ -153,7 +153,7 @@ def test_cwd_pyproject_toml():
     doc = document()
     doc["tool"] = table()
     doc["tool"]["rdetoolkit"] = table()
-    doc["tool"]["rdetoolkit"]["extendeds_mode"] = "multifile"
+    doc["tool"]["rdetoolkit"]["extended_mode"] = "multifile"
     doc["tool"]["rdetoolkit"]["save_raw"] = True
     doc["tool"]["rdetoolkit"]["magic_variable"] = False
     doc["tool"]["rdetoolkit"]["save_thumbnail_image"] = True
@@ -171,7 +171,7 @@ def test_cwd_pyproject_toml():
 def test_parse_config_file(config_yaml):
     config = parse_config_file(path=config_yaml)
     assert isinstance(config, Config)
-    assert config.extendeds_mode == 'rdeformat'
+    assert config.extended_mode == 'rdeformat'
     assert config.save_raw is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
@@ -180,7 +180,7 @@ def test_parse_config_file(config_yaml):
 def test_parse_config_file_specificaton_pyprojecttoml(test_pyproject_toml):
     config = parse_config_file(path=test_pyproject_toml)
     assert isinstance(config, Config)
-    assert config.extendeds_mode == 'rdeformat'
+    assert config.extended_mode == 'rdeformat'
     assert config.save_raw is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
@@ -189,49 +189,49 @@ def test_parse_config_file_specificaton_pyprojecttoml(test_pyproject_toml):
 def test_parse_config_file_current_project_pyprojecttoml(test_cwd_pyproject_toml):
     config = parse_config_file()
     assert isinstance(config, Config)
-    assert config.extendeds_mode == 'multifile'
+    assert config.extended_mode == 'multifile'
     assert config.save_raw is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
 
 
 def test_sucess_get_config_yaml(config_yaml):
-    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    expected_text = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
     valid_dir = Path.cwd()
     config = get_config(valid_dir)
     assert config == expected_text
 
 
 def test_sucess_get_config_dot_yaml(dot_config_yaml):
-    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    expected_text = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
     valid_dir = Path.cwd()
     config = get_config(valid_dir)
     assert config == expected_text
 
 
 def test_sucess_get_config_yml(config_yml):
-    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    expected_text = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
     valid_dir = Path("tasksupport")
     config = get_config(valid_dir)
     assert config == expected_text
 
 
 def test_sucess_get_config_dot_yml(dot_config_yml):
-    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    expected_text = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
     valid_dir = Path("tasksupport")
     config = get_config(valid_dir)
     assert config == expected_text
 
 
 def test_invalid_get_config_yml(invalid_config_yaml):
-    expected_text = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    expected_text = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     valid_dir = Path("tasksupport")
     config = get_config(valid_dir)
     assert config == expected_text
 
 
 def test_get_config_pyprojecttoml(test_cwd_pyproject_toml):
-    expected_text = Config(extendeds_mode='multifile', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    expected_text = Config(extended_mode='multifile', save_raw=True, save_thumbnail_image=True, magic_variable=False)
     valid_dir = Path.cwd()
     config = get_config(valid_dir)
     assert config == expected_text
