@@ -1,14 +1,12 @@
 import os
 from pathlib import Path
-from typing import Any, Final, Optional
+from typing import Any, Final, Optional, Union
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 from tomlkit.toml_file import TOMLFile
 
-from rdetoolkit.models.rde2types import RdeInputDirPaths
-
-CONFIG_FILE: Final = ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yaml"]
+CONFIG_FILE: Final = ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"]
 PYPROJECT_CONFIG_FILES: Final = ["pyproject.toml"]
 CONFIG_FILES = CONFIG_FILE + PYPROJECT_CONFIG_FILES
 
@@ -63,6 +61,7 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
 
     """
     config_data: dict[str, Any] = {}
+    print(path)
     if path is not None and Path(path).name not in CONFIG_FILES:
         return Config()
 
@@ -115,23 +114,59 @@ def is_yaml(filename: str) -> bool:
     return filename.lower().endswith(".yaml") or filename.lower().endswith(".yml")
 
 
-def find_config_files(input_files: RdeInputDirPaths) -> list[str]:
+def find_config_files(target_dir_path: Union[str, Path]) -> list[str]:
     """Find and return a list of configuration files in the given input directory.
 
     Args:
-        input_files (RdeInputDirPaths): An object containing the paths to the input directories.
+        target_dir_path: (Union[str, Path]): An object containing the paths to the input directories.
 
     Returns:
         list[str]: A list of configuration file paths.
 
     """
     files: list[str] = []
-    tasksupport_dir = input_files.tasksupport
-    if not tasksupport_dir:
+    existing_files = os.listdir(target_dir_path)
+    if not existing_files:
         return files
-    existing_files = os.listdir(tasksupport_dir)
     for config_file in CONFIG_FILES:
         if config_file in existing_files:
-            files.append(str(tasksupport_dir.joinpath(config_file)))
+            files.append(os.path.join(target_dir_path, config_file))
     files = sorted(files, key=lambda x: (is_toml(x), is_yaml(x)))
     return files
+
+
+def get_pyproject_toml() -> Optional[Path]:
+    """Get the pyproject.toml file.
+
+    Returns:
+        Optional[Path]: The path to the pyproject.toml file.
+    """
+    pyproject_toml_path = Path.cwd().joinpath("pyproject.toml")
+    return pyproject_toml_path.exists() and pyproject_toml_path or None
+
+
+def get_config(target_dir_path: Union[str, Path]):
+    """Retrieves the configuration from the specified directory path.
+
+    This function searches for configuration files in the specified directory.
+    It parses each found configuration file until it finds a valid configuration,
+    which it then returns. If no valid configuration is found in the directory,
+    it searches for a pyproject.toml file, parses it, and returns its configuration
+    if valid. If no valid configuration is found, it returns None.
+
+    Args:
+        target_dir_path (Union[str, Path]): The path of the directory to search for configuration files.
+
+    Returns:
+        Optional[dict]: The first valid configuration found, or None if no valid configuration is found.
+    """
+    for cfg_file in find_config_files(target_dir_path):
+        __config = parse_config_file(path=cfg_file)
+        if __config is not None:
+            return __config
+    pyproject_toml_path = get_pyproject_toml()
+    if pyproject_toml_path is not None:
+        __config = parse_config_file(path=str(pyproject_toml_path))
+        if __config is not None:
+            return __config
+    return None

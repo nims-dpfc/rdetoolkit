@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 import yaml
-from rdetoolkit.config import Config, is_toml, is_yaml, parse_config_file
+from rdetoolkit.config import Config, is_toml, is_yaml, parse_config_file, get_config
 from tomlkit import document, table
 from tomlkit.toml_file import TOMLFile
 
@@ -39,6 +39,90 @@ def config_yaml():
 
     if Path(test_yaml_path).exists():
         Path(test_yaml_path).unlink()
+
+
+@pytest.fixture()
+def dot_config_yaml():
+    data = {
+        "extendeds_mode": "rdeformat",
+        "save_raw": True,
+        "magic_variable": False,
+        "save_thumbnail_image": True
+    }
+    test_yaml_path = ".rdeconfig.yaml"
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield test_yaml_path
+
+    if Path(test_yaml_path).exists():
+        Path(test_yaml_path).unlink()
+
+
+@pytest.fixture()
+def config_yml():
+    dirname = Path("tasksupport")
+    dirname.mkdir(exist_ok=True)
+    data = {
+        "extendeds_mode": "rdeformat",
+        "save_raw": True,
+        "magic_variable": False,
+        "save_thumbnail_image": True
+    }
+    test_yaml_path = dirname.joinpath("rdeconfig.yml")
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield test_yaml_path
+
+    if Path(test_yaml_path).exists():
+        Path(test_yaml_path).unlink()
+    if dirname.exists():
+        dirname.rmdir()
+
+
+@pytest.fixture()
+def dot_config_yml():
+    dirname = Path("tasksupport")
+    dirname.mkdir(exist_ok=True)
+    data = {
+        "extendeds_mode": "rdeformat",
+        "save_raw": True,
+        "magic_variable": False,
+        "save_thumbnail_image": True
+    }
+    test_yaml_path = dirname.joinpath(".rdeconfig.yml")
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield test_yaml_path
+
+    if Path(test_yaml_path).exists():
+        Path(test_yaml_path).unlink()
+    if dirname.exists():
+        dirname.rmdir()
+
+
+@pytest.fixture()
+def invalid_config_yaml():
+    dirname = Path("tasksupport")
+    dirname.mkdir(exist_ok=True)
+    data = {
+        "extendeds_mode": "rdeformat",
+        "save_raw": True,
+        "magic_variable": False,
+        "save_thumbnail_image": True
+    }
+    test_yaml_path = dirname.joinpath("invalid_rdeconfig.yaml")
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield test_yaml_path
+
+    if Path(test_yaml_path).exists():
+        Path(test_yaml_path).unlink()
+    if dirname.exists():
+        dirname.rmdir()
 
 
 @pytest.fixture
@@ -109,3 +193,45 @@ def test_parse_config_file_current_project_pyprojecttoml(test_cwd_pyproject_toml
     assert config.save_raw is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
+
+
+def test_sucess_get_config_yaml(config_yaml):
+    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    valid_dir = Path.cwd()
+    config = get_config(valid_dir)
+    assert config == expected_text
+
+
+def test_sucess_get_config_dot_yaml(dot_config_yaml):
+    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    valid_dir = Path.cwd()
+    config = get_config(valid_dir)
+    assert config == expected_text
+
+
+def test_sucess_get_config_yml(config_yml):
+    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    valid_dir = Path("tasksupport")
+    config = get_config(valid_dir)
+    assert config == expected_text
+
+
+def test_sucess_get_config_dot_yml(dot_config_yml):
+    expected_text = Config(extendeds_mode='rdeformat', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    valid_dir = Path("tasksupport")
+    config = get_config(valid_dir)
+    assert config == expected_text
+
+
+def test_invalid_get_config_yml(invalid_config_yaml):
+    expected_text = Config(extendeds_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    valid_dir = Path("tasksupport")
+    config = get_config(valid_dir)
+    assert config == expected_text
+
+
+def test_get_config_pyprojecttoml(test_cwd_pyproject_toml):
+    expected_text = Config(extendeds_mode='multifile', save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    valid_dir = Path.cwd()
+    config = get_config(valid_dir)
+    assert config == expected_text
