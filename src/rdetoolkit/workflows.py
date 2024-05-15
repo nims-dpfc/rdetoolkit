@@ -141,7 +141,8 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         from rdetoolkit import workflow
         from custom import custom_dataset # User-defined structuring processing function
 
-        workflow.run(custom_dataset) # Execute structuring process
+        cfg = Config(save_raw=True, save_main_image=False, save_thumbnail_image=False, magic_variable=False)
+        workflow.run(custom_dataset, config=cfg) # Execute structuring process
         ```
 
         If options are specified (setting the mode to "RDEformat"):
