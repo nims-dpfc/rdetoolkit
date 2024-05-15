@@ -61,7 +61,6 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
 
     """
     config_data: dict[str, Any] = {}
-    print(path)
     if path is not None and Path(path).name not in CONFIG_FILES:
         return Config()
 
