@@ -5,6 +5,7 @@ import zipfile
 from typing import Generator
 
 import pytest
+import yaml
 
 pytest_plugins = (
     "tests.fixtures.excelinvoice",
@@ -202,7 +203,18 @@ def tasksupport() -> Generator[list[str], None, None]:
     empty_defjson = pathlib.Path(tasksupport_dir, "metadata-def.json")
     empty_defjson.touch()
 
-    yield [str(empty_defcsv), str(empty_schema), str(empty_defjson)]
+    dirname = pathlib.Path("data/tasksupport")
+    data = {
+        "extended_mode": "rdeformat",
+        "save_raw": True,
+        "magic_variable": False,
+        "save_thumbnail_image": True
+    }
+    test_yaml_path = dirname.joinpath(".rdeconfig.yml")
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield [str(empty_defcsv), str(empty_schema), str(empty_defjson), str(test_yaml_path)]
 
     if os.path.exists("data"):
         shutil.rmtree("data")

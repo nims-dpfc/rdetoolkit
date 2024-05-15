@@ -173,7 +173,8 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
             __config = config
         else:
             __config = get_config(srcpaths.tasksupport)
-            __config = config if __config is None else __config
+            if config is not None:
+                __config = config
         raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
 
         # Backup of invoice.json
@@ -183,13 +184,13 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
             if __config.extended_mode == "rdefotmat":
-                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
             elif __config.extended_mode == "multifile":
-                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
             elif excel_invoice_files is not None:
-                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
+                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function, config=__config)
             else:
-                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
 
     except StructuredError as e:
         traceback.print_exc(file=sys.stderr)
