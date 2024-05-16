@@ -248,10 +248,10 @@ def test_invalid_invoice_validate():
     """
     invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid.json")
     schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
-    expected_value = "Error in validating invoice.schema.json:\nNone is not of type 'string'\n{'label': {'ja': 'サンプル１', 'en': 'sample1'}, 'type': 'string', 'format': 'date', 'options': {'unit': 'A'}}"
+    expected_value = "'sample1' is a required property"
     with pytest.raises(InvoiceSchemaValidationError) as e:
         invoice_validate(invoice_path, schema_path)
-    assert expected_value == str(e.value)
+    assert expected_value in str(e.value)
 
 
 def test_invalid_basic_info_invoice_validate():
@@ -274,3 +274,37 @@ def test_invalid_filepath_invoice_json():
     with pytest.raises(FileNotFoundError) as e:
         invoice_validate(invoice_path, schema_path)
     assert "The schema and path do not exist" in str(e.value)
+
+
+@pytest.mark.parametrize("input_data, expected", [
+    # シンプルな辞書
+    ({"a": 1, "b": None, "c": 3}, {"a": 1, "c": 3}),
+
+    # ネストされた辞書
+    ({"a": {"b": None, "c": 3}, "d": None}, {"a": {"c": 3}}),
+
+    # リストの中に辞書
+    ({"a": [1, None, 3, {"b": None, "c": 4}]}, {"a": [1, 3, {"c": 4}]}),
+
+    # リスト
+    ([1, None, 3, {"a": None, "b": 2}], [1, 3, {"b": 2}]),
+
+    # 辞書の中にリスト
+    ({"a": [None, 2, None], "b": None, "c": [1, 2, 3]}, {"a": [2], "c": [1, 2, 3]}),
+
+    # 完全にNoneの辞書
+    ({"a": None, "b": None}, {}),
+
+    # 完全にNoneのリスト
+    ([None, None, None], []),
+
+    # Noneのない辞書
+    ({"a": 1, "b": 2, "c": 3}, {"a": 1, "b": 2, "c": 3}),
+
+    # Noneのないリスト
+    ([1, 2, 3], [1, 2, 3])
+])
+def test_remove_none_values(input_data, expected):
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    invoice = InvoiceValidator(schema_path)
+    assert invoice._remove_none_values(input_data) == expected

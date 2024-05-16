@@ -2,7 +2,7 @@ import copy
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 from jsonschema import Draft202012Validator, FormatChecker, validate
 from jsonschema import ValidationError as SchemaValidationError
@@ -106,10 +106,19 @@ class InvoiceValidator:
 
         if path is not None:
             data = read_from_json_file(path)
-        else:
-            if obj is None:
-                raise ValueError("Unexpected error")
+        elif obj is not None:
             data = obj
+        else:
+            raise ValueError("Unexpected error")
+
+        # Remove None values from the data
+        # Although invoice.schema.json does not allow None, the invoice.json generated from the system is written in a format that allows None. Therefore, as a temporary measure, we remove the None values from invoice.json.
+        _data = self._remove_none_values(data)
+        if isinstance(data, dict):
+            data = cast(dict[str, Any], _data)
+        else:
+            # In RDE, the top of invoice.json never returns as an array.
+            raise ValueError("Expected a dictionary, but got a different type.")
 
         with open(self.pre_basic_info_schema, encoding="utf-8") as f:
             basic_info = json.load(f)
@@ -176,6 +185,32 @@ class InvoiceValidator:
             __ref["prefixItems"] = __temp_specificattr_item["items"]
             del __ref["items"]
             # __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
+
+    def _remove_none_values(self, data: Union[dict, list, Any]) -> Union[dict, list, Any]:
+        """Recursively removes key/value pairs from dictionaries and elements from lists where the value is None.
+
+        Args:
+            data (Union[dict, list, Any]): The input data which can be a dictionary, list, or any other type.
+
+        Returns:
+            Union[dict, list, Any]: The cleaned data with None values removed.
+
+        Examples:
+            >>> remove_none_values({"a": 1, "b": None, "c": 3})
+            {'a': 1, 'c': 3}
+
+            >>> remove_none_values([1, None, 3, {"a": None, "b": 2}])
+            [1, 3, {'b': 2}]
+
+            >>> remove_none_values({"a": [None, 2, None], "b": None, "c": [1, 2, 3]})
+            {'a': [2], 'c': [1, 2, 3]}
+        """
+        if isinstance(data, dict):
+            return {k: self._remove_none_values(v) for k, v in data.items() if v is not None}
+        elif isinstance(data, list):
+            return [self._remove_none_values(item) for item in data if item is not None]
+        else:
+            return data
 
 
 def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):
