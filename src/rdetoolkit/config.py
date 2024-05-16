@@ -50,6 +50,7 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
         - "rdeconfig.yaml"
         - ".rdeconfig.yaml"
         - "rdeconfig.yml"
+        - ".rdeconfig.yml"
         - "pyproject.toml"
 
     Note:
