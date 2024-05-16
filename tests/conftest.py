@@ -205,11 +205,34 @@ def tasksupport() -> Generator[list[str], None, None]:
 
     dirname = pathlib.Path("data/tasksupport")
     data = {
-        "extended_mode": "rdeformat",
+        "extended_mode": None,
         "save_raw": True,
         "magic_variable": False,
         "save_thumbnail_image": True
     }
+    test_yaml_path = dirname.joinpath(".rdeconfig.yml")
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield [str(empty_defcsv), str(empty_schema), str(empty_defjson), str(test_yaml_path)]
+
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+@pytest.fixture()
+def tasksupport_empty_config() -> Generator[list[str], None, None]:
+    tasksupport_dir = pathlib.Path("data", "tasksupport")
+    tasksupport_dir.mkdir(parents=True, exist_ok=True)
+    empty_defcsv = pathlib.Path(tasksupport_dir, "default_value.csv")
+    empty_defcsv.touch()
+    empty_schema = pathlib.Path(tasksupport_dir, "invoice.schema.json")
+    empty_schema.touch()
+    empty_defjson = pathlib.Path(tasksupport_dir, "metadata-def.json")
+    empty_defjson.touch()
+
+    dirname = pathlib.Path("data/tasksupport")
+    data = {}
     test_yaml_path = dirname.joinpath(".rdeconfig.yml")
     with open(test_yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True)

@@ -173,7 +173,7 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
             __config = config
         else:
             __config = get_config(srcpaths.tasksupport)
-            if config is None:
+            if __config is None:
                 __config = Config()
         raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
 
