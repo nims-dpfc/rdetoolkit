@@ -308,3 +308,15 @@ def test_remove_none_values(input_data, expected):
     schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
     invoice = InvoiceValidator(schema_path)
     assert invoice._remove_none_values(input_data) == expected
+
+
+def test_allow_invoice_json():
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_allow_none.json")
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    invoice = InvoiceValidator(schema_path)
+    data = invoice.validate(path=invoice_path)
+    assert data["custom"]["sample1"] == "2023-01-01"
+    assert data["custom"]["sample2"] == 1.0
+    assert data["custom"]["sample7"] == "#h1"
+    # Noneの値は削除されているため、存在しない
+    assert not data["custom"].get("sample3")
