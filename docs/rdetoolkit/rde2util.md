@@ -8,11 +8,10 @@
     options:
         members:
             - assignVals
-            - writeFile
+            - writefile
             - _metadata_validation
             - _process_action
             - _process_unit
-            - _cast_value
 
 ## StorageDir
 
