@@ -379,7 +379,7 @@ class ExcelInvoiceFile:
         cval = key.replace("custom/", "")
         _assign_invoice_val(invoice_obj, "custom", cval, value, schema_obj)
 
-    def _ensure_sample_id_order(sefl, invoice_obj: dict):
+    def _ensure_sample_id_order(self, invoice_obj: dict):
         sample_info_value = invoice_obj.get("sample")
         if sample_info_value is None:
             return
