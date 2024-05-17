@@ -99,17 +99,7 @@ class InvoiceValidator:
         Returns:
             None
         """
-        if path is None and obj is None:
-            raise ValueError("At least one of 'path' or 'obj' must be provided")
-        elif path is not None and obj is not None:
-            raise ValueError("Both 'path' and 'obj' cannot be provided at the same time")
-
-        if path is not None:
-            data = read_from_json_file(path)
-        elif obj is not None:
-            data = obj
-        else:
-            raise ValueError("Unexpected error")
+        data = self.__get_data(path, obj)
 
         # Remove None values from the data
         # Although invoice.schema.json does not allow None, the invoice.json generated from the system is written in a format that allows None. Therefore, as a temporary measure, we remove the None values from invoice.json.
@@ -133,6 +123,18 @@ class InvoiceValidator:
             raise InvoiceSchemaValidationError(f"Error in validating invoice.schema.json:\n{error.message}\n{error.schema}")
 
         return data
+
+    def __get_data(self, path: Optional[Union[str, Path]], obj: Optional[dict[str, Any]]) -> dict[str, Any]:
+        if path is None and obj is None:
+            raise ValueError("At least one of 'path' or 'obj' must be provided")
+        if path is not None and obj is not None:
+            raise ValueError("Both 'path' and 'obj' cannot be provided at the same time")
+
+        if path is not None:
+            return read_from_json_file(path)
+        if obj is not None:
+            return obj
+        raise ValueError("Unexpected error")
 
     def __pre_validate(self) -> dict[str, Any]:
         if isinstance(self.schema_path, str):
