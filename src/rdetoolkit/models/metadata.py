@@ -1,6 +1,8 @@
-from typing import Any, Optional
+from typing import Any, Final, Optional
 
 from pydantic import BaseModel, Field, RootModel, field_validator
+
+MAX_VALUE_SIZE: Final[int] = 1024
 
 
 class Variable(BaseModel):
@@ -22,8 +24,8 @@ class Variable(BaseModel):
         for value in v.values():
             if not isinstance(v, str):
                 continue
-            if len(str(value).encode("utf-8")) > 1024:
-                raise ValueError(f"Value size exceeds 1024 bytes: {v}")
+            if len(str(value).encode("utf-8")) > MAX_VALUE_SIZE:
+                raise ValueError(f"Value size exceeds {MAX_VALUE_SIZE} bytes: {v}")
         return v
 
 
@@ -46,8 +48,8 @@ class MetaValue(BaseModel):
         """
         if not isinstance(v, str):
             return v
-        if len(str(v).encode("utf-8")) > 1024:
-            raise ValueError("Value size exceeds 1024 bytes")
+        if len(str(v).encode("utf-8")) > MAX_VALUE_SIZE:
+            raise ValueError(f"Value size exceeds {MAX_VALUE_SIZE} bytes")
         return v
 
 
