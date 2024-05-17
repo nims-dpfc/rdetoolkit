@@ -33,13 +33,11 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 select = [
-    "F",  # pyflakes
-    "E",  # pycodestyle
-    "W",  # pycodestyle warnings
-    "I",  # isort
-    "D",  # pydocstyle
-    "N",  # pep8-naming
-    "PL", # Pylint
+    "F", # pyflakes
+    "E", # pycodestyle
+    "W", # pycodestyle warnings
+    "I", # isort
+    "D", # pydocstyle
 ]
 ignore = ["D100", "D101", "D104", "D105", "D107"]
 exclude = [

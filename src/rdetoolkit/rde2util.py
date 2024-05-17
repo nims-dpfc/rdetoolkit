@@ -22,22 +22,22 @@ class _ChardetType(TypedDict):
     confidence: float
 
 
-def get_default_values(defaultValsFilePath):
+def get_default_values(default_values_filepath):
     """Reads default values from a default_value.csv file and returns them as a dictionary.
 
-    This function opens a file specified by 'defaultValsFilePath', detects its encoding,
+    This function opens a file specified by 'default_values_filepath', detects its encoding,
     and reads its content as a CSV. Each row in the CSV file should have 'key' and 'value' columns.
     The function constructs and returns a dictionary mapping keys to their corresponding values.
 
     Args:
-        defaultValsFilePath (str | Path): The file path to the CSV file containing default values.
+        default_values_filepath (str | Path): The file path to the CSV file containing default values.
 
     Returns:
         dict: A dictionary containing the keys and their corresponding default values.
     """
     dctDefaultVals = {}
-    enc = chardet.detect(open(defaultValsFilePath, "rb").read())["encoding"]
-    with open(defaultValsFilePath, encoding=enc) as fIn:
+    enc = chardet.detect(open(default_values_filepath, "rb").read())["encoding"]
+    with open(default_values_filepath, encoding=enc) as fIn:
         for row in csv.DictReader(fIn):
             dctDefaultVals[row["key"]] = row["value"]
     return dctDefaultVals
@@ -111,17 +111,17 @@ class CharDecEncoding:
             return ""
 
 
-def _split_value_unit(tgtStr: str) -> ValueUnitPair:  # pragma: no cover
+def _split_value_unit(target_char: str) -> ValueUnitPair:  # pragma: no cover
     """Split units and values from input characters.
 
     Args:
-        tgtStr (str): String combining values and units
+        target_char (str): String combining values and units
 
     Returns:
         ValueUnitPair: Result of splitting values and units
     """
     valpair = ValueUnitPair(value="", unit="")
-    valLeft = str(tgtStr).strip()
+    valLeft = str(target_char).strip()
     ptn1 = r"^[+-]?[0-9]*\.?[0-9]*"  # 実数部の正規表現
     ptn2 = r"[eE][+-]?[0-9]+"  # 指数部の正規表現
     r1 = re.match(ptn1, valLeft)
@@ -181,20 +181,20 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
     """
     enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
     with open(invoice_file_path, encoding=enc) as f:
-        invoiceObj = json.load(f)
-    return invoiceObj
+        invoiceobj = json.load(f)
+    return invoiceobj
 
 
-def write_to_json_file(invoicefile_path: RdeFsPath, invoiceObj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
+def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
     """Writes an content to a JSON file.
 
     Args:
         invoicefile_path (RdeFsPath): Path to the destination JSON file.
-        invoiceObj (dict[str, Any]): Invoice object to be serialized and written.
+        invoiceobj (dict[str, Any]): Invoice object to be serialized and written.
         enc (str): Encoding to use when writing the file. Defaults to "utf_8".
     """
     with open(invoicefile_path, "w", encoding=enc) as f:
-        json.dump(invoiceObj, f, indent=4, ensure_ascii=False)
+        json.dump(invoiceobj, f, indent=4, ensure_ascii=False)
 
 
 class StorageDir:
@@ -346,11 +346,11 @@ class Meta:
         else:
             _tmp_metadef = {}
 
-        for _, vDef in _tmp_metadef.items():
-            if vDef.get("action"):
-                self.actions.append(vDef.get("action"))
-            if vDef.get("unit"):
-                outunit = vDef.get("unit")
+        for _, vdef in _tmp_metadef.items():
+            if vdef.get("action"):
+                self.actions.append(vdef.get("action"))
+            if vdef.get("unit"):
+                outunit = vdef.get("unit")
                 if not outunit.startswith("$"):
                     continue
                 kRef = outunit[1:]
@@ -361,7 +361,7 @@ class Meta:
         self,
         entry_dict_meta: Union[MetaType, RepeatedMetaType],
         *,
-        ignoreEmptyStrValue=True,
+        ignore_empty_strvalue=True,
     ) -> "dict[str, set]":
         """Register the value of metadata.
 
@@ -370,7 +370,7 @@ class Meta:
 
         Args:
             entry_dict_meta (EntryMetaData): metadata(key/value) to register
-            ignoreEmptyStrValue (bool, optional): When ignoreEmptyStrValue is True,
+            ignore_empty_strvalue (bool, optional): When ignore_empty_strvalue is True,
             even if the metadata value is an empty string, it is registered as a meta.
             However, if false, an empty string is not registered as a meta. Defaults to True.
 
@@ -388,19 +388,19 @@ class Meta:
         # Register referred values in the reference table for actions and referred units (raw names)
         self.__register_refered_values(entry_dict_meta)
 
-        for kDef, vDef in self.metaDef.items():
-            kSrc = self.__get_source_key(kDef, vDef, entry_dict_meta)
+        for kdef, vdef in self.metaDef.items():
+            kSrc = self.__get_source_key(kdef, vdef, entry_dict_meta)
             if kSrc is None:
                 continue
 
-            vSrc = entry_dict_meta[kSrc]
-            _vsrc = self.__convert_to_str(vSrc)
+            vsrc = entry_dict_meta[kSrc]
+            _vsrc = self.__convert_to_str(vsrc)
 
-            if kDef:
+            if kdef:
                 # Register referred values in the reference table for actions and referred units (meta names)
-                self.__registerd_refered_table(kDef, _vsrc)
+                self.__registerd_refered_table(kdef, _vsrc)
 
-            self.__process_meta_value(kDef, vDef, _vsrc, ignoreEmptyStrValue)
+            self.__process_meta_value(kdef, vdef, _vsrc, ignore_empty_strvalue)
             ret["assigned"].add(kSrc)
             # Do not break because a single value may be assigned to multiple places
 
@@ -418,44 +418,44 @@ class Meta:
             containing key-value pairs to be registered.
 
         """
-        for kSrc, vSrc in entry_dict_meta.items():
-            _vsrc = self.__convert_to_str(vSrc)
+        for kSrc, vsrc in entry_dict_meta.items():
+            _vsrc = self.__convert_to_str(vsrc)
             self.__registerd_refered_table(kSrc, _vsrc)
 
-    def __get_source_key(self, kDef: str, vDef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
-        kSrc = kDef
-        if kDef not in entry_dict_meta and "originalName" in vDef:
-            kSrc = vDef["originalName"]
+    def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
+        kSrc = kdef
+        if kdef not in entry_dict_meta and "originalName" in vdef:
+            kSrc = vdef["originalName"]
         if kSrc not in entry_dict_meta:
             return None
         return kSrc
 
-    def __process_meta_value(self, kDef: str, vDef: MetadataDefJson, _vsrc: Union[str, list[str]], ignoreEmptyStrValue: bool) -> None:
-        if vDef.get("action"):
+    def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: Union[str, list[str]], ignore_empty_strvalue: bool) -> None:
+        if vdef.get("action"):
             raise StructuredError("ERROR: this meta value should set by action")
 
-        if vDef.get("variable"):
-            self.__set_variable_metadata(kDef, _vsrc, vDef, ignoreEmptyStrValue)
+        if vdef.get("variable"):
+            self.__set_variable_metadata(kdef, _vsrc, vdef, ignore_empty_strvalue)
         else:
-            if _vsrc is None or (_vsrc == "" and ignoreEmptyStrValue):
+            if _vsrc is None or (_vsrc == "" and ignore_empty_strvalue):
                 return
-            self.__set_const_metadata(kDef, _vsrc, vDef)
+            self.__set_const_metadata(kdef, _vsrc, vdef)
 
-    def _process_unit(self, vObj, idx):  # pragma: no cover
-        strUnit = vObj.get("unit", "")
+    def _process_unit(self, vobj, idx):  # pragma: no cover
+        strUnit = vobj.get("unit", "")
         # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
         if strUnit.startswith("$"):
             srcKey = strUnit[1:]
             srcVal = self.referedmap[srcKey]
             if srcVal is None:
                 # 参照先が存在しなかった場合は単位未設定の状態とする
-                del vObj["unit"]
+                del vobj["unit"]
             elif isinstance(srcVal, str):
-                vObj["unit"] = srcVal
+                vobj["unit"] = srcVal
             else:
-                vObj["unit"] = srcVal[idx]
+                vobj["unit"] = srcVal[idx]
 
-    def _process_action(self, vObj, k, idx):  # pragma: no cover
+    def _process_action(self, vobj, k, idx):  # pragma: no cover
         # actionの処理
         strAct = self.metaDef[k].get("action")
         if not strAct:
@@ -466,7 +466,7 @@ class Meta:
                 continue
             rVal = srcVal[idx] if isinstance(srcVal, list) else srcVal
             strAct = strAct.replace(srcKey, f'"{rVal}"' if isinstance(rVal, str) else str(rVal))
-        vObj["value"] = eval(strAct)
+        vobj["value"] = eval(strAct)
 
     def __convert_to_str(self, value: Union[str, int, float, list]) -> Union[str, list[str]]:
         """Convert the given value to string or list of strings."""
@@ -477,7 +477,7 @@ class Meta:
         return ""
 
     @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
-    def writefile(self, metaFilePath, enc="utf_8"):
+    def writefile(self, meta_filepath, enc="utf_8"):
         """Writes the metadata to a file after processing units and actions.
 
         This method serializes the metadata into JSON format and writes it to the specified file.
@@ -487,7 +487,7 @@ class Meta:
         The method also returns a list of keys from 'metaDef' that were not assigned values in the output.
 
         Args:
-            metaFilePath (str): The file path where the metadata will be written.
+            meta_filepath (str): The file path where the metadata will be written.
             enc (str, optional): The encoding for the output file. Default is "utf_8".
 
         Returns:
@@ -501,16 +501,16 @@ class Meta:
         outDict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
 
         for idx, kvDict in [(None, outDict["constant"])] + list(enumerate(outDict["variable"])):
-            for k, vObj in kvDict.items():
-                self._process_unit(vObj, idx)
-                self._process_action(vObj, k, idx)
+            for k, vobj in kvDict.items():
+                self._process_unit(vobj, idx)
+                self._process_action(vobj, k, idx)
 
         # 項目をmetaDefに従ってソート
         outDict["constant"] = self.__sort_by_metadef(outDict["constant"])
         outDict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outDict["variable"]]
 
         # ファイル出力
-        with open(metaFilePath, "w", encoding=enc) as fOut:
+        with open(meta_filepath, "w", encoding=enc) as fOut:
             json.dump(outDict, fOut, indent=4, ensure_ascii=False)
 
         # metaDefのうち値の入らなかったキーのリストを返す
@@ -554,10 +554,10 @@ class Meta:
         metadefvalue: MetadataDefJson,
         opt_ignore_emptystr: bool,
     ) -> None:  # pragma: no cover
-        outType = metadefvalue["schema"].get("type")
-        outFmt = metadefvalue["schema"].get("format")
-        orgType = metadefvalue.get("originalType")
-        outUnit = metadefvalue.get("unit")
+        outtype = metadefvalue["schema"].get("type")
+        outfmt = metadefvalue["schema"].get("format")
+        orgtype = metadefvalue.get("originalType")
+        outunit = metadefvalue.get("unit")
         if len(self.metaVar) < len(metavalues):
             self.metaVar += [{} for _ in range(len(metavalues) - len(self.metaVar))]
         for idx, vSrcElm in enumerate(metavalues):
@@ -565,7 +565,7 @@ class Meta:
                 continue
             if vSrcElm == "" and opt_ignore_emptystr:
                 continue
-            self.metaVar[idx][key] = self._metadata_validation(vSrcElm, outType, outFmt, orgType, outUnit)
+            self.metaVar[idx][key] = self._metadata_validation(vSrcElm, outtype, outfmt, orgtype, outunit)
 
     def __set_const_metadata(
         self,
@@ -573,31 +573,31 @@ class Meta:
         metavalue: Union[str, list[str]],
         metadefvalue: MetadataDefJson,
     ) -> None:  # pragma: no cover
-        outType = metadefvalue["schema"].get("type")
-        outFmt = metadefvalue["schema"].get("format")
-        orgType = metadefvalue.get("originalType")
-        outUnit = metadefvalue.get("unit")
+        outtype = metadefvalue["schema"].get("type")
+        outfmt = metadefvalue["schema"].get("format")
+        orgtype = metadefvalue.get("originalType")
+        outunit = metadefvalue.get("unit")
         if not isinstance(metavalue, list):
-            self.metaConst[key] = self._metadata_validation(metavalue, outType, outFmt, orgType, outUnit)
+            self.metaConst[key] = self._metadata_validation(metavalue, outtype, outfmt, orgtype, outunit)
 
     def _metadata_validation(
         self,
-        vSrc: str,
-        outType: Optional[str],
-        outFmt: Optional[str],
-        orgType: Optional[str],
-        outUnit: Optional[str],
+        vsrc: str,
+        outtype: Optional[str],
+        outfmt: Optional[str],
+        orgtype: Optional[str],
+        outunit: Optional[str],
     ) -> "dict[str, Union[bool, int, float, str]]":  # pragma: no cover
         """Casts the input metadata to the specified format and performs validation to check.
 
         if it can be cast to the specified data type. The formats for various metadata are described in metadata-def.json.
 
         Args:
-            vSrc (str): The value of the input metadata.
-            outType (Optional[str]): The data type of the converted metadata.
-            outFmt (Optional[str]): The format of the converted metadata.
-            orgType (Optional[str]): The data type of the original metadata.
-            outUnit (Optional[str]): The unit of the converted metadata.
+            vsrc (str): The value of the input metadata.
+            outtype (Optional[str]): The data type of the converted metadata.
+            outfmt (Optional[str]): The format of the converted metadata.
+            orgtype (Optional[str]): The data type of the original metadata.
+            outunit (Optional[str]): The unit of the converted metadata.
 
         Returns:
             dict[str, Union[bool, int, float, str]]: Returns the conversion result in the form of metadata for metadata.json.
@@ -605,50 +605,50 @@ class Meta:
         Note:
             original func: _vDict()
         """
-        vSrc = vSrc.strip()
+        vsrc = vsrc.strip()
 
-        if orgType is None:
-            _casted_value = castVal(vSrc, outType, outFmt)
-        elif orgType in ["integer", "number"]:
+        if orgtype is None:
+            _casted_value = castVal(vsrc, outtype, outfmt)
+        elif orgtype in ["integer", "number"]:
             # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-            valpair = _split_value_unit(vSrc)
+            valpair = _split_value_unit(vsrc)
             vStr = valpair.value
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = castVal(vStr, orgType, outFmt)
+            _casted_value = castVal(vStr, orgtype, outfmt)
         else:
-            vStr = vSrc
+            vStr = vsrc
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = castVal(vStr, orgType, outFmt)
+            _casted_value = castVal(vStr, orgtype, outfmt)
 
-        if outUnit:
+        if outunit:
             return {
                 "value": _casted_value,
-                "unit": outUnit,
+                "unit": outunit,
             }
         else:
             return {"value": _casted_value}
 
 
-def castVal(valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union[bool, int, float, str]:
-    """The function formats the string valStr based on outType and outFmt and returns the formatted value.
+def castVal(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
+    """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
 
-    The function returns a formatted value of the string valStr according to
-    the specified outType and outFmt. The outType must be a string ("string")
-    for outFmt to be used. If valStr contains a value with units,
+    The function returns a formatted value of the string valstr according to
+    the specified outtype and outfmt. The outtype must be a string ("string")
+    for outfmt to be used. If valstr contains a value with units,
     the assignment of units is not handled within this function.
     It should be assigned separately as needed.
 
     Args:
-        valStr (str): String to be converted of type
-        outType (str): Type information at output
-        outFmt (str): Formatting at output (related to date data)
+        valstr (str): String to be converted of type
+        outtype (str): Type information at output
+        outfmt (str): Formatting at output (related to date data)
     """
 
-    def _tryCast(valStr, tp):
+    def _tryCast(valstr, tp):
         try:
-            return tp(valStr)
+            return tp(valstr)
         except Exception:
             return None
 
@@ -663,28 +663,28 @@ def castVal(valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union
         else:
             raise StructuredError("ERROR: unknown format in metaDef")
 
-    if outType == "boolean":
-        if _tryCast(valStr, bool) is not None:
-            return bool(valStr)
+    if outtype == "boolean":
+        if _tryCast(valstr, bool) is not None:
+            return bool(valstr)
 
-    elif outType == "integer":
+    elif outtype == "integer":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
-        val_unit_pair = _split_value_unit(valStr)
+        val_unit_pair = _split_value_unit(valstr)
         if _tryCast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
 
-    elif outType == "number":
+    elif outtype == "number":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
-        val_unit_pair = _split_value_unit(valStr)
+        val_unit_pair = _split_value_unit(valstr)
         if _tryCast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
         if _tryCast(val_unit_pair.value, float) is not None:
             return float(val_unit_pair.value)
 
-    elif outType == "string":
-        if not outFmt:
-            return valStr
-        return _convert_to_date_format(valStr, outFmt)
+    elif outtype == "string":
+        if not outfmt:
+            return valstr
+        return _convert_to_date_format(valstr, outfmt)
 
     else:
         raise StructuredError("ERROR: unknown value type in metaDef")

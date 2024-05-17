@@ -100,11 +100,11 @@ class CustomLog:
 
         self.logger = logger
 
-    def get_logger(self, needLogs: bool = True) -> Logger:
+    def get_logger(self, needlogs: bool = True) -> Logger:
         """Retrieves the logger instance.
 
         Args:
-            needLogs (bool, optional): Indicates whether logs are needed. Defaults to True.
+            needlogs (bool, optional): Indicates whether logs are needed. Defaults to True.
 
         Returns:
             Logger: The logger instance.
@@ -114,7 +114,7 @@ class CustomLog:
         if not logger.hasHandlers():
             logDir = StorageDir.get_specific_outputdir(True, "logs")
             logFile = logDir / "rdeuser.log"
-            if needLogs:
+            if needlogs:
                 self._set_handler(StreamHandler(), True)
                 self._set_handler(FileHandler(logFile), True)
             else:

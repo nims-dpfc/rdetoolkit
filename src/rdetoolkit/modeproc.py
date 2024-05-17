@@ -182,7 +182,7 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
     except Exception as e:
         raise StructuredError(
             f"ERROR: failed to generate invoice file for data {idx:04d}",
-            eObj=e,
+            eobj=e,
         )
 
     if config.save_raw:

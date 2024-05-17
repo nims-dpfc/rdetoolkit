@@ -2,10 +2,10 @@ from _typeshed import Incomplete
 from typing import Optional
 
 class StructuredError(Exception):
-    eMsg: Incomplete
-    eCode: Incomplete
-    eObj: Incomplete
-    def __init__(self, eMsg: str = ..., eCode: int = ..., eObj: Incomplete | None = ...) -> None: ...
+    emsg: Incomplete
+    ecode: Incomplete
+    eobj: Incomplete
+    def __init__(self, emsg: str = ..., ecode: int = ..., eobj: Incomplete | None = ...) -> None: ...
 
 class InvoiceSchemaValidationError(Exception):
     message: Incomplete

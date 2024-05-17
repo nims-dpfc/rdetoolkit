@@ -33,19 +33,19 @@ def __find_img_path(dirname: str, target_name: str) -> str:
 
 
 @catch_exception_with_message(error_message="ERROR: failed to copy image files", error_code=50)
-def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, target_image_name: Optional[str] = None, imgExt: Optional[str] = None) -> None:
+def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, target_image_name: Optional[str] = None, img_ext: Optional[str] = None) -> None:
     """Copy the image files in the other image folder and the main image folder to the thumbnail folder.
 
     Args:
         out_dir_thumb_img (str): directory path where thumbnail image is saved
         out_dir_main_img (str): directory path where main image is saved
         target_image_name (str, optional): Specify the name of the image file to be copied to the thumbnail folder.
-        imgExt (str, optional): image file extension.
+        img_ext (str, optional): image file extension.
     """
-    if imgExt is None:
+    if img_ext is None:
         img_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"]
     else:
-        img_exts = [imgExt]
+        img_exts = [img_ext]
 
     img_paths_main = [glob(os.path.join(out_dir_main_img, "*" + ext)) for ext in img_exts]
     img_path_main = list(itertools.chain.from_iterable(img_paths_main))

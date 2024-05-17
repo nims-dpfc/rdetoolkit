@@ -10,17 +10,17 @@ class StructuredError(Exception):
     more detailed representation of errors.
 
     Args:
-        eMsg (str): The error message.
-        eCode (int): The error code. Defaults to 1.
-        eObj (any): An additional error object. This can be an object of any type to
+        emsg (str): The error message.
+        ecode (int): The error code. Defaults to 1.
+        eobj (any): An additional error object. This can be an object of any type to
                     provide more context to the error.
     """
 
-    def __init__(self, eMsg: str = "", eCode=1, eObj=None):
-        super().__init__(eMsg)
-        self.eMsg = eMsg
-        self.eCode = eCode
-        self.eObj = eObj
+    def __init__(self, emsg: str = "", ecode=1, eobj=None):
+        super().__init__(emsg)
+        self.emsg = emsg
+        self.ecode = ecode
+        self.eobj = eobj
 
 
 class InvoiceSchemaValidationError(Exception):
@@ -65,11 +65,11 @@ def catch_exception_with_message(*, error_message: Optional[str] = None, error_c
                     msg = str(e)
 
                 if error_code is not None:
-                    eCode = error_code
+                    ecode = error_code
                 else:
-                    eCode = 1
+                    ecode = 1
 
-                raise StructuredError(msg, eCode=eCode, eObj=e)
+                raise StructuredError(msg, ecode=ecode, eobj=e)
 
             except Exception as e:
                 if error_message is not None:

@@ -90,7 +90,7 @@ def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepa
 
     Example:
         ```python
-        rawFilesTplList = [(Path('data/temp/samle1.txt'),), (Path('data/temp/sample2.txt'),), (Path('data/temp/sample3.txt'),)]
+        rawfiles_tplList = [(Path('data/temp/samle1.txt'),), (Path('data/temp/sample2.txt'),), (Path('data/temp/sample3.txt'),)]
 
         excel_invoice_files = Path("data/inputdata/sample_excel_invoice.xlsx")
 
@@ -194,8 +194,8 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
 
     except StructuredError as e:
         traceback.print_exc(file=sys.stderr)
-        write_job_errorlog_file(e.eCode, e.eMsg)
-        logger.exception(e.eMsg)
+        write_job_errorlog_file(e.ecode, e.emsg)
+        logger.exception(e.emsg)
         sys.exit(1)
     except Exception as e:
         traceback.print_exc(file=sys.stderr)
