@@ -3,6 +3,7 @@ name = "rdetoolkit"
 version = "0.2.0"
 description = "A module that supports the workflow of the RDE2.0 dataset construction program"
 authors = [{ name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }]
+keywords = ["rdetoolkit", "RDE", "toolkit", "structure", "dataset"]
 dependencies = [
     "chardet>=5.2.0",
     "charset-normalizer>=3.2.0",
@@ -32,11 +33,13 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 select = [
-    "F", # pyflakes
-    "E", # pycodestyle
-    "W", # pycodestyle warnings
-    "I", # isort
-    "D", # pydocstyle
+    "F",  # pyflakes
+    "E",  # pycodestyle
+    "W",  # pycodestyle warnings
+    "I",  # isort
+    "D",  # pydocstyle
+    "N",  # pep8-naming
+    "PL", # Pylint
 ]
 ignore = ["D100", "D101", "D104", "D105", "D107"]
 exclude = [
@@ -68,6 +71,7 @@ exclude = [
     "venv",
     "tests",
     "stubs",
+    "csv2graph.py",
 ]
 # 1行の最大文字数は問わないとチーム内で合意
 line-length = 250
