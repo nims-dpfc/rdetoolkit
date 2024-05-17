@@ -385,41 +385,61 @@ class Meta:
         """
         ret = {"assigned": set()}  # type: ignore[var-annotated]
 
-        # actionやrefered unit用に被参照値テーブルに登録(raw名)
-        for kSrc, vSrc in entry_dict_meta.items():
-            _vsrc = self.__convert_to_str(vSrc)
-            self.__registerd_refered_table(kSrc, _vsrc)
+        # Register referred values in the reference table for actions and referred units (raw names)
+        self.__register_refered_values(entry_dict_meta)
 
         for kDef, vDef in self.metaDef.items():
-            kSrc = kDef
-            if kDef not in entry_dict_meta and "originalName" in vDef:
-                kSrc = vDef["originalName"]
-            if kSrc not in entry_dict_meta:
+            kSrc = self.__get_source_key(kDef, vDef, entry_dict_meta)
+            if kSrc is None:
                 continue
 
             vSrc = entry_dict_meta[kSrc]
             _vsrc = self.__convert_to_str(vSrc)
 
             if kDef:
-                # actionやrefered unit用に被参照値テーブルに登録(meta名)
+                # Register referred values in the reference table for actions and referred units (meta names)
                 self.__registerd_refered_table(kDef, _vsrc)
 
-            action = vDef.get("action")
-            if action:
-                raise StructuredError("ERROR: this meta value should set by action")
-            if vDef.get("variable"):
-                self.__set_variable_metadata(kDef, _vsrc, vDef, ignoreEmptyStrValue)
-            else:
-                if vSrc is None:
-                    continue
-                if vSrc == "" and ignoreEmptyStrValue:
-                    continue
-                self.__set_const_metadata(kDef, _vsrc, vDef)
+            self.__process_meta_value(kDef, vDef, _vsrc, ignoreEmptyStrValue)
             ret["assigned"].add(kSrc)
-            # 一つの値を複数個所に代入する可能性があるためbreakしない
+            # Do not break because a single value may be assigned to multiple places
 
         ret["unknown"] = {k for k in entry_dict_meta if k not in ret["assigned"]}
         return ret
+
+    def __register_refered_values(self, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> None:
+        """Register referred values in the reference table.
+
+        This method converts the values from the input metadata dictionary to strings
+        and registers them in the referred values table using the original keys.
+
+        Args:
+            entry_dict_meta (Union[MetaType, RepeatedMetaType]): The metadata dictionary
+            containing key-value pairs to be registered.
+
+        """
+        for kSrc, vSrc in entry_dict_meta.items():
+            _vsrc = self.__convert_to_str(vSrc)
+            self.__registerd_refered_table(kSrc, _vsrc)
+
+    def __get_source_key(self, kDef: str, vDef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
+        kSrc = kDef
+        if kDef not in entry_dict_meta and "originalName" in vDef:
+            kSrc = vDef["originalName"]
+        if kSrc not in entry_dict_meta:
+            return None
+        return kSrc
+
+    def __process_meta_value(self, kDef: str, vDef: MetadataDefJson, _vsrc: Union[str, list[str]], ignoreEmptyStrValue: bool) -> None:
+        if vDef.get("action"):
+            raise StructuredError("ERROR: this meta value should set by action")
+
+        if vDef.get("variable"):
+            self.__set_variable_metadata(kDef, _vsrc, vDef, ignoreEmptyStrValue)
+        else:
+            if _vsrc is None or (_vsrc == "" and ignoreEmptyStrValue):
+                return
+            self.__set_const_metadata(kDef, _vsrc, vDef)
 
     def _process_unit(self, vObj, idx):  # pragma: no cover
         strUnit = vObj.get("unit", "")
@@ -457,7 +477,7 @@ class Meta:
         return ""
 
     @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
-    def writeFile(self, metaFilePath, enc="utf_8"):
+    def writefile(self, metaFilePath, enc="utf_8"):
         """Writes the metadata to a file after processing units and actions.
 
         This method serializes the metadata into JSON format and writes it to the specified file.
@@ -486,23 +506,21 @@ class Meta:
                 self._process_action(vObj, k, idx)
 
         # 項目をmetaDefに従ってソート
-        outDict["constant"] = {k: outDict["constant"][k] for k in self.metaDef if k in outDict["constant"]}
-        lvSort = []
-        for dvOrg in outDict["variable"]:
-            lvSort.append({k: dvOrg[k] for k in self.metaDef if k in dvOrg})
-        outDict["variable"] = lvSort
+        outDict["constant"] = self.__sort_by_metadef(outDict["constant"])
+        outDict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outDict["variable"]]
 
         # ファイル出力
         with open(metaFilePath, "w", encoding=enc) as fOut:
             json.dump(outDict, fOut, indent=4, ensure_ascii=False)
 
         # metaDefのうち値の入らなかったキーのリストを返す
-        ret = {"assigned": set(outDict["constant"].keys())}
-        for dv in outDict["variable"]:
-            ret["assigned"] = ret["assigned"].union(dv.keys())
-        ret["unknown"] = {k for k in self.metaDef if k not in ret["assigned"]}
+        assigned_keys = set(outDict["constant"].keys()).union(*(dv.keys() for dv in outDict["variable"]))
+        unkown_keys = {k for k in self.metaDef if k not in assigned_keys}
 
-        return ret
+        return {"assigned": assigned_keys, "unknown": unkown_keys}
+
+    def __sort_by_metadef(self, data_dict: dict[str, Any]) -> dict[str, Any]:
+        return {k: data_dict[k] for k in self.metaDef if k in data_dict}
 
     def __registerd_refered_table(self, key: str, value: Union[str, list[str]]) -> None:  # pragma: no cover
         """Registers the referenced value in the referred value table for actions and referred units, using the raw name.
@@ -590,19 +608,19 @@ class Meta:
         vSrc = vSrc.strip()
 
         if orgType is None:
-            _casted_value = self._cast_value(vSrc, outType, outFmt)
+            _casted_value = castVal(vSrc, outType, outFmt)
         elif orgType in ["integer", "number"]:
             # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
             valpair = _split_value_unit(vSrc)
             vStr = valpair.value
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = self._cast_value(vStr, orgType, outFmt)
+            _casted_value = castVal(vStr, orgType, outFmt)
         else:
             vStr = vSrc
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = self._cast_value(vStr, orgType, outFmt)
+            _casted_value = castVal(vStr, orgType, outFmt)
 
         if outUnit:
             return {
@@ -611,63 +629,6 @@ class Meta:
             }
         else:
             return {"value": _casted_value}
-
-    def _cast_value(self, valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union[bool, int, float, str]:  # pragma: no cover
-        """The function formats the string valStr based on outType and outFmt and returns the formatted value.
-
-        The function returns a formatted value of the string valStr according to
-        the specified outType and outFmt. The outType must be a string ("string")
-        for outFmt to be used. If valStr contains a value with units,
-        the assignment of units is not handled within this function.
-        It should be assigned separately as needed.
-
-        Args:
-            valStr (str): String to be converted of type
-            outType (str): Type information at output
-            outFmt (str): Formatting at output (related to date data)
-        """
-
-        def _tryCast(valStr, tp):
-            try:
-                return tp(valStr)
-            except Exception:
-                return None
-
-        if outType == "boolean":
-            if _tryCast(valStr, bool) is not None:
-                return bool(valStr)
-        elif outType == "integer":
-            # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-            val_unit_pair = _split_value_unit(valStr)
-            if _tryCast(val_unit_pair.value, int) is not None:
-                return int(val_unit_pair.value)
-        elif outType == "number":
-            # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-            val_unit_pair = _split_value_unit(valStr)
-            if _tryCast(val_unit_pair.value, int) is not None:
-                return int(val_unit_pair.value)
-            if _tryCast(val_unit_pair.value, float) is not None:
-                return float(val_unit_pair.value)
-        elif outType == "string":
-            if not outFmt:
-                return valStr
-            elif outFmt == "date-time":
-                # Do not discard timezone information if it is already attached.
-                dtObj = dateutil.parser.parse(valStr)
-                return dtObj.isoformat()
-            elif outFmt == "date":
-                # Do not discard timezone information if it is already attached.
-                dtObj = dateutil.parser.parse(valStr)
-                return dtObj.strftime("%Y-%m-%d")
-            elif outFmt == "time":
-                # Do not discard timezone information if it is already attached.
-                dtObj = dateutil.parser.parse(valStr)
-                return dtObj.strftime("%H:%M:%S")
-            else:
-                raise StructuredError("ERROR: unknown format in metaDef")
-        else:
-            raise StructuredError("ERROR: unknown value type in metaDef")
-        raise StructuredError("ERROR: failed to cast metaDef value")
 
 
 def castVal(valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union[bool, int, float, str]:
@@ -691,40 +652,43 @@ def castVal(valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union
         except Exception:
             return None
 
+    def _convert_to_date_format(value: str, fmt: str) -> str:
+        dtobj = dateutil.parser.parse(value)
+        if fmt == "date-time":
+            return dtobj.isoformat()
+        elif fmt == "date":
+            return dtobj.strftime("%Y-%m-%d")
+        elif fmt == "time":
+            return dtobj.strftime("%H:%M:%S")
+        else:
+            raise StructuredError("ERROR: unknown format in metaDef")
+
     if outType == "boolean":
         if _tryCast(valStr, bool) is not None:
             return bool(valStr)
+
     elif outType == "integer":
-        # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
+        # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valStr)
         if _tryCast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
+
     elif outType == "number":
-        # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
+        # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valStr)
         if _tryCast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
         if _tryCast(val_unit_pair.value, float) is not None:
             return float(val_unit_pair.value)
+
     elif outType == "string":
         if not outFmt:
             return valStr
-        elif outFmt == "date-time":
-            # Do not discard timezone information if it is already attached.
-            dtObj = dateutil.parser.parse(valStr)
-            return dtObj.isoformat()
-        elif outFmt == "date":
-            # Do not discard timezone information if it is already attached.
-            dtObj = dateutil.parser.parse(valStr)
-            return dtObj.strftime("%Y-%m-%d")
-        elif outFmt == "time":
-            # Do not discard timezone information if it is already attached.
-            dtObj = dateutil.parser.parse(valStr)
-            return dtObj.strftime("%H:%M:%S")
-        else:
-            raise StructuredError("ERROR: unknown format in metaDef")
+        return _convert_to_date_format(valStr, outFmt)
+
     else:
         raise StructuredError("ERROR: unknown value type in metaDef")
+
     raise StructuredError("ERROR: failed to cast metaDef value")
 
 
@@ -755,5 +719,5 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
     metaObj.assignVals(const_info)
     metaObj.assignVals(val_info)
 
-    ret = metaObj.writeFile(metaout_filepath)
+    ret = metaObj.writefile(metaout_filepath)
     return ret

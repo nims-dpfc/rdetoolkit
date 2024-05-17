@@ -91,20 +91,20 @@ def test_assignVals_exsit_key(meta_const_instance):
     assert result["assigned"] == {"reference", "date"}
 
 
-def test_empty_writeFile(meta_const_instance):
+def test_empty_writefile(meta_const_instance):
     """metadata.json is empty"""
     metafilepath = "tests/metadata.json"  # Replace with the actual file path
-    result = meta_const_instance.writeFile(metafilepath)
+    result = meta_const_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
     assert result["assigned"] == set()
 
 
-def test_has_contents_writeFile(meta_const_instance):
+def test_has_contents_writefile(meta_const_instance):
     """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {"date": "2022-01-01", "reference": "sample.com"}
     meta_const_instance.assignVals(entry_dict_meta)
-    meta_const_instance.writeFile(metafilepath)
+    meta_const_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
     with open(metafilepath, encoding="utf-8") as f:
@@ -162,7 +162,7 @@ def test_assignVals_variable_exsit_key(meta_variable_instance):
     assert result["assigned"] == {"reference", "date", "custom.user"}
 
 
-def test_has_variable_writeFile(meta_variable_instance):
+def test_has_variable_writefile(meta_variable_instance):
     """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {
@@ -171,7 +171,7 @@ def test_has_variable_writeFile(meta_variable_instance):
         "custom.user": ["A", "B", "C"],
     }
     meta_variable_instance.assignVals(entry_dict_meta)
-    meta_variable_instance.writeFile(metafilepath)
+    meta_variable_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
     with open(metafilepath, encoding="utf-8") as f:
