@@ -97,19 +97,19 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
         return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
 
 
-def _assignInvoiceVal(invoiceobj, key1, key2, valobj, invoiceschema_obj):
+def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
     """When the destination key, which is the first key 'keys1', is 'custom', valobj is cast according to the invoiceschema_obj. In all other cases, valobj is assigned without changing its type."""
     if key1 == "custom":
         dctSchema = invoiceschema_obj["properties"][key1]["properties"][key2]
         try:
-            invoiceobj[key1][key2] = rde2util.castVal(valobj, dctSchema["type"], dctSchema.get("format"))
+            invoiceobj[key1][key2] = rde2util.castval(valobj, dctSchema["type"], dctSchema.get("format"))
         except rde2util._CastError:
             raise StructuredError(f"ERROR: failed to cast invoice value for key [{key1}][{key2}]")
     else:
         invoiceobj[key1][key2] = valobj
 
 
-def overwriteInvoiceFileforDPFTerm(invoiceobj, invoice_dst_filepath, invoiceschema_filepath, invoice_info):
+def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoiceschema_filepath, invoice_info):
     """A function to overwrite DPF metadata into an invoice file.
 
     Args:
@@ -122,7 +122,7 @@ def overwriteInvoiceFileforDPFTerm(invoiceobj, invoice_dst_filepath, invoicesche
     with open(invoiceschema_filepath, encoding=enc) as f:
         invoiceschema_obj = json.load(f)
     for k, v in invoice_info.items():
-        _assignInvoiceVal(invoiceobj, "custom", k, v, invoiceschema_obj)
+        _assign_invoice_val(invoiceobj, "custom", k, v, invoiceschema_obj)
     with open(invoice_dst_filepath, "w", encoding=enc) as fOut:
         json.dump(invoiceobj, fOut, indent=4, ensure_ascii=False)
 
@@ -350,14 +350,14 @@ class ExcelInvoiceFile:
 
     def _assign_basic(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         cval = key.replace("basic/", "")
-        _assignInvoiceVal(invoice_obj, "basic", cval, value, schema_obj)
+        _assign_invoice_val(invoice_obj, "basic", cval, value, schema_obj)
 
     def _assign_sample(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         cval = key.replace("sample/", "")
         if cval == "names":
-            _assignInvoiceVal(invoice_obj, "sample", cval, [value], schema_obj)
+            _assign_invoice_val(invoice_obj, "sample", cval, [value], schema_obj)
         else:
-            _assignInvoiceVal(invoice_obj, "sample", cval, value, schema_obj)
+            _assign_invoice_val(invoice_obj, "sample", cval, value, schema_obj)
 
     def _assign_sample_general(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         cval = key.replace("sample.general/", "sample.general.")
@@ -377,7 +377,7 @@ class ExcelInvoiceFile:
 
     def _assign_custom(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         cval = key.replace("custom/", "")
-        _assignInvoiceVal(invoice_obj, "custom", cval, value, schema_obj)
+        _assign_invoice_val(invoice_obj, "custom", cval, value, schema_obj)
 
     def _ensure_sample_id_order(sefl, invoice_obj: dict):
         sample_info_value = invoice_obj.get("sample")
@@ -511,7 +511,7 @@ def update_description_with_features(
         if description.startswith("\n"):
             description = description[1:]
 
-    _assignInvoiceVal(invoice_obj, "basic", "description", description, invoice_schema_obj)
+    _assign_invoice_val(invoice_obj, "basic", "description", description, invoice_schema_obj)
     rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
 
 

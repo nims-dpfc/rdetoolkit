@@ -357,7 +357,7 @@ class Meta:
                 self.referedmap[kRef] = None
         return _tmp_metadef
 
-    def assignVals(
+    def assign_vals(
         self,
         entry_dict_meta: Union[MetaType, RepeatedMetaType],
         *,
@@ -608,19 +608,19 @@ class Meta:
         vsrc = vsrc.strip()
 
         if orgtype is None:
-            _casted_value = castVal(vsrc, outtype, outfmt)
+            _casted_value = castval(vsrc, outtype, outfmt)
         elif orgtype in ["integer", "number"]:
             # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
             valpair = _split_value_unit(vsrc)
             vStr = valpair.value
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = castVal(vStr, orgtype, outfmt)
+            _casted_value = castval(vStr, orgtype, outfmt)
         else:
             vStr = vsrc
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = castVal(vStr, orgtype, outfmt)
+            _casted_value = castval(vStr, orgtype, outfmt)
 
         if outunit:
             return {
@@ -631,7 +631,7 @@ class Meta:
             return {"value": _casted_value}
 
 
-def castVal(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
+def castval(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
     """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
 
     The function returns a formatted value of the string valstr according to
@@ -646,7 +646,7 @@ def castVal(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union
         outfmt (str): Formatting at output (related to date data)
     """
 
-    def _tryCast(valstr, tp):
+    def _trycast(valstr, tp):
         try:
             return tp(valstr)
         except Exception:
@@ -664,21 +664,21 @@ def castVal(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union
             raise StructuredError("ERROR: unknown format in metaDef")
 
     if outtype == "boolean":
-        if _tryCast(valstr, bool) is not None:
+        if _trycast(valstr, bool) is not None:
             return bool(valstr)
 
     elif outtype == "integer":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
-        if _tryCast(val_unit_pair.value, int) is not None:
+        if _trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
 
     elif outtype == "number":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
-        if _tryCast(val_unit_pair.value, int) is not None:
+        if _trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
-        if _tryCast(val_unit_pair.value, float) is not None:
+        if _trycast(val_unit_pair.value, float) is not None:
             return float(val_unit_pair.value)
 
     elif outtype == "string":
@@ -716,8 +716,8 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
         MetaType is expected to be a dictionary or a similar structure containing metadata information.
     """
     metaObj = Meta(metadef_filepath)
-    metaObj.assignVals(const_info)
-    metaObj.assignVals(val_info)
+    metaObj.assign_vals(const_info)
+    metaObj.assign_vals(val_info)
 
     ret = metaObj.writefile(metaout_filepath)
     return ret

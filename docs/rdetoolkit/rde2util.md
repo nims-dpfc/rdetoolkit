@@ -7,7 +7,7 @@
 ::: src.rdetoolkit.rde2util.Meta
     options:
         members:
-            - assignVals
+            - assign_vals
             - writefile
             - _metadata_validation
             - _process_action
@@ -46,9 +46,9 @@
 
 ::: src.rdetoolkit.rde2util.write_to_json_file
 
-## castVal
+## castval
 
-::: src.rdetoolkit.rde2util.castVal
+::: src.rdetoolkit.rde2util.castval
 
 ## dict2meta
 

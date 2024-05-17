@@ -78,7 +78,7 @@ def test_read_metadef_file(meta_const_instance):
 
 def test_assignVals_unknown_key(meta_const_instance):
     entry_dict_meta = {"key1": "value1", "key2": "value2"}
-    result = meta_const_instance.assignVals(entry_dict_meta)
+    result = meta_const_instance.assign_vals(entry_dict_meta)
     print(result)
     assert result["unknown"] == {"key1", "key2"}
     assert result["assigned"] == set()
@@ -86,7 +86,7 @@ def test_assignVals_unknown_key(meta_const_instance):
 
 def test_assignVals_exsit_key(meta_const_instance):
     entry_dict_meta = {"date": "2022-01-01", "reference": "sample.com"}
-    result = meta_const_instance.assignVals(entry_dict_meta)
+    result = meta_const_instance.assign_vals(entry_dict_meta)
     assert result["unknown"] == set()
     assert result["assigned"] == {"reference", "date"}
 
@@ -103,7 +103,7 @@ def test_has_contents_writefile(meta_const_instance):
     """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {"date": "2022-01-01", "reference": "sample.com"}
-    meta_const_instance.assignVals(entry_dict_meta)
+    meta_const_instance.assign_vals(entry_dict_meta)
     meta_const_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
@@ -157,7 +157,7 @@ def test_assignVals_variable_exsit_key(meta_variable_instance):
         "reference": ["sample.com", "experiments.app", "myDocuments.go.jp"],
         "custom.user": ["A", "B", "C"],
     }
-    result = meta_variable_instance.assignVals(entry_dict_meta)
+    result = meta_variable_instance.assign_vals(entry_dict_meta)
     assert result["unknown"] == set()
     assert result["assigned"] == {"reference", "date", "custom.user"}
 
@@ -170,7 +170,7 @@ def test_has_variable_writefile(meta_variable_instance):
         "reference": ["sample.com", "experiments.app", "myDocuments.go.jp"],
         "custom.user": ["A", "B", "C"],
     }
-    meta_variable_instance.assignVals(entry_dict_meta)
+    meta_variable_instance.assign_vals(entry_dict_meta)
     meta_variable_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
