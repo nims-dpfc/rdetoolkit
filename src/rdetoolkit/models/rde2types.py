@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, Sequence, TypedDict, Union
 
 ZipFilesPathList = Sequence[Path]
-unZipFilesPathList = Sequence[Path]
+UnZipFilesPathList = Sequence[Path]
 ExcelInvoicePathList = Sequence[Path]
 OtherFilesPathList = Sequence[Path]
 PathTuple = tuple[Path, ...]

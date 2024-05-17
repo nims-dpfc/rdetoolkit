@@ -1,14 +1,14 @@
 import abc
 from abc import ABC, abstractmethod
 from pathlib import Path
-from rdetoolkit.models.rde2types import RawFiles as RawFiles, ZipFilesPathList as ZipFilesPathList, unZipFilesPathList as unZipFilesPathList
+from rdetoolkit.models.rde2types import RawFiles as RawFiles, ZipFilesPathList as ZipFilesPathList, UnZipFilesPathList as UnZipFilesPathList
 from typing import List, Optional, Tuple
 
 class IInputFileHelper(ABC, metaclass=abc.ABCMeta):
     @abstractmethod
     def get_zipfiles(self, input_files: list[Path]) -> ZipFilesPathList: ...
     @abstractmethod
-    def unpacked(self, zipfile: Path, target_dir: Path) -> unZipFilesPathList: ...
+    def unpacked(self, zipfile: Path, target_dir: Path) -> UnZipFilesPathList: ...
 
 class IInputFileChecker(ABC, metaclass=abc.ABCMeta):
     @abstractmethod

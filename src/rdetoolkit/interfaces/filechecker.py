@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from rdetoolkit.models.rde2types import RawFiles, ZipFilesPathList, unZipFilesPathList
+from rdetoolkit.models.rde2types import RawFiles, UnZipFilesPathList, ZipFilesPathList
 
 
 class IInputFileHelper(ABC):
@@ -13,7 +13,7 @@ class IInputFileHelper(ABC):
 
     Methods:
         get_zipfiles(input_files: list[Path]) -> ZipFilesPathList:
-        unpacked(zipfile: Path, target_dir: Path) -> unZipFilesPathList:
+        unpacked(zipfile: Path, target_dir: Path) -> UnZipFilesPathList:
     """
 
     @abstractmethod
@@ -29,7 +29,7 @@ class IInputFileHelper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def unpacked(self, zipfile: Path, target_dir: Path) -> unZipFilesPathList:
+    def unpacked(self, zipfile: Path, target_dir: Path) -> UnZipFilesPathList:
         """Unpacks a specified zip file into a target directory and returns a list of paths to the unpacked files.
 
         Args:
@@ -37,7 +37,7 @@ class IInputFileHelper(ABC):
             target_dir (Path): The directory where the zip file contents will be unpacked.
 
         Returns:
-            unZipFilesPathList: A list of paths to the unpacked files.
+            UnZipFilesPathList: A list of paths to the unpacked files.
         """
         raise NotImplementedError
 
