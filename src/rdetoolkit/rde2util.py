@@ -5,7 +5,7 @@ import pathlib
 import re
 import zipfile
 from copy import deepcopy
-from typing import Any, Optional, TypedDict, Union, cast
+from typing import Any, Final, Optional, TypedDict, Union, cast
 
 import chardet  # for following failure cases
 import dateutil.parser
@@ -14,6 +14,8 @@ from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
+
+LANG_ENC_FLAG: Final[int] = 0x800
 
 
 class _ChardetType(TypedDict):
@@ -35,12 +37,12 @@ def get_default_values(default_values_filepath):
     Returns:
         dict: A dictionary containing the keys and their corresponding default values.
     """
-    dctDefaultVals = {}
+    dct_default_values = {}
     enc = chardet.detect(open(default_values_filepath, "rb").read())["encoding"]
-    with open(default_values_filepath, encoding=enc) as fIn:
-        for row in csv.DictReader(fIn):
-            dctDefaultVals[row["key"]] = row["value"]
-    return dctDefaultVals
+    with open(default_values_filepath, encoding=enc) as fin:
+        for row in csv.DictReader(fin):
+            dct_default_values[row["key"]] = row["value"]
+    return dct_default_values
 
 
 class CharDecEncoding:
@@ -67,8 +69,8 @@ class CharDecEncoding:
         if isinstance(text_filepath, pathlib.Path):
             text_filepath = str(text_filepath)
 
-        byteAr = open(text_filepath, "rb").read()
-        _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(byteAr))
+        bcontents = open(text_filepath, "rb").read()
+        _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(bcontents))
         if _cast_detect_ret["encoding"] is not None:
             enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
         else:
@@ -121,23 +123,23 @@ def _split_value_unit(target_char: str) -> ValueUnitPair:  # pragma: no cover
         ValueUnitPair: Result of splitting values and units
     """
     valpair = ValueUnitPair(value="", unit="")
-    valLeft = str(target_char).strip()
+    valleft = str(target_char).strip()
     ptn1 = r"^[+-]?[0-9]*\.?[0-9]*"  # 実数部の正規表現
     ptn2 = r"[eE][+-]?[0-9]+"  # 指数部の正規表現
-    r1 = re.match(ptn1, valLeft)
+    r1 = re.match(ptn1, valleft)
     if r1:
         _v = r1.group()
-        valLeft = valLeft[r1.end() :]
-        r2 = re.match(ptn2, valLeft)
+        valleft = valleft[r1.end() :]
+        r2 = re.match(ptn2, valleft)
         if r2:
             _v += r2.group()
             valpair.value = _v
-            valpair.unit = valLeft[r2.end() :]
+            valpair.unit = valleft[r2.end() :]
         else:
             valpair.value = _v.strip()
-            valpair.unit = valLeft.strip()
+            valpair.unit = valleft.strip()
     else:
-        valpair.unit = valLeft.strip()
+        valpair.unit = valleft.strip()
     return valpair
 
 
@@ -147,7 +149,6 @@ def _decode_filename(info: zipfile.ZipInfo) -> None:  # pragma: no cover
     Args:
         info (zipfile.ZipInfo): The `ZipInfo` object containing the file information.
     """
-    LANG_ENC_FLAG = 0x800
     encoding = "utf_8" if info.flag_bits & LANG_ENC_FLAG else "cp437"
     info.filename = info.filename.encode(encoding).decode("cp932")
 
@@ -353,8 +354,8 @@ class Meta:
                 outunit = vdef.get("unit")
                 if not outunit.startswith("$"):
                     continue
-                kRef = outunit[1:]
-                self.referedmap[kRef] = None
+                keyref = outunit[1:]
+                self.referedmap[keyref] = None
         return _tmp_metadef
 
     def assign_vals(
@@ -389,11 +390,11 @@ class Meta:
         self.__register_refered_values(entry_dict_meta)
 
         for kdef, vdef in self.metaDef.items():
-            kSrc = self.__get_source_key(kdef, vdef, entry_dict_meta)
-            if kSrc is None:
+            keysrc = self.__get_source_key(kdef, vdef, entry_dict_meta)
+            if keysrc is None:
                 continue
 
-            vsrc = entry_dict_meta[kSrc]
+            vsrc = entry_dict_meta[keysrc]
             _vsrc = self.__convert_to_str(vsrc)
 
             if kdef:
@@ -401,7 +402,7 @@ class Meta:
                 self.__registerd_refered_table(kdef, _vsrc)
 
             self.__process_meta_value(kdef, vdef, _vsrc, ignore_empty_strvalue)
-            ret["assigned"].add(kSrc)
+            ret["assigned"].add(keysrc)
             # Do not break because a single value may be assigned to multiple places
 
         ret["unknown"] = {k for k in entry_dict_meta if k not in ret["assigned"]}
@@ -418,17 +419,17 @@ class Meta:
             containing key-value pairs to be registered.
 
         """
-        for kSrc, vsrc in entry_dict_meta.items():
+        for keysrc, vsrc in entry_dict_meta.items():
             _vsrc = self.__convert_to_str(vsrc)
-            self.__registerd_refered_table(kSrc, _vsrc)
+            self.__registerd_refered_table(keysrc, _vsrc)
 
     def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
-        kSrc = kdef
+        keysrc = kdef
         if kdef not in entry_dict_meta and "originalName" in vdef:
-            kSrc = vdef["originalName"]
-        if kSrc not in entry_dict_meta:
+            keysrc = vdef["originalName"]
+        if keysrc not in entry_dict_meta:
             return None
-        return kSrc
+        return keysrc
 
     def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: Union[str, list[str]], ignore_empty_strvalue: bool) -> None:
         if vdef.get("action"):
@@ -442,31 +443,31 @@ class Meta:
             self.__set_const_metadata(kdef, _vsrc, vdef)
 
     def _process_unit(self, vobj, idx):  # pragma: no cover
-        strUnit = vobj.get("unit", "")
+        _unit = vobj.get("unit", "")
         # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
-        if strUnit.startswith("$"):
-            srcKey = strUnit[1:]
-            srcVal = self.referedmap[srcKey]
-            if srcVal is None:
+        if _unit.startswith("$"):
+            srckey = _unit[1:]
+            srcval = self.referedmap[srckey]
+            if srcval is None:
                 # 参照先が存在しなかった場合は単位未設定の状態とする
                 del vobj["unit"]
-            elif isinstance(srcVal, str):
-                vobj["unit"] = srcVal
+            elif isinstance(srcval, str):
+                vobj["unit"] = srcval
             else:
-                vobj["unit"] = srcVal[idx]
+                vobj["unit"] = srcval[idx]
 
     def _process_action(self, vobj, k, idx):  # pragma: no cover
         # actionの処理
-        strAct = self.metaDef[k].get("action")
-        if not strAct:
+        stract = self.metaDef[k].get("action")
+        if not stract:
             return
 
-        for srcKey, srcVal in self.referedmap.items():
-            if srcKey not in strAct:
+        for srckey, srcval in self.referedmap.items():
+            if srckey not in stract:
                 continue
-            rVal = srcVal[idx] if isinstance(srcVal, list) else srcVal
-            strAct = strAct.replace(srcKey, f'"{rVal}"' if isinstance(rVal, str) else str(rVal))
-        vobj["value"] = eval(strAct)
+            realval = srcval[idx] if isinstance(srcval, list) else srcval
+            stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
+        vobj["value"] = eval(stract)
 
     def __convert_to_str(self, value: Union[str, int, float, list]) -> Union[str, list[str]]:
         """Convert the given value to string or list of strings."""
@@ -498,23 +499,23 @@ class Meta:
         Raises:
             CustomException: If the metadata generation fails, with a custom error message and error code.
         """
-        outDict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
+        outdict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
 
-        for idx, kvDict in [(None, outDict["constant"])] + list(enumerate(outDict["variable"])):
-            for k, vobj in kvDict.items():
+        for idx, kvdict in [(None, outdict["constant"])] + list(enumerate(outdict["variable"])):
+            for k, vobj in kvdict.items():
                 self._process_unit(vobj, idx)
                 self._process_action(vobj, k, idx)
 
         # 項目をmetaDefに従ってソート
-        outDict["constant"] = self.__sort_by_metadef(outDict["constant"])
-        outDict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outDict["variable"]]
+        outdict["constant"] = self.__sort_by_metadef(outdict["constant"])
+        outdict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outdict["variable"]]
 
         # ファイル出力
-        with open(meta_filepath, "w", encoding=enc) as fOut:
-            json.dump(outDict, fOut, indent=4, ensure_ascii=False)
+        with open(meta_filepath, "w", encoding=enc) as fout:
+            json.dump(outdict, fout, indent=4, ensure_ascii=False)
 
         # metaDefのうち値の入らなかったキーのリストを返す
-        assigned_keys = set(outDict["constant"].keys()).union(*(dv.keys() for dv in outDict["variable"]))
+        assigned_keys = set(outdict["constant"].keys()).union(*(dv.keys() for dv in outdict["variable"]))
         unkown_keys = {k for k in self.metaDef if k not in assigned_keys}
 
         return {"assigned": assigned_keys, "unknown": unkown_keys}
@@ -542,8 +543,8 @@ class Meta:
         if key in self.referedmap:
             self.referedmap[key] = deepcopy(value)
         else:
-            for strAct in self.actions:
-                if key not in strAct:
+            for stract in self.actions:
+                if key not in stract:
                     continue
                 self.referedmap[key] = deepcopy(value)
 
@@ -560,12 +561,12 @@ class Meta:
         outunit = metadefvalue.get("unit")
         if len(self.metaVar) < len(metavalues):
             self.metaVar += [{} for _ in range(len(metavalues) - len(self.metaVar))]
-        for idx, vSrcElm in enumerate(metavalues):
-            if vSrcElm is None:
+        for idx, val_src_element in enumerate(metavalues):
+            if val_src_element is None:
                 continue
-            if vSrcElm == "" and opt_ignore_emptystr:
+            if val_src_element == "" and opt_ignore_emptystr:
                 continue
-            self.metaVar[idx][key] = self._metadata_validation(vSrcElm, outtype, outfmt, orgtype, outunit)
+            self.metaVar[idx][key] = self._metadata_validation(val_src_element, outtype, outfmt, orgtype, outunit)
 
     def __set_const_metadata(
         self,
@@ -612,15 +613,15 @@ class Meta:
         elif orgtype in ["integer", "number"]:
             # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
             valpair = _split_value_unit(vsrc)
-            vStr = valpair.value
+            vstr = valpair.value
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = castval(vStr, orgtype, outfmt)
+            _casted_value = castval(vstr, orgtype, outfmt)
         else:
-            vStr = vsrc
+            vstr = vsrc
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = castval(vStr, orgtype, outfmt)
+            _casted_value = castval(vstr, orgtype, outfmt)
 
         if outunit:
             return {
@@ -715,9 +716,9 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
     Note:
         MetaType is expected to be a dictionary or a similar structure containing metadata information.
     """
-    metaObj = Meta(metadef_filepath)
-    metaObj.assign_vals(const_info)
-    metaObj.assign_vals(val_info)
+    meta_obj = Meta(metadef_filepath)
+    meta_obj.assign_vals(const_info)
+    meta_obj.assign_vals(val_info)
 
-    ret = metaObj.writefile(metaout_filepath)
+    ret = meta_obj.writefile(metaout_filepath)
     return ret

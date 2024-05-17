@@ -30,24 +30,24 @@ def read_excelinvoice(excelinvoice_filepath):
     Raises:
         StructuredError: If there are multiple sheets with `invoiceList_format_id` in the ExcelInvoice, or if no sheets are present in the ExcelInvoice.
     """
-    dctSheets = pd.read_excel(excelinvoice_filepath, sheet_name=None, dtype=str, header=None, index_col=None)
+    dct_sheets = pd.read_excel(excelinvoice_filepath, sheet_name=None, dtype=str, header=None, index_col=None)
     dfexcelinvoice = None
-    dfGeneral = None
-    dfSpecific = None
-    for shName, df in dctSheets.items():
+    df_general = None
+    df_specific = None
+    for sh_name, df in dct_sheets.items():
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfexcelinvoice is not None:
                 raise StructuredError("ERROR: multiple sheet in invoiceList files")
             ExcelInvoiceFile._check_intermittent_empty_rows(df)
             dfexcelinvoice = __process_invoice_sheet(df)
-        elif shName == "generalTerm":
-            dfGeneral = __process_general_term_sheet(df)
-        elif shName == "specificTerm":
-            dfSpecific = __process_specific_term_sheet(df)
+        elif sh_name == "generalTerm":
+            df_general = __process_general_term_sheet(df)
+        elif sh_name == "specificTerm":
+            df_specific = __process_specific_term_sheet(df)
 
     if dfexcelinvoice is None:
         raise StructuredError("ERROR: no sheet in invoiceList files")
-    return dfexcelinvoice, dfGeneral, dfSpecific
+    return dfexcelinvoice, df_general, df_specific
 
 
 def __process_invoice_sheet(df: pd.DataFrame) -> pd.Series:
@@ -100,9 +100,9 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
 def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
     """When the destination key, which is the first key 'keys1', is 'custom', valobj is cast according to the invoiceschema_obj. In all other cases, valobj is assigned without changing its type."""
     if key1 == "custom":
-        dctSchema = invoiceschema_obj["properties"][key1]["properties"][key2]
+        dct_schema = invoiceschema_obj["properties"][key1]["properties"][key2]
         try:
-            invoiceobj[key1][key2] = rde2util.castval(valobj, dctSchema["type"], dctSchema.get("format"))
+            invoiceobj[key1][key2] = rde2util.castval(valobj, dct_schema["type"], dct_schema.get("format"))
         except rde2util._CastError:
             raise StructuredError(f"ERROR: failed to cast invoice value for key [{key1}][{key2}]")
     else:
@@ -123,8 +123,8 @@ def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoices
         invoiceschema_obj = json.load(f)
     for k, v in invoice_info.items():
         _assign_invoice_val(invoiceobj, "custom", k, v, invoiceschema_obj)
-    with open(invoice_dst_filepath, "w", encoding=enc) as fOut:
-        json.dump(invoiceobj, fOut, indent=4, ensure_ascii=False)
+    with open(invoice_dst_filepath, "w", encoding=enc) as fout:
+        json.dump(invoiceobj, fout, indent=4, ensure_ascii=False)
 
 
 def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
@@ -145,16 +145,16 @@ def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
     """
     # Check for the existence of rawfiles_tpl specified as an index
     # Conversely, check that all rawfiles_tpl are present in the ExcelInvoice index
-    dctTpl = {str(tpl[0].parent.name): tpl for tpl in rawfiles_tpl}  # Assuming terminal folder names are unique
-    dirSetGlob = set(dctTpl.keys())
-    dirSetInvoice = set(dfexcelinvoice["data_folder"])
-    if dirSetGlob == dirSetInvoice:
+    dcttpl = {str(tpl[0].parent.name): tpl for tpl in rawfiles_tpl}  # Assuming terminal folder names are unique
+    dir_setglob = set(dcttpl.keys())
+    dir_set_invoice = set(dfexcelinvoice["data_folder"])
+    if dir_setglob == dir_set_invoice:
         # Reorder rawfiles_tpl according to the order of appearance in the invoice
-        return [dctTpl[d] for d in dfexcelinvoice["data_folder"]]
-    elif dirSetGlob - dirSetInvoice:
-        raise StructuredError(f"ERROR: unused raw data: {(dirSetGlob-dirSetInvoice).pop()}")
-    elif dirSetInvoice - dirSetGlob:
-        raise StructuredError(f"ERROR: raw data not found: {(dirSetInvoice-dirSetGlob).pop()}")
+        return [dcttpl[d] for d in dfexcelinvoice["data_folder"]]
+    elif dir_setglob - dir_set_invoice:
+        raise StructuredError(f"ERROR: unused raw data: {(dir_setglob-dir_set_invoice).pop()}")
+    elif dir_set_invoice - dir_setglob:
+        raise StructuredError(f"ERROR: raw data not found: {(dir_set_invoice-dir_setglob).pop()}")
 
     raise StructuredError("ERROR: unknown error")  # This line should never be reached
 
@@ -217,13 +217,13 @@ class ExcelInvoiceFile:
     Attributes:
         invoice_path (Path): Path to the invoice file.
         dfexcelinvoice (pd.DataFrame): Dataframe of the invoice.
-        dfGeneral (pd.DataFrame): Dataframe of general data.
-        dfSpecific (pd.DataFrame): Dataframe of specific data.
+        df_general (pd.DataFrame): Dataframe of general data.
+        df_specific (pd.DataFrame): Dataframe of specific data.
     """
 
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
-        self.dfexcelinvoice, self.dfGeneral, self.dfSpecific = self.read()
+        self.dfexcelinvoice, self.df_general, self.df_specific = self.read()
 
     def read(self, *, target_path: Optional[Path] = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
@@ -233,7 +233,7 @@ class ExcelInvoiceFile:
                 uses the path from `self.invoice_path`. Defaults to None.
 
         Returns:
-            tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Three dataframes (dfexcelinvoice, dfGeneral, dfSpecific).
+            tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Three dataframes (dfexcelinvoice, df_general, df_specific).
 
         Raises:
             StructuredError: If the invoice file is not found, or if multiple sheets exist in the invoice list files,
@@ -245,26 +245,26 @@ class ExcelInvoiceFile:
         if not os.path.exists(target_path):
             raise StructuredError(f"ERROR: excelinvoice not found {target_path}")
 
-        dctSheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
+        dct_sheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
 
         dfexcelinvoice = None
-        dfGeneral = None
-        dfSpecific = None
-        for shName, df in dctSheets.items():
+        df_general = None
+        df_specific = None
+        for sh_name, df in dct_sheets.items():
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfexcelinvoice is not None:
                     raise StructuredError("ERROR: multiple sheet in invoiceList files")
                 ExcelInvoiceFile._check_intermittent_empty_rows(df)
                 dfexcelinvoice = self._process_invoice_sheet(df)
-            elif shName == "generalTerm":
-                dfGeneral = self._process_general_term_sheet(df)
-            elif shName == "specificTerm":
-                dfSpecific = self._process_specific_term_sheet(df)
+            elif sh_name == "generalTerm":
+                df_general = self._process_general_term_sheet(df)
+            elif sh_name == "specificTerm":
+                df_specific = self._process_specific_term_sheet(df)
 
         if dfexcelinvoice is None:
             raise StructuredError("ERROR: no sheet in invoiceList files")
 
-        return dfexcelinvoice, dfGeneral, dfSpecific
+        return dfexcelinvoice, df_general, df_specific
 
     def _process_invoice_sheet(self, df: pd.DataFrame) -> pd.Series:
         df = df.dropna(axis=0, how="all").dropna(axis=1, how="all")
@@ -361,18 +361,18 @@ class ExcelInvoiceFile:
 
     def _assign_sample_general(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         cval = key.replace("sample.general/", "sample.general.")
-        termID = self.dfGeneral[self.dfGeneral["key_name"] == cval]["term_id"].values[0]
-        for dObj in invoice_obj["sample"]["generalAttributes"]:
-            if dObj.get("termId") == termID:
-                dObj["value"] = value
+        term_id = self.df_general[self.df_general["key_name"] == cval]["term_id"].values[0]
+        for dictobj in invoice_obj["sample"]["generalAttributes"]:
+            if dictobj.get("termId") == term_id:
+                dictobj["value"] = value
                 break
 
     def _assign_sample_specific(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         cval = key.replace("sample.specific/", "sample.specific.")
-        termID = self.dfSpecific[self.dfSpecific["key_name"] == cval]["term_id"].values[0]
-        for dObj in invoice_obj["sample"]["specificAttributes"]:
-            if dObj.get("termId") == termID:
-                dObj["value"] = value
+        term_id = self.df_specific[self.df_specific["key_name"] == cval]["term_id"].values[0]
+        for dictobj in invoice_obj["sample"]["specificAttributes"]:
+            if dictobj.get("termId") == term_id:
+                dictobj["value"] = value
                 break
 
     def _assign_custom(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
@@ -386,8 +386,8 @@ class ExcelInvoiceFile:
         if "sampleId" not in sample_info_value:
             return
 
-        sampleId_value = invoice_obj["sample"].pop("sampleId")
-        invoice_obj["sample"] = {"sampleId": sampleId_value, **invoice_obj["sample"]}
+        sampleid_value = invoice_obj["sample"].pop("sampleId")
+        invoice_obj["sample"] = {"sampleId": sampleid_value, **invoice_obj["sample"]}
 
     def _detect_encoding(self, file_path: Path):
         return CharDecEncoding.detect_text_file_encoding(file_path)

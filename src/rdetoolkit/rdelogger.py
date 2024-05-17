@@ -112,11 +112,11 @@ class CustomLog:
         """
         logger = self.logger
         if not logger.hasHandlers():
-            logDir = StorageDir.get_specific_outputdir(True, "logs")
-            logFile = logDir / "rdeuser.log"
+            logdir = StorageDir.get_specific_outputdir(True, "logs")
+            logfile = logdir / "rdeuser.log"
             if needlogs:
                 self._set_handler(StreamHandler(), True)
-                self._set_handler(FileHandler(logFile), True)
+                self._set_handler(FileHandler(logfile), True)
             else:
                 self._set_handler(NullHandler(), False)
         self.logger = logger

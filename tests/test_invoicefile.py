@@ -44,11 +44,11 @@ def test_read_valid_excel_invoice_file(inputfile_single_dummy_header_excelinvoic
     invoice_path = Path(inputfile_single_dummy_header_excelinvoice)
     excel_invoice_file = ExcelInvoiceFile(invoice_path)
 
-    dfexcelinvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+    dfexcelinvoice, df_general, df_specific = excel_invoice_file.read()
 
     assert dfexcelinvoice.columns[0] == "data_file_names/name"
-    assert (dfGeneral.columns == ["term_id", "key_name"]).all()
-    assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
+    assert (df_general.columns == ["term_id", "key_name"]).all()
+    assert (df_specific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
 def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
@@ -56,11 +56,11 @@ def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
     invoice_path = Path(excelinvoice_non_sampleinfo)
     excel_invoice_file = ExcelInvoiceFile(invoice_path)
 
-    dfexcelinvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+    dfexcelinvoice, df_general, df_specific = excel_invoice_file.read()
 
     assert dfexcelinvoice.columns[0] == "data_file_names/name"
-    assert (dfGeneral.columns == ["term_id", "key_name"]).all()
-    assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
+    assert (df_general.columns == ["term_id", "key_name"]).all()
+    assert (df_specific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
 def test_read_none_sample_excel_invoice_file_blankline(
@@ -73,7 +73,7 @@ def test_read_none_sample_excel_invoice_file_blankline(
 
     with pytest.raises(StructuredError) as e:
         excel_invoice_file = ExcelInvoiceFile(invoice_path)
-        dfexcelinvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+        dfexcelinvoice, df_general, df_specific = excel_invoice_file.read()
 
     assert str(e.value) == "Error! Blank lines exist between lines"
 
@@ -281,7 +281,7 @@ def test_update_description_none_features_none_variable(
 
 def test_read_excelinvoice(inputfile_single_excelinvoice):
     """read_excelinvoiceのテスト
-    dfexcelinvoice, dfGeneral, dfSpecificが正しい値で返ってくるかテスト
+    dfexcelinvoice, df_general, dfSpecificが正しい値で返ってくるかテスト
     """
     expect_sheet1 = [
         [
@@ -341,16 +341,16 @@ def test_read_excelinvoice(inputfile_single_excelinvoice):
         ],
     )
 
-    dfexcelinvoice, dfGeneral, dfSpecific = read_excelinvoice(inputfile_single_excelinvoice)
+    dfexcelinvoice, df_general, df_specific = read_excelinvoice(inputfile_single_excelinvoice)
 
     print(dfexcelinvoice)
     print(df1)
 
     assert_frame_equal(dfexcelinvoice, df1)
-    assert isinstance(dfGeneral, pd.DataFrame)
-    assert dfGeneral.columns.to_list() == ["term_id", "key_name"]
-    assert isinstance(dfSpecific, pd.DataFrame)
-    assert dfSpecific.columns.to_list() == ["sample_class_id", "term_id", "key_name"]
+    assert isinstance(df_general, pd.DataFrame)
+    assert df_general.columns.to_list() == ["term_id", "key_name"]
+    assert isinstance(df_specific, pd.DataFrame)
+    assert df_specific.columns.to_list() == ["sample_class_id", "term_id", "key_name"]
 
 
 def test_empty_excelinvoice_read_excelinvoice(empty_inputfile_excelinvoice):
