@@ -33,13 +33,15 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 select = [
-    "F", # pyflakes
-    "E", # pycodestyle
-    "W", # pycodestyle warnings
-    "I", # isort
-    "D", # pydocstyle
+    "F",  # pyflakes
+    "E",  # pycodestyle
+    "W",  # pycodestyle warnings
+    "I",  # isort
+    "D",  # pydocstyle
+    "N",  # pep8-naming
+    "PL", # Pylint
 ]
-ignore = ["D100", "D101", "D104", "D105", "D107"]
+ignore = ["D100", "D101", "D104", "D105", "D107", "PLR0913"]
 exclude = [
     "bzr",
     ".direnv",
@@ -70,8 +72,9 @@ exclude = [
     "tests",
     "stubs",
     "csv2graph.py",
+    "src/rdetoolkit/models/invoice_schema.py", # Ignore pydocstyle warnings for this file as it is for defining pydantic models.
 ]
-# 1行の最大文字数は問わないとチーム内で合意
+# The team has agreed not to enforce a maximum character limit per line.
 line-length = 250
 indent-width = 4
 
@@ -82,7 +85,7 @@ indent-style = "space"
 convention = "google"
 
 [tool.ruff.per-file-ignores]
-# __init__.pyは未使用インポートを許容
+# Unused imports are allowed in __init__.py.
 "__init__.py" = ["F401", "F403"]
 
 [tool.mypy]
