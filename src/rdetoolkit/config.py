@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Final, Optional, Union
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from tomlkit.toml_file import TOMLFile
 
 CONFIG_FILE: Final = ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"]
@@ -75,6 +75,10 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
         config_data = __read_pyproject_toml(str(pyproject_toml))
     else:
         return Config()
+
+    if config_data is None:
+        return Config()
+
     return Config(**config_data)
 
 
@@ -160,12 +164,19 @@ def get_config(target_dir_path: Union[str, Path]):
         Optional[dict]: The first valid configuration found, or None if no valid configuration is found.
     """
     for cfg_file in find_config_files(target_dir_path):
-        __config = parse_config_file(path=cfg_file)
+        try:
+            __config = parse_config_file(path=cfg_file)
+        except ValidationError as e:
+            raise ValueError(f"Invalid configuration file: {cfg_file}") from e
         if __config is not None:
             return __config
+
     pyproject_toml_path = get_pyproject_toml()
     if pyproject_toml_path is not None:
-        __config = parse_config_file(path=str(pyproject_toml_path))
+        try:
+            __config = parse_config_file(path=str(pyproject_toml_path))
+        except ValidationError as e:
+            raise ValueError(f"Invalid configuration file: {pyproject_toml_path}") from e
         if __config is not None:
             return __config
     return None
