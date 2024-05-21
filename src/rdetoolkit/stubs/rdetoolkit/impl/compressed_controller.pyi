@@ -1,11 +1,10 @@
-from pathlib import Path
-from typing import List, Tuple, Union
-
 import pandas as pd
 from _typeshed import Incomplete
+from pathlib import Path
 from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser as ICompressedFileStructParser
-from rdetoolkit.invoiceFile import checkExistRawFiles as checkExistRawFiles
+from rdetoolkit.invoicefile import check_exist_rawfiles as check_exist_rawfiles
+from typing import List, Tuple, Union
 
 class CompressedFlatFileParser(ICompressedFileStructParser):
     xlsx_invoice: Incomplete

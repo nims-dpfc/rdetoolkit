@@ -1,10 +1,8 @@
-site_name: "RdeToolKit Documentation"
+site_name: "RDEToolKit Documentation"
 theme:
   name: "material"
   font:
     text: Noto Sans JP
-  icon:
-    repo: fontawesome/brands/gitlab
   palette:
     - scheme: default
       primary: indigo
@@ -17,53 +15,90 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.sections
     - navigation.top
+    # - toc.integrate
+    - navigation.tabs
+    - navigation.tabs.sticky
 
 nav:
-  - はじめに: index.md
-  - インストール: install.md
-  - API Document:
+  - Getting started: index.md
+  - Installation: install.md
+  - User Guide:
+      - Quick Start: usage/quickstart.md
+      - 構造化処理: usage/structured.md
+      - 設定ファイル: usage/config.md
+      - 起動モード: usage/mode.md
+      - 説明欄の自動記述: usage/feature_description.md
+      - File Mode / Folder Mode: usage/file_folder_mode.md
+      - Magic Variable: usage/magic_variable.md
+      - Docker: usage/docker.md
+  - API Documentation:
       - impl:
           - rdetoolkit/impl/compressed_controller.md
           - rdetoolkit/impl/input_controller.md
       - interface:
-          - rdetoolkit/interfaces/filechecker.md
+          - rdetoolkit/interface/filechecker.md
       - models:
+          - rdetoolkit/models/invoice_schema.md
+          - rdetoolkit/models/metadata.md
           - rdetoolkit/models/rde2types.md
-      - rdetoolkit/csv2graph.md
-      - rdetoolkit/img2thumb.md
-      - rdetoolkit/invoiceFile.md
-      - rdetoolkit/modeproc.md
-      - rdetoolkit/rde2util.md
-      - rdetoolkit/rdelogger.md
+      - rdetoolkit/config.md
       - rdetoolkit/workflows.md
-  - Contributing: contributing.md
+      - rdetoolkit/rde2util.md
+      - rdetoolkit/invoicefile.md
+      - rdetoolkit/modeproc.md
+      - rdetoolkit/img2thumb.md
+      - rdetoolkit/rdelogger.md
+      - rdetoolkit/csv2graph.md
+      - rdetoolkit/exceptions.md
+  - Development:
+      - Top: contribute/home.md
+      - Documents: contribute/documents_contributing.md
+      - Source Code: contribute/sourcecode_contributing.md
 
 plugins:
   - search:
       separator: '[\s\-\.]+'
-  - mkdocstrings
+      lang: 'ja'
+  - mermaid2
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_inheritance_diagram: true
+            heading_level: 3
+            show_root_toc_entry: false
 
 watch:
   - src
 
 markdown_extensions:
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+        # make exceptions to highlighting of code:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
   - pymdownx.highlight:
       use_pygments: true
       noclasses: true
       pygments_style: colorful
       linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 
-repo_url: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
-repo_name: rde20/rdetoolkit
+repo_url: https://github.com/nims-dpfc/rdetoolkit
+repo_name: nims-dpfc/rdetoolkit
 
 extra:
   social:
-    - icon: fontawesome/brands/gitlab
-      link: https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit
+    - icon: fontawesome/brands/github
+      link: https://github.com/nims-dpfc/rdetoolkit
   consent:
     title: Cookie consent
     description:
@@ -71,3 +106,6 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10.9.0/dist/mermaid.min.js

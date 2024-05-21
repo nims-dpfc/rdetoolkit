@@ -6,7 +6,7 @@ import pytest
 from rdetoolkit.rde2util import (
     Meta,
     _split_value_unit,
-    detect_text_file_encoding,
+    CharDecEncoding,
     read_from_json_file,
     write_to_json_file,
 )
@@ -78,7 +78,7 @@ def test_read_metadef_file(meta_const_instance):
 
 def test_assignVals_unknown_key(meta_const_instance):
     entry_dict_meta = {"key1": "value1", "key2": "value2"}
-    result = meta_const_instance.assignVals(entry_dict_meta)
+    result = meta_const_instance.assign_vals(entry_dict_meta)
     print(result)
     assert result["unknown"] == {"key1", "key2"}
     assert result["assigned"] == set()
@@ -86,25 +86,25 @@ def test_assignVals_unknown_key(meta_const_instance):
 
 def test_assignVals_exsit_key(meta_const_instance):
     entry_dict_meta = {"date": "2022-01-01", "reference": "sample.com"}
-    result = meta_const_instance.assignVals(entry_dict_meta)
+    result = meta_const_instance.assign_vals(entry_dict_meta)
     assert result["unknown"] == set()
     assert result["assigned"] == {"reference", "date"}
 
 
-def test_empty_writeFile(meta_const_instance):
+def test_empty_writefile(meta_const_instance):
     """metadata.json is empty"""
     metafilepath = "tests/metadata.json"  # Replace with the actual file path
-    result = meta_const_instance.writeFile(metafilepath)
+    result = meta_const_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
     assert result["assigned"] == set()
 
 
-def test_has_contents_writeFile(meta_const_instance):
+def test_has_contents_writefile(meta_const_instance):
     """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {"date": "2022-01-01", "reference": "sample.com"}
-    meta_const_instance.assignVals(entry_dict_meta)
-    meta_const_instance.writeFile(metafilepath)
+    meta_const_instance.assign_vals(entry_dict_meta)
+    meta_const_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
     with open(metafilepath, encoding="utf-8") as f:
@@ -157,12 +157,12 @@ def test_assignVals_variable_exsit_key(meta_variable_instance):
         "reference": ["sample.com", "experiments.app", "myDocuments.go.jp"],
         "custom.user": ["A", "B", "C"],
     }
-    result = meta_variable_instance.assignVals(entry_dict_meta)
+    result = meta_variable_instance.assign_vals(entry_dict_meta)
     assert result["unknown"] == set()
     assert result["assigned"] == {"reference", "date", "custom.user"}
 
 
-def test_has_variable_writeFile(meta_variable_instance):
+def test_has_variable_writefile(meta_variable_instance):
     """Write the metadata to metadata.json"""
     metafilepath = "tests/metadata.json"
     entry_dict_meta = {
@@ -170,8 +170,8 @@ def test_has_variable_writeFile(meta_variable_instance):
         "reference": ["sample.com", "experiments.app", "myDocuments.go.jp"],
         "custom.user": ["A", "B", "C"],
     }
-    meta_variable_instance.assignVals(entry_dict_meta)
-    meta_variable_instance.writeFile(metafilepath)
+    meta_variable_instance.assign_vals(entry_dict_meta)
+    meta_variable_instance.writefile(metafilepath)
     assert os.path.exists("tests/metadata.json")
 
     with open(metafilepath, encoding="utf-8") as f:
@@ -219,24 +219,24 @@ def utf_8_sig_file():
 
 
 def test_detect_text_file_encoding(utf_8_file):
-    assert detect_text_file_encoding(utf_8_file) == "utf_8"
+    assert CharDecEncoding.detect_text_file_encoding(utf_8_file) == "utf_8"
 
 
 def test_detect_text_file_encoding_shift_jis(shift_jis_file):
-    assert detect_text_file_encoding(shift_jis_file) == "cp932"
+    assert CharDecEncoding.detect_text_file_encoding(shift_jis_file) == "cp932"
 
 
 def test_detect_text_file_encoding_utf_8_sig(utf_8_sig_file):
-    assert detect_text_file_encoding(utf_8_sig_file) == "utf_8_sig"
+    assert CharDecEncoding.detect_text_file_encoding(utf_8_sig_file) == "utf_8_sig"
 
 
 # read_invoice_json_fileのテスト
 def test_read_from_json_file_valid_json_file(ivnoice_json_none_sample_info):
     expect_json = {
-        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "datasetId": "1s1199df4-0d1v-41b0-1dea-23bf4dh09g12",
         "basic": {
             "dateSubmitted": "2023-03-14",
-            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataOwnerId": "0c233ef274f28e611de4074638b4dc43e737ab993132343532343430",
             "dataName": "test1",
             "experimentId": "test_230606_1",
             "description": "desc1",

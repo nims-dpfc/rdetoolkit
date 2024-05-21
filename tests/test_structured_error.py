@@ -32,6 +32,6 @@ def test_catch_exception_with_message_StructuredError():
     with pytest.raises(StructuredError) as ex:
         test_func(True)
 
-    assert ex.value.eMsg == error_message
-    assert ex.value.eCode == error_code
-    assert isinstance(ex.value.eObj, StructuredError)
+    assert ex.value.emsg == error_message
+    assert ex.value.ecode == error_code
+    assert isinstance(ex.value.eobj, StructuredError)

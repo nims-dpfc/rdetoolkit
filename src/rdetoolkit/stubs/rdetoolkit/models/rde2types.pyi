@@ -1,14 +1,14 @@
 from pathlib import Path
-from typing import Optional, TypedDict, Union
+from typing import Optional, Sequence, TypedDict, Union
 
-ZipFilesPathList = list[Path]
-unZipFilesPathList = list[Path]
-ExcelInvoicePathList = list[Path]
-OtherFilesPathList = list[Path]
+ZipFilesPathList = Sequence[Path]
+UnZipFilesPathList = Sequence[Path]
+ExcelInvoicePathList = Sequence[Path]
+OtherFilesPathList = Sequence[Path]
 PathTuple = tuple[Path, ...]
 InputFilesGroup = tuple[ZipFilesPathList, ExcelInvoicePathList, OtherFilesPathList]
-RawFiles = list[PathTuple]
-MetaType = dict[str, Union[str, int, float, list]]
+RawFiles = Sequence[PathTuple]
+MetaType = dict[str, Union[str, int, float, list, bool]]
 RepeatedMetaType = dict[str, list[Union[str, int, float]]]
 MetaItem = dict[str, Union[str, int, float, bool]]
 RdeFsPath = Union[str, Path]

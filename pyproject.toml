@@ -1,10 +1,9 @@
 [project]
 name = "rdetoolkit"
-version = "0.1.10"
+version = "0.2.0"
 description = "A module that supports the workflow of the RDE2.0 dataset construction program"
-authors = [
-    { name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }
-]
+authors = [{ name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }]
+keywords = ["rdetoolkit", "RDE", "toolkit", "structure", "dataset"]
 dependencies = [
     "chardet>=5.2.0",
     "charset-normalizer>=3.2.0",
@@ -15,14 +14,18 @@ dependencies = [
     "build>=1.0.3",
     "click>=8.1.7",
     "toml>=0.10.2",
+    "pydantic>=2.6.3",
+    "jsonschema>=4.21.1",
+    "tomlkit>=0.12.4",
+    "PyYAML>=6.0.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
-package_data = {"rdetoolkit" = ["py.typed"]}
+package_data = { "rdetoolkit" = ["py.typed"] }
 
 [project.urls]
-"Homepage" = "https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit"
-"Bug Tracker" = "https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/issues"
+"Homepage" = "https://github.com/nims-dpfc/rdetoolkit"
+"Bug Tracker" = "https://github.com/nims-dpfc/rdetoolkit"
 
 [build-system]
 requires = ["hatchling"]
@@ -30,13 +33,15 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 select = [
-    "F", # pyflakes
-    "E", # pycodestyle
-    "W", # pycodestyle warnings
-    "I", # isort
-    "D", # pydocstyle
+    "F",  # pyflakes
+    "E",  # pycodestyle
+    "W",  # pycodestyle warnings
+    "I",  # isort
+    "D",  # pydocstyle
+    "N",  # pep8-naming
+    "PL", # Pylint
 ]
-ignore = ["D100", "D104", "D107"]
+ignore = ["D100", "D101", "D104", "D105", "D107", "PLR0913"]
 exclude = [
     "bzr",
     ".direnv",
@@ -65,9 +70,11 @@ exclude = [
     "site-packages",
     "venv",
     "tests",
-    "stubs"
+    "stubs",
+    "csv2graph.py",
+    "src/rdetoolkit/models/invoice_schema.py", # Ignore pydocstyle warnings for this file as it is for defining pydantic models.
 ]
-# 1行の最大文字数は問わないとチーム内で合意
+# The team has agreed not to enforce a maximum character limit per line.
 line-length = 250
 indent-width = 4
 
@@ -78,7 +85,7 @@ indent-style = "space"
 convention = "google"
 
 [tool.ruff.per-file-ignores]
-# __init__.pyは未使用インポートを許容
+# Unused imports are allowed in __init__.py.
 "__init__.py" = ["F401", "F403"]
 
 [tool.mypy]
@@ -102,7 +109,7 @@ exclude_also = [
     "if 0:",
     "if __name__ == .__main__.:",
     "@(abc\\.)?abstractmethod",
-    ]
+]
 
 [tool.rye]
 managed = true
@@ -121,8 +128,10 @@ dev-dependencies = [
     "mkdocs>=1.5.3",
     "mkdocs-material>=9.5.1",
     "mkdocstrings[crystal,python]>=0.24.0",
-    "ruff>=0.1.14",
     "pre-commit>=3.6.0",
+    "types-PyYAML>=6.0.12.20240311",
+    "mkdocs-mermaid2-plugin>=1.1.1",
+    "ruff>=0.4.3",
 ]
 
 [tool.hatch.metadata]

@@ -1,0 +1,238 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "invoice_basic_schema/when adding samples",
+    "type": "object",
+    "required": [
+        "basic",
+        "datasetId"
+    ],
+    "properties": {
+        "datasetId": {
+            "type": "string"
+        },
+        "basic": {
+            "type": "object",
+            "label": {
+                "ja": "送状基本情報",
+                "en": "Invoice Basic Information"
+            },
+            "required": [
+                "dateSubmitted",
+                "dataOwnerId",
+                "dataName"
+            ],
+            "properties": {
+                "dateSubmitted": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "dataOwnerId": {
+                    "type": "string",
+                    "pattern": "^([0-9a-zA-Z]{56})$"
+                },
+                "dateName": {
+                    "type": "string",
+                    "pattern": "^.*"
+                },
+                "instrumentId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "pattern": "^$|^([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})$"
+                },
+                "experimentId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "sample": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/sample/sampleWhenAdding"
+                },
+                {
+                    "$ref": "#/definitions/sample/sampleWhenRef"
+                }
+            ]
+        }
+    },
+    "definitions": {
+        "sample": {
+            "sampleWhenAdding": {
+                "type": "object",
+                "required": [
+                    "names",
+                    "ownerId"
+                ],
+                "properties": {
+                    "sampleId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "names": {
+                        "type": "array"
+                    },
+                    "ownerId": {
+                        "description": "sample ownere id",
+                        "type": "string",
+                        "pattern": "^([0-9a-zA-Z]{56})$"
+                    },
+                    "composition": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "referenceUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "generalAttributes": {
+                        "type": "array",
+                        "properties": {
+                            "termId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    },
+                    "specificAttributes": {
+                        "type": "array",
+                        "properties": {
+                            "classId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "termId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "sampleWhenRef": {
+                "type": "object",
+                "required": [
+                    "sampleId"
+                ],
+                "properties": {
+                    "sampleId": {
+                        "type": "string",
+                        "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                    },
+                    "names": {
+                        "type": "array"
+                    },
+                    "ownerId": {
+                        "description": "sample ownere id",
+                        "type": "string",
+                        "pattern": "^([0-9a-zA-Z]{56})$"
+                    },
+                    "composition": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "referenceUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "generalAttributes": {
+                        "type": "array",
+                        "properties": {
+                            "termId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    },
+                    "specificAttributes": {
+                        "type": "array",
+                        "properties": {
+                            "classId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "termId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

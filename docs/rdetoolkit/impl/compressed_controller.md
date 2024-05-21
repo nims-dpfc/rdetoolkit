@@ -1,6 +1,6 @@
 # compressed_controller
 
-`compressed_controller`では、RDEから入力された圧縮ファイルを操作するための処理が定義されています。
+In `compressed_controller`, processes are defined for handling compressed files input from RDE.
 
 ## CompressedFlatFileParser
 
@@ -9,6 +9,7 @@
         members:
             - read
             - _unpacked
+            - _is_excluded
 
 ## CompressedFolderParser
 
@@ -19,6 +20,7 @@
             - read
             - _unpacked
             - validation_uniq_fspath
+            - _is_excluded
 
 ## parse_compressedfile_mode
 

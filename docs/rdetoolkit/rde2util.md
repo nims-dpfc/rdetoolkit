@@ -7,12 +7,11 @@
 ::: src.rdetoolkit.rde2util.Meta
     options:
         members:
-            - assignVals
-            - writeFile
+            - assign_vals
+            - writefile
             - _metadata_validation
             - _process_action
             - _process_unit
-            - _cast_value
 
 ## StorageDir
 
@@ -28,9 +27,12 @@
 
 ::: src.rdetoolkit.rde2util.get_default_values
 
-## detect_text_file_encoding
+## CharDecEncoding
 
-::: src.rdetoolkit.rde2util.detect_text_file_encoding
+::: src.rdetoolkit.rde2util.CharDecEncoding
+    options:
+        members:
+            - detect_text_file_encoding
 
 ## unzip_japanese_zip
 
@@ -44,9 +46,9 @@
 
 ::: src.rdetoolkit.rde2util.write_to_json_file
 
-## castVal
+## castval
 
-::: src.rdetoolkit.rde2util.castVal
+::: src.rdetoolkit.rde2util.castval
 
 ## dict2meta
 

@@ -1,10 +1,10 @@
 # filechecker
 
-`filechecker`では、入力ファイル操作に関するインターフェースが定義されています。
+In `filechecker`, interfaces for handling input file operations are defined.
 
 ## IInputFileHelper
 
-抽象インターフェース `IInputFileHelper` を定義しています。このインターフェースは、入力ファイル操作のためのヘルパーを表すものです。
+The abstract interface `IInputFileHelper` is defined. This interface represents a helper for handling input file operations.
 
 ::: src.rdetoolkit.interfaces.filechecker.IInputFileHelper
     options:
@@ -14,7 +14,7 @@
 
 ## IInputFileChecker
 
-抽象インターフェース `IInputFileChecker` を定義しています。このインターフェースは、入力ファイルのチェックのためのヘルパーを表すものです。
+The abstract interface `IInputFileChecker` is defined. This interface represents a helper for checking input files.
 
 ::: src.rdetoolkit.interfaces.filechecker.IInputFileChecker
     options:
@@ -23,7 +23,7 @@
 
 ## ICompressedFileStructParser
 
-抽象インターフェース `ICompressedFileStructParser` を定義しています。このインターフェースは、圧縮ファイルの構造解析のためのヘルパーを表すものです。
+The abstract interface `ICompressedFileStructParser` is defined. This interface represents a helper for parsing the structure of compressed files.
 
 ::: src.rdetoolkit.interfaces.filechecker.ICompressedFileStructParser
     options:

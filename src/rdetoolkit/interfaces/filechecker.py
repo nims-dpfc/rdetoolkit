@@ -1,18 +1,8 @@
-# ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform Center, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from rdetoolkit.models.rde2types import RawFiles, ZipFilesPathList, unZipFilesPathList
+from rdetoolkit.models.rde2types import RawFiles, UnZipFilesPathList, ZipFilesPathList
 
 
 class IInputFileHelper(ABC):
@@ -23,7 +13,7 @@ class IInputFileHelper(ABC):
 
     Methods:
         get_zipfiles(input_files: list[Path]) -> ZipFilesPathList:
-        unpacked(zipfile: Path, target_dir: Path) -> unZipFilesPathList:
+        unpacked(zipfile: Path, target_dir: Path) -> UnZipFilesPathList:
     """
 
     @abstractmethod
@@ -39,7 +29,7 @@ class IInputFileHelper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def unpacked(self, zipfile: Path, target_dir: Path) -> unZipFilesPathList:
+    def unpacked(self, zipfile: Path, target_dir: Path) -> UnZipFilesPathList:
         """Unpacks a specified zip file into a target directory and returns a list of paths to the unpacked files.
 
         Args:
@@ -47,7 +37,7 @@ class IInputFileHelper(ABC):
             target_dir (Path): The directory where the zip file contents will be unpacked.
 
         Returns:
-            unZipFilesPathList: A list of paths to the unpacked files.
+            UnZipFilesPathList: A list of paths to the unpacked files.
         """
         raise NotImplementedError
 
@@ -55,9 +45,7 @@ class IInputFileHelper(ABC):
 class IInputFileChecker(ABC):
     """An abstract interface for checking and parsing input files.
 
-    This interface is designed to define the structure for classes that handle the parsing
-    of source input files. It's responsible for validating and extracting necessary information
-    from these files.
+    This interface is designed to define the structure for classes that handle the parsing of source input files. It's responsible for validating and extracting necessary information from these files.
     """
 
     @abstractmethod
@@ -81,16 +69,14 @@ class ICompressedFileStructParser(ABC):
     """An abstract interface for parsing the structure of compressed files.
 
     This interface defines the expected operations for classes that are responsible for
-    reading and understanding the structure of compressed files (like zip files), especially
-    focusing on how these files are organized internally.
+    reading and understanding the structure of compressed files (like zip files), especially focusing on how these files are organized internally.
     """
 
     @abstractmethod
     def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
         """Reads and parses the structure of the compressed file.
 
-        This method should open and inspect the contents of a compressed file, extracting
-        information about its internal structure, such as file paths and organization.
+        This method should open and inspect the contents of a compressed file, extracting information about its internal structure, such as file paths and organization.
 
         Args:
             zipfile (Path): The path to the compressed file to be read.

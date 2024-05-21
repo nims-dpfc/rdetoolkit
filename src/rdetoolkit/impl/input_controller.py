@@ -1,13 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2023, Materials Data Platform Center, NIMS
-#
-# This software is released under the MIT License.
-#
-# Contributor:
-#     Hayato Sonokawa
-# ---------------------------------------------------------
-# coding: utf-8
-
 import re
 import shutil
 from collections import defaultdict
@@ -17,8 +7,14 @@ from typing import List, Optional, Tuple
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
-from rdetoolkit.invoiceFile import readExcelInvoice
-from rdetoolkit.models.rde2types import ExcelInvoicePathList, InputFilesGroup, OtherFilesPathList, RawFiles, ZipFilesPathList
+from rdetoolkit.invoicefile import read_excelinvoice
+from rdetoolkit.models.rde2types import (
+    ExcelInvoicePathList,
+    InputFilesGroup,
+    OtherFilesPathList,
+    RawFiles,
+    ZipFilesPathList,
+)
 
 
 class InvoiceChecker(IInputFileChecker):
@@ -45,11 +41,14 @@ class InvoiceChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: A list of tuples where each tuple contains file paths grouped as 'other files'.
                 - Optional[Path]: This is always None for this implementation.
         """
         input_files = [f for f in src_dir_input.glob("*")]
         zipfiles, _, other_files = self._get_group_by_files(input_files)
+        if not isinstance(other_files, list):
+            other_files = list(other_files)
         if zipfiles:
             other_files.extend(zipfiles)
         rawfiles = [tuple(other_files)]
@@ -87,6 +86,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: Path to the Excel Invoice file.
         """
@@ -108,7 +108,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
         return zipfiles, excel_invoice_files, other_files
 
     def _get_rawfiles(self, zipfile: Optional[Path], excel_invoice_file: Path) -> List[Tuple[Path, ...]]:
-        df_excel_invoice, _, _ = readExcelInvoice(excel_invoice_file)
+        df_excel_invoice, _, _ = read_excelinvoice(excel_invoice_file)
         original_sort_items = df_excel_invoice.iloc[:, 0].to_list()
         if zipfile is None:
             return [() for _ in range(len(df_excel_invoice["basic/dataName"]))]
@@ -127,7 +127,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
             raise StructuredError("Error! The input file and the description in the ExcelInvoice are not consistent.")
 
     def get_index(self, paths, sort_items):
-        """Retrieves the index of the 'divided' folder.
+        """Retrieves the index of the `divided` folder.
 
         Args:
             paths (pathlib.Path): Directory path of the raw files.
@@ -180,6 +180,7 @@ class RDEFormatChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: This will always return None for this implementation.
         """
@@ -235,13 +236,14 @@ class MultiFileChecker(IInputFileChecker):
 
         Returns:
             tuple[RawFiles, Optional[Path]]:
+
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: This will always return None for this implementation.
         """
         input_files = [f for f in src_dir_input.glob("*")]
         other_files = self._get_group_by_files(input_files)
         _rawfiles: list[Tuple[Path, ...]] = [(f,) for f in other_files]
-        return _rawfiles, None
+        return sorted(_rawfiles, key=lambda path: str(path)), None
 
     def _get_group_by_files(self, input_files: List[Path]) -> OtherFilesPathList:
         excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", "xlsx"] and f.stem.endswith("_excel_invoice")]

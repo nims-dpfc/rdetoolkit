@@ -1,17 +1,18 @@
 # input_controller
 
-`input_controller`では、RDEの各種入力モードに応じたファイル操作の処理が定義されています。
+In `input_controller`, processes for file operations according to various input modes of RDE are defined.
 
-RDEには、入力ファイルに応じて、以下の4つのモードが存在します。
+Depending on the input file, RDE has the following four modes:
 
-- インボイスモード
-- エクセルインボイスモード
-- RDEフォーマットモード
-- マルチファイルモード
+- Invoice mode
+- ExcelInvoice mode
+- RDEformat mode
+- Multifile mode
 
 ## InvoiceChecke
 
-::: src.rdetoolkit.impl.input_controller.InvoiceChecke
+::: src.rdetoolkit.impl.input_controller.InvoiceChecker
+    handler: python
     options:
         members:
             - parse
@@ -35,6 +36,7 @@ RDEには、入力ファイルに応じて、以下の4つのモードが存在�
 ## RDEFormatChecker
 
 ::: src.rdetoolkit.impl.input_controller.RDEFormatChecker
+    handler: python
     options:
         members:
             - parse
@@ -45,6 +47,7 @@ RDEには、入力ファイルに応じて、以下の4つのモードが存在�
 ## MultiFileChecker
 
 ::: src.rdetoolkit.impl.input_controller.MultiFileChecker
+    handler: python
     options:
         members:
             - parse

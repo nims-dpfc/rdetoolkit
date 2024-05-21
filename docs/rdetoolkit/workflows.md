@@ -1,6 +1,6 @@
 # workflows
 
-`workflows`では、構造化処理を構築するために必要なモジュールが定義されています。
+In `workflows`, modules necessary for building the structuring process are defined.
 
 ## check_files
 

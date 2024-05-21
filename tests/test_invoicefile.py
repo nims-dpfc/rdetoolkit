@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoiceFile import ExcelInvoiceFile, InvoiceFile, checkExistRawFiles, readExcelInvoice, update_description_with_features
+from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, check_exist_rawfiles, read_excelinvoice, update_description_with_features, apply_magic_variable
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
@@ -14,10 +14,10 @@ def test_invoicefile_read_method(ivnoice_json_none_sample_info):
     """テストケース: InvoiceFileのread"""
     invoice_file = InvoiceFile(ivnoice_json_none_sample_info)
     expect_data = {
-        "datasetId": "e751fcc4-b926-4747-b236-cab40316fc49",
+        "datasetId": "1s1199df4-0d1v-41b0-1dea-23bf4dh09g12",
         "basic": {
             "dateSubmitted": "2023-03-14",
-            "dataOwnerId": "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "dataOwnerId": "0c233ef274f28e611de4074638b4dc43e737ab993132343532343430",
             "dataName": "test1",
             "experimentId": "test_230606_1",
             "description": "desc1",
@@ -44,11 +44,11 @@ def test_read_valid_excel_invoice_file(inputfile_single_dummy_header_excelinvoic
     invoice_path = Path(inputfile_single_dummy_header_excelinvoice)
     excel_invoice_file = ExcelInvoiceFile(invoice_path)
 
-    dfExcelInvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+    dfexcelinvoice, df_general, df_specific = excel_invoice_file.read()
 
-    assert dfExcelInvoice.columns[0] == "data_file_names/name"
-    assert (dfGeneral.columns == ["term_id", "key_name"]).all()
-    assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
+    assert dfexcelinvoice.columns[0] == "data_file_names/name"
+    assert (df_general.columns == ["term_id", "key_name"]).all()
+    assert (df_specific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
 def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
@@ -56,11 +56,11 @@ def test_read_none_sample_excel_invoice_file(excelinvoice_non_sampleinfo):
     invoice_path = Path(excelinvoice_non_sampleinfo)
     excel_invoice_file = ExcelInvoiceFile(invoice_path)
 
-    dfExcelInvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+    dfexcelinvoice, df_general, df_specific = excel_invoice_file.read()
 
-    assert dfExcelInvoice.columns[0] == "data_file_names/name"
-    assert (dfGeneral.columns == ["term_id", "key_name"]).all()
-    assert (dfSpecific.columns == ["sample_class_id", "term_id", "key_name"]).all()
+    assert dfexcelinvoice.columns[0] == "data_file_names/name"
+    assert (df_general.columns == ["term_id", "key_name"]).all()
+    assert (df_specific.columns == ["sample_class_id", "term_id", "key_name"]).all()
 
 
 def test_read_none_sample_excel_invoice_file_blankline(
@@ -73,12 +73,12 @@ def test_read_none_sample_excel_invoice_file_blankline(
 
     with pytest.raises(StructuredError) as e:
         excel_invoice_file = ExcelInvoiceFile(invoice_path)
-        dfExcelInvoice, dfGeneral, dfSpecific = excel_invoice_file.read()
+        dfexcelinvoice, df_general, df_specific = excel_invoice_file.read()
 
     assert str(e.value) == "Error! Blank lines exist between lines"
 
 
-def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_sample_info, ivnoice_schema_json):
+def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_sample_info, ivnoice_schema_json_none_specificAttributes):
     """試料情報ありの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -88,7 +88,7 @@ def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_
     excel_invoice_path = Path(inputfile_multi_excelinvoice)
 
     excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
-    excel_invoice_file.overwrite(ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json, 0)
+    excel_invoice_file.overwrite(ivnoice_json_with_sample_info, dist_path, ivnoice_schema_json_none_specificAttributes, 0)
 
     with open(dist_path, encoding="utf-8") as f:
         contents = json.load(f)
@@ -97,7 +97,7 @@ def test_excelinvoice_overwrite(inputfile_multi_excelinvoice, ivnoice_json_with_
     assert contents["custom"]["key2"] == "CCC"
 
 
-def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice_json_none_sample_info, ivnoice_schema_json):
+def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice_json_none_sample_info, ivnoice_schema_json_none_sample):
     """試料情報なしの上書き処理
     上書き後のinvoice.jsonの内容を確認する
     上書き前のkey/value -> custom.key1: test1
@@ -107,7 +107,7 @@ def test_excelinvoice_overwrite_none_sample(excelinvoice_non_sampleinfo, ivnoice
     excel_invoice_path = Path(excelinvoice_non_sampleinfo)
 
     excel_invoice_file = ExcelInvoiceFile(excel_invoice_path)
-    excel_invoice_file.overwrite(ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json, 0)
+    excel_invoice_file.overwrite(ivnoice_json_none_sample_info, dist_path, ivnoice_schema_json_none_sample, 0)
 
     with open(dist_path, encoding="utf-8") as f:
         contents = json.load(f)
@@ -279,28 +279,33 @@ def test_update_description_none_features_none_variable(
     assert result_contents["basic"]["description"] == expect_message
 
 
-def test_readExcelInvoice(inputfile_single_excelinvoice):
-    """readExcelInvoiceのテスト
-    dfExcelInvoice, dfGeneral, dfSpecificが正しい値で返ってくるかテスト
+def test_read_excelinvoice(inputfile_single_excelinvoice):
+    """read_excelinvoiceのテスト
+    dfexcelinvoice, df_general, dfSpecificが正しい値で返ってくるかテスト
     """
     expect_sheet1 = [
         [
             "test_child1.txt",
             "N_TEST_1",
             "test_user",
-            "f30812c3-14bc-4274-809f-afcfaa2e4047",
+            "de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439",
             "test1",
+            "ee17c7b3-f0ff-5126-831c-2d519f481055",
             "test_230606_1",
+            "https://sample.com",
             "desc1",
             "sample1",
-            "cbf194ea-813f-4e05-b288",
-            "1111",
+            "de17c7b3-f0ff-5126-831c-2d519f481055",
+            "de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439",
             "sample1",
-            "test_ref",
+            "https://sample.com",
             "desc3",
             "testname",
             "Fe",
             "magnet",
+            "7439-89-6",
+            "7439-89-6",
+            "7439-89-6",
             "7439-89-6",
             "AAA",
             "CCC",
@@ -314,45 +319,53 @@ def test_readExcelInvoice(inputfile_single_excelinvoice):
             "dataOwner",
             "basic/dataOwnerId",
             "basic/dataName",
+            "basic/instrumentId",
             "basic/experimentId",
             "basic/referenceUrl",
-            "sample/description",
+            "basic/description",
             "sample/names",
             "sample/sampleId",
             "sample/ownerId",
             "sample/composition",
+            "sample/referenceUrl",
             "sample/description",
             "sample.general/general-name",
-            "sample.general/chemical-composition",
-            "sample.general/sample-type",
             "sample.general/cas-number",
+            "sample.general/crystal-structure",
+            "sample.general/purchase-date",
+            "sample.general/lot-number-or-product-number-etc",
+            "sample.general/smiles-string",
+            "sample.general/supplier",
             "custom/key1",
             "custom/key2",
         ],
     )
 
-    dfExcelInvoice, dfGeneral, dfSpecific = readExcelInvoice(inputfile_single_excelinvoice)
+    dfexcelinvoice, df_general, df_specific = read_excelinvoice(inputfile_single_excelinvoice)
 
-    assert_frame_equal(dfExcelInvoice, df1)
-    assert isinstance(dfGeneral, pd.DataFrame)
-    assert dfGeneral.columns.to_list() == ["term_id", "key_name"]
-    assert isinstance(dfSpecific, pd.DataFrame)
-    assert dfSpecific.columns.to_list() == ["sample_class_id", "term_id", "key_name"]
+    print(dfexcelinvoice)
+    print(df1)
+
+    assert_frame_equal(dfexcelinvoice, df1)
+    assert isinstance(df_general, pd.DataFrame)
+    assert df_general.columns.to_list() == ["term_id", "key_name"]
+    assert isinstance(df_specific, pd.DataFrame)
+    assert df_specific.columns.to_list() == ["sample_class_id", "term_id", "key_name"]
 
 
-def test_empty_excelinvoice_readExcelInvoice(empty_inputfile_excelinvoice):
+def test_empty_excelinvoice_read_excelinvoice(empty_inputfile_excelinvoice):
     """空のエクセルインボイスを入れた時に例外をキャッチできるかテスト"""
     with pytest.raises(StructuredError) as e:
-        _, _, _ = readExcelInvoice(empty_inputfile_excelinvoice)
+        _, _, _ = read_excelinvoice(empty_inputfile_excelinvoice)
     assert str(e.value) == "ERROR: no sheet in invoiceList files"
 
 
-def test_invalid_excelinvoice_readExcelInvoice(
+def test_invalid_excelinvoice_read_excelinvoice(
     inputfile_invalid_samesheet_excelinvoice,
 ):
     """sheet1の内容が複数あるエクセルインボイスを入れた時に例外をキャッチできるかテスト"""
     with pytest.raises(StructuredError) as e:
-        _, _, _ = readExcelInvoice(inputfile_invalid_samesheet_excelinvoice)
+        _, _, _ = read_excelinvoice(inputfile_invalid_samesheet_excelinvoice)
     assert str(e.value) == "ERROR: multiple sheet in invoiceList files"
 
 
@@ -372,7 +385,7 @@ def test_check_exist_rawfiles(inputfile_multi_excelinvoice):
     df_excelinvoice = df.iloc[4:, :].reset_index(drop=True).copy()
 
     test_excel_raw_files = [Path("test_child2.txt"), Path("test_child1.txt"), Path("test_child3.txt"), Path("test_child9.txt"), Path("test_child10.txt")]
-    rtn = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
+    rtn = check_exist_rawfiles(df_excelinvoice, test_excel_raw_files)
 
     assert expect_rtn == rtn
 
@@ -394,6 +407,19 @@ def test_error_check_exist_rawfiles(inputfile_multi_excelinvoice):
     test_excel_raw_files = [Path("test_child1.txt")]
 
     with pytest.raises(StructuredError) as e:
-        _ = checkExistRawFiles(df_excelinvoice, test_excel_raw_files)
+        _ = check_exist_rawfiles(df_excelinvoice, test_excel_raw_files)
 
     assert str(e.value) == "ERROR: raw file not found: test_child2.txt"
+
+
+def test_apply_magic_variable_inputfile_check(ivnoice_json_magic_filename_variable):
+    """${filename}が置換できるかテスト
+
+    conftest.pyよりfixsture: ivnoice_json_magic_filename_variableを取得
+    """
+    invoice_path = ivnoice_json_magic_filename_variable
+    rawfile_path = "/test/dummy/dymmy_replace_filename.txt"
+
+    result = apply_magic_variable(invoice_path, rawfile_path)
+
+    assert result["basic"]["dataName"] == "dymmy_replace_filename.txt"

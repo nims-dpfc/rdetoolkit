@@ -1,9 +1,3 @@
-# ---------------------------------------------------------
-# Copyright (c) 2022, Materials Data Platform Center, NIMS
-#
-# This software is released under the MIT License.
-# ---------------------------------------------------------
-# coding: utf-8
 import csv
 import json
 import os
@@ -11,14 +5,17 @@ import pathlib
 import re
 import zipfile
 from copy import deepcopy
-from typing import Any, Optional, TypedDict, Union, cast
+from typing import Any, Final, Optional, TypedDict, Union, cast
 
 import chardet  # for following failure cases
 import dateutil.parser
+from chardet.universaldetector import UniversalDetector
 from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
+
+LANG_ENC_FLAG: Final[int] = 0x800
 
 
 class _ChardetType(TypedDict):
@@ -27,90 +24,122 @@ class _ChardetType(TypedDict):
     confidence: float
 
 
-def get_default_values(defaultValsFilePath):
+def get_default_values(default_values_filepath):
     """Reads default values from a default_value.csv file and returns them as a dictionary.
 
-    This function opens a file specified by 'defaultValsFilePath', detects its encoding,
+    This function opens a file specified by 'default_values_filepath', detects its encoding,
     and reads its content as a CSV. Each row in the CSV file should have 'key' and 'value' columns.
     The function constructs and returns a dictionary mapping keys to their corresponding values.
 
     Args:
-        defaultValsFilePath (str | Path): The file path to the CSV file containing default values.
+        default_values_filepath (str | Path): The file path to the CSV file containing default values.
 
     Returns:
         dict: A dictionary containing the keys and their corresponding default values.
     """
-    dctDefaultVals = {}
-    enc = chardet.detect(open(defaultValsFilePath, "rb").read())["encoding"]
-    with open(defaultValsFilePath, encoding=enc) as fIn:
-        for row in csv.DictReader(fIn):
-            dctDefaultVals[row["key"]] = row["value"]
-    return dctDefaultVals
+    dct_default_values = {}
+    enc = chardet.detect(open(default_values_filepath, "rb").read())["encoding"]
+    with open(default_values_filepath, encoding=enc) as fin:
+        for row in csv.DictReader(fin):
+            dct_default_values[row["key"]] = row["value"]
+    return dct_default_values
 
 
-def detect_text_file_encoding(text_filepath: RdeFsPath) -> str:
-    """Detect the encoding of a given text file.
+class CharDecEncoding:
+    """A class to handle character encoding detection and conversion for text files."""
 
-    This function attempts to detect the encoding of a text file. If the initially
-    detected encoding isn't one of the usual ones, it uses chardet for a more thorough detection.
+    USUAL_ENCs = ("ascii", "shift_jis", "utf_8", "utf_8_sig", "euc_jp")
 
-    Args:
-        text_filepath (RdeFsPath): Path to the text file to be analyzed.
+    @classmethod
+    def detect_text_file_encoding(cls, text_filepath: RdeFsPath) -> str:
+        """Detect the encoding of a given text file.
 
-    Returns:
-        str: The detected encoding of the text file.
+        This function attempts to detect the encoding of a text file. If the initially
+        detected encoding isn't one of the usual ones, it uses chardet for a more thorough detection.
 
-    Raises:
-        FileNotFoundError: If the given file path does not exist.
-    """
-    if isinstance(text_filepath, pathlib.Path):
-        text_filepath = str(text_filepath)
+        Args:
+            text_filepath (RdeFsPath): Path to the text file to be analyzed.
 
-    USUAL_ENC = ["ascii", "shift_jis", "utf_8", "utf_8_sig", "euc_jp"]
-    byteAr = open(text_filepath, "rb").read()
-    _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(byteAr))
-    if _cast_detect_ret["encoding"] is not None:
-        enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
-    else:
-        enc = ""
+        Returns:
+            str: The detected encoding of the text file.
 
-    if enc not in USUAL_ENC:
-        ret = chardet.detect(byteAr)
-        if ret["encoding"] is not None:
-            enc = ret["encoding"].replace("-", "_").lower()
-    if enc == "shift_jis":
-        enc = "cp932"
-    return enc
+        Raises:
+            FileNotFoundError: If the given file path does not exist.
+        """
+        if isinstance(text_filepath, pathlib.Path):
+            text_filepath = str(text_filepath)
+
+        bcontents = open(text_filepath, "rb").read()
+        _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(bcontents))
+        if _cast_detect_ret["encoding"] is not None:
+            enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
+        else:
+            enc = ""
+
+        if enc not in cls.USUAL_ENCs:
+            enc = cls.__detect(text_filepath)
+        if enc == "shift_jis":
+            enc = "cp932"
+        return enc
+
+    @classmethod
+    def __detect(cls, text_filepath: str) -> str:
+        """Detect the encoding of a given text file using chardet.
+
+        Args:
+            text_filepath (str): Path to the text file to be analyzed.
+
+        Returns:
+            str: The detected encoding of the text file.
+        """
+        detector = UniversalDetector()
+
+        try:
+            with open(text_filepath, mode="rb") as f:
+                while True:
+                    binary = f.readline()
+                    if binary == b"":
+                        break
+                    detector.feed(binary)
+                    if detector.done:
+                        break
+        finally:
+            detector.close()
+
+        ret = detector.result["encoding"]
+        if ret:
+            return ret.replace("-", "_").lower()
+        else:
+            return ""
 
 
-def _split_value_unit(tgtStr: str) -> ValueUnitPair:  # pragma: no cover
+def _split_value_unit(target_char: str) -> ValueUnitPair:  # pragma: no cover
     """Split units and values from input characters.
 
     Args:
-        tgtStr (str): String combining values and units
+        target_char (str): String combining values and units
 
     Returns:
         ValueUnitPair: Result of splitting values and units
     """
     valpair = ValueUnitPair(value="", unit="")
-    valLeft = str(tgtStr).strip()
+    valleft = str(target_char).strip()
     ptn1 = r"^[+-]?[0-9]*\.?[0-9]*"  # 実数部の正規表現
     ptn2 = r"[eE][+-]?[0-9]+"  # 指数部の正規表現
-    r1 = re.match(ptn1, valLeft)
+    r1 = re.match(ptn1, valleft)
     if r1:
         _v = r1.group()
-        valLeft = valLeft[r1.end() :]
-        r2 = re.match(ptn2, valLeft)
+        valleft = valleft[r1.end() :]
+        r2 = re.match(ptn2, valleft)
         if r2:
-            print(r2)
             _v += r2.group()
             valpair.value = _v
-            valpair.unit = valLeft[r2.end() :]
+            valpair.unit = valleft[r2.end() :]
         else:
             valpair.value = _v.strip()
-            valpair.unit = valLeft.strip()
+            valpair.unit = valleft.strip()
     else:
-        valpair.unit = valLeft.strip()
+        valpair.unit = valleft.strip()
     return valpair
 
 
@@ -120,7 +149,6 @@ def _decode_filename(info: zipfile.ZipInfo) -> None:  # pragma: no cover
     Args:
         info (zipfile.ZipInfo): The `ZipInfo` object containing the file information.
     """
-    LANG_ENC_FLAG = 0x800
     encoding = "utf_8" if info.flag_bits & LANG_ENC_FLAG else "cp437"
     info.filename = info.filename.encode(encoding).decode("cp932")
 
@@ -152,22 +180,22 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
     Returns:
         dict[str, Any]: The parsed json object.
     """
-    enc = detect_text_file_encoding(invoice_file_path)
+    enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
     with open(invoice_file_path, encoding=enc) as f:
-        invoiceObj = json.load(f)
-    return invoiceObj
+        invoiceobj = json.load(f)
+    return invoiceobj
 
 
-def write_to_json_file(invoiceFilePath: RdeFsPath, invoiceObj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
+def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
     """Writes an content to a JSON file.
 
     Args:
-        invoiceFilePath (RdeFsPath): Path to the destination JSON file.
-        invoiceObj (dict[str, Any]): Invoice object to be serialized and written.
+        invoicefile_path (RdeFsPath): Path to the destination JSON file.
+        invoiceobj (dict[str, Any]): Invoice object to be serialized and written.
         enc (str): Encoding to use when writing the file. Defaults to "utf_8".
     """
-    with open(invoiceFilePath, "w", encoding=enc) as f:
-        json.dump(invoiceObj, f, indent=4, ensure_ascii=False)
+    with open(invoicefile_path, "w", encoding=enc) as f:
+        json.dump(invoiceobj, f, indent=4, ensure_ascii=False)
 
 
 class StorageDir:
@@ -313,28 +341,28 @@ class Meta:
             Unclear whether the processing of actions and units after l262 is currently necessary.
         """
         if metadef_filepath:
-            enc = detect_text_file_encoding(metadef_filepath)
+            enc = CharDecEncoding.detect_text_file_encoding(metadef_filepath)
             with open(metadef_filepath, encoding=enc) as f:
                 _tmp_metadef = json.load(f)
         else:
             _tmp_metadef = {}
 
-        for _, vDef in _tmp_metadef.items():
-            if vDef.get("action"):
-                self.actions.append(vDef.get("action"))
-            if vDef.get("unit"):
-                outunit = vDef.get("unit")
+        for _, vdef in _tmp_metadef.items():
+            if vdef.get("action"):
+                self.actions.append(vdef.get("action"))
+            if vdef.get("unit"):
+                outunit = vdef.get("unit")
                 if not outunit.startswith("$"):
                     continue
-                kRef = outunit[1:]
-                self.referedmap[kRef] = None
+                keyref = outunit[1:]
+                self.referedmap[keyref] = None
         return _tmp_metadef
 
-    def assignVals(
+    def assign_vals(
         self,
         entry_dict_meta: Union[MetaType, RepeatedMetaType],
         *,
-        ignoreEmptyStrValue=True,
+        ignore_empty_strvalue=True,
     ) -> "dict[str, set]":
         """Register the value of metadata.
 
@@ -343,7 +371,7 @@ class Meta:
 
         Args:
             entry_dict_meta (EntryMetaData): metadata(key/value) to register
-            ignoreEmptyStrValue (bool, optional): When ignoreEmptyStrValue is True,
+            ignore_empty_strvalue (bool, optional): When ignore_empty_strvalue is True,
             even if the metadata value is an empty string, it is registered as a meta.
             However, if false, an empty string is not registered as a meta. Defaults to True.
 
@@ -358,79 +386,99 @@ class Meta:
         """
         ret = {"assigned": set()}  # type: ignore[var-annotated]
 
-        # actionやrefered unit用に被参照値テーブルに登録(raw名)
-        for kSrc, vSrc in entry_dict_meta.items():
-            _vsrc = self.__convert_to_str(vSrc)
-            self.__registerd_refered_table(kSrc, _vsrc)
+        # Register referred values in the reference table for actions and referred units (raw names)
+        self.__register_refered_values(entry_dict_meta)
 
-        for kDef, vDef in self.metaDef.items():
-            kSrc = kDef
-            if kDef not in entry_dict_meta and "originalName" in vDef:
-                kSrc = vDef["originalName"]
-            if kSrc not in entry_dict_meta:
+        for kdef, vdef in self.metaDef.items():
+            keysrc = self.__get_source_key(kdef, vdef, entry_dict_meta)
+            if keysrc is None:
                 continue
 
-            vSrc = entry_dict_meta[kSrc]
-            _vsrc = self.__convert_to_str(vSrc)
+            vsrc = entry_dict_meta[keysrc]
+            _vsrc = self.__convert_to_str(vsrc)
 
-            if kDef:
-                # actionやrefered unit用に被参照値テーブルに登録(meta名)
-                self.__registerd_refered_table(kDef, _vsrc)
+            if kdef:
+                # Register referred values in the reference table for actions and referred units (meta names)
+                self.__registerd_refered_table(kdef, _vsrc)
 
-            action = vDef.get("action")
-            if action:
-                raise StructuredError("ERROR: this meta value should set by action")
-            if vDef.get("variable"):
-                self.__set_variable_metadata(kDef, _vsrc, vDef, ignoreEmptyStrValue)
-            else:
-                if vSrc is None:
-                    continue
-                if vSrc == "" and ignoreEmptyStrValue:
-                    continue
-                self.__set_const_metadata(kDef, _vsrc, vDef)
-            ret["assigned"].add(kSrc)
-            # 一つの値を複数個所に代入する可能性があるためbreakしない
+            self.__process_meta_value(kdef, vdef, _vsrc, ignore_empty_strvalue)
+            ret["assigned"].add(keysrc)
+            # Do not break because a single value may be assigned to multiple places
 
         ret["unknown"] = {k for k in entry_dict_meta if k not in ret["assigned"]}
         return ret
 
-    def _process_unit(self, vObj, idx):  # pragma: no cover
-        strUnit = vObj.get("unit", "")
-        # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
-        if strUnit.startswith("$"):
-            srcKey = strUnit[1:]
-            srcVal = self.referedmap[srcKey]
-            if srcVal is None:
-                # 参照先が存在しなかった場合は単位未設定の状態とする
-                del vObj["unit"]
-            elif isinstance(srcVal, str):
-                vObj["unit"] = srcVal
-            else:
-                vObj["unit"] = srcVal[idx]
+    def __register_refered_values(self, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> None:
+        """Register referred values in the reference table.
 
-    def _process_action(self, vObj, k, idx):  # pragma: no cover
+        This method converts the values from the input metadata dictionary to strings
+        and registers them in the referred values table using the original keys.
+
+        Args:
+            entry_dict_meta (Union[MetaType, RepeatedMetaType]): The metadata dictionary
+            containing key-value pairs to be registered.
+
+        """
+        for keysrc, vsrc in entry_dict_meta.items():
+            _vsrc = self.__convert_to_str(vsrc)
+            self.__registerd_refered_table(keysrc, _vsrc)
+
+    def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
+        keysrc = kdef
+        if kdef not in entry_dict_meta and "originalName" in vdef:
+            keysrc = vdef["originalName"]
+        if keysrc not in entry_dict_meta:
+            return None
+        return keysrc
+
+    def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: Union[str, list[str]], ignore_empty_strvalue: bool) -> None:
+        if vdef.get("action"):
+            raise StructuredError("ERROR: this meta value should set by action")
+
+        if vdef.get("variable"):
+            self.__set_variable_metadata(kdef, _vsrc, vdef, ignore_empty_strvalue)
+        else:
+            if _vsrc is None or (_vsrc == "" and ignore_empty_strvalue):
+                return
+            self.__set_const_metadata(kdef, _vsrc, vdef)
+
+    def _process_unit(self, vobj, idx):  # pragma: no cover
+        _unit = vobj.get("unit", "")
+        # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
+        if _unit.startswith("$"):
+            srckey = _unit[1:]
+            srcval = self.referedmap[srckey]
+            if srcval is None:
+                # 参照先が存在しなかった場合は単位未設定の状態とする
+                del vobj["unit"]
+            elif isinstance(srcval, str):
+                vobj["unit"] = srcval
+            else:
+                vobj["unit"] = srcval[idx]
+
+    def _process_action(self, vobj, k, idx):  # pragma: no cover
         # actionの処理
-        strAct = self.metaDef[k].get("action")
-        if not strAct:
+        stract = self.metaDef[k].get("action")
+        if not stract:
             return
 
-        for srcKey, srcVal in self.referedmap.items():
-            if srcKey not in strAct:
+        for srckey, srcval in self.referedmap.items():
+            if srckey not in stract:
                 continue
-            rVal = srcVal[idx] if isinstance(srcVal, list) else srcVal
-            strAct = strAct.replace(srcKey, f'"{rVal}"' if isinstance(rVal, str) else str(rVal))
-        vObj["value"] = eval(strAct)
+            realval = srcval[idx] if isinstance(srcval, list) else srcval
+            stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
+        vobj["value"] = eval(stract)
 
     def __convert_to_str(self, value: Union[str, int, float, list]) -> Union[str, list[str]]:
         """Convert the given value to string or list of strings."""
-        if isinstance(value, (str, int, float)):
+        if isinstance(value, (str, int, float, bool)):
             return str(value)
         if isinstance(value, list):
             return list(map(str, value))
         return ""
 
     @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
-    def writeFile(self, metaFilePath, enc="utf_8"):
+    def writefile(self, meta_filepath, enc="utf_8"):
         """Writes the metadata to a file after processing units and actions.
 
         This method serializes the metadata into JSON format and writes it to the specified file.
@@ -440,7 +488,7 @@ class Meta:
         The method also returns a list of keys from 'metaDef' that were not assigned values in the output.
 
         Args:
-            metaFilePath (str): The file path where the metadata will be written.
+            meta_filepath (str): The file path where the metadata will be written.
             enc (str, optional): The encoding for the output file. Default is "utf_8".
 
         Returns:
@@ -451,31 +499,29 @@ class Meta:
         Raises:
             CustomException: If the metadata generation fails, with a custom error message and error code.
         """
-        outDict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
+        outdict = json.loads(json.dumps({"constant": self.metaConst, "variable": self.metaVar}))
 
-        for idx, kvDict in [(None, outDict["constant"])] + list(enumerate(outDict["variable"])):
-            for k, vObj in kvDict.items():
-                self._process_unit(vObj, idx)
-                self._process_action(vObj, k, idx)
+        for idx, kvdict in [(None, outdict["constant"])] + list(enumerate(outdict["variable"])):
+            for k, vobj in kvdict.items():
+                self._process_unit(vobj, idx)
+                self._process_action(vobj, k, idx)
 
         # 項目をmetaDefに従ってソート
-        outDict["constant"] = {k: outDict["constant"][k] for k in self.metaDef if k in outDict["constant"]}
-        lvSort = []
-        for dvOrg in outDict["variable"]:
-            lvSort.append({k: dvOrg[k] for k in self.metaDef if k in dvOrg})
-        outDict["variable"] = lvSort
+        outdict["constant"] = self.__sort_by_metadef(outdict["constant"])
+        outdict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outdict["variable"]]
 
         # ファイル出力
-        with open(metaFilePath, "w", encoding=enc) as fOut:
-            json.dump(outDict, fOut, indent=4, ensure_ascii=False)
+        with open(meta_filepath, "w", encoding=enc) as fout:
+            json.dump(outdict, fout, indent=4, ensure_ascii=False)
 
         # metaDefのうち値の入らなかったキーのリストを返す
-        ret = {"assigned": set(outDict["constant"].keys())}
-        for dv in outDict["variable"]:
-            ret["assigned"] = ret["assigned"].union(dv.keys())
-        ret["unknown"] = {k for k in self.metaDef if k not in ret["assigned"]}
+        assigned_keys = set(outdict["constant"].keys()).union(*(dv.keys() for dv in outdict["variable"]))
+        unkown_keys = {k for k in self.metaDef if k not in assigned_keys}
 
-        return ret
+        return {"assigned": assigned_keys, "unknown": unkown_keys}
+
+    def __sort_by_metadef(self, data_dict: dict[str, Any]) -> dict[str, Any]:
+        return {k: data_dict[k] for k in self.metaDef if k in data_dict}
 
     def __registerd_refered_table(self, key: str, value: Union[str, list[str]]) -> None:  # pragma: no cover
         """Registers the referenced value in the referred value table for actions and referred units, using the raw name.
@@ -497,8 +543,8 @@ class Meta:
         if key in self.referedmap:
             self.referedmap[key] = deepcopy(value)
         else:
-            for strAct in self.actions:
-                if key not in strAct:
+            for stract in self.actions:
+                if key not in stract:
                     continue
                 self.referedmap[key] = deepcopy(value)
 
@@ -509,18 +555,18 @@ class Meta:
         metadefvalue: MetadataDefJson,
         opt_ignore_emptystr: bool,
     ) -> None:  # pragma: no cover
-        outType = metadefvalue["schema"].get("type")
-        outFmt = metadefvalue["schema"].get("format")
-        orgType = metadefvalue.get("originalType")
-        outUnit = metadefvalue.get("unit")
+        outtype = metadefvalue["schema"].get("type")
+        outfmt = metadefvalue["schema"].get("format")
+        orgtype = metadefvalue.get("originalType")
+        outunit = metadefvalue.get("unit")
         if len(self.metaVar) < len(metavalues):
             self.metaVar += [{} for _ in range(len(metavalues) - len(self.metaVar))]
-        for idx, vSrcElm in enumerate(metavalues):
-            if vSrcElm is None:
+        for idx, val_src_element in enumerate(metavalues):
+            if val_src_element is None:
                 continue
-            if vSrcElm == "" and opt_ignore_emptystr:
+            if val_src_element == "" and opt_ignore_emptystr:
                 continue
-            self.metaVar[idx][key] = self._metadata_validation(vSrcElm, outType, outFmt, orgType, outUnit)
+            self.metaVar[idx][key] = self._metadata_validation(val_src_element, outtype, outfmt, orgtype, outunit)
 
     def __set_const_metadata(
         self,
@@ -528,31 +574,31 @@ class Meta:
         metavalue: Union[str, list[str]],
         metadefvalue: MetadataDefJson,
     ) -> None:  # pragma: no cover
-        outType = metadefvalue["schema"].get("type")
-        outFmt = metadefvalue["schema"].get("format")
-        orgType = metadefvalue.get("originalType")
-        outUnit = metadefvalue.get("unit")
+        outtype = metadefvalue["schema"].get("type")
+        outfmt = metadefvalue["schema"].get("format")
+        orgtype = metadefvalue.get("originalType")
+        outunit = metadefvalue.get("unit")
         if not isinstance(metavalue, list):
-            self.metaConst[key] = self._metadata_validation(metavalue, outType, outFmt, orgType, outUnit)
+            self.metaConst[key] = self._metadata_validation(metavalue, outtype, outfmt, orgtype, outunit)
 
     def _metadata_validation(
         self,
-        vSrc: str,
-        outType: Optional[str],
-        outFmt: Optional[str],
-        orgType: Optional[str],
-        outUnit: Optional[str],
+        vsrc: str,
+        outtype: Optional[str],
+        outfmt: Optional[str],
+        orgtype: Optional[str],
+        outunit: Optional[str],
     ) -> "dict[str, Union[bool, int, float, str]]":  # pragma: no cover
         """Casts the input metadata to the specified format and performs validation to check.
 
         if it can be cast to the specified data type. The formats for various metadata are described in metadata-def.json.
 
         Args:
-            vSrc (str): The value of the input metadata.
-            outType (Optional[str]): The data type of the converted metadata.
-            outFmt (Optional[str]): The format of the converted metadata.
-            orgType (Optional[str]): The data type of the original metadata.
-            outUnit (Optional[str]): The unit of the converted metadata.
+            vsrc (str): The value of the input metadata.
+            outtype (Optional[str]): The data type of the converted metadata.
+            outfmt (Optional[str]): The format of the converted metadata.
+            orgtype (Optional[str]): The data type of the original metadata.
+            outunit (Optional[str]): The unit of the converted metadata.
 
         Returns:
             dict[str, Union[bool, int, float, str]]: Returns the conversion result in the form of metadata for metadata.json.
@@ -560,144 +606,90 @@ class Meta:
         Note:
             original func: _vDict()
         """
-        vSrc = vSrc.strip()
+        vsrc = vsrc.strip()
 
-        if orgType is None:
-            _casted_value = self._cast_value(vSrc, outType, outFmt)
-        elif orgType in ["integer", "number"]:
+        if orgtype is None:
+            _casted_value = castval(vsrc, outtype, outfmt)
+        elif orgtype in ["integer", "number"]:
             # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-            valpair = _split_value_unit(vSrc)
-            vStr = valpair.value
+            valpair = _split_value_unit(vsrc)
+            vstr = valpair.value
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = self._cast_value(vStr, orgType, outFmt)
+            _casted_value = castval(vstr, orgtype, outfmt)
         else:
-            vStr = vSrc
+            vstr = vsrc
             # 解釈可能かチェック。不可能だった場合は例外スローされるため、
             # 例外なく処理終了できるかのみに興味がある
-            _casted_value = self._cast_value(vStr, orgType, outFmt)
+            _casted_value = castval(vstr, orgtype, outfmt)
 
-        if outUnit:
+        if outunit:
             return {
                 "value": _casted_value,
-                "unit": outUnit,
+                "unit": outunit,
             }
         else:
             return {"value": _casted_value}
 
-    def _cast_value(self, valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union[bool, int, float, str]:  # pragma: no cover
-        """The function formats the string valStr based on outType and outFmt and returns the formatted value.
 
-        The function returns a formatted value of the string valStr according to
-        the specified outType and outFmt. The outType must be a string ("string")
-        for outFmt to be used. If valStr contains a value with units,
-        the assignment of units is not handled within this function.
-        It should be assigned separately as needed.
+def castval(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
+    """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
 
-        Args:
-            valStr (str): String to be converted of type
-            outType (str): Type information at output
-            outFmt (str): Formatting at output (related to date data)
-        """
-
-        def _tryCast(valStr, tp):
-            try:
-                return tp(valStr)
-            except Exception:
-                return None
-
-        if outType == "boolean":
-            if _tryCast(valStr, bool) is not None:
-                return bool(valStr)
-        elif outType == "integer":
-            # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-            val_unit_pair = _split_value_unit(valStr)
-            if _tryCast(val_unit_pair.value, int) is not None:
-                return int(val_unit_pair.value)
-        elif outType == "number":
-            # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-            val_unit_pair = _split_value_unit(valStr)
-            if _tryCast(val_unit_pair.value, int) is not None:
-                return int(val_unit_pair.value)
-            if _tryCast(val_unit_pair.value, float) is not None:
-                return float(val_unit_pair.value)
-        elif outType == "string":
-            if not outFmt:
-                return valStr
-            elif outFmt == "date-time":
-                # Do not discard timezone information if it is already attached.
-                dtObj = dateutil.parser.parse(valStr)
-                return dtObj.isoformat()
-            elif outFmt == "date":
-                # Do not discard timezone information if it is already attached.
-                dtObj = dateutil.parser.parse(valStr)
-                return dtObj.strftime("%Y-%m-%d")
-            elif outFmt == "time":
-                # Do not discard timezone information if it is already attached.
-                dtObj = dateutil.parser.parse(valStr)
-                return dtObj.strftime("%H:%M:%S")
-            else:
-                raise StructuredError("ERROR: unknown format in metaDef")
-        else:
-            raise StructuredError("ERROR: unknown value type in metaDef")
-        raise StructuredError("ERROR: failed to cast metaDef value")
-
-
-def castVal(valStr: str, outType: Optional[str], outFmt: Optional[str]) -> Union[bool, int, float, str]:
-    """The function formats the string valStr based on outType and outFmt and returns the formatted value.
-
-    The function returns a formatted value of the string valStr according to
-    the specified outType and outFmt. The outType must be a string ("string")
-    for outFmt to be used. If valStr contains a value with units,
+    The function returns a formatted value of the string valstr according to
+    the specified outtype and outfmt. The outtype must be a string ("string")
+    for outfmt to be used. If valstr contains a value with units,
     the assignment of units is not handled within this function.
     It should be assigned separately as needed.
 
     Args:
-        valStr (str): String to be converted of type
-        outType (str): Type information at output
-        outFmt (str): Formatting at output (related to date data)
+        valstr (str): String to be converted of type
+        outtype (str): Type information at output
+        outfmt (str): Formatting at output (related to date data)
     """
 
-    def _tryCast(valStr, tp):
+    def _trycast(valstr, tp):
         try:
-            return tp(valStr)
+            return tp(valstr)
         except Exception:
             return None
 
-    if outType == "boolean":
-        if _tryCast(valStr, bool) is not None:
-            return bool(valStr)
-    elif outType == "integer":
-        # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-        val_unit_pair = _split_value_unit(valStr)
-        if _tryCast(val_unit_pair.value, int) is not None:
-            return int(val_unit_pair.value)
-    elif outType == "number":
-        # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
-        val_unit_pair = _split_value_unit(valStr)
-        if _tryCast(val_unit_pair.value, int) is not None:
-            return int(val_unit_pair.value)
-        if _tryCast(val_unit_pair.value, float) is not None:
-            return float(val_unit_pair.value)
-    elif outType == "string":
-        if not outFmt:
-            return valStr
-        elif outFmt == "date-time":
-            # Do not discard timezone information if it is already attached.
-            dtObj = dateutil.parser.parse(valStr)
-            return dtObj.isoformat()
-        elif outFmt == "date":
-            # Do not discard timezone information if it is already attached.
-            dtObj = dateutil.parser.parse(valStr)
-            return dtObj.strftime("%Y-%m-%d")
-        elif outFmt == "time":
-            # Do not discard timezone information if it is already attached.
-            dtObj = dateutil.parser.parse(valStr)
-            return dtObj.strftime("%H:%M:%S")
+    def _convert_to_date_format(value: str, fmt: str) -> str:
+        dtobj = dateutil.parser.parse(value)
+        if fmt == "date-time":
+            return dtobj.isoformat()
+        elif fmt == "date":
+            return dtobj.strftime("%Y-%m-%d")
+        elif fmt == "time":
+            return dtobj.strftime("%H:%M:%S")
         else:
             raise StructuredError("ERROR: unknown format in metaDef")
+
+    if outtype == "boolean":
+        if _trycast(valstr, bool) is not None:
+            return bool(valstr)
+
+    elif outtype == "integer":
+        # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
+        val_unit_pair = _split_value_unit(valstr)
+        if _trycast(val_unit_pair.value, int) is not None:
+            return int(val_unit_pair.value)
+
+    elif outtype == "number":
+        # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
+        val_unit_pair = _split_value_unit(valstr)
+        if _trycast(val_unit_pair.value, int) is not None:
+            return int(val_unit_pair.value)
+        if _trycast(val_unit_pair.value, float) is not None:
+            return float(val_unit_pair.value)
+
+    elif outtype == "string":
+        if not outfmt:
+            return valstr
+        return _convert_to_date_format(valstr, outfmt)
+
     else:
         raise StructuredError("ERROR: unknown value type in metaDef")
+
     raise StructuredError("ERROR: failed to cast metaDef value")
 
 
@@ -724,9 +716,9 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
     Note:
         MetaType is expected to be a dictionary or a similar structure containing metadata information.
     """
-    metaObj = Meta(metadef_filepath)
-    metaObj.assignVals(const_info)
-    metaObj.assignVals(val_info)
+    meta_obj = Meta(metadef_filepath)
+    meta_obj.assign_vals(const_info)
+    meta_obj.assign_vals(val_info)
 
-    ret = metaObj.writeFile(metaout_filepath)
+    ret = meta_obj.writefile(metaout_filepath)
     return ret

@@ -10,6 +10,8 @@
 --trusted-host pypi.org
 --trusted-host files.pythonhosted.org
 -e file:.
+annotated-types==0.6.0
+attrs==23.2.0
 build==1.0.3
 chardet==5.2.0
 charset-normalizer==3.2.0
@@ -20,6 +22,8 @@ et-xmlfile==1.1.0
 fonttools==4.42.1
 importlib-metadata==6.8.0
 importlib-resources==6.0.1
+jsonschema==4.21.1
+jsonschema-specifications==2023.12.1
 kiwisolver==1.4.5
 matplotlib==3.7.3
 numpy==1.25.2
@@ -27,12 +31,19 @@ openpyxl==3.1.2
 packaging==23.1
 pandas==2.1.0
 pillow==10.0.0
+pydantic==2.6.3
+pydantic-core==2.16.3
 pyparsing==3.1.1
 pyproject-hooks==1.0.0
 python-dateutil==2.8.2
 pytz==2023.3.post1
+pyyaml==6.0.1
+referencing==0.34.0
+rpds-py==0.18.0
 six==1.16.0
 toml==0.10.2
 tomli==2.0.1
+tomlkit==0.12.4
+typing-extensions==4.10.0
 tzdata==2023.3
 zipp==3.16.2

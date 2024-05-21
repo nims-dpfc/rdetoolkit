@@ -26,8 +26,9 @@ from rdetoolkit.impl.input_controller import (
     MultiFileChecker,
     RDEFormatChecker,
 )
-from rdetoolkit.models.rde2types import RdeFormatFlags, RdeInputDirPaths
+from rdetoolkit.models.rde2types import RdeInputDirPaths
 from rdetoolkit.modeproc import selected_input_checker
+from rdetoolkit.config import Config
 
 
 class TestInvoiceChecker:
@@ -228,9 +229,8 @@ def test_selected_input_checker_rde_format():
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = RdeFormatFlags()
-    fmtflags.is_rdeformat_enabled = True
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), RDEFormatChecker)
+    fmtflags = Config(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), RDEFormatChecker)
 
 
 def test_selected_input_checker_multi_file():
@@ -240,9 +240,8 @@ def test_selected_input_checker_multi_file():
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = RdeFormatFlags()
-    fmtflags.is_multifile_enabled = True
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), MultiFileChecker)
+    fmtflags = Config(extended_mode="multifile", save_raw=True, save_thumbnail_image=False)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), MultiFileChecker)
 
 
 def test_selected_input_checker_excelinvoice(inputfile_zip_with_file, inputfile_single_excelinvoice):
@@ -252,9 +251,9 @@ def test_selected_input_checker_excelinvoice(inputfile_zip_with_file, inputfile_
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = RdeFormatFlags()
+    fmtflags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False)
     assert isinstance(
-        selected_input_checker(src_paths, unpacked_dir_path, fmtflags),
+        selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode),
         ExcelInvoiceChecker,
     )
 
@@ -266,5 +265,5 @@ def test_selected_input_checker_invoice(inputfile_single):
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = RdeFormatFlags()
-    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags), InvoiceChecker)
+    fmtflags = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False)
+    assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), InvoiceChecker)

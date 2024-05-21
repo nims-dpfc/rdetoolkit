@@ -1,8 +1,8 @@
-# Contributing to RdeToolKit
+# Contributing to RDEToolKit
 
 ## コントリビュートの準備
 
-RdeToolKitへのコントリビュートをしていただくには、以下の手順が必要です。
+RDEToolKitへのコントリビュートをしていただくには、以下の手順が必要です。
 
 ### リポジトリのクローンをローカルに作成する
 
@@ -41,7 +41,7 @@ rye sync
 source .venv/bin/activate
 ```
 
-また、RdeToolKitではコード品質の観点から、`pre-commit`を採用しています。pre-commitのセットアップを実行するため、以下の処理を実行してください。
+また、RDEToolKitではコード品質の観点から、`pre-commit`を採用しています。pre-commitのセットアップを実行するため、以下の処理を実行してください。
 
 ```bash
 pre-commit install
@@ -51,19 +51,19 @@ pre-commit install
 
 ## Contributing
 
-RdeToolKitでは、以下の2点のコントリビュートを期待しています。
+RDEToolKitでは、以下の2点のコントリビュートを期待しています。
 
 - ドキュメントのコントリビュート
 - コードベースのコントリビュート
 
 ## ドキュメントのコントリビュート
 
-RdeToolKitのモジュールドキュメントは、ユーザーがRDE構造化処理を正しく実行するために必要なリソースになります。利用者の皆様からのドキュメント改善にご協力ください。
-必ずしも、RdeToolKitへの深い理解がある必要はありません。ドキュメントの内容が不足している、理解しにくいという箇所は、積極的にIssueでの報告をお待ちしています。
+RDEToolKitのモジュールドキュメントは、ユーザーがRDE構造化処理を正しく実行するために必要なリソースになります。利用者の皆様からのドキュメント改善にご協力ください。
+必ずしも、RDEToolKitへの深い理解がある必要はありません。ドキュメントの内容が不足している、理解しにくいという箇所は、積極的にIssueでの報告をお待ちしています。
 
 具体的な手順については、次のセクションから説明いたします。
 
-### RdeToolKitのドキュメント
+### RDEToolKitのドキュメント
 
 rdetoolkitのドキュメントは、本リポジトリの`docs`フォルダに格納しています。ドキュメントは、[MkDocs](https://www.mkdocs.org/)を使用してドキュメントを構築しています。
 主に、Markdown形式で記述されています。
@@ -77,10 +77,10 @@ rdetoolkitのドキュメントは、本リポジトリの`docs`フォルダに�
 
 ### ドキュメントの改善点をリクエストする
 
-以下のURLより、RdeToolKitのリポジトリにアクセスし、issueを発行してください。
+以下のURLより、RDEToolKitのリポジトリにアクセスし、issueを発行してください。
 この時、ラベルは`Type:documentation`というラベルを付与してください。
 
-> [RdeToolKit - gitlab.nims.go.jp](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit)
+> [RDEToolKit - gitlab.nims.go.jp](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit)
 
 ### ローカル環境で変更する
 
@@ -102,11 +102,11 @@ git push origin <対象のブランチ名>
 
 ### ドキュメントをWeb上で確認する
 
-ドキュメントをWebで確認する場合、ドキュメントの変更が完了し、マージリクエストを発行した時点でCIのワークフローが実行され、問題なくビルドが完了すると、ドキュメントが`artifacts`に追加されます。RdeToolKitのリポジトリページより、[Pipline](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit/-/pipelines)にアクセスし、`Download artifact`ボタンをクリックし、zipファイルをダウンロードしてください。zipファイルを展開すると、HTMLファイル群があるため、そのファイルをブラウザ上で確認してください。
+ドキュメントをWebで確認する場合、ドキュメントの変更が完了し、プルリクエストを発行した時点でCIのワークフローが実行され、問題なくビルドが完了すると、ドキュメントが`artifacts`に追加されます。RDEToolKitのリポジトリページより、[Pipline](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit/-/pipelines)にアクセスし、`Download artifact`ボタンをクリックし、zipファイルをダウンロードしてください。zipファイルを展開すると、HTMLファイル群があるため、そのファイルをブラウザ上で確認してください。
 
 ### ドキュメントをmainブランチにマージする
 
-ドキュメントを追加しマージリクエストを作成します。管理者が確認し、問題がなければマージします。
+ドキュメントを追加しプルリクエストを作成します。管理者が確認し、問題がなければマージします。
 
 ## 機能バグレポートと機能拡張のリクエスト
 
@@ -114,11 +114,11 @@ git push origin <対象のブランチ名>
 
 - 上記リポジトリのissueで、Issueを作成し新機能、問題や不具合を報告する
 - 変更を実際に加える場合、ローカルで新規にブランチを作成し、変更を加える。
-- CIテストを実行し、マージリクエストを出す
+- CIテストを実行し、プルリクエストを出す
 - CIテストが全てパス、レビューが完了したら、マージする
 - Releaseページを作成する
 
-この手順書を参考にして、RdeToolKitの開発・変更を行ってください。共同開発を円滑に進めるためのガイドラインとして利用してください。
+この手順書を参考にして、RDEToolKitの開発・変更を行ってください。共同開発を円滑に進めるためのガイドラインとして利用してください。
 
 ### Issueを作成する
 
@@ -144,9 +144,9 @@ git checkout -b develop-v<x.y.z>-<任意の機能名など> origin/develop-v<x.y
 - [rye](https://rye-up.com/) or [Poetry](https://python-poetry.org/docs/)(プロジェクト管理ツール)
 - `git` (バージョン管理)
 
-#### RdeToolKitでのフォーマッター・リンターについて
+#### RDEToolKitでのフォーマッター・リンターについて
 
-RdeToolKitでは、`Ruff`と`mypy`を使用してフォーマット、リンターを動作させてコード品質を一定に保つことを目標としています。`Ruff`は、isort, black, flake8の機能に変わるツールです。Rustで開発されているため、isort, black, flake8で動作させるより段違いに高速です。また、`mypy`は、静的型チェックツールです。RdeToolKitは型の詳細な定義を強制することで、コードの可読性と保守性の向上を目的としています。
+RDEToolKitでは、`Ruff`と`mypy`を使用してフォーマット、リンターを動作させてコード品質を一定に保つことを目標としています。`Ruff`は、isort, black, flake8の機能に変わるツールです。Rustで開発されているため、isort, black, flake8で動作させるより段違いに高速です。また、`mypy`は、静的型チェックツールです。RDEToolKitは型の詳細な定義を強制することで、コードの可読性と保守性の向上を目的としています。
 
 > - Ruff: <https://docs.astral.sh/ruff/>
 > - mypy: <https://mypy.readthedocs.io/en/stable/>
@@ -173,7 +173,7 @@ git push origin develop-v<x.y.z>-<先ほどつけた名称>
 
 ### 変更リクエスト (Merge Request)
 
-:warning: **この時、`main`ブランチにマージリクエストを発行してないでください。**
+:warning: **この時、`main`ブランチにプルリクエストを発行してないでください。**
 
 変更が完了したら、GitHub等のプラットフォームを使用して変更リクエスト (PR) を作成します。
 この時、レビューを受け、必ずCIテストが全てパスすることを確認してください。
