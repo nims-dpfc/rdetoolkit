@@ -42,11 +42,16 @@ def test_make_dockerfile():
     with open(test_path, encoding="utf-8") as f:
         content = f.read()
 
-    expected_content = """FROM python:3.9-slim-buster
+    expected_content = """FROM python:3.11.9
+
 WORKDIR /app
+
 COPY requirements.txt .
+
 RUN pip install -r requirements.txt
-COPY . .
+
+COPY main.py /app
+COPY modules/ /app/modules/
 """
     assert content == expected_content
     test_path.unlink()

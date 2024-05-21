@@ -31,6 +31,7 @@ nav:
       - 説明欄の自動記述: usage/feature_description.md
       - File Mode / Folder Mode: usage/file_folder_mode.md
       - Magic Variable: usage/magic_variable.md
+      - Docker: usage/docker.md
   - API Documentation:
       - impl:
           - rdetoolkit/impl/compressed_controller.md

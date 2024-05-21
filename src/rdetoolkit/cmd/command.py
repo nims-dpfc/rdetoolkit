@@ -160,11 +160,12 @@ class DockerfileGenerator:
             dockerfile_path = Path(self.path)
 
         contents = [
-            "FROM python:3.9-slim-buster",
-            "WORKDIR /app",
-            "COPY requirements.txt .",
-            "RUN pip install -r requirements.txt",
-            "COPY . .\n",
+            "FROM python:3.11.9\n",
+            "WORKDIR /app\n",
+            "COPY requirements.txt .\n",
+            "RUN pip install -r requirements.txt\n",
+            "COPY main.py /app",
+            "COPY modules/ /app/modules/\n",
         ]
 
         with open(dockerfile_path, "w", encoding="utf-8") as f:

@@ -14,7 +14,7 @@ RDEToolKitの各種モジュールを使うことで、RDEへの研究・実験�
 
 ## Usage
 
-[クイックスタート](quickstart.md) を参照してください。
+[クイックスタート](usage/quickstart.md) を参照してください。
 
 ## API Documentation
 
