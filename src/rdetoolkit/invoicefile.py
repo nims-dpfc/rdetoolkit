@@ -192,11 +192,11 @@ class InvoiceFile:
             self.invoice_json = json.load(f)
         return self.invoice_json
 
-    def overwrite(self, dist_file_path: Path, *, src_file_path: Optional[Path] = None):
+    def overwrite(self, dst_file_path: Path, *, src_file_path: Optional[Path] = None):
         """Overwrites the destination file with the content of the source invoice file.
 
         Args:
-            dist_file_path (Path): Path to the destination file to be overwritten.
+            dst_file_path (Path): Path to the destination file to be overwritten.
             src_file_path (Optional[Path], optional): Path to the source invoice file. If not provided,
                 uses the path from `self.invoice_path`. Defaults to None.
 
@@ -207,8 +207,8 @@ class InvoiceFile:
             src_file_path = self.invoice_path
         if not os.path.exists(src_file_path):
             raise StructuredError(f"File Not Found: {src_file_path}")
-        if src_file_path != dist_file_path:
-            shutil.copy(str(src_file_path), str(dist_file_path))
+        if src_file_path != dst_file_path:
+            shutil.copy(str(src_file_path), str(dst_file_path))
 
 
 class ExcelInvoiceFile:

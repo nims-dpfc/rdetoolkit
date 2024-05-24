@@ -6,7 +6,14 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, check_exist_rawfiles, read_excelinvoice, update_description_with_features, apply_magic_variable
+from rdetoolkit.invoicefile import (
+    ExcelInvoiceFile,
+    InvoiceFile,
+    check_exist_rawfiles,
+    read_excelinvoice,
+    update_description_with_features,
+    apply_magic_variable,
+)
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
@@ -29,14 +36,14 @@ def test_invoicefile_read_method(ivnoice_json_none_sample_info):
 
 def test_overwrite_method(ivnoice_json_none_sample_info):
     """テストケース: InvoiceFileのoverwrite"""
-    dist_file_path = Path("tests/test_dist_invoice.json")
+    dst_file_path = Path("tests/test_dist_invoice.json")
     invoice_file = InvoiceFile(ivnoice_json_none_sample_info)
-    invoice_file.overwrite(dist_file_path)
+    invoice_file.overwrite(dst_file_path)
 
-    with open(ivnoice_json_none_sample_info, "rb") as src_file, open(dist_file_path, "rb") as dist_file:
+    with open(ivnoice_json_none_sample_info, "rb") as src_file, open(dst_file_path, "rb") as dist_file:
         assert src_file.read() == dist_file.read()
-    if os.path.exists(dist_file_path):
-        os.remove(dist_file_path)
+    if os.path.exists(dst_file_path):
+        os.remove(dst_file_path)
 
 
 def test_read_valid_excel_invoice_file(inputfile_single_dummy_header_excelinvoice):
@@ -384,7 +391,13 @@ def test_check_exist_rawfiles(inputfile_multi_excelinvoice):
     df.columns = [f"{s1}/{s2}" if s1 else s2 for s1, s2 in zip(hd1, hd2)]
     df_excelinvoice = df.iloc[4:, :].reset_index(drop=True).copy()
 
-    test_excel_raw_files = [Path("test_child2.txt"), Path("test_child1.txt"), Path("test_child3.txt"), Path("test_child9.txt"), Path("test_child10.txt")]
+    test_excel_raw_files = [
+        Path("test_child2.txt"),
+        Path("test_child1.txt"),
+        Path("test_child3.txt"),
+        Path("test_child9.txt"),
+        Path("test_child10.txt"),
+    ]
     rtn = check_exist_rawfiles(df_excelinvoice, test_excel_raw_files)
 
     assert expect_rtn == rtn
