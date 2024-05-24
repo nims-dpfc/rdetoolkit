@@ -13,6 +13,7 @@
 Note:
     テスト実行後、dataフォルダというフォルダは削除されるのでご注意ください。
 """
+
 from pathlib import Path
 
 from rdetoolkit.config import Config
@@ -170,7 +171,7 @@ def test_check_files_rdeformat_single(inputfile_rdeformat_divived, tasksupport, 
     ]
     expect_excelinvoice = None
 
-    format_flags = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
@@ -195,7 +196,7 @@ def test_check_files_invoice_multiformat(tasksupport, ivnoice_json_with_sample_i
     ]
     expect_excelinvoice = None
 
-    format_flags = Config(extended_mode='multifile', save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    format_flags = Config(extended_mode="MultiDataTile", save_raw=True, save_thumbnail_image=False, magic_variable=False)
     srcpaths = RdeInputDirPaths(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),

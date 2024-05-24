@@ -20,7 +20,12 @@ from rdetoolkit.validation import invoice_validate, metadata_def_validate
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
 
-def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def rdeformat_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    datasets_process_function: Optional[_CallbackType] = None,
+    config: Optional[Config] = None,
+):
     """Process the source data and apply specific transformations using the provided callback function.
 
     This function performs several steps:
@@ -76,7 +81,12 @@ def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     invoice_validate(invoice_dst_filepath, schema_path)
 
 
-def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def multifile_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    datasets_process_function: Optional[_CallbackType] = None,
+    config: Optional[Config] = None,
+):
     """Processes multiple source files and applies transformations using the provided callback function.
 
     This function performs several steps:
@@ -136,7 +146,14 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     invoice_validate(invoice_dst_filepath, schema_path)
 
 
-def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def excel_invoice_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    excel_invoice_file: Path,
+    idx: int,
+    datasets_process_function: Optional[_CallbackType] = None,
+    config: Optional[Config] = None,
+):
     """Processes invoice data from an Excel file and applies dataset transformations using the provided callback function.
 
     This function performs several steps:
@@ -214,7 +231,12 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
 
-def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def invoice_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    datasets_process_function: Optional[_CallbackType] = None,
+    config: Optional[Config] = None,
+):
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
     This function performs several steps:
@@ -314,7 +336,7 @@ def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]):
         shutil.copy(f, os.path.join(raw_dir_path, f.name))
 
 
-def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: str) -> IInputFileChecker:
+def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: Optional[str]) -> IInputFileChecker:
     """Determine the appropriate input file checker based on the provided format flags and source paths.
 
     The function scans the source paths to identify the type of input files present. Based on the file type
@@ -323,7 +345,7 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     Args:
         src_paths (RdeInputDirPaths): Paths for the source input files.
         unpacked_dir_path (Path): Directory path for unpacked files.
-        mode (str): Format flags indicating which checker mode is enabled.
+        mode (Optional[str]): Format flags indicating which checker mode is enabled.
 
     Returns:
         IInputFileChecker: An instance of the appropriate input file checker based on the provided criteria.
@@ -333,9 +355,9 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     """
     input_files = [f for f in src_paths.inputdata.glob("*")]
     excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", ".xlsx"] and f.stem.endswith("_excel_invoice")]
-    if mode == "rdeformat":
+    if mode is not None and mode.lower() == "rdeformat":
         return RDEFormatChecker(unpacked_dir_path)
-    elif mode == "multifile":
+    elif mode is not None and mode.lower() == "multidatatile":
         return MultiFileChecker(unpacked_dir_path)
     elif excel_invoice_files:
         return ExcelInvoiceChecker(unpacked_dir_path)
