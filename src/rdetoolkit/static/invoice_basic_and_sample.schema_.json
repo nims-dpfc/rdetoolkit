@@ -62,6 +62,9 @@
                 },
                 {
                     "$ref": "#/definitions/sample/sampleWhenRef"
+                },
+                {
+                    "$ref": "#/definitions/sample/sampleWhenAddingExcelInvoice"
                 }
             ]
         }
@@ -160,6 +163,88 @@
                     "sampleId": {
                         "type": "string",
                         "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                    },
+                    "names": {
+                        "type": "array"
+                    },
+                    "ownerId": {
+                        "description": "sample ownere id",
+                        "type": "string",
+                        "pattern": "^([0-9a-zA-Z]{56})$"
+                    },
+                    "composition": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "referenceUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "generalAttributes": {
+                        "type": "array",
+                        "properties": {
+                            "termId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    },
+                    "specificAttributes": {
+                        "type": "array",
+                        "properties": {
+                            "classId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "termId": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "sampleWhenAddingExcelInvoice": {
+                "type": "object",
+                "required": [
+                    "names",
+                    "ownerId"
+                ],
+                "properties": {
+                    "sampleId": {
+                        "type":  "string",
+                        "pattern": "^$"
                     },
                     "names": {
                         "type": "array"
