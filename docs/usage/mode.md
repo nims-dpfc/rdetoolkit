@@ -4,7 +4,7 @@ RDEの構造化処理でサポートしているモードは、以下4つのモ�
 | --- | --- |
 | invoiceモード | デフォルトで起動 |
 | Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチファイルモード | 設定ファイルに`extended_mode: 'multifile'`を追加 |
+| マルチデータタイル | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
 | RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
 
 ここでは、各種モードの説明と実行例をまとめました。
@@ -25,9 +25,9 @@ RDEの構造化処理でサポートしているモードは、以下4つのモ�
 #### 投入データ
 
 - 登録ファイル
-    - test23_1.csv
+  - test23_1.csv
 - tasksupport
-    - 追加なし
+  - 追加なし
 
 #### 実行前ファイル構成
 
@@ -89,16 +89,15 @@ data
 !!! Note
     ExcelInvoiceには、ファイルモードとフォルダモードという概念があります。[File Mode / Folder Mode](file_folder_mode.md)を参照ください。
 
-
 ### ExcelInvoiceモード実行例
 
 #### 投入データ
 
 - 登録ファイル(data/inputdata)
-    - data.zip (投入ファイルをzip圧縮したもの)
-    - sample_excel_invoice.xlsx (この事例では3行3データタイル分を記載)
+  - data.zip (投入ファイルをzip圧縮したもの)
+  - sample_excel_invoice.xlsx (この事例では3行3データタイル分を記載)
 - tasksupport
-    - 追加なし
+  - 追加なし
 
 #### 実行前ディレクトリ構成
 
@@ -436,22 +435,21 @@ RDEformatモードでは、投入した`invoice.json`は利用されず`invoice/
     - tempフォルダに展開されるが終了後削除されない
 
 
+## マルチデータタイル(MultiDataTile)
 
-## Multifileモード
-
-マルチファイルモードは、一度に複数のデータセットを格納するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`multifile.txt`をデータセットテンプレートに格納すると、登録したデータ数ごとに、データセットタイルが作成されますが、`multifile.txt`がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
+マルチデータタイルは、一度に複数のデータセットを追加するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`.rdeconfig.yml`をデータセットテンプレートに格納し、`extended_mode: 'MultiDataTile'`を追加すると、登録したデータ数ごとに、データセットタイルが作成されます。`.rdeconfig.yml`がない場合、もしくは、`extended_mode`の指定がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
 
 ![multifile_mode](../img/multifile_mode.svg)
 
-### Multifileモード実行例
+### マルチデータタイル(MultiDataTile) 実行例
 
 #### 投入データ
 
 - 登録ファイル
-    - tdata0000.dat
-    - data0001.dat
+  - tdata0000.dat
+  - data0001.dat
 - tasksupport
-    - .rdeconfig.yml
+  - .rdeconfig.yml
 
 !!! Note
     設定ファイル`.rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
@@ -467,6 +465,7 @@ data
 ├── invoice
 │   └── invoice.json
 └── tasksupport
+    ├── .rdeconfig.yml
     ├── invoice.schema.json
     └── metadata-def.json
 ```
@@ -503,9 +502,9 @@ data
 │   └── data0001.dat
 ├── structured
 ├── tasksupport
-│   ├── invoice.schema.json
+│   ├── .rdeconfig.yml
 │   ├── metadata-def.json
-│   └── multifile.txt
+│   └── invoice.schema.json
 ├── temp
 │   └── invoice_org.json
 └── thumbnail
