@@ -53,9 +53,8 @@ def rdeformat_mode_process(
     if config is None:
         config = Config()
     # rewriting the invoice
-    invoice = InvoiceFile(resource_paths.invoice_org)
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
-    invoice.overwrite(invoice_dst_filepath)
+    InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
     copy_input_to_rawfile_for_rdeformat(resource_paths)
 
     # run custom dataset process
@@ -115,9 +114,8 @@ def multifile_mode_process(
     if config is None:
         config = Config()
 
-    invoice = InvoiceFile(resource_paths.invoice_org)
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
-    invoice.overwrite(invoice_dst_filepath)
+    InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
 
     if config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
