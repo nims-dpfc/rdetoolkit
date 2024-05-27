@@ -190,7 +190,7 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if __config.extended_mode is not None and __config.extended_mode.lower() == "rdefotmat":
+            if __config.extended_mode is not None and __config.extended_mode.lower() == "rdeformat":
                 rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
             elif __config.extended_mode is not None and __config.extended_mode.lower() == "multidatatile":
                 multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
