@@ -189,22 +189,48 @@ class InvoiceFile:
 
         enc = CharDecEncoding.detect_text_file_encoding(target_path)
         with open(target_path, encoding=enc) as f:
-            self.invoice_json = json.load(f)
-        return self.invoice_json
+            self.invoice_obj = json.load(f)
+        return self.invoice_obj
 
-    def overwrite(self, dst_file_path: Path, *, src_file_path: Optional[Path] = None):
-        """Overwrites the destination file with the content of the source invoice file.
+    def overwrite(self, dst_file_path: Path, *, src_obj: Optional[Path] = None):
+        """Overwrites the contents of the destination file with the invoice JSON data.
 
         Args:
-            dst_file_path (Path): Path to the destination file to be overwritten.
-            src_file_path (Optional[Path], optional): Path to the source invoice file. If not provided,
-                uses the path from `self.invoice_path`. Defaults to None.
+            dst_file_path (Path): The path to the destination file.
+            src_obj (Optional[Path], optional): The path to the source object. Defaults to None.
 
         Raises:
-            StructuredError: If the source file is not found.
+            StructuredError: If the destination file does not exist.
+
+        Example:
+            # Usage
+            invoice = InvoiceFile("invoice.json")
+            invoice.invoice_obj["basic"]["dataName"] = "new_data_name"
+            invoice.overwrite("invoice_new.json")
+
         """
-        if src_file_path is None:
-            src_file_path = self.invoice_path
+        if src_obj is None:
+            src_obj = self.invoice_path
+        parent_dir = os.path.dirname(dst_file_path)
+        os.makedirs(parent_dir, exist_ok=True)
+        enc = CharDecEncoding.detect_text_file_encoding(self.invoice_path)
+        with open(dst_file_path, "w", encoding=enc) as f:
+            json.dump(self.invoice_obj, f, indent=4, ensure_ascii=False)
+
+    @classmethod
+    def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path):
+        """Copies the original invoice file from the source file path to the destination file path.
+
+        Args:
+            src_file_path (Path): The source file path of the original invoice file.
+            dst_file_path (Path): The destination file path where the original invoice file will be copied to.
+
+        Raises:
+            StructuredError: If the source file path does not exist.
+
+        Returns:
+            None
+        """
         if not os.path.exists(src_file_path):
             raise StructuredError(f"File Not Found: {src_file_path}")
         if src_file_path != dst_file_path:
