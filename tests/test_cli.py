@@ -10,7 +10,14 @@ from rdetoolkit.cli import (
     init,
     version,
 )
-from rdetoolkit.cmd.command import DockerfileGenerator, MainScriptGenerator, RequirementsTxtGenerator, InvoiceJsonGenerator, InvoiceSchemaJsonGenerator, MetadataDefJsonGenerator
+from rdetoolkit.cmd.command import (
+    DockerfileGenerator,
+    MainScriptGenerator,
+    RequirementsTxtGenerator,
+    InvoiceJsonGenerator,
+    InvoiceSchemaJsonGenerator,
+    MetadataDefJsonGenerator,
+)
 
 
 def test_make_main_py():
@@ -79,7 +86,7 @@ def test_make_requirements_txt():
 # ex.
 # pandas==2.0.3
 # numpy
-rdetoolkit==0.2.0
+rdetoolkit==0.9.0
 """
     assert content == expected_content
     test_path.unlink()
