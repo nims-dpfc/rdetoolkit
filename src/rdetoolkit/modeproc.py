@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 from pathlib import Path
@@ -67,10 +68,8 @@ def rdeformat_mode_process(
             resource_paths.main_image,
         )
 
-    try:
+    with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
 
     # validate metadata-def.json
     metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
@@ -131,10 +130,8 @@ def multifile_mode_process(
     if config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
-    try:
+    with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
 
     # validate metadata-def.json
     metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
@@ -216,10 +213,8 @@ def excel_invoice_mode_process(
     if config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
-    try:
+    with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
 
     # validate metadata-def.json
     metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
@@ -276,10 +271,8 @@ def invoice_mode_process(
     if config.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    try:
+    with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
 
     # validate metadata-def.json
     metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
