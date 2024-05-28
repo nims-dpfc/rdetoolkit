@@ -104,7 +104,7 @@ class InitCommand:
     def __make_main_script(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
         generator = MainScriptGenerator(path)
         generator.generate()
 
