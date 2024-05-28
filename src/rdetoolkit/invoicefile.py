@@ -38,7 +38,7 @@ def read_excelinvoice(excelinvoice_filepath):
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfexcelinvoice is not None:
                 raise StructuredError("ERROR: multiple sheet in invoiceList files")
-            ExcelInvoiceFile._check_intermittent_empty_rows(df)
+            ExcelInvoiceFile.check_intermittent_empty_rows(df)
             dfexcelinvoice = __process_invoice_sheet(df)
         elif sh_name == "generalTerm":
             df_general = __process_general_term_sheet(df)
@@ -103,7 +103,7 @@ def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
         dct_schema = invoiceschema_obj["properties"][key1]["properties"][key2]
         try:
             invoiceobj[key1][key2] = rde2util.castval(valobj, dct_schema["type"], dct_schema.get("format"))
-        except rde2util._CastError:
+        except StructuredError:
             raise StructuredError(f"ERROR: failed to cast invoice value for key [{key1}][{key2}]")
     else:
         invoiceobj[key1][key2] = valobj
@@ -315,7 +315,7 @@ class ExcelInvoiceFile:
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfexcelinvoice is not None:
                     raise StructuredError("ERROR: multiple sheet in invoiceList files")
-                ExcelInvoiceFile._check_intermittent_empty_rows(df)
+                ExcelInvoiceFile.check_intermittent_empty_rows(df)
                 dfexcelinvoice = self._process_invoice_sheet(df)
             elif sh_name == "generalTerm":
                 df_general = self._process_general_term_sheet(df)
@@ -374,7 +374,7 @@ class ExcelInvoiceFile:
         self._write_json(dist_path, invoice_obj, enc)
 
     @staticmethod
-    def _check_intermittent_empty_rows(df: pd.DataFrame) -> None:
+    def check_intermittent_empty_rows(df: pd.DataFrame) -> None:
         """Function to detect if there are empty rows between data rows in the ExcelInvoice (in DataFrame format).
 
         If an empty row exists, an exception is raised.
