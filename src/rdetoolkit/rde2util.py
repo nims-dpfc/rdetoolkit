@@ -38,7 +38,9 @@ def get_default_values(default_values_filepath):
         dict: A dictionary containing the keys and their corresponding default values.
     """
     dct_default_values = {}
-    enc = chardet.detect(open(default_values_filepath, "rb").read())["encoding"]
+    with open(default_values_filepath, "rb") as rf:
+        enc_default_values_data = rf.read()
+    enc = chardet.detect(enc_default_values_data)["encoding"]
     with open(default_values_filepath, encoding=enc) as fin:
         for row in csv.DictReader(fin):
             dct_default_values[row["key"]] = row["value"]
@@ -69,7 +71,8 @@ class CharDecEncoding:
         if isinstance(text_filepath, pathlib.Path):
             text_filepath = str(text_filepath)
 
-        bcontents = open(text_filepath, "rb").read()
+        with open(text_filepath, "rb") as tf:
+            bcontents = tf.read()
         _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(bcontents))
         enc = _cast_detect_ret["encoding"].replace("-", "_").lower() if _cast_detect_ret["encoding"] is not None else ""
 

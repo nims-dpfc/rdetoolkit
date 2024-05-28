@@ -118,7 +118,9 @@ def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoices
         invoiceschema_filepath (pathlib.Path): The file path of invoice.schema.json.
         invoice_info (object): Information about the invoice file.
     """
-    enc = chardet.detect(open(invoiceschema_filepath, "rb").read())["encoding"]
+    with open(invoiceschema_filepath, "rb") as f:
+        data = f.read()
+    enc = chardet.detect(data)["encoding"]
     with open(invoiceschema_filepath, encoding=enc) as f:
         invoiceschema_obj = json.load(f)
     for k, v in invoice_info.items():
@@ -533,15 +535,21 @@ def update_description_with_features(
     Returns:
         None: The function does not return a value but writes the features to the invoice.json file in the description field.
     """
-    enc = chardet.detect(open(dst_invoice_json, "rb").read())["encoding"]
+    with open(dst_invoice_json, "rb") as dst_invoice:
+        enc_dst_invoice_data = dst_invoice.read()
+    enc = chardet.detect(enc_dst_invoice_data)["encoding"]
     with open(dst_invoice_json, encoding=enc) as f:
         invoice_obj = json.load(f)
 
-    enc = chardet.detect(open(rde_resource.invoice_schema_json, "rb").read())["encoding"]
+    with open(rde_resource.invoice_schema_json, "rb") as rde_resource_invoice_schema:
+        enc_rde_invoice_schema_data = rde_resource_invoice_schema.read()
+    enc = chardet.detect(enc_rde_invoice_schema_data)["encoding"]
     with open(rde_resource.invoice_schema_json, encoding=enc) as f:
         invoice_schema_obj = json.load(f)
 
-    enc = chardet.detect(open(metadata_def_json, "rb").read())["encoding"]
+    with open(metadata_def_json, "rb") as metadata_def_json_f:
+        enc_rde_invoice_schema_data = metadata_def_json_f.read()
+    enc = chardet.detect(enc_rde_invoice_schema_data)["encoding"]
     with open(metadata_def_json, encoding=enc) as f:
         metadata_def_obj = json.load(f)
 
