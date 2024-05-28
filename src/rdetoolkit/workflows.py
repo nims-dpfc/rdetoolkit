@@ -3,7 +3,7 @@ import traceback
 from pathlib import Path
 from typing import Generator, Optional
 
-from rdetoolkit.config import Config, get_config
+from rdetoolkit.config import Config, load_config
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
@@ -175,13 +175,7 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         )
 
         # Loading configuration file
-        __config = Config()
-        if config is not None:
-            __config = config
-        else:
-            __config = get_config(srcpaths.tasksupport)
-            if __config is None:
-                __config = Config()
+        __config = load_config(str(srcpaths.tasksupport), config=config)
         raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
 
         # Backup of invoice.json

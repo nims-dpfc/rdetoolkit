@@ -353,9 +353,13 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     """
     input_files = [f for f in src_paths.inputdata.glob("*")]
     excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", ".xlsx"] and f.stem.endswith("_excel_invoice")]
-    if mode is not None and mode.lower() == "rdeformat":
+    if mode is not None:
+        mode = mode.lower()
+    else:
+        mode = ""
+    if mode == "rdeformat":
         return RDEFormatChecker(unpacked_dir_path)
-    elif mode is not None and mode.lower() == "multidatatile":
+    elif mode == "multidatatile":
         return MultiFileChecker(unpacked_dir_path)
     elif excel_invoice_files:
         return ExcelInvoiceChecker(unpacked_dir_path)

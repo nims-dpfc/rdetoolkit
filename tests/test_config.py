@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 import yaml
-from rdetoolkit.config import Config, is_toml, is_yaml, parse_config_file, get_config
+from rdetoolkit.config import Config, is_toml, is_yaml, parse_config_file, get_config, load_config
 from tomlkit import document, table
 from tomlkit.toml_file import TOMLFile
 
@@ -249,3 +249,24 @@ def test_invalid_get_config_empty_yml(invalid_empty_config_yaml):
     valid_dir = Path("tasksupport")
     config = get_config(valid_dir)
     assert config == expected_text
+
+
+def test_load_config_with_config():
+    config = Config(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    task_support = Path("tasksupport")
+    result = load_config(task_support, config=config)
+    assert result == config
+
+
+def test_load_config_without_config(tasksupport):
+    tasksupport_path = Path("data/tasksupport")
+    config = Config(extended_mode=None, save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    result = load_config(tasksupport_path)
+    assert result == config
+
+
+def test_load_config_with_none_config_and_none_get_config():
+    dummpy_path = Path("tasksupport")
+    config = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    result = load_config(dummpy_path)
+    assert result == config

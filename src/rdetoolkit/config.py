@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
-from typing import Any, Final, Optional, Union
+from typing import Any, Final, Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from tomlkit.toml_file import TOMLFile
+
+from rdetoolkit.models.rde2types import RdeFsPath
 
 CONFIG_FILE: Final = ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"]
 PYPROJECT_CONFIG_FILES: Final = ["pyproject.toml"]
@@ -120,17 +122,19 @@ def is_yaml(filename: str) -> bool:
     return filename.lower().endswith(".yaml") or filename.lower().endswith(".yml")
 
 
-def find_config_files(target_dir_path: Union[str, Path]) -> list[str]:
+def find_config_files(target_dir_path: RdeFsPath) -> list[str]:
     """Find and return a list of configuration files in the given input directory.
 
     Args:
-        target_dir_path: (Union[str, Path]): An object containing the paths to the input directories.
+        target_dir_path: (RdeFsPath): An object containing the paths to the input directories.
 
     Returns:
         list[str]: A list of configuration file paths.
 
     """
     files: list[str] = []
+    if isinstance(target_dir_path, Path):
+        target_dir_path = str(target_dir_path)
     existing_files = os.listdir(target_dir_path)
     if not existing_files:
         return files
@@ -151,7 +155,7 @@ def get_pyproject_toml() -> Optional[Path]:
     return pyproject_toml_path.exists() and pyproject_toml_path or None
 
 
-def get_config(target_dir_path: Union[str, Path]):
+def get_config(target_dir_path: RdeFsPath):
     """Retrieves the configuration from the specified directory path.
 
     This function searches for configuration files in the specified directory.
@@ -161,11 +165,15 @@ def get_config(target_dir_path: Union[str, Path]):
     if valid. If no valid configuration is found, it returns None.
 
     Args:
-        target_dir_path (Union[str, Path]): The path of the directory to search for configuration files.
+        target_dir_path (RdeFsPath): The path of the directory to search for configuration files.
 
     Returns:
         Optional[dict]: The first valid configuration found, or None if no valid configuration is found.
     """
+    if isinstance(target_dir_path, str):
+        target_dir_path = Path(target_dir_path)
+    if not target_dir_path.exists():
+        return None
     for cfg_file in find_config_files(target_dir_path):
         try:
             __config = parse_config_file(path=cfg_file)
@@ -183,3 +191,24 @@ def get_config(target_dir_path: Union[str, Path]):
         if __config is not None:
             return __config
     return None
+
+
+def load_config(tasksupport_path: RdeFsPath, *, config: Optional[Config] = None):
+    """Loads the configuration for the RDE Toolkit.
+
+    Args:
+        tasksupport_path (RdeFsPath): The path to the tasksupport directory.
+        config (Optional[Config]): An optional existing configuration object.
+
+    Returns:
+        Config: The loaded configuration object.
+
+    """
+    __config = Config()
+    if config is not None:
+        __config = config
+    else:
+        __config = get_config(tasksupport_path)
+        if __config is None:
+            __config = Config()
+    return __config
