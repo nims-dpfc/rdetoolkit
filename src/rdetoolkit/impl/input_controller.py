@@ -244,8 +244,7 @@ class MultiFileChecker(IInputFileChecker):
 
     def _get_group_by_files(self, input_files: List[Path]) -> OtherFilesPathList:
         excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", "xlsx"] and f.stem.endswith("_excel_invoice")]
-        other_files = [f for f in input_files if f not in excel_invoice_files]
-        return other_files
+        return [f for f in input_files if f not in excel_invoice_files]
 
     def _unpacked(self, zipfile: Path, target_dir: Path) -> list[Path]:
         shutil.unpack_archive(zipfile, self.out_dir_temp)

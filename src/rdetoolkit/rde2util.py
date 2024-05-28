@@ -182,8 +182,7 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
     """
     enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
     with open(invoice_file_path, encoding=enc) as f:
-        invoiceobj = json.load(f)
-    return invoiceobj
+        return json.load(f)
 
 
 def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
@@ -720,5 +719,4 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
     meta_obj.assign_vals(const_info)
     meta_obj.assign_vals(val_info)
 
-    ret = meta_obj.writefile(metaout_filepath)
-    return ret
+    return meta_obj.writefile(metaout_filepath)

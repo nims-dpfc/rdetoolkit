@@ -141,8 +141,7 @@ def find_config_files(target_dir_path: RdeFsPath) -> list[str]:
     for config_file in CONFIG_FILES:
         if config_file in existing_files:
             files.append(os.path.join(target_dir_path, config_file))
-    files = sorted(files, key=lambda x: (is_toml(x), is_yaml(x)))
-    return files
+    return sorted(files, key=lambda x: (is_toml(x), is_yaml(x)))
 
 
 def get_pyproject_toml() -> Optional[Path]:
