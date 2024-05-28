@@ -60,7 +60,7 @@ class InitCommand:
     def __make_template_json(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = InvoiceSchemaJsonGenerator(path)
         generator.generate()
@@ -69,7 +69,7 @@ class InitCommand:
     def __make_metadata_def_json(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = MetadataDefJsonGenerator(path)
         generator.generate()
@@ -78,7 +78,7 @@ class InitCommand:
     def __make_invoice_json(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = InvoiceJsonGenerator(path)
         generator.generate()
@@ -95,7 +95,7 @@ class InitCommand:
     def __make_requirements_txt(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = RequirementsTxtGenerator(path)
         generator.generate()
@@ -111,7 +111,7 @@ class InitCommand:
     def __make_dockerfile(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
         generator = DockerfileGenerator(path)
         generator.generate()
         self._info_msg(f"Created: {path}")
