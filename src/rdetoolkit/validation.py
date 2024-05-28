@@ -137,10 +137,7 @@ class InvoiceValidator:
         raise ValueError("Unexpected error")
 
     def __pre_validate(self) -> dict[str, Any]:
-        if isinstance(self.schema_path, str):
-            __path = Path(self.schema_path)
-        else:
-            __path = self.schema_path
+        __path = Path(self.schema_path) if isinstance(self.schema_path, str) else self.schema_path
 
         if __path.suffix != ".json":
             raise ValueError("The schema file must be a json file")

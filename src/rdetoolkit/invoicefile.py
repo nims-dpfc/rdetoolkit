@@ -548,6 +548,7 @@ def update_description_with_features(
     with open(rde_resource.meta.joinpath("metadata.json"), encoding=enc) as f:
         metadata_json_obj = json.load(f)
 
+    description = invoice_obj["basic"]["description"] if invoice_obj["basic"]["description"] else ""
     if invoice_obj["basic"]["description"]:
         description = invoice_obj["basic"]["description"]
     else:

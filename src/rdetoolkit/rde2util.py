@@ -71,10 +71,7 @@ class CharDecEncoding:
 
         bcontents = open(text_filepath, "rb").read()
         _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(bcontents))
-        if _cast_detect_ret["encoding"] is not None:
-            enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
-        else:
-            enc = ""
+        enc = _cast_detect_ret["encoding"].replace("-", "_").lower() if _cast_detect_ret["encoding"] is not None else ""
 
         if enc not in cls.USUAL_ENCs:
             enc = cls.__detect(text_filepath)

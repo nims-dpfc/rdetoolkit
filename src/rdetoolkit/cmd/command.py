@@ -154,10 +154,7 @@ class DockerfileGenerator:
         Returns:
             list[str]: The content of the generated Dockerfile.
         """
-        if isinstance(self.path, str):
-            dockerfile_path = Path(self.path)
-        else:
-            dockerfile_path = Path(self.path)
+        dockerfile_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
             "FROM python:3.11.9\n",
@@ -184,10 +181,7 @@ class RequirementsTxtGenerator:
         Returns:
             list[str]: The content of the generated requirements.txt file.
         """
-        if isinstance(self.path, str):
-            requirements_path = Path(self.path)
-        else:
-            requirements_path = self.path
+        requirements_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
             "# ----------------------------------------------------",
@@ -220,10 +214,7 @@ class InvoiceSchemaJsonGenerator:
         Returns:
             dict[str, Any]: The content of the generated invoice.schema.json file.
         """
-        if isinstance(self.path, str):
-            invoice_schema_path = Path(self.path)
-        else:
-            invoice_schema_path = self.path
+        invoice_schema_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         obj = InvoiceSchemaJson(
             version="https://json-schema.org/draft/2020-12/schema",
@@ -252,10 +243,7 @@ class MetadataDefJsonGenerator:
         Returns:
             dict[str, Any]: The content of the metadata-def.json file.
         """
-        if isinstance(self.path, str):
-            matadata_def_path = Path(self.path)
-        else:
-            matadata_def_path = self.path
+        matadata_def_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         obj: dict[str, Any] = {"constant": {}, "variable": []}
 
@@ -275,10 +263,7 @@ class InvoiceJsonGenerator:
         Returns:
             dict[str, Any]: The content of the invoice.json file.
         """
-        if isinstance(self.path, str):
-            invoice_path = Path(self.path)
-        else:
-            invoice_path = self.path
+        invoice_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         with open(invoice_path, mode="w", encoding="utf-8") as f:
             json.dump(INVOICE_JSON, f, indent=4, ensure_ascii=False)
@@ -296,10 +281,7 @@ class MainScriptGenerator:
         Returns:
             list[str]: A list of strings representing the contents of the generated script.
         """
-        if isinstance(self.path, str):
-            main_path = Path(self.path)
-        else:
-            main_path = self.path
+        main_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
             "# The following script is a template for the source code.\n\n" "import rdetoolkit\n",

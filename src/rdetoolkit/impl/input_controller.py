@@ -94,10 +94,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
         zipfiles, excel_invoice_files, other_files = self._get_group_by_files(input_files)
         self._validate_files(zipfiles, excel_invoice_files, other_files)
 
-        if zipfiles:
-            rawfiles = self._get_rawfiles(zipfiles[0], excel_invoice_files[0])
-        else:
-            rawfiles = self._get_rawfiles(None, excel_invoice_files[0])
+        rawfiles = self._get_rawfiles(zipfiles[0], excel_invoice_files[0]) if zipfiles else self._get_rawfiles(None, excel_invoice_files[0])
 
         return rawfiles, excel_invoice_files[0]
 

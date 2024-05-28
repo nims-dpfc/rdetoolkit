@@ -42,10 +42,7 @@ def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, t
         target_image_name (str, optional): Specify the name of the image file to be copied to the thumbnail folder.
         img_ext (str, optional): image file extension.
     """
-    if img_ext is None:
-        img_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"]
-    else:
-        img_exts = [img_ext]
+    img_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"] if img_ext is None else [img_ext]
 
     img_paths_main = [glob(os.path.join(out_dir_main_img, "*" + ext)) for ext in img_exts]
     img_path_main = list(itertools.chain.from_iterable(img_paths_main))

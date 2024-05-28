@@ -126,10 +126,7 @@ class RdeInputDirPaths:
         Returns:
             Path: Path to the 'default_value.csv' file.
         """
-        if self.tasksupport:
-            tasksupport = self.tasksupport
-        else:
-            tasksupport = Path("data", "tasksupport")
+        tasksupport = self.tasksupport if self.tasksupport else Path("data", "tasksupport")
         return tasksupport.joinpath("default_value.csv")
 
 

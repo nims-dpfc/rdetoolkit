@@ -59,23 +59,14 @@ def catch_exception_with_message(*, error_message: Optional[str] = None, error_c
             try:
                 return func(*args, **kwargs)
             except StructuredError as e:
-                if error_message is not None:
-                    msg = error_message
-                else:
-                    msg = str(e)
+                msg = error_message if error_message is not None else str(e)
 
-                if error_code is not None:
-                    ecode = error_code
-                else:
-                    ecode = 1
+                ecode = error_code if error_code is not None else 1
 
                 raise StructuredError(msg, ecode=ecode, eobj=e)
 
             except Exception as e:
-                if error_message is not None:
-                    msg = error_message
-                else:
-                    msg = str(e)
+                msg = error_message if error_message is not None else str(e)
                 raise Exception(msg)
 
         return wrapper
