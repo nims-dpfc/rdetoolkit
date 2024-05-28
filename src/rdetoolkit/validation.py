@@ -36,7 +36,7 @@ class MetadataDefValidator:
         """
         if path is None and json_obj is None:
             raise ValueError("At least one of 'path' or 'json_obj' must be provided")
-        elif path is not None and json_obj is not None:
+        if path is not None and json_obj is not None:
             raise ValueError("Both 'path' and 'json_obj' cannot be provided at the same time")
 
         if path is not None:
@@ -175,6 +175,7 @@ class InvoiceValidator:
             __ref["prefixItems"] = __temp_generalattr_item["items"]
             del __ref["items"]
             # __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
+            return __ref
 
         __specificattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("specificAttributes")
         if __specificattr_item:
@@ -183,6 +184,7 @@ class InvoiceValidator:
             __ref["prefixItems"] = __temp_specificattr_item["items"]
             del __ref["items"]
             # __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
+            return __ref
 
     def _remove_none_values(self, data: Union[dict, list, Any]) -> Union[dict, list, Any]:
         """Recursively removes key/value pairs from dictionaries and elements from lists where the value is None.
@@ -236,4 +238,4 @@ def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):
     try:
         validator.validate(path=path)
     except ValidationError:
-        raise InvoiceSchemaValidationError()
+        raise InvoiceSchemaValidationError

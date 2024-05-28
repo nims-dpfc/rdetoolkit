@@ -55,7 +55,7 @@ class InitCommand:
         except Exception as e:
             print(e)
             self._error_msg("Failed to create files required for structured RDE programs.")
-            raise click.Abort()
+            raise click.Abort
 
     def __make_template_json(self, path: Path) -> None:
         if Path(path).exists():
@@ -90,7 +90,7 @@ class InitCommand:
                 dir.mkdir(parents=True, exist_ok=True)
             except Exception:
                 self._error_msg(f"Failed to create directory: {dir}")
-                raise click.Abort()
+                raise click.Abort
 
     def __make_requirements_txt(self, path: Path) -> None:
         if Path(path).exists():
