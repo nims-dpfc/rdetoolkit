@@ -494,12 +494,12 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional
     if mode is None:
         mode = ""
     invoice_org_filepath = StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json")
-    if excel_invoice_file is not None:
+    if (excel_invoice_file is not None) or (mode is not None and mode.lower() in ["rdeformat", "multidatatile"]):
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
         shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
-    elif mode is not None and mode.lower() in ["rdeformat", "multidatatile"]:
-        invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
-        shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
+    # elif mode is not None and mode.lower() in ["rdeformat", "multidatatile"]:
+    #     invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
+    #     shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
 
     return invoice_org_filepath
 
@@ -557,10 +557,6 @@ def update_description_with_features(
         metadata_json_obj = json.load(f)
 
     description = invoice_obj["basic"]["description"] if invoice_obj["basic"]["description"] else ""
-    if invoice_obj["basic"]["description"]:
-        description = invoice_obj["basic"]["description"]
-    else:
-        description = ""
     for key, value in metadata_def_obj.items():
         if not value.get("_feature"):
             continue
