@@ -1,6 +1,5 @@
-from _typeshed import Incomplete
 from pathlib import Path
-from rdetoolkit.config import Config as Config, find_config_files as find_config_files, parse_config_file as parse_config_file
+from rdetoolkit.config import Config as Config, load_config as load_config
 from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.invoicefile import backup_invoice_json_files as backup_invoice_json_files
 from rdetoolkit.models.rde2types import RawFiles as RawFiles, RdeInputDirPaths as RdeInputDirPaths, RdeOutputResourcePath as RdeOutputResourcePath
@@ -8,8 +7,6 @@ from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process as exc
 from rdetoolkit.rde2util import StorageDir as StorageDir
 from rdetoolkit.rdelogger import get_logger as get_logger, write_job_errorlog_file as write_job_errorlog_file
 from typing import Generator, Optional
-
-logger: Incomplete
 
 def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[RawFiles, Optional[Path]]: ...
 def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepath: Path, invoice_schema_filepath: Path) -> Generator[RdeOutputResourcePath, None, None]: ...

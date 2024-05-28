@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from pathlib import Path
 from pydantic import BaseModel
 from rdetoolkit.models.rde2types import RdeFsPath as RdeFsPath

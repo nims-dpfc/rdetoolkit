@@ -1,7 +1,6 @@
 import pathlib
-from _typeshed import Incomplete
-from rdetoolkit.exceptions import StructuredError as StructuredError, catch_exception_with_message as catch_exception_with_message
-from rdetoolkit.models.rde2types import MetaItem as MetaItem, MetaType as MetaType, MetadataDefJson as MetadataDefJson, RdeFsPath as RdeFsPath, RepeatedMetaType as RepeatedMetaType, ValueUnitPair as ValueUnitPair
+from _typeshed import Incomplete as Incomplete
+from rdetoolkit.models.rde2types import MetaType as MetaType, RdeFsPath as RdeFsPath, RepeatedMetaType as RepeatedMetaType
 from typing import Any, Final, Optional, TypedDict, Union
 
 LANG_ENC_FLAG: Final[int]
@@ -11,7 +10,7 @@ class _ChardetType(TypedDict):
     language: str
     confidence: float
 
-def get_default_values(default_values_filepath): ...
+def get_default_values(default_values_filepath) -> None: ...
 
 class CharDecEncoding:
     USUAL_ENCs: Incomplete
