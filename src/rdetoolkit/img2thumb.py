@@ -28,8 +28,7 @@ def __find_img_path(dirname: str, target_name: str) -> str:
     matching_files = [f for f in glob(search_pattern, recursive=True)]
     if matching_files:
         return matching_files[0]
-    else:
-        return ""
+    return ""
 
 
 @catch_exception_with_message(error_message="ERROR: failed to copy image files", error_code=50)

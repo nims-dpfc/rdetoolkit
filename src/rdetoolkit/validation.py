@@ -152,8 +152,7 @@ class InvoiceValidator:
             except ValueError:
                 raise InvoiceSchemaValidationError("Error in schema validation")
             return data
-        else:
-            return data
+        return data
 
     def __temporarily_modify_json_schema(self):
         """Temporarily modifies the structure of the schema to validate invoice.json using invoice.schema.json.
@@ -206,10 +205,9 @@ class InvoiceValidator:
         """
         if isinstance(data, dict):
             return {k: self._remove_none_values(v) for k, v in data.items() if v is not None}
-        elif isinstance(data, list):
+        if isinstance(data, list):
             return [self._remove_none_values(item) for item in data if item is not None]
-        else:
-            return data
+        return data
 
 
 def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):

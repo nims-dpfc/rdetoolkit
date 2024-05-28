@@ -198,6 +198,4 @@ def parse_compressedfile_mode(
     if "data_file_names/name" in xlsx_invoice.columns:
         # File Mode
         return CompressedFlatFileParser(xlsx_invoice)
-    else:
-        # Folder Mode
-        return CompressedFolderParser(xlsx_invoice)
+    return CompressedFolderParser(xlsx_invoice)

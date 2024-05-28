@@ -109,8 +109,7 @@ class CharDecEncoding:
         ret = detector.result["encoding"]
         if ret:
             return ret.replace("-", "_").lower()
-        else:
-            return ""
+        return ""
 
 
 def _split_value_unit(target_char: str) -> ValueUnitPair:  # pragma: no cover
@@ -627,8 +626,7 @@ class Meta:
                 "value": _casted_value,
                 "unit": outunit,
             }
-        else:
-            return {"value": _casted_value}
+        return {"value": _casted_value}
 
 
 def castval(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
@@ -656,12 +654,11 @@ def castval(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union
         dtobj = dateutil.parser.parse(value)
         if fmt == "date-time":
             return dtobj.isoformat()
-        elif fmt == "date":
+        if fmt == "date":
             return dtobj.strftime("%Y-%m-%d")
-        elif fmt == "time":
+        if fmt == "time":
             return dtobj.strftime("%H:%M:%S")
-        else:
-            raise StructuredError("ERROR: unknown format in metaDef")
+        raise StructuredError("ERROR: unknown format in metaDef")
 
     if outtype == "boolean":
         if _trycast(valstr, bool) is not None:

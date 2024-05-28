@@ -91,10 +91,9 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
     file_set_invoice = set(dfexcelinvoice["data_file_names/name"])
     if file_set_invoice - file_set_group:
         raise StructuredError(f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}")
-    else:
-        # excel_rawfilesを、インボイス出現順に並び替える
-        _tmp = {f.name: f for f in excel_rawfiles}
-        return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
+    # excel_rawfilesを、インボイス出現順に並び替える
+    _tmp = {f.name: f for f in excel_rawfiles}
+    return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
 
 
 def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
@@ -153,9 +152,9 @@ def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
     if dir_setglob == dir_set_invoice:
         # Reorder rawfiles_tpl according to the order of appearance in the invoice
         return [dcttpl[d] for d in dfexcelinvoice["data_folder"]]
-    elif dir_setglob - dir_set_invoice:
+    if dir_setglob - dir_set_invoice:
         raise StructuredError(f"ERROR: unused raw data: {(dir_setglob-dir_set_invoice).pop()}")
-    elif dir_set_invoice - dir_setglob:
+    if dir_set_invoice - dir_setglob:
         raise StructuredError(f"ERROR: raw data not found: {(dir_set_invoice-dir_setglob).pop()}")
 
     raise StructuredError("ERROR: unknown error")  # This line should never be reached
@@ -507,14 +506,12 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional
 def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> Optional[dict]:
     if key in metadata_json_obj["constant"]:
         return metadata_json_obj["constant"]
-    elif metadata_json_obj.get("variable"):
+    if metadata_json_obj.get("variable"):
         _variable = metadata_json_obj["variable"]
         if len(_variable) > 0:
             return metadata_json_obj["variable"][0]
-        else:
-            return None
-    else:
         return None
+    return None
 
 
 def update_description_with_features(

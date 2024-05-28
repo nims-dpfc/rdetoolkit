@@ -349,9 +349,8 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     mode = mode.lower() if mode is not None else ""
     if mode == "rdeformat":
         return RDEFormatChecker(unpacked_dir_path)
-    elif mode == "multidatatile":
+    if mode == "multidatatile":
         return MultiFileChecker(unpacked_dir_path)
-    elif excel_invoice_files:
+    if excel_invoice_files:
         return ExcelInvoiceChecker(unpacked_dir_path)
-    else:
-        return InvoiceChecker(unpacked_dir_path)
+    return InvoiceChecker(unpacked_dir_path)
