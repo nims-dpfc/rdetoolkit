@@ -152,6 +152,7 @@ class InvoiceValidator:
             except ValueError:
                 raise InvoiceSchemaValidationError("Error in schema validation")
             return data
+
         return data
 
     def __temporarily_modify_json_schema(self):
@@ -175,7 +176,6 @@ class InvoiceValidator:
             __ref["prefixItems"] = __temp_generalattr_item["items"]
             del __ref["items"]
             # __ref["items"][rule_keyword] = __temp_generalattr_item["items"]
-            return __ref
 
         __specificattr_item = self.schema.get("properties", {}).get("sample", {}).get("properties", {}).get("specificAttributes")
         if __specificattr_item:
@@ -184,7 +184,8 @@ class InvoiceValidator:
             __ref["prefixItems"] = __temp_specificattr_item["items"]
             del __ref["items"]
             # __ref["items"][rule_keyword] = __temp_specificattr_item["items"]
-            return __ref
+
+        return None
 
     def _remove_none_values(self, data: Union[dict, list, Any]) -> Union[dict, list, Any]:
         """Recursively removes key/value pairs from dictionaries and elements from lists where the value is None.
@@ -209,6 +210,7 @@ class InvoiceValidator:
             return {k: self._remove_none_values(v) for k, v in data.items() if v is not None}
         if isinstance(data, list):
             return [self._remove_none_values(item) for item in data if item is not None]
+
         return data
 
 
