@@ -17,6 +17,23 @@ from rdetoolkit.invoicefile import (
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
 
+def test_get_item_invoice(ivnoice_json_none_sample_info):
+    invoice = InvoiceFile(ivnoice_json_none_sample_info)
+    assert invoice["basic"]["dateSubmitted"] == "2023-03-14"
+
+
+def test_set_item_invoice(ivnoice_json_none_sample_info):
+    invoice = InvoiceFile(ivnoice_json_none_sample_info)
+    invoice["basic"]["dateSubmitted"] = "2023-03-15"
+    assert invoice["basic"]["dateSubmitted"] == "2023-03-15"
+
+
+def test_delete_item_invoice(ivnoice_json_none_sample_info):
+    invoice = InvoiceFile(ivnoice_json_none_sample_info)
+    del invoice["basic"]["dateSubmitted"]
+    assert "dateSubmitted" not in invoice["basic"]
+
+
 def test_invoicefile_read_method(ivnoice_json_none_sample_info):
     """テストケース: InvoiceFileのread"""
     invoice_file = InvoiceFile(ivnoice_json_none_sample_info)

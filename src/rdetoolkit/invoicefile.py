@@ -168,11 +168,44 @@ class InvoiceFile:
 
     Note:
         - The class uses an external utility `rde2util.CharDecEncoding.detect_text_file_encoding` to detect the encoding of the file.
+
+    Args:
+        invoice_path (Path): The path to the invoice file.
+
+    Raises:
+        ValueError: If `invoice_obj` is not a dictionary.
+
+    Example:
+        # Usage
+        invoice = InvoiceFile("invoice.json")
+        invoice.invoice_obj["basic"]["dataName"] = "new_data_name"
+        invoice.overwrite("invoice_new.json")
     """
 
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
-        self.invoice_obj = self.read()
+        self._invoice_obj = self.read()
+
+    @property
+    def invoice_obj(self):
+        """Gets the invoice object."""
+        return self._invoice_obj
+
+    @invoice_obj.setter
+    def invoice_obj(self, value):
+        """Sets the invoice object."""
+        if not isinstance(value, dict):
+            raise ValueError("invoice_obj must be a dictionary")
+        self._invoice_obj = value
+
+    def __getitem__(self, key):
+        return self._invoice_obj[key]
+
+    def __setitem__(self, key, value):
+        self._invoice_obj[key] = value
+
+    def __delitem__(self, key):
+        del self._invoice_obj[key]
 
     def read(self, *, target_path: Optional[Path] = None) -> dict:
         """Reads the content of the invoice file and returns it as a dictionary.
