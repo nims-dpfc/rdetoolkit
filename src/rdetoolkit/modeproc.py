@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import contextlib
 import os
 import shutil
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from rdetoolkit import img2thumb
 from rdetoolkit.config import Config
@@ -24,8 +26,8 @@ _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 def rdeformat_mode_process(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
-    datasets_process_function: Optional[_CallbackType] = None,
-    config: Optional[Config] = None,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
 ):
     """Process the source data and apply specific transformations using the provided callback function.
 
@@ -82,8 +84,8 @@ def rdeformat_mode_process(
 def multifile_mode_process(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
-    datasets_process_function: Optional[_CallbackType] = None,
-    config: Optional[Config] = None,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
 ):
     """Processes multiple source files and applies transformations using the provided callback function.
 
@@ -146,8 +148,8 @@ def excel_invoice_mode_process(
     resource_paths: RdeOutputResourcePath,
     excel_invoice_file: Path,
     idx: int,
-    datasets_process_function: Optional[_CallbackType] = None,
-    config: Optional[Config] = None,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
 ):
     """Processes invoice data from an Excel file and applies dataset transformations using the provided callback function.
 
@@ -227,8 +229,8 @@ def excel_invoice_mode_process(
 def invoice_mode_process(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
-    datasets_process_function: Optional[_CallbackType] = None,
-    config: Optional[Config] = None,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
 ):
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
@@ -327,7 +329,7 @@ def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]):
         shutil.copy(f, os.path.join(raw_dir_path, f.name))
 
 
-def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: Optional[str]) -> IInputFileChecker:
+def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: str | None) -> IInputFileChecker:
     """Determine the appropriate input file checker based on the provided format flags and source paths.
 
     The function scans the source paths to identify the type of input files present. Based on the file type

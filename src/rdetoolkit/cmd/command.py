@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import click
 
@@ -145,7 +147,7 @@ class VersionCommand:
 
 
 class DockerfileGenerator:
-    def __init__(self, path: Union[str, Path] = "Dockerfile"):
+    def __init__(self, path: str | Path = "Dockerfile"):
         self.path = path
 
     def generate(self) -> list[str]:
@@ -172,7 +174,7 @@ class DockerfileGenerator:
 
 
 class RequirementsTxtGenerator:
-    def __init__(self, path: Union[str, Path] = "requirements.txt"):
+    def __init__(self, path: str | Path = "requirements.txt"):
         self.path = path
 
     def generate(self) -> list[str]:
@@ -205,7 +207,7 @@ class RequirementsTxtGenerator:
 
 
 class InvoiceSchemaJsonGenerator:
-    def __init__(self, path: Union[str, Path] = "invoice.schema.json"):
+    def __init__(self, path: str | Path = "invoice.schema.json"):
         self.path = path
 
     def generate(self) -> dict[str, Any]:
@@ -234,7 +236,7 @@ class InvoiceSchemaJsonGenerator:
 
 
 class MetadataDefJsonGenerator:
-    def __init__(self, path: Union[str, Path] = "metadata-def.json"):
+    def __init__(self, path: str | Path = "metadata-def.json"):
         self.path = path
 
     def generate(self) -> dict[str, Any]:
@@ -254,7 +256,7 @@ class MetadataDefJsonGenerator:
 
 
 class InvoiceJsonGenerator:
-    def __init__(self, path: Union[str, Path] = "invoice.json"):
+    def __init__(self, path: str | Path = "invoice.json"):
         self.path = path
 
     def generate(self) -> dict[str, Any]:
@@ -272,7 +274,7 @@ class InvoiceJsonGenerator:
 
 
 class MainScriptGenerator:
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         self.path = path
 
     def generate(self) -> list[str]:

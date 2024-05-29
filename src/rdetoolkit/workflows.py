@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import sys
 import traceback
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Generator
 
 from rdetoolkit.config import Config, load_config
 from rdetoolkit.exceptions import StructuredError
@@ -19,7 +21,7 @@ from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 
 
-def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[RawFiles, Optional[Path]]:
+def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFiles, Path | None]:
     """Classify input files to determine if the input pattern is appropriate.
 
     1. Invoice
@@ -123,7 +125,7 @@ def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepa
         yield rdeoutput_resource_path
 
 
-def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Optional[Config] = None):  # pragma: no cover
+def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None):  # pragma: no cover
     """RDE Structuring Processing Function.
 
     This function executes the structuring process for RDE data. If you want to implement custom processing for the input data,

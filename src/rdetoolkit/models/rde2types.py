@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence, TypedDict, Union
+from typing import Sequence, TypedDict, Union
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
@@ -164,10 +166,10 @@ class RdeOutputResourcePath:
     invoice: Path
     invoice_schema_json: Path
     invoice_org: Path
-    temp: Optional[Path] = None
-    invoice_patch: Optional[Path] = None
-    attachment: Optional[Path] = None
-    nonshared_raw: Optional[Path] = None
+    temp: Path | None = None
+    invoice_patch: Path | None = None
+    attachment: Path | None = None
+    nonshared_raw: Path | None = None
 
 
 class Name(TypedDict):

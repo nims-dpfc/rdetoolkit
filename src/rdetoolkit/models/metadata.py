@@ -1,4 +1,6 @@
-from typing import Any, Final, Optional
+from __future__ import annotations
+
+from typing import Any, Final
 
 from pydantic import BaseModel, Field, RootModel, field_validator
 
@@ -33,7 +35,7 @@ class MetaValue(BaseModel):
     """Metadata class for the 'value' and 'unit' attributes."""
 
     value: Any
-    unit: Optional[str] = None
+    unit: str | None = None
 
     @field_validator("value")
     @classmethod
@@ -76,5 +78,5 @@ class MetadataItem(BaseModel):
         variable (ValidableItems): An array of metadata sets that vary with each measurement.
     """
 
-    constant: Optional[dict[str, MetaValue]] = Field(default=None)
+    constant: dict[str, MetaValue] | None = Field(default=None)
     variable: ValidableItems = Field(default=None)

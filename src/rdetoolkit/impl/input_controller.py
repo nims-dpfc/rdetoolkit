@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import re
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller
@@ -33,7 +34,7 @@ class InvoiceChecker(IInputFileChecker):
     def __init__(self, unpacked_dir_basename: Path):
         self.out_dir_temp = unpacked_dir_basename
 
-    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Path | None]:
         """Parses the source input directory, grouping files based on their type.
 
         Args:
@@ -54,7 +55,7 @@ class InvoiceChecker(IInputFileChecker):
         rawfiles = [tuple(other_files)]
         return rawfiles, None
 
-    def _get_group_by_files(self, input_files: List[Path]) -> InputFilesGroup:
+    def _get_group_by_files(self, input_files: list[Path]) -> InputFilesGroup:
         zipfiles = [f for f in input_files if f.suffix.lower() == ".zip"]
         excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", "xlsx"] and f.stem.endswith("_excel_invoice")]
         other_files = [f for f in input_files if f not in zipfiles and f not in excel_invoice_files]
@@ -78,7 +79,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
     def __init__(self, unpacked_dir_basename: Path):
         self.out_dir_temp = unpacked_dir_basename
 
-    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Path | None]:
         """Parse the source input directory, group files by their type, validate the groups, and return the raw files and Excel Invoice file.
 
         Args:
@@ -98,13 +99,13 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
         return rawfiles, excel_invoice_files[0]
 
-    def _get_group_by_files(self, input_files: List[Path]) -> InputFilesGroup:
+    def _get_group_by_files(self, input_files: list[Path]) -> InputFilesGroup:
         zipfiles = [f for f in input_files if f.suffix.lower() == ".zip"]
         excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", ".xlsx"] and f.stem.endswith("_excel_invoice")]
         other_files = [f for f in input_files if f not in zipfiles and f not in excel_invoice_files]
         return zipfiles, excel_invoice_files, other_files
 
-    def _get_rawfiles(self, zipfile: Optional[Path], excel_invoice_file: Path) -> List[Tuple[Path, ...]]:
+    def _get_rawfiles(self, zipfile: Path | None, excel_invoice_file: Path) -> list[tuple[Path, ...]]:
         df_excel_invoice, _, _ = read_excelinvoice(excel_invoice_file)
         original_sort_items = df_excel_invoice.iloc[:, 0].to_list()
         if zipfile is None:
@@ -168,7 +169,7 @@ class RDEFormatChecker(IInputFileChecker):
     def __init__(self, unpacked_dir_basename: Path):
         self.out_dir_temp = unpacked_dir_basename
 
-    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Path | None]:
         """Parse the source input directory, identify ZIP files, unpack the ZIP file, and return the raw files.
 
         Args:
@@ -188,7 +189,7 @@ class RDEFormatChecker(IInputFileChecker):
         _rawfiles = self._get_rawfiles(unpacked_files)
         return _rawfiles, None
 
-    def _get_zipfiles(self, input_files: List[Path]) -> ZipFilesPathList:
+    def _get_zipfiles(self, input_files: list[Path]) -> ZipFilesPathList:
         return [f for f in input_files if f.suffix.lower() == ".zip"]
 
     def _unpacked(self, zipfile: Path, target_dir: Path) -> list[Path]:
@@ -223,7 +224,7 @@ class MultiFileChecker(IInputFileChecker):
     def __init__(self, unpacked_dir_basename: Path):
         self.out_dir_temp = unpacked_dir_basename
 
-    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Optional[Path]]:
+    def parse(self, src_dir_input: Path) -> tuple[RawFiles, Path | None]:
         """Parse the source input directory, group ZIP files and other files, and return the raw files.
 
         Args:
@@ -237,10 +238,10 @@ class MultiFileChecker(IInputFileChecker):
         """
         input_files = [f for f in src_dir_input.glob("*")]
         other_files = self._get_group_by_files(input_files)
-        _rawfiles: list[Tuple[Path, ...]] = [(f,) for f in other_files]
+        _rawfiles: list[tuple[Path, ...]] = [(f,) for f in other_files]
         return sorted(_rawfiles, key=lambda path: str(path)), None
 
-    def _get_group_by_files(self, input_files: List[Path]) -> OtherFilesPathList:
+    def _get_group_by_files(self, input_files: list[Path]) -> OtherFilesPathList:
         excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", "xlsx"] and f.stem.endswith("_excel_invoice")]
         return [f for f in input_files if f not in excel_invoice_files]
 

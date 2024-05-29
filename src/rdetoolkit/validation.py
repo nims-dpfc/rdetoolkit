@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import copy
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 from jsonschema import Draft202012Validator, FormatChecker, validate
 from jsonschema import ValidationError as SchemaValidationError
@@ -18,7 +20,7 @@ class MetadataDefValidator:
     def __init__(self) -> None:
         self.schema = MetadataItem
 
-    def validate(self, *, path: Optional[Union[str, Path]] = None, json_obj: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    def validate(self, *, path: str | Path | None = None, json_obj: dict[str, Any] | None = None) -> dict[str, Any]:
         """Validates the provided JSON data against the MetadataItem schema.
 
         Args:
@@ -51,7 +53,7 @@ class MetadataDefValidator:
         return __data
 
 
-def metadata_def_validate(path: Union[str, Path]):
+def metadata_def_validate(path: str | Path):
     """Validate metadata-def.json file.
 
     This function validates the metadata definition file specified by the given path.
@@ -80,12 +82,12 @@ def metadata_def_validate(path: Union[str, Path]):
 class InvoiceValidator:
     pre_basic_info_schema = os.path.join(os.path.dirname(__file__), "static", "invoice_basic_and_sample.schema_.json")
 
-    def __init__(self, schema_path: Union[str, Path]):
+    def __init__(self, schema_path: str | Path):
         self.schema_path = schema_path
         self.schema = self.__pre_validate()
         self.__temporarily_modify_json_schema()
 
-    def validate(self, *, path: Optional[Union[str, Path]] = None, obj: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    def validate(self, *, path: str | Path | None = None, obj: dict[str, Any] | None = None) -> dict[str, Any]:
         """Validate the provided JSON data against the schema.
 
         Args:
@@ -124,7 +126,7 @@ class InvoiceValidator:
 
         return data
 
-    def __get_data(self, path: Optional[Union[str, Path]], obj: Optional[dict[str, Any]]) -> dict[str, Any]:
+    def __get_data(self, path: str | Path | None, obj: dict[str, Any] | None) -> dict[str, Any]:
         if path is None and obj is None:
             raise ValueError("At least one of 'path' or 'obj' must be provided")
         if path is not None and obj is not None:
@@ -187,7 +189,7 @@ class InvoiceValidator:
 
         return None
 
-    def _remove_none_values(self, data: Union[dict, list, Any]) -> Union[dict, list, Any]:
+    def _remove_none_values(self, data: dict | list | Any) -> dict | list | Any:
         """Recursively removes key/value pairs from dictionaries and elements from lists where the value is None.
 
         Args:
@@ -214,7 +216,7 @@ class InvoiceValidator:
         return data
 
 
-def invoice_validate(path: Union[str, Path], schema: Union[str, Path]):
+def invoice_validate(path: str | Path, schema: str | Path):
     """invoice.json validation function.
 
     Args:

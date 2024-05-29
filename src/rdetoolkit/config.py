@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Any, Final, Optional
+from typing import Any, Final
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -25,7 +27,7 @@ class Config(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    extended_mode: Optional[str] = Field(default=None, description="The mode to run the RDEtoolkit in. select: rdeformat, MultiDataTile")
+    extended_mode: str | None = Field(default=None, description="The mode to run the RDEtoolkit in. select: rdeformat, MultiDataTile")
     save_raw: bool = Field(default=True, description="Auto Save raw data to the raw directory")
     save_thumbnail_image: bool = Field(default=False, description="Auto Save main image to the thumbnail directory")
     magic_variable: bool = Field(
@@ -34,7 +36,7 @@ class Config(BaseModel):
     )
 
 
-def parse_config_file(*, path: Optional[str] = None) -> Config:
+def parse_config_file(*, path: str | None = None) -> Config:
     """Parse the configuration file and return a Config object.
 
     Args:
@@ -144,7 +146,7 @@ def find_config_files(target_dir_path: RdeFsPath) -> list[str]:
     return sorted(files, key=lambda x: (is_toml(x), is_yaml(x)))
 
 
-def get_pyproject_toml() -> Optional[Path]:
+def get_pyproject_toml() -> Path | None:
     """Get the pyproject.toml file.
 
     Returns:
@@ -192,7 +194,7 @@ def get_config(target_dir_path: RdeFsPath):
     return None
 
 
-def load_config(tasksupport_path: RdeFsPath, *, config: Optional[Config] = None):
+def load_config(tasksupport_path: RdeFsPath, *, config: Config | None = None):
     """Loads the configuration for the RDE Toolkit.
 
     Args:

@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import os
 import re
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Union
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
     def __init__(self, xlsx_invoice: pd.DataFrame):
         self.xlsx_invoice = xlsx_invoice
 
-    def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
+    def read(self, zipfile: Path, target_path: Path) -> list[tuple[Path, ...]]:
         """Extracts the contents of the zipfile to the target path and checks their existence against the Excelinvoice.
 
         Args:
@@ -39,7 +40,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         _extracted_files = self._unpacked(zipfile, target_path)
         return [(f,) for f in check_exist_rawfiles(self.xlsx_invoice, _extracted_files)]
 
-    def _unpacked(self, zipfile: Union[Path, str], target_dir: Union[Path, str]):
+    def _unpacked(self, zipfile: Path | str, target_dir: Path | str):
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         shutil.unpack_archive(zipfile, target_dir)
@@ -90,7 +91,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
     def __init__(self, xlsx_invoice: pd.DataFrame):
         self.xlsx_invoice = xlsx_invoice
 
-    def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
+    def read(self, zipfile: Path, target_path: Path) -> list[tuple[Path, ...]]:
         """Extracts the contents of the zipfile and returns validated file paths.
 
         Args:
@@ -105,7 +106,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
         safe_verification_files = self.validation_uniq_fspath(target_path, exclude_names=["invoice_org.json"])
         return [tuple(f) for f in safe_verification_files.values()]
 
-    def _unpacked(self, zipfile: Union[Path, str], target_dir: Union[Path, str]):
+    def _unpacked(self, zipfile: Path | str, target_dir: Path | str):
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         shutil.unpack_archive(zipfile, target_dir)
@@ -141,7 +142,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
 
         return False
 
-    def validation_uniq_fspath(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:
+    def validation_uniq_fspath(self, target_path: str | Path, exclude_names: list[str]) -> dict[str, list[Path]]:
         """Check if there are any non-unique directory names under the target directory.
 
         Args:

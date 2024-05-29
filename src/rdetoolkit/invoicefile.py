@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import copy
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 import chardet
 import pandas as pd
@@ -208,7 +210,7 @@ class InvoiceFile:
     def __delitem__(self, key):
         del self._invoice_obj[key]
 
-    def read(self, *, target_path: Optional[Path] = None) -> dict:
+    def read(self, *, target_path: Path | None = None) -> dict:
         """Reads the content of the invoice file and returns it as a dictionary.
 
         Args:
@@ -226,7 +228,7 @@ class InvoiceFile:
             self.invoice_obj = json.load(f)
         return self.invoice_obj
 
-    def overwrite(self, dst_file_path: Path, *, src_obj: Optional[Path] = None):
+    def overwrite(self, dst_file_path: Path, *, src_obj: Path | None = None):
         """Overwrites the contents of the destination file with the invoice JSON data.
 
         Args:
@@ -285,7 +287,7 @@ class ExcelInvoiceFile:
         self.invoice_path = invoice_path
         self.dfexcelinvoice, self.df_general, self.df_specific = self.read()
 
-    def read(self, *, target_path: Optional[Path] = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def read(self, *, target_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
 
         Args:
@@ -476,7 +478,7 @@ class ExcelInvoiceFile:
                     value[item] = None
 
 
-def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional[str]) -> Path:
+def backup_invoice_json_files(excel_invoice_file: Path | None, mode: str | None) -> Path:
     """Backs up invoice files and retrieves paths based on the mode specified in the input.
 
     For excelinvoice and rdeformat modes, it backs up invoice.json as the original file in the temp directory in MultiDataTile mode.
@@ -503,7 +505,7 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional
     return invoice_org_filepath
 
 
-def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> Optional[dict]:
+def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> dict | None:
     if key in metadata_json_obj["constant"]:
         return metadata_json_obj["constant"]
     if metadata_json_obj.get("variable"):
@@ -590,7 +592,7 @@ class RuleBasedReplacer:
         rule_file_path (Optional[Union[str, Path]]): Path to the rule file. If specified, rules are loaded from this path.
     """
 
-    def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
+    def __init__(self, *, rule_file_path: str | Path | None = None):
         self.rules: dict[str, str] = {}
         self.last_apply_result: dict[str, Any] = {}
 
@@ -599,7 +601,7 @@ class RuleBasedReplacer:
         if rule_file_path and rule_file_path.exists():
             self.load_rules(rule_file_path)
 
-    def load_rules(self, filepath: Union[str, Path]) -> None:
+    def load_rules(self, filepath: str | Path) -> None:
         """Function to read file mapping rules.
 
         The file containing the mapping rules must be in JSON format.
@@ -620,7 +622,7 @@ class RuleBasedReplacer:
             data = json.load(f)
             self.rules = data.get("filename_mapping", {})
 
-    def get_apply_rules_obj(self, replacements: dict[str, Any], source_json_obj: Optional[dict[str, Any]], *, mapping_rules: Optional[dict[str, str]] = None) -> dict[str, Any]:
+    def get_apply_rules_obj(self, replacements: dict[str, Any], source_json_obj: dict[str, Any] | None, *, mapping_rules: dict[str, str] | None = None) -> dict[str, Any]:
         """Function to convert file mapping rules into a JSON format.
 
         This function takes string mappings separated by dots ('.') and converts them into a dictionary format, making it easier to handle within a target JsonObject.
@@ -685,7 +687,7 @@ class RuleBasedReplacer:
         """
         self.rules[path] = variable
 
-    def write_rule(self, replacements_rule: dict[str, Any], save_file_path: Union[str, Path]) -> str:
+    def write_rule(self, replacements_rule: dict[str, Any], save_file_path: str | Path) -> str:
         """Function to write file mapping rules to a target JSON file.
 
         Writes the set mapping rules (in JSON format) to the target file
@@ -731,7 +733,7 @@ class RuleBasedReplacer:
         return contents
 
 
-def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: Union[str, Path]) -> dict[str, Any]:
+def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: str | Path) -> dict[str, Any]:
     """Applies a default filename mapping rule based on the basename of the save file path.
 
     This function creates an instance of RuleBasedReplacer and applies a default mapping rule. If the basename
@@ -761,7 +763,7 @@ def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_f
     return replacer.last_apply_result
 
 
-def apply_magic_variable(invoice_path: Union[str, Path], rawfile_path: Union[str, Path], *, save_filepath: Optional[Union[str, Path]] = None) -> dict[str, Any]:
+def apply_magic_variable(invoice_path: str | Path, rawfile_path: str | Path, *, save_filepath: str | Path | None = None) -> dict[str, Any]:
     """Converts the magic variable ${filename}.
 
     If ${filename} is present in basic.dataName of invoice.json, it is replaced with the filename of rawfile_path.

@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import logging
 import os
 from logging import DEBUG, INFO, FileHandler, Formatter, Logger, NullHandler, StreamHandler, getLogger
-from typing import Optional
 
 from rdetoolkit.rde2util import StorageDir
 
 
-def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
+def get_logger(name: str, *, file_path: str | None = None) -> logging.Logger:
     """Creates a logger using Python's logging module.
 
     The logger is a tool for generating log messages, tracking processes, and facilitating debugging.

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import json
 import os
@@ -5,7 +7,7 @@ import pathlib
 import re
 import zipfile
 from copy import deepcopy
-from typing import Any, Final, Optional, TypedDict, Union, cast
+from typing import Any, Final, TypedDict, cast
 
 import chardet  # for following failure cases
 import dateutil.parser
@@ -292,7 +294,7 @@ class Meta:
         self,
         metadef_filepath: RdeFsPath,
         *,
-        metafilepath: Optional[RdeFsPath] = None,
+        metafilepath: RdeFsPath | None = None,
     ):
         """Initializes the Meta class.
 
@@ -321,7 +323,7 @@ class Meta:
         self.metaConst: dict[str, MetaItem] = {}
         self.metaVar: list[dict[str, MetaItem]] = []
         self.actions: list[str] = []
-        self.referedmap: dict[str, Optional[Union[str, list]]] = {}
+        self.referedmap: dict[str, str | list | None] = {}
         if metafilepath is not None:
             raise StructuredError("ERROR: not supported yet")
         self.metaDef: dict[str, MetadataDefJson] = self._read_metadef_file(metadef_filepath)
@@ -358,10 +360,10 @@ class Meta:
 
     def assign_vals(
         self,
-        entry_dict_meta: Union[MetaType, RepeatedMetaType],
+        entry_dict_meta: MetaType | RepeatedMetaType,
         *,
         ignore_empty_strvalue=True,
-    ) -> "dict[str, set]":
+    ) -> dict[str, set]:
         """Register the value of metadata.
 
         Perform validation and casting on the input metadata value in the specified format, and register it.
@@ -406,7 +408,7 @@ class Meta:
         ret["unknown"] = {k for k in entry_dict_meta if k not in ret["assigned"]}
         return ret
 
-    def __register_refered_values(self, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> None:
+    def __register_refered_values(self, entry_dict_meta: MetaType | RepeatedMetaType) -> None:
         """Register referred values in the reference table.
 
         This method converts the values from the input metadata dictionary to strings
@@ -421,7 +423,7 @@ class Meta:
             _vsrc = self.__convert_to_str(vsrc)
             self.__registerd_refered_table(keysrc, _vsrc)
 
-    def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
+    def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: MetaType | RepeatedMetaType) -> str | None:
         keysrc = kdef
         if kdef not in entry_dict_meta and "originalName" in vdef:
             keysrc = vdef["originalName"]
@@ -429,7 +431,7 @@ class Meta:
             return None
         return keysrc
 
-    def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: Union[str, list[str]], ignore_empty_strvalue: bool) -> None:
+    def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: str | list[str], ignore_empty_strvalue: bool) -> None:
         if vdef.get("action"):
             raise StructuredError("ERROR: this meta value should set by action")
 
@@ -467,7 +469,7 @@ class Meta:
             stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
         vobj["value"] = eval(stract)
 
-    def __convert_to_str(self, value: Union[str, float, list]) -> Union[str, list[str]]:
+    def __convert_to_str(self, value: str | float | list) -> str | list[str]:
         """Convert the given value to string or list of strings."""
         if isinstance(value, (str, int, float, bool)):
             return str(value)
@@ -521,7 +523,7 @@ class Meta:
     def __sort_by_metadef(self, data_dict: dict[str, Any]) -> dict[str, Any]:
         return {k: data_dict[k] for k in self.metaDef if k in data_dict}
 
-    def __registerd_refered_table(self, key: str, value: Union[str, list[str]]) -> None:  # pragma: no cover
+    def __registerd_refered_table(self, key: str, value: str | list[str]) -> None:  # pragma: no cover
         """Registers the referenced value in the referred value table for actions and referred units, using the raw name.
 
         This method updates the referred value table with the provided key and value. If the key already exists in the table,
@@ -549,7 +551,7 @@ class Meta:
     def __set_variable_metadata(
         self,
         key: str,
-        metavalues: Union[str, list[str]],
+        metavalues: str | list[str],
         metadefvalue: MetadataDefJson,
         opt_ignore_emptystr: bool,
     ) -> None:  # pragma: no cover
@@ -569,7 +571,7 @@ class Meta:
     def __set_const_metadata(
         self,
         key: str,
-        metavalue: Union[str, list[str]],
+        metavalue: str | list[str],
         metadefvalue: MetadataDefJson,
     ) -> None:  # pragma: no cover
         outtype = metadefvalue["schema"].get("type")
@@ -582,11 +584,11 @@ class Meta:
     def _metadata_validation(
         self,
         vsrc: str,
-        outtype: Optional[str],
-        outfmt: Optional[str],
-        orgtype: Optional[str],
-        outunit: Optional[str],
-    ) -> "dict[str, Union[bool, int, float, str]]":  # pragma: no cover
+        outtype: str | None,
+        outfmt: str | None,
+        orgtype: str | None,
+        outunit: str | None,
+    ) -> dict[str, bool | int | float | str]:  # pragma: no cover
         """Casts the input metadata to the specified format and performs validation to check.
 
         if it can be cast to the specified data type. The formats for various metadata are described in metadata-def.json.
@@ -629,7 +631,7 @@ class Meta:
         return {"value": _casted_value}
 
 
-def castval(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
+def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int | float | str:
     """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
 
     The function returns a formatted value of the string valstr according to
