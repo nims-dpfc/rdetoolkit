@@ -27,7 +27,8 @@ class Variable(BaseModel):
             if not isinstance(v, str):
                 continue
             if len(str(value).encode("utf-8")) > MAX_VALUE_SIZE:
-                raise ValueError(f"Value size exceeds {MAX_VALUE_SIZE} bytes: {v}")
+                emsg = f"Value size exceeds {MAX_VALUE_SIZE} bytes: {v}"
+                raise ValueError(emsg)
         return v
 
 
@@ -51,7 +52,8 @@ class MetaValue(BaseModel):
         if not isinstance(v, str):
             return v
         if len(str(v).encode("utf-8")) > MAX_VALUE_SIZE:
-            raise ValueError(f"Value size exceeds {MAX_VALUE_SIZE} bytes")
+            emsg = f"Value size exceeds {MAX_VALUE_SIZE} bytes"
+            raise ValueError(emsg)
         return v
 
 

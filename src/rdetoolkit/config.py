@@ -179,7 +179,8 @@ def get_config(target_dir_path: RdeFsPath):
         try:
             __config = parse_config_file(path=cfg_file)
         except ValidationError as e:
-            raise ValueError(f"Invalid configuration file: {cfg_file}") from e
+            emsg = f"Invalid configuration file: {cfg_file}"
+            raise ValueError(emsg) from e
         if __config is not None:
             return __config
 
@@ -188,7 +189,8 @@ def get_config(target_dir_path: RdeFsPath):
         try:
             __config = parse_config_file(path=str(pyproject_toml_path))
         except ValidationError as e:
-            raise ValueError(f"Invalid configuration file: {pyproject_toml_path}") from e
+            emsg = f"Invalid configuration file: {pyproject_toml_path}"
+            raise ValueError(emsg) from e
         if __config is not None:
             return __config
     return None

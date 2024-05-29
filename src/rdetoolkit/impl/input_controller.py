@@ -121,7 +121,8 @@ class ExcelInvoiceChecker(IInputFileChecker):
             return sorted([_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]], key=lambda paths: self.get_index(paths[0], original_sort_items))
         if len(_parse) == len(df_excel_invoice[df_excel_invoice.columns[0]]):
             return sorted(_parse, key=lambda paths: self.get_index(paths[0], original_sort_items))
-        raise StructuredError("Error! The input file and the description in the ExcelInvoice are not consistent.")
+        emsg = "Error! The input file and the description in the ExcelInvoice are not consistent."
+        raise StructuredError(emsg)
 
     def get_index(self, paths, sort_items):
         """Retrieves the index of the `divided` folder.
@@ -145,15 +146,18 @@ class ExcelInvoiceChecker(IInputFileChecker):
 
     def _detect_invalid_zipfiles(self, zipfiles: ZipFilesPathList) -> None:
         if len(zipfiles) > 1:
-            raise StructuredError("ERROR: more than 1 zipped input files")
+            emsg = "ERROR: more than 1 zipped input files"
+            raise StructuredError(emsg)
 
     def _detect_invalid_excel_invoice_files(self, excel_invoice_files: ExcelInvoicePathList) -> None:
         if len(excel_invoice_files) > 1:
-            raise StructuredError(f"ERROR: more than 1 excelinvoice file list. file num: {len(excel_invoice_files)}")
+            emsg = f"ERROR: more than 1 excelinvoice file list. file num: {len(excel_invoice_files)}"
+            raise StructuredError(emsg)
 
     def _detect_invalid_other_files(self, other_files: OtherFilesPathList) -> None:
         if len(other_files) > 0:
-            raise StructuredError("ERROR: input file should be EXCEL or ZIP file")
+            emsg = "ERROR: input file should be EXCEL or ZIP file"
+            raise StructuredError(emsg)
 
 
 class RDEFormatChecker(IInputFileChecker):
@@ -184,7 +188,8 @@ class RDEFormatChecker(IInputFileChecker):
         input_files = [f for f in src_dir_input.glob("*")]
         zipfiles = self._get_zipfiles(input_files)
         if len(zipfiles) != 1:
-            raise StructuredError("ERROR: no zipped input files")
+            emsg = "ERROR: no zipped input files"
+            raise StructuredError(emsg)
         unpacked_files = self._unpacked(zipfiles[0], self.out_dir_temp)
         _rawfiles = self._get_rawfiles(unpacked_files)
         return _rawfiles, None

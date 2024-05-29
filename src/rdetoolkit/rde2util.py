@@ -325,7 +325,8 @@ class Meta:
         self.actions: list[str] = []
         self.referedmap: dict[str, str | list | None] = {}
         if metafilepath is not None:
-            raise StructuredError("ERROR: not supported yet")
+            emsg = "ERROR: not supported yet"
+            raise StructuredError(emsg)
         self.metaDef: dict[str, MetadataDefJson] = self._read_metadef_file(metadef_filepath)
 
     def _read_metadef_file(self, metadef_filepath: RdeFsPath) -> dict[str, MetadataDefJson]:  # pragma: no cover
@@ -433,7 +434,8 @@ class Meta:
 
     def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: str | list[str], ignore_empty_strvalue: bool) -> None:
         if vdef.get("action"):
-            raise StructuredError("ERROR: this meta value should set by action")
+            emsg = "ERROR: this meta value should set by action"
+            raise StructuredError(emsg)
 
         if vdef.get("variable"):
             self.__set_variable_metadata(kdef, _vsrc, vdef, ignore_empty_strvalue)
@@ -660,7 +662,8 @@ def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int 
             return dtobj.strftime("%Y-%m-%d")
         if fmt == "time":
             return dtobj.strftime("%H:%M:%S")
-        raise StructuredError("ERROR: unknown format in metaDef")
+        emsg = "ERROR: unknown format in metaDef"
+        raise StructuredError(emsg)
 
     if outtype == "boolean":
         if _trycast(valstr, bool) is not None:
@@ -686,9 +689,11 @@ def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int 
         return _convert_to_date_format(valstr, outfmt)
 
     else:
-        raise StructuredError("ERROR: unknown value type in metaDef")
+        emsg = "ERROR: unknown value type in metaDef"
+        raise StructuredError(emsg)
 
-    raise StructuredError("ERROR: failed to cast metaDef value")
+    emsg = "ERROR: failed to cast metaDef value"
+    raise StructuredError(emsg)
 
 
 def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, const_info: MetaType, val_info: MetaType) -> dict[str, set[Any]]:

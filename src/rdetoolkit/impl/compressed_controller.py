@@ -172,13 +172,15 @@ class CompressedFolderParser(ICompressedFileStructParser):
             _filered_paths = [Path(dir) / Path(f) for f in fnames if f not in exclude_names]
             for f in _filered_paths:
                 if str(f).lower() in unique_dirname_set:
-                    raise StructuredError("ERROR: folder paths and file paths stored in a zip file must always have unique names.")
+                    emsg = "ERROR: folder paths and file paths stored in a zip file must always have unique names."
+                    raise StructuredError(emsg)
                 unique_dirname_set.add(str(f).lower())
 
             # check folder
             lower_dir = str(dir).lower()
             if lower_dir in unique_dirname_set:
-                raise StructuredError("ERROR: folder paths and file paths stored in a zip file must always have unique names.")
+                emsg = "ERROR: folder paths and file paths stored in a zip file must always have unique names."
+                raise StructuredError(emsg)
             unique_dirname_set.add(lower_dir)
             verification_files[lower_dir] = _filered_paths
 

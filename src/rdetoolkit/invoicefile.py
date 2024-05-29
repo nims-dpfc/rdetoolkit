@@ -39,7 +39,8 @@ def read_excelinvoice(excelinvoice_filepath):
     for sh_name, df in dct_sheets.items():
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfexcelinvoice is not None:
-                raise StructuredError("ERROR: multiple sheet in invoiceList files")
+                emsg = "ERROR: multiple sheet in invoiceList files"
+                raise StructuredError(emsg)
             ExcelInvoiceFile.check_intermittent_empty_rows(df)
             dfexcelinvoice = __process_invoice_sheet(df)
         elif sh_name == "generalTerm":
@@ -48,7 +49,8 @@ def read_excelinvoice(excelinvoice_filepath):
             df_specific = __process_specific_term_sheet(df)
 
     if dfexcelinvoice is None:
-        raise StructuredError("ERROR: no sheet in invoiceList files")
+        emsg = "ERROR: no sheet in invoiceList files"
+        raise StructuredError(emsg)
     return dfexcelinvoice, df_general, df_specific
 
 
@@ -92,7 +94,8 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
     file_set_group = {f.name for f in excel_rawfiles}
     file_set_invoice = set(dfexcelinvoice["data_file_names/name"])
     if file_set_invoice - file_set_group:
-        raise StructuredError(f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}")
+        emsg = f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}"
+        raise StructuredError(emsg)
     # excel_rawfilesを、インボイス出現順に並び替える
     _tmp = {f.name: f for f in excel_rawfiles}
     return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
@@ -105,7 +108,8 @@ def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
         try:
             invoiceobj[key1][key2] = rde2util.castval(valobj, dct_schema["type"], dct_schema.get("format"))
         except StructuredError:
-            raise StructuredError(f"ERROR: failed to cast invoice value for key [{key1}][{key2}]")
+            emsg = f"ERROR: failed to cast invoice value for key [{key1}][{key2}]"
+            raise StructuredError(emsg)
     else:
         invoiceobj[key1][key2] = valobj
 
@@ -155,11 +159,14 @@ def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
         # Reorder rawfiles_tpl according to the order of appearance in the invoice
         return [dcttpl[d] for d in dfexcelinvoice["data_folder"]]
     if dir_setglob - dir_set_invoice:
-        raise StructuredError(f"ERROR: unused raw data: {(dir_setglob-dir_set_invoice).pop()}")
+        emsg = f"ERROR: unused raw data: {(dir_setglob-dir_set_invoice).pop()}"
+        raise StructuredError(emsg)
     if dir_set_invoice - dir_setglob:
-        raise StructuredError(f"ERROR: raw data not found: {(dir_set_invoice-dir_setglob).pop()}")
+        emsg = f"ERROR: raw data not found: {(dir_set_invoice-dir_setglob).pop()}"
+        raise StructuredError(emsg)
 
-    raise StructuredError("ERROR: unknown error")  # This line should never be reached
+    emsg = "ERROR: unknown error"
+    raise StructuredError(emsg)  # This line should never be reached
 
 
 class InvoiceFile:
@@ -198,7 +205,8 @@ class InvoiceFile:
     def invoice_obj(self, value):
         """Sets the invoice object."""
         if not isinstance(value, dict):
-            raise ValueError("invoice_obj must be a dictionary")
+            emsg = "invoice_obj must be a dictionary"
+            raise ValueError(emsg)
         self._invoice_obj = value
 
     def __getitem__(self, key):
@@ -268,7 +276,8 @@ class InvoiceFile:
             None
         """
         if not os.path.exists(src_file_path):
-            raise StructuredError(f"File Not Found: {src_file_path}")
+            emsg = f"File Not Found: {src_file_path}"
+            raise StructuredError(emsg)
         if src_file_path != dst_file_path:
             shutil.copy(str(src_file_path), str(dst_file_path))
 
@@ -305,7 +314,8 @@ class ExcelInvoiceFile:
             target_path = self.invoice_path
 
         if not os.path.exists(target_path):
-            raise StructuredError(f"ERROR: excelinvoice not found {target_path}")
+            emsg = f"ERROR: excelinvoice not found {target_path}"
+            raise StructuredError(emsg)
 
         dct_sheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
 
@@ -315,7 +325,8 @@ class ExcelInvoiceFile:
         for sh_name, df in dct_sheets.items():
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfexcelinvoice is not None:
-                    raise StructuredError("ERROR: multiple sheet in invoiceList files")
+                    emsg = "ERROR: multiple sheet in invoiceList files"
+                    raise StructuredError(emsg)
                 ExcelInvoiceFile.check_intermittent_empty_rows(df)
                 dfexcelinvoice = self._process_invoice_sheet(df)
             elif sh_name == "generalTerm":
@@ -324,7 +335,8 @@ class ExcelInvoiceFile:
                 df_specific = self._process_specific_term_sheet(df)
 
         if dfexcelinvoice is None:
-            raise StructuredError("ERROR: no sheet in invoiceList files")
+            emsg = "ERROR: no sheet in invoiceList files"
+            raise StructuredError(emsg)
 
         return dfexcelinvoice, df_general, df_specific
 
@@ -390,7 +402,8 @@ class ExcelInvoiceFile:
             if not ExcelInvoiceFile.__is_empty_row(row):
                 continue
             if any(not ExcelInvoiceFile.__is_empty_row(r) for r in df.iloc[i + 1]):
-                raise StructuredError("Error! Blank lines exist between lines")
+                emsg = "Error! Blank lines exist between lines"
+                raise StructuredError(emsg)
 
     @staticmethod
     def __is_empty_row(row) -> bool:
@@ -615,7 +628,8 @@ class RuleBasedReplacer:
         if isinstance(filepath, str):
             filepath = Path(filepath)
         if filepath.suffix != ".json":
-            raise StructuredError(f"Error. File format/extension is not correct: {filepath}")
+            emsg = f"Error. File format/extension is not correct: {filepath}"
+            raise StructuredError(emsg)
 
         enc = CharDecEncoding.detect_text_file_encoding(filepath)
         with open(filepath, encoding=enc) as f:
@@ -709,7 +723,8 @@ class RuleBasedReplacer:
             save_file_path = Path(save_file_path)
 
         if save_file_path.suffix != ".json":
-            raise StructuredError(f"Extension error. Incorrect extension: {save_file_path}")
+            emsg = f"Extension error. Incorrect extension: {save_file_path}"
+            raise StructuredError(emsg)
 
         if save_file_path.exists():
             enc = CharDecEncoding.detect_text_file_encoding(save_file_path)
@@ -728,7 +743,8 @@ class RuleBasedReplacer:
                 json.dump(data_to_write, f, indent=4, ensure_ascii=False)
                 contents = json.dumps({"filename_mapping": self.rules})
         except json.JSONDecodeError:
-            raise StructuredError("Error. No write was performed on the target json")
+            emsg = "Error. No write was performed on the target json"
+            raise StructuredError(emsg)
 
         return contents
 

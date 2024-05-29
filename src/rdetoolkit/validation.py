@@ -37,9 +37,11 @@ class MetadataDefValidator:
 
         """
         if path is None and json_obj is None:
-            raise ValueError("At least one of 'path' or 'json_obj' must be provided")
+            emsg = "At least one of 'path' or 'json_obj' must be provided"
+            raise ValueError(emsg)
         if path is not None and json_obj is not None:
-            raise ValueError("Both 'path' and 'json_obj' cannot be provided at the same time")
+            emsg = "Both 'path' and 'json_obj' cannot be provided at the same time"
+            raise ValueError(emsg)
 
         if path is not None:
             with open(path, encoding="utf-8") as f:
@@ -47,7 +49,8 @@ class MetadataDefValidator:
         elif json_obj is not None:
             __data = json_obj
         else:
-            raise ValueError("Unexpected error")
+            emsg = "Unexpected validation error"
+            raise ValueError(emsg)
 
         MetadataItem(**__data)
         return __data
@@ -70,13 +73,15 @@ def metadata_def_validate(path: str | Path):
         path = Path(path)
 
     if not path.exists():
-        raise FileNotFoundError(f"The schema and path do not exist: {path.name}")
+        emsg = f"The schema and path do not exist: {path.name}"
+        raise FileNotFoundError(emsg)
 
     validator = MetadataDefValidator()
     try:
         validator.validate(path=path)
     except ValidationError as e:
-        raise MetadataDefValidationError(f"Error in validating metadata_def.json: {e}")
+        emsg = f"Error in validating metadata_def.json: {e}"
+        raise MetadataDefValidationError(emsg)
 
 
 class InvoiceValidator:
@@ -110,39 +115,50 @@ class InvoiceValidator:
             data = cast(dict[str, Any], _data)
         else:
             # In RDE, the top of invoice.json never returns as an array.
-            raise ValueError("Expected a dictionary, but got a different type.")
+            emsg = "Expected a dictionary, but got a different type."
+            raise ValueError(emsg)
 
         with open(self.pre_basic_info_schema, encoding="utf-8") as f:
             basic_info = json.load(f)
         try:
             validate(instance=data, schema=basic_info)
         except SchemaValidationError:
-            raise InvoiceSchemaValidationError("Error in validating system standard item in invoice.schema.json")
+            emsg = "Error in validating system standard item in invoice.schema.json"
+            raise InvoiceSchemaValidationError(emsg)
 
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
         errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
+        all_error_msg: str = ""
         for error in errors:
-            raise InvoiceSchemaValidationError(f"Error in validating invoice.schema.json:\n{error.message}\n{error.schema}")
+            err_fmt = f"{error.message}\n{error.schema}\n\n"
+            all_error_msg += err_fmt
+        if all_error_msg:
+            emsg = f"Error in validating invoice.schema.json:\n{all_error_msg}"
+            raise InvoiceSchemaValidationError(emsg)
 
         return data
 
     def __get_data(self, path: str | Path | None, obj: dict[str, Any] | None) -> dict[str, Any]:
         if path is None and obj is None:
-            raise ValueError("At least one of 'path' or 'obj' must be provided")
+            emsg = "At least one of 'path' or 'obj' must be provided"
+            raise ValueError(emsg)
         if path is not None and obj is not None:
-            raise ValueError("Both 'path' and 'obj' cannot be provided at the same time")
+            emsg = "Both 'path' and 'obj' cannot be provided at the same time"
+            raise ValueError(emsg)
 
         if path is not None:
             return read_from_json_file(path)
         if obj is not None:
             return obj
-        raise ValueError("Unexpected error")
+        emsg = "Unexpected error"
+        raise ValueError(emsg)
 
     def __pre_validate(self) -> dict[str, Any]:
         __path = Path(self.schema_path) if isinstance(self.schema_path, str) else self.schema_path
 
         if __path.suffix != ".json":
-            raise ValueError("The schema file must be a json file")
+            emsg = "The schema file must be a json file"
+            raise ValueError(emsg)
 
         data = read_from_json_file(__path)
 
@@ -150,9 +166,11 @@ class InvoiceValidator:
             try:
                 InvoiceSchemaJson(**data)
             except ValidationError:
-                raise InvoiceSchemaValidationError("Error in schema validation")
+                emsg = "Error in schema validation"
+                raise InvoiceSchemaValidationError(emsg)
             except ValueError:
-                raise InvoiceSchemaValidationError("Error in schema validation")
+                emsg = "Error in schema validation"
+                raise InvoiceSchemaValidationError(emsg)
             return data
 
         return data
@@ -234,9 +252,11 @@ def invoice_validate(path: str | Path, schema: str | Path):
         path = Path(path)
 
     if not schema.exists():
-        raise FileNotFoundError(f"The schema and path do not exist: {schema.name}")
+        emsg = f"The schema and path do not exist: {schema.name}"
+        raise FileNotFoundError(emsg)
     if not path.exists():
-        raise FileNotFoundError(f"The schema and path do not exist: {path.name}")
+        emsg = f"The schema and path do not exist: {path.name}"
+        raise FileNotFoundError(emsg)
 
     validator = InvoiceValidator(schema)
     try:

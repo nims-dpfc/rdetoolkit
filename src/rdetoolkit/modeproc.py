@@ -194,8 +194,9 @@ def excel_invoice_mode_process(
     except StructuredError:
         raise
     except Exception as e:
+        emsg = f"ERROR: failed to generate invoice file for data {idx:04d}"
         raise StructuredError(
-            f"ERROR: failed to generate invoice file for data {idx:04d}",
+            emsg,
             eobj=e,
         )
 
