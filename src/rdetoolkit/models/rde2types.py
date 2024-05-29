@@ -71,8 +71,7 @@ class RdeFormatFlags:  # pragma: no cover
             ValueError: If both flags are set to True
         """
         if value and self.is_multifile_enabled:
-            emsg = "both flags cannot be True"
-            raise ValueError(emsg)
+            raise ValueError("both flags cannot be True")
         self._is_rdeformat_enabled = value
 
     @property
@@ -95,8 +94,7 @@ class RdeFormatFlags:  # pragma: no cover
             ValueError: If both flags are set to True
         """
         if value and self.is_rdeformat_enabled:
-            emsg = "both flags cannot be True"
-            raise ValueError(emsg)
+            raise ValueError("both flags cannot be True")
         self._is_multifile_enabled = value
 
 
