@@ -16,8 +16,11 @@ from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
+from rdetoolkit.rdelogger import get_logger
 
 LANG_ENC_FLAG: Final[int] = 0x800
+
+logger = get_logger(__name__)
 
 
 class _ChardetType(TypedDict):
@@ -651,7 +654,9 @@ def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int 
     def _trycast(valstr, tp):
         try:
             return tp(valstr)
-        except Exception:
+        except Exception as e:
+            emsg = f"ERROR: failed to cast metaDef value: {e}"
+            logger.exception(emsg)
             return None
 
     def _convert_to_date_format(value: str, fmt: str) -> str:
