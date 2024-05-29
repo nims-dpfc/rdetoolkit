@@ -87,11 +87,11 @@ class InitCommand:
         self._info_msg(f"Created: {path}")
 
     def __make_dirs(self):
-        for dir in self.default_dirs:
+        for d in self.default_dirs:
             try:
-                dir.mkdir(parents=True, exist_ok=True)
+                d.mkdir(parents=True, exist_ok=True)
             except Exception:
-                self._error_msg(f"Failed to create directory: {dir}")
+                self._error_msg(f"Failed to create directory: {d}")
                 raise click.Abort
 
     def __make_requirements_txt(self, path: Path) -> None:
@@ -119,9 +119,9 @@ class InitCommand:
         self._info_msg(f"Created: {path}")
 
     def __delete_dirs(self):
-        for dir in self.default_dirs:
-            if dir.exists():
-                shutil.rmtree(dir)
+        for d in self.default_dirs:
+            if d.exists():
+                shutil.rmtree(d)
 
     def _info_msg(self, msg):
         click.echo(msg)

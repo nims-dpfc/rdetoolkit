@@ -149,8 +149,8 @@ def test_init_creation():
         Path("input/inputdata"),
         Path("templates/tasksupport"),
     ]
-    for dir in dirs:
-        assert dir.exists()
+    for d in dirs:
+        assert d.exists()
 
     files = [
         Path("container/main.py"),
