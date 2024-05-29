@@ -29,6 +29,7 @@ cycler==0.11.0
 distlib==0.3.7
 editorconfig==0.12.4
 et-xmlfile==1.1.0
+eval-type-backport==0.2.0
 exceptiongroup==1.1.3
 filelock==3.12.4
 flake8==6.0.0
