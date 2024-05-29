@@ -6,7 +6,6 @@ from rdetoolkit.cmd.command import InitCommand, VersionCommand
 @click.group()
 def cli():
     """CLI generates template projects for RDE structured programs."""
-    pass
 
 
 @click.command()
