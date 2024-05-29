@@ -19,7 +19,7 @@ def get_module_members(module_name: ModuleType):
         A list of names of functions and classes defined in the module.
     """
     members = []
-    for name in d(module_name):
+    for name in dir(module_name):
         if name.startswith("__") or name.startswith("_"):
             continue  # Skip dunder methods
         obj = getattr(module_name, name)
