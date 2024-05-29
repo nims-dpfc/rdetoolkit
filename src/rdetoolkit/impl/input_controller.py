@@ -185,7 +185,7 @@ class RDEFormatChecker(IInputFileChecker):
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: This will always return None for this implementation.
         """
-        input_files = [f for f in src_dir_input.glob("*")]
+        input_files = list(src_dir_input.glob("*"))
         zipfiles = self._get_zipfiles(input_files)
         if len(zipfiles) != 1:
             emsg = "ERROR: no zipped input files"
