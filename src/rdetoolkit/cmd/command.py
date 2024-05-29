@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Union
 
 import click
+
 from rdetoolkit import __version__
 from rdetoolkit.cmd.default import INVOICE_JSON, PROPATIES
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, Properties
