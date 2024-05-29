@@ -284,7 +284,8 @@ class MainScriptGenerator:
         main_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
-            "# The following script is a template for the source code.\n\n" "import rdetoolkit\n",
+            "# The following script is a template for the source code.\n\n",
+            "import rdetoolkit\n",
             "rdetoolkit.workflows.run()\n",
         ]
 
