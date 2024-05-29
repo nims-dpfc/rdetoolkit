@@ -52,8 +52,7 @@ class InitCommand:
             self.__make_invoice_json(current_dir / "input" / "invoice" / "invoice.json")
             self._info_msg(f"\nCheck the folder: {current_dir}")
             self._success_msg("Done!")
-        except Exception as e:
-            print(e)
+        except Exception:
             self._error_msg("Failed to create files required for structured RDE programs.")
             raise click.Abort
 
