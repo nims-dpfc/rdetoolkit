@@ -347,7 +347,7 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     Raises:
         None, but callers should be aware that downstream exceptions can be raised by individual checker initializations.
     """
-    input_files = [f for f in src_paths.inputdata.glob("*")]
+    input_files = list(src_paths.inputdata.glob("*"))
     excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", ".xlsx"] and f.stem.endswith("_excel_invoice")]
     mode = mode.lower() if mode is not None else ""
     if mode == "rdeformat":

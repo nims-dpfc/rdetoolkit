@@ -46,7 +46,7 @@ class InvoiceChecker(IInputFileChecker):
                 - RawFiles: A list of tuples where each tuple contains file paths grouped as 'other files'.
                 - Optional[Path]: This is always None for this implementation.
         """
-        input_files = [f for f in src_dir_input.glob("*")]
+        input_files = list(src_dir_input.glob("*"))
         zipfiles, _, other_files = self._get_group_by_files(input_files)
         if not isinstance(other_files, list):
             other_files = list(other_files)
@@ -91,7 +91,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: Path to the Excel Invoice file.
         """
-        input_files = [f for f in src_dir_input.glob("*")]
+        input_files = list(src_dir_input.glob("*"))
         zipfiles, excel_invoice_files, other_files = self._get_group_by_files(input_files)
         self._validate_files(zipfiles, excel_invoice_files, other_files)
 
@@ -241,7 +241,7 @@ class MultiFileChecker(IInputFileChecker):
                 - RawFiles: List of tuples containing paths of raw files.
                 - Optional[Path]: This will always return None for this implementation.
         """
-        input_files = [f for f in src_dir_input.glob("*")]
+        input_files = list(src_dir_input.glob("*"))
         other_files = self._get_group_by_files(input_files)
         _rawfiles: list[tuple[Path, ...]] = [(f,) for f in other_files]
         return sorted(_rawfiles, key=lambda path: str(path)), None

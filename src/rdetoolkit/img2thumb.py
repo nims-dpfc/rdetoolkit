@@ -26,7 +26,7 @@ def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: str | list[str
 
 def __find_img_path(dirname: str, target_name: str) -> str:
     search_pattern = os.path.join(dirname, "**", target_name)
-    matching_files = [f for f in glob(search_pattern, recursive=True)]
+    matching_files = list(glob(search_pattern, recursive=True))
     if matching_files:
         return matching_files[0]
     return ""
