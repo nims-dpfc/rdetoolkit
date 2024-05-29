@@ -40,7 +40,7 @@ class RdeFormatFlags:  # pragma: no cover
     _is_multifile_enabled: bool = False
 
     def __init__(self):
-        warnings.warn("The RdeFormatFlags class is scheduled to be deleted in the next update.", FutureWarning)
+        warnings.warn("The RdeFormatFlags class is scheduled to be deleted in the next update.", FutureWarning, stacklevel=2)
 
     def __post_init__(self):
         """Method called after object initialization.
