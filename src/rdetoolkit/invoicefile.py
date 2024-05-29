@@ -669,7 +669,7 @@ class RuleBasedReplacer:
         if mapping_rules is None:
             mapping_rules = self.rules
         if source_json_obj is None:
-            source_json_obj = dict()
+            source_json_obj = {}
 
         for key, value in self.rules.items():
             keys = key.split(".")
@@ -733,7 +733,7 @@ class RuleBasedReplacer:
             _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
             data_to_write = copy.deepcopy(exists_contents)
         else:
-            new_contents: dict[str, Any] = dict()
+            new_contents: dict[str, Any] = {}
             _ = self.get_apply_rules_obj(replacements_rule, new_contents)
             data_to_write = copy.deepcopy(new_contents)
             enc = "utf-8"
