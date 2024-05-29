@@ -198,7 +198,7 @@ def excel_invoice_mode_process(
         raise StructuredError(
             emsg,
             eobj=e,
-        )
+        ) from e
 
     if config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)

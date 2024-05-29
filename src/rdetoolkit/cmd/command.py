@@ -55,9 +55,9 @@ class InitCommand:
             self.__make_invoice_json(current_dir / "input" / "invoice" / "invoice.json")
             self._info_msg(f"\nCheck the folder: {current_dir}")
             self._success_msg("Done!")
-        except Exception:
+        except Exception as e:
             self._error_msg("Failed to create files required for structured RDE programs.")
-            raise click.Abort
+            raise click.Abort from e
 
     def __make_template_json(self, path: Path) -> None:
         if Path(path).exists():
@@ -90,9 +90,9 @@ class InitCommand:
         for d in self.default_dirs:
             try:
                 d.mkdir(parents=True, exist_ok=True)
-            except Exception:
+            except Exception as e:
                 self._error_msg(f"Failed to create directory: {d}")
-                raise click.Abort
+                raise click.Abort from e
 
     def __make_requirements_txt(self, path: Path) -> None:
         if Path(path).exists():

@@ -107,9 +107,9 @@ def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
         dct_schema = invoiceschema_obj["properties"][key1]["properties"][key2]
         try:
             invoiceobj[key1][key2] = rde2util.castval(valobj, dct_schema["type"], dct_schema.get("format"))
-        except StructuredError:
+        except StructuredError as struct_err:
             emsg = f"ERROR: failed to cast invoice value for key [{key1}][{key2}]"
-            raise StructuredError(emsg)
+            raise StructuredError(emsg) from struct_err
     else:
         invoiceobj[key1][key2] = valobj
 
@@ -742,9 +742,9 @@ class RuleBasedReplacer:
             with open(save_file_path, mode="w", encoding=enc) as f:
                 json.dump(data_to_write, f, indent=4, ensure_ascii=False)
                 contents = json.dumps({"filename_mapping": self.rules})
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as json_err:
             emsg = "Error. No write was performed on the target json"
-            raise StructuredError(emsg)
+            raise StructuredError(emsg) from json_err
 
         return contents
 

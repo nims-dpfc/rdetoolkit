@@ -64,11 +64,11 @@ def catch_exception_with_message(*, error_message: str | None = None, error_code
 
                 ecode = error_code if error_code is not None else 1
 
-                raise StructuredError(msg, ecode=ecode, eobj=e)
+                raise StructuredError(msg, ecode=ecode, eobj=e) from e
 
             except Exception as e:
                 msg = error_message if error_message is not None else str(e)
-                raise Exception(msg)
+                raise Exception(msg) from e
 
         return wrapper
 

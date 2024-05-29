@@ -79,9 +79,9 @@ def metadata_def_validate(path: str | Path):
     validator = MetadataDefValidator()
     try:
         validator.validate(path=path)
-    except ValidationError as e:
-        emsg = f"Error in validating metadata_def.json: {e}"
-        raise MetadataDefValidationError(emsg)
+    except ValidationError as validation_error:
+        emsg = f"Error in validating metadata_def.json: {validation_error}"
+        raise MetadataDefValidationError(emsg) from validation_error
 
 
 class InvoiceValidator:
@@ -122,9 +122,9 @@ class InvoiceValidator:
             basic_info = json.load(f)
         try:
             validate(instance=data, schema=basic_info)
-        except SchemaValidationError:
+        except SchemaValidationError as schema_error:
             emsg = "Error in validating system standard item in invoice.schema.json"
-            raise InvoiceSchemaValidationError(emsg)
+            raise InvoiceSchemaValidationError(emsg) from schema_error
 
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
         errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
@@ -165,12 +165,12 @@ class InvoiceValidator:
         if __path.name == "invoice.schema.json":
             try:
                 InvoiceSchemaJson(**data)
-            except ValidationError:
+            except ValidationError as validation_error:
                 emsg = "Error in schema validation"
-                raise InvoiceSchemaValidationError(emsg)
-            except ValueError:
+                raise InvoiceSchemaValidationError(emsg) from validation_error
+            except ValueError as value_error:
                 emsg = "Error in schema validation"
-                raise InvoiceSchemaValidationError(emsg)
+                raise InvoiceSchemaValidationError(emsg) from value_error
             return data
 
         return data
@@ -261,5 +261,5 @@ def invoice_validate(path: str | Path, schema: str | Path):
     validator = InvoiceValidator(schema)
     try:
         validator.validate(path=path)
-    except ValidationError:
-        raise InvoiceSchemaValidationError
+    except ValidationError as validation_error:
+        raise InvoiceSchemaValidationError from validation_error
