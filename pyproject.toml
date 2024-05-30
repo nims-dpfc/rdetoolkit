@@ -17,6 +17,7 @@ dependencies = [
     "jsonschema>=4.21.1",
     "tomlkit>=0.12.4",
     "PyYAML>=6.0.1",
+    "eval_type_backport>=0.2.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
@@ -38,14 +39,32 @@ select = [
     "I",    # isort
     "D",    # pydocstyle
     "N",    # pep8-naming
-    "PL",   # Pylint
+    "PL",   # Pylint,
+    "ANN",  # flake8-annotations
+    "S",    # flake8-bandit
+    "BLE",  # flake8-blind-except
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "COM",  # flake8-commas
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "EM",   # flake8-errmsg
+    "FA",   # flake8-future-annotations
+    "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
+    "INP",  # flake8-no-pep420
+    "PIE",  # flake8-pie
+    "T10",  # flake8-debugger
+    "T20",  # flake8-print
+    "PYI",  # flake8-pyi
+    "RSE",  # flake8-raise
+    "RET",  # flake8-return
     "SLF",  # flake8-self
     "SLOT", # flake8-slots
     "SIM",  # flake8-simplify
     "TID",  # flake8-tidy-imports
-
 ]
-ignore = ["D100", "D101", "D104", "D105", "D107", "PLR0913"]
+ignore = ["D100", "D101", "D104", "D105", "D107", "PLR0913", "S307", "ANN101"]
 exclude = [
     "bzr",
     ".direnv",
@@ -84,6 +103,9 @@ indent-width = 4
 
 [tool.ruff.format]
 indent-style = "space"
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
