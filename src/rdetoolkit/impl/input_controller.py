@@ -3,8 +3,8 @@ from __future__ import annotations
 import re
 import shutil
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller

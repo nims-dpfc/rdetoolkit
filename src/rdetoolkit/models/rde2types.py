@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import os
 import warnings
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence, TypedDict, Union
+from typing import TypedDict, Union
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sys
 import traceback
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 from rdetoolkit.config import Config, load_config
 from rdetoolkit.exceptions import StructuredError
@@ -80,7 +80,11 @@ def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFil
     return rawfiles, excelinvoice
 
 
-def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepath: Path, invoice_schema_filepath: Path) -> Generator[RdeOutputResourcePath, None, None]:
+def generate_folder_paths_iterator(
+    raw_files_group: RawFiles,
+    invoice_org_filepath: Path,
+    invoice_schema_filepath: Path,
+) -> Generator[RdeOutputResourcePath, None, None]:
     """Generates iterator for RDE output folder paths.
 
     Create data folders for registration in the RDE system.
