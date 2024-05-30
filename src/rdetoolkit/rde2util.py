@@ -16,11 +16,8 @@ from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
-from rdetoolkit.rdelogger import get_logger
 
 LANG_ENC_FLAG: Final[int] = 0x800
-
-logger = get_logger(__name__)
 
 
 class _ChardetType(TypedDict):
@@ -29,7 +26,7 @@ class _ChardetType(TypedDict):
     confidence: float
 
 
-def get_default_values(default_values_filepath):
+def get_default_values(default_values_filepath) -> dict[str, Any]:
     """Reads default values from a default_value.csv file and returns them as a dictionary.
 
     This function opens a file specified by 'default_values_filepath', detects its encoding,
@@ -189,7 +186,7 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
         return json.load(f)
 
 
-def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
+def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8") -> None:  # pragma: no cover
     """Writes an content to a JSON file.
 
     Args:
@@ -483,7 +480,7 @@ class Meta:
         return ""
 
     @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
-    def writefile(self, meta_filepath, enc="utf_8"):
+    def writefile(self, meta_filepath, enc="utf_8") -> dict[str, Any]:
         """Writes the metadata to a file after processing units and actions.
 
         This method serializes the metadata into JSON format and writes it to the specified file.
@@ -654,9 +651,8 @@ def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int 
     def _trycast(valstr, tp):
         try:
             return tp(valstr)
-        except Exception as e:
-            emsg = f"ERROR: failed to cast metaDef value: {e}"
-            logger.exception(emsg)
+        except ValueError:
+            # emsg = f"ERROR: failed to cast metaDef value: {e}"
             return None
 
     def _convert_to_date_format(value: str, fmt: str) -> str:
