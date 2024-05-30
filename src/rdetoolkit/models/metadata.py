@@ -40,7 +40,7 @@ class MetaValue(BaseModel):
 
     @field_validator("value")
     @classmethod
-    def check_value_size(cls, v):
+    def check_value_size(cls, v: Any):
         """Validator that verifies that the size of the 'value' does not exceed 1024 bytes if it is a string.
 
         Args:

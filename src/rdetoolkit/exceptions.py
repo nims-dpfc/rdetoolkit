@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Callable
+from typing import Any, Callable
+
+from rdetoolkit.rdelogger import get_logger
+
+logger = get_logger(__name__)
 
 
 class StructuredError(Exception):
@@ -18,7 +22,7 @@ class StructuredError(Exception):
                     provide more context to the error.
     """
 
-    def __init__(self, emsg: str = "", ecode=1, eobj=None):
+    def __init__(self, emsg: str = "", ecode: int = 1, eobj: Any | None = None):
         super().__init__(emsg)
         self.emsg = emsg
         self.ecode = ecode
@@ -28,7 +32,7 @@ class StructuredError(Exception):
 class InvoiceSchemaValidationError(Exception):
     """Raised when a validation error occurs."""
 
-    def __init__(self, message="Validation error") -> None:
+    def __init__(self, message: str = "Validation error") -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -36,7 +40,7 @@ class InvoiceSchemaValidationError(Exception):
 class MetadataDefValidationError(Exception):
     """Raised when a validation error occurs."""
 
-    def __init__(self, message="Validation error") -> None:
+    def __init__(self, message: str = "Validation error") -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -55,7 +59,7 @@ def catch_exception_with_message(*, error_message: str | None = None, error_code
         A function decorator that provides customized error handling on exception occurrence.
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
@@ -68,6 +72,7 @@ def catch_exception_with_message(*, error_message: str | None = None, error_code
                 raise StructuredError(msg, ecode=ecode, eobj=e) from e
 
             except Exception as e:
+                logger.exception(e)
                 msg = error_message if error_message is not None else str(e)
                 raise Exception(msg) from e
 

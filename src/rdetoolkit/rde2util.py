@@ -7,7 +7,7 @@ import pathlib
 import re
 import zipfile
 from copy import deepcopy
-from typing import Any, Final, TypedDict, cast
+from typing import Any, Callable, Final, TypedDict, cast
 
 import chardet  # for following failure cases
 import dateutil.parser
@@ -26,7 +26,7 @@ class _ChardetType(TypedDict):
     confidence: float
 
 
-def get_default_values(default_values_filepath) -> dict[str, Any]:
+def get_default_values(default_values_filepath: RdeFsPath) -> dict[str, Any]:
     """Reads default values from a default_value.csv file and returns them as a dictionary.
 
     This function opens a file specified by 'default_values_filepath', detects its encoding,
@@ -34,7 +34,7 @@ def get_default_values(default_values_filepath) -> dict[str, Any]:
     The function constructs and returns a dictionary mapping keys to their corresponding values.
 
     Args:
-        default_values_filepath (str | Path): The file path to the CSV file containing default values.
+        default_values_filepath (RdeFsPath): The file path to the CSV file containing default values.
 
     Returns:
         dict: A dictionary containing the keys and their corresponding default values.
@@ -363,7 +363,7 @@ class Meta:
         self,
         entry_dict_meta: MetaType | RepeatedMetaType,
         *,
-        ignore_empty_strvalue=True,
+        ignore_empty_strvalue: bool = True,
     ) -> dict[str, set]:
         """Register the value of metadata.
 
@@ -444,7 +444,7 @@ class Meta:
                 return
             self.__set_const_metadata(kdef, _vsrc, vdef)
 
-    def _process_unit(self, vobj, idx):  # pragma: no cover
+    def _process_unit(self, vobj: dict[str, Any], idx: int | None):  # pragma: no cover
         _unit = vobj.get("unit", "")
         # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
         if _unit.startswith("$"):
@@ -455,10 +455,10 @@ class Meta:
                 del vobj["unit"]
             elif isinstance(srcval, str):
                 vobj["unit"] = srcval
-            else:
+            elif idx is not None:
                 vobj["unit"] = srcval[idx]
 
-    def _process_action(self, vobj, k, idx):  # pragma: no cover
+    def _process_action(self, vobj: dict[str, Any], k: str, idx: int | None):  # pragma: no cover
         # actionの処理
         stract = self.metaDef[k].get("action")
         if not stract:
@@ -467,8 +467,9 @@ class Meta:
         for srckey, srcval in self.referedmap.items():
             if srckey not in stract:
                 continue
-            realval = srcval[idx] if isinstance(srcval, list) else srcval
-            stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
+            if idx is not None:
+                realval = srcval[idx] if isinstance(srcval, list) else srcval
+                stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
         vobj["value"] = eval(stract)
 
     def __convert_to_str(self, value: str | float | list) -> str | list[str]:
@@ -480,7 +481,7 @@ class Meta:
         return ""
 
     @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
-    def writefile(self, meta_filepath, enc="utf_8") -> dict[str, Any]:
+    def writefile(self, meta_filepath: str, enc: str = "utf_8") -> dict[str, Any]:
         """Writes the metadata to a file after processing units and actions.
 
         This method serializes the metadata into JSON format and writes it to the specified file.
@@ -633,7 +634,7 @@ class Meta:
         return {"value": _casted_value}
 
 
-def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int | float | str:
+def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int | float | str:
     """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
 
     The function returns a formatted value of the string valstr according to
@@ -643,12 +644,12 @@ def castval(valstr: str, outtype: str | None, outfmt: str | None) -> bool | int 
     It should be assigned separately as needed.
 
     Args:
-        valstr (str): String to be converted of type
+        valstr (Any): String to be converted of type
         outtype (str): Type information at output
         outfmt (str): Formatting at output (related to date data)
     """
 
-    def _trycast(valstr, tp):
+    def _trycast(valstr: str, tp: Callable[[str], Any]):
         try:
             return tp(valstr)
         except ValueError:

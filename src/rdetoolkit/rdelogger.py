@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from logging import DEBUG, INFO, FileHandler, Formatter, Logger, NullHandler, StreamHandler, getLogger
+from logging import DEBUG, INFO, FileHandler, Formatter, Handler, Logger, NullHandler, StreamHandler, getLogger
 from typing import Callable
 
 from rdetoolkit.rde2util import StorageDir
@@ -125,7 +125,7 @@ class CustomLog:
 
         return self.logger
 
-    def _set_handler(self, handler, verbose: bool):
+    def _set_handler(self, handler: Handler, verbose: bool):
         level = DEBUG if verbose else INFO
         handler.setLevel(level)
         formatter = Formatter(
@@ -157,7 +157,7 @@ def log_decorator() -> Callable:
         ```
     """
 
-    def _log_decorator(func):
+    def _log_decorator(func: Callable):
         def wrapper(*args, **kargs):
             logger = CustomLog().get_logger()
             logger.info(f"{func.__name__:15} --> Start")

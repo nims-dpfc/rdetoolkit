@@ -12,11 +12,11 @@ import pandas as pd
 
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.models.rde2types import RdeOutputResourcePath
+from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
 from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
 
 
-def read_excelinvoice(excelinvoice_filepath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Reads an ExcelInvoice and processes each sheet into a dataframe.
 
     This function reads an ExcelInvoice file and processes various sheets within the file, specifically looking for sheets named `invoiceList_format_id`,`generalTerm`, and `specificTerm`.
@@ -101,7 +101,7 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
     return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
 
 
-def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
+def _assign_invoice_val(invoiceobj: dict[str, Any], key1: str, key2: str, valobj: Any, invoiceschema_obj: dict[str, Any]) -> None:
     """When the destination key, which is the first key 'keys1', is 'custom', valobj is cast according to the invoiceschema_obj. In all other cases, valobj is assigned without changing its type."""
     if key1 == "custom":
         dct_schema = invoiceschema_obj["properties"][key1]["properties"][key2]
@@ -114,14 +114,19 @@ def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
         invoiceobj[key1][key2] = valobj
 
 
-def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoiceschema_filepath, invoice_info) -> None:
+def overwrite_invoicefile_for_dpfterm(
+    invoiceobj: dict[str, Any],
+    invoice_dst_filepath: RdeFsPath,
+    invoiceschema_filepath: RdeFsPath,
+    invoice_info: dict[str, Any],
+) -> None:
     """A function to overwrite DPF metadata into an invoice file.
 
     Args:
-        invoiceobj (object): The object of invoice.json.
-        invoice_dst_filepath (pathlib.Path): The file path for the destination invoice.json.
-        invoiceschema_filepath (pathlib.Path): The file path of invoice.schema.json.
-        invoice_info (object): Information about the invoice file.
+        invoiceobj (dict[str, Any]): The object of invoice.json.
+        invoice_dst_filepath (RdeFsPath): The file path for the destination invoice.json.
+        invoiceschema_filepath (RdeFsPath): The file path of invoice.schema.json.
+        invoice_info (dict[str, Any]): Information about the invoice file.
     """
     with open(invoiceschema_filepath, "rb") as f:
         data = f.read()
@@ -134,7 +139,7 @@ def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoices
         json.dump(invoiceobj, fout, indent=4, ensure_ascii=False)
 
 
-def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl) -> list:
+def check_exist_rawfiles_for_folder(dfexcelinvoice: pd.DataFrame, rawfiles_tpl: tuple) -> list:
     """Function to check the existence of rawfiles_tpl specified for a folder.
 
     It checks whether rawfiles_tpl, specified as an index, exists in all indexes of ExcelInvoice.
@@ -202,20 +207,20 @@ class InvoiceFile:
         return self._invoice_obj
 
     @invoice_obj.setter
-    def invoice_obj(self, value) -> None:
+    def invoice_obj(self, value: dict[str, Any]) -> None:
         """Sets the invoice object."""
         if not isinstance(value, dict):
             emsg = "invoice_obj must be a dictionary"
             raise ValueError(emsg)
         self._invoice_obj = value
 
-    def __getitem__(self, key) -> Any:
+    def __getitem__(self, key: str) -> Any:
         return self._invoice_obj[key]
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         self._invoice_obj[key] = value
 
-    def __delitem__(self, key) -> None:
+    def __delitem__(self, key: str) -> None:
         del self._invoice_obj[key]
 
     def read(self, *, target_path: Path | None = None) -> dict:
@@ -406,7 +411,7 @@ class ExcelInvoiceFile:
                 raise StructuredError(emsg)
 
     @staticmethod
-    def __is_empty_row(row) -> bool:
+    def __is_empty_row(row: pd.Series) -> bool:
         return all(cell == "" or pd.isnull(cell) for cell in row)
 
     def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
@@ -636,7 +641,13 @@ class RuleBasedReplacer:
             data = json.load(f)
             self.rules = data.get("filename_mapping", {})
 
-    def get_apply_rules_obj(self, replacements: dict[str, Any], source_json_obj: dict[str, Any] | None, *, mapping_rules: dict[str, str] | None = None) -> dict[str, Any]:
+    def get_apply_rules_obj(
+        self,
+        replacements: dict[str, Any],
+        source_json_obj: dict[str, Any] | None,
+        *,
+        mapping_rules: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Function to convert file mapping rules into a JSON format.
 
         This function takes string mappings separated by dots ('.') and converts them into a dictionary format, making it easier to handle within a target JsonObject.

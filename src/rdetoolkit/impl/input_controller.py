@@ -4,6 +4,7 @@ import re
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from typing import Sequence
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl import compressed_controller
@@ -118,13 +119,16 @@ class ExcelInvoiceChecker(IInputFileChecker):
         # the same file so that the number of decompressed files matches
         # the number of "filename" columns in the data frame.
         if len(_parse) == 1 and len(_parse) != len(df_excel_invoice[df_excel_invoice.columns[0]]):
-            return sorted([_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]], key=lambda paths: self.get_index(paths[0], original_sort_items))
+            return sorted(
+                [_parse[0] for _ in df_excel_invoice[df_excel_invoice.columns[0]]],
+                key=lambda paths: self.get_index(paths[0], original_sort_items),
+            )
         if len(_parse) == len(df_excel_invoice[df_excel_invoice.columns[0]]):
             return sorted(_parse, key=lambda paths: self.get_index(paths[0], original_sort_items))
         emsg = "Error! The input file and the description in the ExcelInvoice are not consistent."
         raise StructuredError(emsg)
 
-    def get_index(self, paths, sort_items) -> int:
+    def get_index(self, paths: Path, sort_items: Sequence) -> int:
         """Retrieves the index of the `divided` folder.
 
         Args:

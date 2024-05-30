@@ -10,10 +10,13 @@ import click
 from rdetoolkit import __version__
 from rdetoolkit.cmd.default import INVOICE_JSON, PROPATIES
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, Properties
+from rdetoolkit.rdelogger import get_logger
+
+logger = get_logger(__name__)
 
 
 class Command(click.Command):
-    def __init__(self, name, **attrs) -> None:
+    def __init__(self, name: str, **attrs: Any) -> None:
         super().__init__(name, **attrs)
 
 
@@ -56,6 +59,7 @@ class InitCommand:
             self._info_msg(f"\nCheck the folder: {current_dir}")
             self._success_msg("Done!")
         except Exception as e:
+            logger.exception(e)
             self._error_msg("Failed to create files required for structured RDE programs.")
             raise click.Abort from e
 
@@ -91,6 +95,7 @@ class InitCommand:
             try:
                 d.mkdir(parents=True, exist_ok=True)
             except Exception as e:
+                logger.exception(e)
                 self._error_msg(f"Failed to create directory: {d}")
                 raise click.Abort from e
 
@@ -123,13 +128,13 @@ class InitCommand:
             if d.exists():
                 shutil.rmtree(d)
 
-    def _info_msg(self, msg):
+    def _info_msg(self, msg: str):
         click.echo(msg)
 
-    def _success_msg(self, msg):
+    def _success_msg(self, msg: str):
         click.echo(click.style(msg, fg="green"))
 
-    def _error_msg(self, msg):
+    def _error_msg(self, msg: str):
         click.echo(click.style(f"Error! {msg}", fg="red"))
 
 
