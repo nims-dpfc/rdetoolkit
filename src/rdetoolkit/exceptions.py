@@ -3,10 +3,6 @@ from __future__ import annotations
 from functools import wraps
 from typing import Any, Callable
 
-from rdetoolkit.rdelogger import get_logger
-
-logger = get_logger(__name__)
-
 
 class StructuredError(Exception):
     """A custom exception class providing structured error information.
@@ -66,13 +62,9 @@ def catch_exception_with_message(*, error_message: str | None = None, error_code
                 return func(*args, **kwargs)
             except StructuredError as e:
                 msg = error_message if error_message is not None else str(e)
-
                 ecode = error_code if error_code is not None else 1
-
                 raise StructuredError(msg, ecode=ecode, eobj=e) from e
-
             except Exception as e:
-                logger.exception(e)
                 msg = error_message if error_message is not None else str(e)
                 raise Exception(msg) from e
 

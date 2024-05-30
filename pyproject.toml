@@ -41,7 +41,6 @@ select = [
     "N",    # pep8-naming
     "PL",   # Pylint,
     "S",    # flake8-bandit
-    "BLE",  # flake8-blind-except
     "B",    # flake8-bugbear
     "A",    # flake8-builtins
     "COM",  # flake8-commas
@@ -63,7 +62,17 @@ select = [
     "SIM",  # flake8-simplify
     "TID",  # flake8-tidy-imports
 ]
-ignore = ["D100", "D101", "D104", "D105", "D107", "PLR0913", "S307", "ANN101"]
+ignore = [
+    "D100",
+    "D101",
+    "D104",
+    "D105",
+    "D107",
+    "PLR0913",
+    "S307",
+    "ANN101",
+    "BLE001",
+]
 exclude = [
     "bzr",
     ".direnv",
