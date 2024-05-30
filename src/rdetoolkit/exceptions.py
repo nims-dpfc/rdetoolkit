@@ -28,7 +28,7 @@ class StructuredError(Exception):
 class InvoiceSchemaValidationError(Exception):
     """Raised when a validation error occurs."""
 
-    def __init__(self, message="Validation error"):
+    def __init__(self, message="Validation error") -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -36,7 +36,7 @@ class InvoiceSchemaValidationError(Exception):
 class MetadataDefValidationError(Exception):
     """Raised when a validation error occurs."""
 
-    def __init__(self, message="Validation error"):
+    def __init__(self, message="Validation error") -> None:
         self.message = message
         super().__init__(self.message)
 

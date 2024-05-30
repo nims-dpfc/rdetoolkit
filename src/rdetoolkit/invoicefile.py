@@ -209,13 +209,13 @@ class InvoiceFile:
             raise ValueError(emsg)
         self._invoice_obj = value
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Any:
         return self._invoice_obj[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         self._invoice_obj[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key) -> None:
         del self._invoice_obj[key]
 
     def read(self, *, target_path: Path | None = None) -> dict:

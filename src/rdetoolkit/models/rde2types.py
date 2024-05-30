@@ -39,10 +39,10 @@ class RdeFormatFlags:  # pragma: no cover
     _is_rdeformat_enabled: bool = False
     _is_multifile_enabled: bool = False
 
-    def __init__(self):
+    def __init__(self) -> None:
         warnings.warn("The RdeFormatFlags class is scheduled to be deleted in the next update.", FutureWarning, stacklevel=2)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Method called after object initialization.
 
         This method checks for the existence of files named rdeformat.txt and multifile.txt in the data/tasksupport directory,

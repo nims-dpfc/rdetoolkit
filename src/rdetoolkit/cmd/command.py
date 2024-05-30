@@ -13,7 +13,7 @@ from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, Properties
 
 
 class Command(click.Command):
-    def __init__(self, name, **attrs):
+    def __init__(self, name, **attrs) -> None:
         super().__init__(name, **attrs)
 
 
