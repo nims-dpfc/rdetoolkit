@@ -57,7 +57,7 @@ def catch_exception_with_message(*, error_message: str | None = None, error_code
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             try:
                 return func(*args, **kwargs)
             except StructuredError as e:

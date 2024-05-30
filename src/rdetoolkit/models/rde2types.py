@@ -61,7 +61,7 @@ class RdeFormatFlags:  # pragma: no cover
         return self._is_rdeformat_enabled
 
     @is_rdeformat_enabled.setter
-    def is_rdeformat_enabled(self, value: bool):
+    def is_rdeformat_enabled(self, value: bool) -> None:
         """Setter to change the enabled state of the RDE format.
 
         Args:
@@ -85,7 +85,7 @@ class RdeFormatFlags:  # pragma: no cover
         return self._is_multifile_enabled
 
     @is_multifile_enabled.setter
-    def is_multifile_enabled(self, value: bool):
+    def is_multifile_enabled(self, value: bool) -> None:
         """Setter to change the enabled state of multi-file support.
 
         Args:

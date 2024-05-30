@@ -444,7 +444,7 @@ class Meta:
                 return
             self.__set_const_metadata(kdef, _vsrc, vdef)
 
-    def _process_unit(self, vobj: dict[str, Any], idx: int | None):  # pragma: no cover
+    def _process_unit(self, vobj: dict[str, Any], idx: int | None) -> None:  # pragma: no cover
         _unit = vobj.get("unit", "")
         # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
         if _unit.startswith("$"):
@@ -458,7 +458,7 @@ class Meta:
             elif idx is not None:
                 vobj["unit"] = srcval[idx]
 
-    def _process_action(self, vobj: dict[str, Any], k: str, idx: int | None):  # pragma: no cover
+    def _process_action(self, vobj: dict[str, Any], k: str, idx: int | None) -> None:  # pragma: no cover
         # actionの処理
         stract = self.metaDef[k].get("action")
         if not stract:
@@ -649,7 +649,7 @@ def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int 
         outfmt (str): Formatting at output (related to date data)
     """
 
-    def _trycast(valstr: str, tp: Callable[[str], Any]):
+    def _trycast(valstr: str, tp: Callable[[str], Any]) -> Any:
         try:
             return tp(valstr)
         except ValueError:

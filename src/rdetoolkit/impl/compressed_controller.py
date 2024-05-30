@@ -40,7 +40,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         _extracted_files = self._unpacked(zipfile, target_path)
         return [(f,) for f in check_exist_rawfiles(self.xlsx_invoice, _extracted_files)]
 
-    def _unpacked(self, zipfile: Path | str, target_dir: Path | str):
+    def _unpacked(self, zipfile: Path | str, target_dir: Path | str) -> list[Path]:
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         shutil.unpack_archive(zipfile, target_dir)
@@ -106,7 +106,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
         safe_verification_files = self.validation_uniq_fspath(target_path, exclude_names=["invoice_org.json"])
         return [tuple(f) for f in safe_verification_files.values()]
 
-    def _unpacked(self, zipfile: Path | str, target_dir: Path | str):
+    def _unpacked(self, zipfile: Path | str, target_dir: Path | str) -> list[Path]:
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         shutil.unpack_archive(zipfile, target_dir)

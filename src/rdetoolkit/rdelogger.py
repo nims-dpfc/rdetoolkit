@@ -125,7 +125,7 @@ class CustomLog:
 
         return self.logger
 
-    def _set_handler(self, handler: Handler, verbose: bool):
+    def _set_handler(self, handler: Handler, verbose: bool) -> None:
         level = DEBUG if verbose else INFO
         handler.setLevel(level)
         formatter = Formatter(
@@ -157,8 +157,8 @@ def log_decorator() -> Callable:
         ```
     """
 
-    def _log_decorator(func: Callable):
-        def wrapper(*args, **kargs):
+    def _log_decorator(func: Callable) -> Callable:
+        def wrapper(*args, **kargs) -> Callable:
             logger = CustomLog().get_logger()
             logger.info(f"{func.__name__:15} --> Start")
             try:

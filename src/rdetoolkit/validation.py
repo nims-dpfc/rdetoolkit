@@ -175,7 +175,7 @@ class InvoiceValidator:
 
         return data
 
-    def __temporarily_modify_json_schema(self):
+    def __temporarily_modify_json_schema(self) -> dict[str, Any] | None:
         """Temporarily modifies the structure of the schema to validate invoice.json using invoice.schema.json.
 
         This method modifies the 'generalAttributes' and 'specificAttributes' sections of the schema by replacing

@@ -414,7 +414,7 @@ class ExcelInvoiceFile:
     def __is_empty_row(row: pd.Series) -> bool:
         return all(cell == "" or pd.isnull(cell) for cell in row)
 
-    def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
+    def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         assign_funcs: dict[str, Callable[[str, str, dict[Any, Any], dict[Any, Any]], None]] = {
             "basic/": self._assign_basic,
             "sample/": self._assign_sample,
@@ -459,7 +459,7 @@ class ExcelInvoiceFile:
         cval = key.replace("custom/", "")
         _assign_invoice_val(invoice_obj, "custom", cval, value, schema_obj)
 
-    def _ensure_sample_id_order(self, invoice_obj: dict):
+    def _ensure_sample_id_order(self, invoice_obj: dict) -> None:
         sample_info_value = invoice_obj.get("sample")
         if sample_info_value is None:
             return
@@ -469,19 +469,19 @@ class ExcelInvoiceFile:
         sampleid_value = invoice_obj["sample"].pop("sampleId")
         invoice_obj["sample"] = {"sampleId": sampleid_value, **invoice_obj["sample"]}
 
-    def _detect_encoding(self, file_path: Path):
+    def _detect_encoding(self, file_path: Path) -> str:
         return CharDecEncoding.detect_text_file_encoding(file_path)
 
-    def _load_json(self, file_path: Path):
+    def _load_json(self, file_path: Path) -> dict[str, Any]:
         enc = self._detect_encoding(file_path)
         with open(file_path, encoding=enc) as f:
             return json.load(f)
 
-    def _write_json(self, file_path: Path, obj: Any, enc: str):
+    def _write_json(self, file_path: Path, obj: Any, enc: str) -> None:
         with open(file_path, "w", encoding=enc) as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
 
-    def _initialize_sample(self, sample_obj: Any):
+    def _initialize_sample(self, sample_obj: Any) -> None:
         for item, val in sample_obj.items():
             if item in ["sampleId", "composition", "referenceUrl", "description", "ownerId"]:
                 sample_obj[item] = None
@@ -489,7 +489,7 @@ class ExcelInvoiceFile:
                 for attribute in val:
                     attribute["value"] = None
 
-    def _initialize_non_sample(self, key: str, value: Any):
+    def _initialize_non_sample(self, key: str, value: Any) -> None:
         if key not in ["datasetId", "sample"]:
             for item in value:
                 if item not in ["dateSubmitted", "instrumentId"]:

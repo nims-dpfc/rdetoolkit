@@ -90,7 +90,7 @@ class InitCommand:
         generator.generate()
         self._info_msg(f"Created: {path}")
 
-    def __make_dirs(self):
+    def __make_dirs(self) -> None:
         for d in self.default_dirs:
             try:
                 d.mkdir(parents=True, exist_ok=True)
@@ -123,18 +123,18 @@ class InitCommand:
         generator.generate()
         self._info_msg(f"Created: {path}")
 
-    def __delete_dirs(self):
+    def __delete_dirs(self) -> None:
         for d in self.default_dirs:
             if d.exists():
                 shutil.rmtree(d)
 
-    def _info_msg(self, msg: str):
+    def _info_msg(self, msg: str) -> None:
         click.echo(msg)
 
-    def _success_msg(self, msg: str):
+    def _success_msg(self, msg: str) -> None:
         click.echo(click.style(msg, fg="green"))
 
-    def _error_msg(self, msg: str):
+    def _error_msg(self, msg: str) -> None:
         click.echo(click.style(f"Error! {msg}", fg="red"))
 
 

@@ -8,7 +8,7 @@ from glob import glob
 from rdetoolkit.exceptions import catch_exception_with_message
 
 
-def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: str | list[str]):
+def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: str | list[str]) -> None:
     """Copies the other images to the thumbnail directory.
 
     Args:
@@ -33,7 +33,13 @@ def __find_img_path(dirname: str, target_name: str) -> str:
 
 
 @catch_exception_with_message(error_message="ERROR: failed to copy image files", error_code=50)
-def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, target_image_name: str | None = None, img_ext: str | None = None) -> None:
+def copy_images_to_thumbnail(
+    out_dir_thumb_img: str,
+    out_dir_main_img: str,
+    *,
+    target_image_name: str | None = None,
+    img_ext: str | None = None,
+) -> None:
     """Copy the image files in the other image folder and the main image folder to the thumbnail folder.
 
     Args:
