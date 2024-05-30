@@ -267,7 +267,7 @@ class InvoiceFile:
             json.dump(self.invoice_obj, f, indent=4, ensure_ascii=False)
 
     @classmethod
-    def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path):
+    def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path) -> None:
         """Copies the original invoice file from the source file path to the destination file path.
 
         Args:
@@ -523,7 +523,7 @@ def backup_invoice_json_files(excel_invoice_file: Path | None, mode: str | None)
     return invoice_org_filepath
 
 
-def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> dict | None:
+def __serch_key_from_constant_variable_obj(key: str, metadata_json_obj: dict) -> dict | None:
     if key in metadata_json_obj["constant"]:
         return metadata_json_obj["constant"]
     if metadata_json_obj.get("variable"):

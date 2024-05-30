@@ -14,7 +14,7 @@ class Variable(BaseModel):
 
     @field_validator("variable")
     @classmethod
-    def check_value_size(cls, v):
+    def check_value_size(cls, v: dict[str, Any]) -> dict[str, Any]:
         """Validator that verifies that the size of the 'variable' type metadata value does not exceed 1024 bytes.
 
         Args:
@@ -40,7 +40,7 @@ class MetaValue(BaseModel):
 
     @field_validator("value")
     @classmethod
-    def check_value_size(cls, v: Any):
+    def check_value_size(cls, v: Any) -> Any:
         """Validator that verifies that the size of the 'value' does not exceed 1024 bytes if it is a string.
 
         Args:

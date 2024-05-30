@@ -231,7 +231,7 @@ class StorageDir:
     __nDigit = 4  # 分割データインデックスの桁数。固定値
 
     @classmethod
-    def get_datadir(cls, is_mkdir: bool, idx: int = 0):
+    def get_datadir(cls, is_mkdir: bool, idx: int = 0) -> str:
         """Generates a data directory path based on an index and optionally creates it.
 
         This method generates a directory path under 'data' or 'data/divided' based on the provided index.
@@ -270,7 +270,7 @@ class StorageDir:
         return pathlib.Path(target_dir)
 
     @classmethod
-    def get_specific_outputdir(cls, is_mkdir: bool, dir_basename: str, idx: int = 0):
+    def get_specific_outputdir(cls, is_mkdir: bool, dir_basename: str, idx: int = 0) -> pathlib.Path:
         """Generates and optionally creates a specific output directory based on a base name and index.
 
         This method facilitates creating directories for specific outputs like 'invoice_patch', 'temp', etc.,

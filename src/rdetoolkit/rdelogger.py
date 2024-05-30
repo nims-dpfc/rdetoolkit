@@ -5,17 +5,18 @@ import os
 from logging import DEBUG, INFO, FileHandler, Formatter, Handler, Logger, NullHandler, StreamHandler, getLogger
 from typing import Callable
 
+from rdetoolkit.models.rde2types import RdeFsPath
 from rdetoolkit.rde2util import StorageDir
 
 
-def get_logger(name: str, *, file_path: str | None = None) -> logging.Logger:
+def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logger:
     """Creates a logger using Python's logging module.
 
     The logger is a tool for generating log messages, tracking processes, and facilitating debugging.
 
     Args:
         name (str): The identifier's name, usually the module name is specified (__name__).
-        file_path (Optional[str], optional): The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.
+        file_path (Optional[RdeFsPath], optional): The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.
 
     Returns:
         logging.Logger: A configured logger object.
