@@ -56,7 +56,7 @@ class MetadataDefValidator:
         return __data
 
 
-def metadata_def_validate(path: str | Path):
+def metadata_def_validate(path: str | Path) -> None:
     """Validate metadata-def.json file.
 
     This function validates the metadata definition file specified by the given path.
@@ -234,7 +234,7 @@ class InvoiceValidator:
         return data
 
 
-def invoice_validate(path: str | Path, schema: str | Path):
+def invoice_validate(path: str | Path, schema: str | Path) -> None:
     """invoice.json validation function.
 
     Args:

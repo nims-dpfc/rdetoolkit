@@ -124,7 +124,7 @@ class ExcelInvoiceChecker(IInputFileChecker):
         emsg = "Error! The input file and the description in the ExcelInvoice are not consistent."
         raise StructuredError(emsg)
 
-    def get_index(self, paths, sort_items):
+    def get_index(self, paths, sort_items) -> int:
         """Retrieves the index of the `divided` folder.
 
         Args:

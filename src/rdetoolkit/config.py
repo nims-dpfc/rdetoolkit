@@ -156,7 +156,7 @@ def get_pyproject_toml() -> Path | None:
     return pyproject_toml_path.exists() and pyproject_toml_path or None
 
 
-def get_config(target_dir_path: RdeFsPath):
+def get_config(target_dir_path: RdeFsPath) -> Config | None:
     """Retrieves the configuration from the specified directory path.
 
     This function searches for configuration files in the specified directory.
@@ -169,7 +169,7 @@ def get_config(target_dir_path: RdeFsPath):
         target_dir_path (RdeFsPath): The path of the directory to search for configuration files.
 
     Returns:
-        Optional[dict]: The first valid configuration found, or None if no valid configuration is found.
+        Optional[Config]: The first valid configuration found, or None if no valid configuration is found.
     """
     if isinstance(target_dir_path, str):
         target_dir_path = Path(target_dir_path)
@@ -196,7 +196,7 @@ def get_config(target_dir_path: RdeFsPath):
     return None
 
 
-def load_config(tasksupport_path: RdeFsPath, *, config: Config | None = None):
+def load_config(tasksupport_path: RdeFsPath, *, config: Config | None = None) -> Config:
     """Loads the configuration for the RDE Toolkit.
 
     Args:
@@ -207,11 +207,10 @@ def load_config(tasksupport_path: RdeFsPath, *, config: Config | None = None):
         Config: The loaded configuration object.
 
     """
-    __config = Config()
+    __config: Config = Config()
     if config is not None:
         __config = config
     else:
-        __config = get_config(tasksupport_path)
-        if __config is None:
-            __config = Config()
+        __rtn_config = get_config(tasksupport_path)
+        __config = Config() if __rtn_config is None else __rtn_config
     return __config

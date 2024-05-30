@@ -28,7 +28,7 @@ def rdeformat_mode_process(
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
     config: Config | None = None,
-):
+) -> None:
     """Process the source data and apply specific transformations using the provided callback function.
 
     This function performs several steps:
@@ -86,7 +86,7 @@ def multifile_mode_process(
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
     config: Config | None = None,
-):
+) -> None:
     """Processes multiple source files and applies transformations using the provided callback function.
 
     This function performs several steps:
@@ -150,7 +150,7 @@ def excel_invoice_mode_process(
     idx: int,
     datasets_process_function: _CallbackType | None = None,
     config: Config | None = None,
-):
+) -> None:
     """Processes invoice data from an Excel file and applies dataset transformations using the provided callback function.
 
     This function performs several steps:
@@ -232,7 +232,7 @@ def invoice_mode_process(
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
     config: Config | None = None,
-):
+) -> None:
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
     This function performs several steps:
@@ -285,7 +285,7 @@ def invoice_mode_process(
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
 
-def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath):
+def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath) -> None:
     """Copy the input raw files to their respective directories based on the file's part names.
 
     This function scans through the parts of each file's path in `resource_paths.rawfiles`. If the file path
@@ -314,7 +314,7 @@ def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath):
                 break
 
 
-def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]):
+def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]) -> None:
     """Copy the input raw files to the specified directory.
 
     This function takes a list of raw file paths and copies each file to the given `raw_dir_path`.

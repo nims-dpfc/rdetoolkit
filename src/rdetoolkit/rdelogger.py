@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from logging import DEBUG, INFO, FileHandler, Formatter, Logger, NullHandler, StreamHandler, getLogger
+from typing import Callable
 
 from rdetoolkit.rde2util import StorageDir
 
@@ -137,7 +138,7 @@ class CustomLog:
         self.logger.addHandler(handler)
 
 
-def log_decorator():
+def log_decorator() -> Callable:
     """A decorator function that logs the start and end of a decorated function.
 
     Returns:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import wraps
+from typing import Callable
 
 
 class StructuredError(Exception):
@@ -40,7 +41,7 @@ class MetadataDefValidationError(Exception):
         super().__init__(self.message)
 
 
-def catch_exception_with_message(*, error_message: str | None = None, error_code: int | None = None):
+def catch_exception_with_message(*, error_message: str | None = None, error_code: int | None = None) -> Callable:
     """A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.
 
     This decorator catches StructuredError thrown within the function and re-raises it with a specified error message

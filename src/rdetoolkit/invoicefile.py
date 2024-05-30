@@ -16,7 +16,7 @@ from rdetoolkit.models.rde2types import RdeOutputResourcePath
 from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
 
 
-def read_excelinvoice(excelinvoice_filepath):
+def read_excelinvoice(excelinvoice_filepath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Reads an ExcelInvoice and processes each sheet into a dataframe.
 
     This function reads an ExcelInvoice file and processes various sheets within the file, specifically looking for sheets named `invoiceList_format_id`,`generalTerm`, and `specificTerm`.
@@ -114,7 +114,7 @@ def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
         invoiceobj[key1][key2] = valobj
 
 
-def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoiceschema_filepath, invoice_info):
+def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoiceschema_filepath, invoice_info) -> None:
     """A function to overwrite DPF metadata into an invoice file.
 
     Args:
@@ -134,7 +134,7 @@ def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoices
         json.dump(invoiceobj, fout, indent=4, ensure_ascii=False)
 
 
-def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
+def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl) -> list:
     """Function to check the existence of rawfiles_tpl specified for a folder.
 
     It checks whether rawfiles_tpl, specified as an index, exists in all indexes of ExcelInvoice.
@@ -197,12 +197,12 @@ class InvoiceFile:
         self._invoice_obj = self.read()
 
     @property
-    def invoice_obj(self):
+    def invoice_obj(self) -> dict[str, Any]:
         """Gets the invoice object."""
         return self._invoice_obj
 
     @invoice_obj.setter
-    def invoice_obj(self, value):
+    def invoice_obj(self, value) -> None:
         """Sets the invoice object."""
         if not isinstance(value, dict):
             emsg = "invoice_obj must be a dictionary"
@@ -236,7 +236,7 @@ class InvoiceFile:
             self.invoice_obj = json.load(f)
         return self.invoice_obj
 
-    def overwrite(self, dst_file_path: Path, *, src_obj: Path | None = None):
+    def overwrite(self, dst_file_path: Path, *, src_obj: Path | None = None) -> None:
         """Overwrites the contents of the destination file with the invoice JSON data.
 
         Args:
@@ -533,7 +533,7 @@ def update_description_with_features(
     rde_resource: RdeOutputResourcePath,
     dst_invoice_json: Path,
     metadata_def_json: Path,
-):
+) -> None:
     """Writes the provided features to the description field RDE.
 
     This function takes a dictionary of features and formats them to be written

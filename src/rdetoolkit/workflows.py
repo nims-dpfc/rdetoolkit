@@ -125,7 +125,7 @@ def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepa
         yield rdeoutput_resource_path
 
 
-def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None):  # pragma: no cover
+def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> None:  # pragma: no cover
     """RDE Structuring Processing Function.
 
     This function executes the structuring process for RDE data. If you want to implement custom processing for the input data,

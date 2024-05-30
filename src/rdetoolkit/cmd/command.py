@@ -28,7 +28,7 @@ class InitCommand:
         Path("templates/tasksupport"),
     ]
 
-    def invoke(self):
+    def invoke(self) -> None:
         """Invokes the command and performs the necessary actions.
 
         Args:
@@ -134,7 +134,7 @@ class InitCommand:
 
 
 class VersionCommand:
-    def invoke(self):
+    def invoke(self) -> None:
         """Invokes the command and prints the version number.
 
         Args:
