@@ -1,22 +1,20 @@
 from pydantic import BaseModel, RootModel
-from typing import Any, Final
-
-MAX_VALUE_SIZE: Final[int]
+from typing import Any, Optional
 
 class Variable(BaseModel):
     variable: dict[str, Any]
     @classmethod
-    def check_value_size(cls, v: dict[str, Any]) -> dict[str, Any]: ...
+    def check_value_size(cls, v) -> None: ...
 
 class MetaValue(BaseModel):
     value: Any
-    unit: str | None
+    unit: Optional[str]
     @classmethod
-    def check_value_size(cls, v: Any) -> Any: ...
+    def check_value_size(cls, v) -> None: ...
 
 class ValidableItems(RootModel):
     root: list[dict[str, MetaValue]]
 
 class MetadataItem(BaseModel):
-    constant: dict[str, MetaValue] | None
+    constant: Optional[dict[str, MetaValue]]
     variable: ValidableItems

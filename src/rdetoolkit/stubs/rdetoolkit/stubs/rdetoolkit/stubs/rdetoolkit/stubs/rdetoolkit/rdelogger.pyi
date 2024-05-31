@@ -3,6 +3,8 @@ from _typeshed import Incomplete as Incomplete
 from logging import Logger
 from typing import Optional
 
+pp: Incomplete
+
 def get_logger(name: str, *, file_path: Optional[str] = ...) -> logging.Logger: ...
 def write_job_errorlog_file(code: int, message: str, *, filename: str = ...) -> None: ...
 

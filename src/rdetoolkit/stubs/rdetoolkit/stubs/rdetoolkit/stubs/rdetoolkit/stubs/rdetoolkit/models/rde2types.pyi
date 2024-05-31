@@ -1,6 +1,5 @@
-from collections.abc import Sequence
 from pathlib import Path
-from typing import TypedDict, Union
+from typing import Optional, Sequence, TypedDict, Union
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
@@ -15,12 +14,12 @@ MetaItem = dict[str, Union[str, int, float, bool]]
 RdeFsPath = Union[str, Path]
 
 class RdeFormatFlags:
-    def __init__(self) -> None: ...
     def __post_init__(self) -> None: ...
     @property
-    def is_rdeformat_enabled(self) -> bool: ...
+    def is_rdeformat_enabled(self) -> None: ...
     @property
-    def is_multifile_enabled(self) -> bool: ...
+    def is_multifile_enabled(self) -> None: ...
+    def __init__(self, _is_rdeformat_enabled, _is_multifile_enabled) -> None: ...
 
 class RdeInputDirPaths:
     inputdata: Path
@@ -42,10 +41,10 @@ class RdeOutputResourcePath:
     invoice: Path
     invoice_schema_json: Path
     invoice_org: Path
-    temp: Path | None
-    invoice_patch: Path | None
-    attachment: Path | None
-    nonshared_raw: Path | None
+    temp: Optional[Path]
+    invoice_patch: Optional[Path]
+    attachment: Optional[Path]
+    nonshared_raw: Optional[Path]
     def __init__(self, raw, rawfiles, struct, main_image, other_image, meta, thumbnail, logs, invoice, invoice_schema_json, invoice_org, temp, invoice_patch, attachment, nonshared_raw) -> None: ...
 
 class Name(TypedDict):

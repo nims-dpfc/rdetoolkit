@@ -1,9 +1,7 @@
 import pathlib
 from _typeshed import Incomplete as Incomplete
 from rdetoolkit.models.rde2types import MetaType as MetaType, RdeFsPath as RdeFsPath, RepeatedMetaType as RepeatedMetaType
-from typing import Any, Final, Optional, TypedDict, Union
-
-LANG_ENC_FLAG: Final[int]
+from typing import Any, Optional, TypedDict, Union
 
 class _ChardetType(TypedDict):
     encoding: str

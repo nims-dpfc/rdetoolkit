@@ -1,5 +1,7 @@
 from pydantic import BaseModel, RootModel
-from typing import Any, Optional
+from typing import Any, Final, Optional
+
+MAX_VALUE_SIZE: Final[int]
 
 class Variable(BaseModel):
     variable: dict[str, Any]
