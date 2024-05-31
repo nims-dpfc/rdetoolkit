@@ -634,29 +634,39 @@ class Meta:
         return {"value": _casted_value}
 
 
-def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int | float | str:
-    """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
+class ValueCaster:
+    """A utility class for casting values and converting date formats."""
 
-    The function returns a formatted value of the string valstr according to
-    the specified outtype and outfmt. The outtype must be a string ("string")
-    for outfmt to be used. If valstr contains a value with units,
-    the assignment of units is not handled within this function.
-    It should be assigned separately as needed.
+    @staticmethod
+    def trycast(valstr: str, tp: Callable[[str], Any]) -> Any:
+        """Tries to cast the given value string to the specified type.
 
-    Args:
-        valstr (Any): String to be converted of type
-        outtype (str): Type information at output
-        outfmt (str): Formatting at output (related to date data)
-    """
+        Args:
+            valstr (str): The value string to be casted.
+            tp (Callable[[str], Any]): The type to cast the value to.
 
-    def _trycast(valstr: str, tp: Callable[[str], Any]) -> Any:
+        Returns:
+            Any: The casted value if successful, otherwise None.
+        """
         try:
             return tp(valstr)
         except ValueError:
-            # emsg = f"ERROR: failed to cast metaDef value: {e}"
             return None
 
-    def _convert_to_date_format(value: str, fmt: str) -> str:
+    @staticmethod
+    def convert_to_date_format(value: str, fmt: str) -> str:
+        """Converts the given value to the specified date format.
+
+        Args:
+            value (str): The value to be converted.
+            fmt (str): The desired date format.
+
+        Returns:
+            str: The converted value in the specified date format.
+
+        Raises:
+            StructuredError: If the specified format is unknown.
+        """
         dtobj = dateutil.parser.parse(value)
         if fmt == "date-time":
             return dtobj.isoformat()
@@ -667,28 +677,41 @@ def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int 
         emsg = "ERROR: unknown format in metaDef"
         raise StructuredError(emsg)
 
+
+def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int | float | str:
+    """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
+
+    The function returns a formatted value of the string valstr according to the specified outtype and outfmt.
+    The outtype must be a string ("string") for outfmt to be used. If valstr contains a value with units, the assignment of units is not handled within this function.
+    It should be assigned separately as needed.
+
+    Args:
+        valstr (Any): String to be converted of type
+        outtype (str): Type information at output
+        outfmt (str): Formatting at output (related to date data)
+    """
     if outtype == "boolean":
-        if _trycast(valstr, bool) is not None:
+        if ValueCaster.trycast(valstr, bool) is not None:
             return bool(valstr)
 
     elif outtype == "integer":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
-        if _trycast(val_unit_pair.value, int) is not None:
+        if ValueCaster.trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
 
     elif outtype == "number":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
-        if _trycast(val_unit_pair.value, int) is not None:
+        if ValueCaster.trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
-        if _trycast(val_unit_pair.value, float) is not None:
+        if ValueCaster.trycast(val_unit_pair.value, float) is not None:
             return float(val_unit_pair.value)
 
     elif outtype == "string":
         if not outfmt:
             return valstr
-        return _convert_to_date_format(valstr, outfmt)
+        return ValueCaster.convert_to_date_format(valstr, outfmt)
 
     else:
         emsg = "ERROR: unknown value type in metaDef"

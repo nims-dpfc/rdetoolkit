@@ -3,13 +3,8 @@ import os
 import tempfile
 
 import pytest
-from rdetoolkit.rde2util import (
-    Meta,
-    _split_value_unit,
-    CharDecEncoding,
-    read_from_json_file,
-    write_to_json_file,
-)
+from rdetoolkit.rde2util import Meta, _split_value_unit, CharDecEncoding, read_from_json_file, write_to_json_file, castval, ValueCaster
+from rdetoolkit.exceptions import StructuredError
 
 
 def test_split_value_unit():
@@ -273,3 +268,49 @@ def test_write_to_json_file(tmp_path, sample_invoice):
         data = json.load(f)
 
     assert data == sample_invoice
+
+
+@pytest.mark.parametrize(
+    "valstr, fmt, outfmt, expected",
+    [
+        ("100", "integer", None, 100),
+        ("100", "number", None, 100),
+        ("100.1", "number", None, 100.1),
+        ("True", "boolean", None, True),
+        ("sample", "string", None, "sample"),
+        ("2023/1/1 12:00:00", "string", "date-time", "2023-01-01T12:00:00"),
+        ("2023/1/1", "string", "date", "2023-01-01"),
+        ("12:00:00", "string", "time", "12:00:00"),
+    ],
+)
+def test_castval(valstr, fmt, outfmt, expected):
+    result = castval(valstr, fmt, outfmt)
+    assert expected == result
+
+
+def test_castval_invalid():
+    with pytest.raises(StructuredError) as e:
+        castval("100", "num", None)
+    assert str(e.value) == "ERROR: unknown value type in metaDef"
+
+
+def test_castval_invalid_last_statement():
+    with pytest.raises(StructuredError) as e:
+        castval("sample", "number", None)
+    assert str(e.value) == "ERROR: failed to cast metaDef value"
+
+
+def test_trycast():
+    assert ValueCaster.trycast("123", int) == 123
+    assert ValueCaster.trycast("123.456", float) == 123.456
+    assert ValueCaster.trycast("True", bool) is True
+    assert ValueCaster.trycast("abc", int) is None  # キャストが失敗するケース
+
+
+def test_convert_to_date_format():
+    assert ValueCaster.convert_to_date_format("2021-01-01", "date") == "2021-01-01"
+    assert ValueCaster.convert_to_date_format("2021-01-01T12:00:00", "date-time") == "2021-01-01T12:00:00"
+    assert ValueCaster.convert_to_date_format("12:00:00", "time") == "12:00:00"
+
+    with pytest.raises(StructuredError, match="ERROR: unknown format in metaDef"):
+        ValueCaster.convert_to_date_format("2021-01-01", "unknown-format")
