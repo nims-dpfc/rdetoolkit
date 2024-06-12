@@ -50,6 +50,10 @@
 
 ::: src.rdetoolkit.rde2util.castval
 
+## ValueCaster
+
+::: src.rdetoolkit.rde2util.ValueCaster
+
 ## dict2meta
 
 ::: src.rdetoolkit.rde2util.dict2meta

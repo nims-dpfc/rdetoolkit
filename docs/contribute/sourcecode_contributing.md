@@ -24,7 +24,7 @@
 
 - ブランチ名の接頭辞は、`develop-v<x.y.z>`というブランチから、末尾に任意の文字列を追加して作成してください。
 
-```bash
+```shell
 git checkout -b develop-v<x.y.z>-<任意の機能名など> origin/develop-v<x.y.z>
 ```
 
@@ -100,7 +100,7 @@ RDEToolKitでは、`Ruff`と`mypy`を使用してフォーマット、リンタ�
 
 変更を行った後は、テストを実行して正常に動作することを確認してください。
 
-```bash
+```shell
 tox
 ```
 
@@ -108,7 +108,7 @@ tox
 
 変更をコミットし、リモートリポジトリにプッシュします。
 
-```bash
+```shell
 git add .
 git commit -m "#[issue番号] [変更内容の簡単な説明]"
 git push origin develop-v<x.y.z>-<先ほどつけた名称>

@@ -10,6 +10,15 @@ graph LR
 
 起動処理、終了処理は、rdetoolkitを使うことで簡単に実行できます。そのため、ユーザー自身は、ご自身のデータに対する処理を実行する`カスタム構造化処理`を定義するだけです。
 
+### RDEToolKitがサポートする処理
+
+- 起動モードの自動判定
+- 入力データを指定したディレクトリに保存する
+- Main画像をサムネイル画像に保存する
+- magic variableの適用
+- invoice.schema.json, invoice.json等のバリデーション
+- metadata-def.jsonからデータセットタイルの説明欄自動生成
+
 ### 起動処理
 
 起動処理では、カスタム構造化処理を実行する前の処理を実行します。
@@ -43,17 +52,20 @@ rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
 ```mermaid
 graph TD
     init1[起動処理] --> init2[ディレクトリ作成]
-    init2 --> init3{設定:save_raw}
-    init3 -->|False|init5{モード選択}
-    init3-->|True|init4[rawフォルダへ自動保存] --> init5
-    init5-->|default|init6[invoiceモード]
-    init5-->init7[Excelinvoiceモード]
-    init5-->init8[マルチファイルモード]
-    init5-->init9[RDEフォーマットモード]
+    init2-->init3{モード選択}
+    init3-->|default|init6[invoiceモード]
+    init3-->init7[Excelinvoiceモード]
+    init3-->init8[マルチデータタイル]
+    init3-->init9[RDEフォーマットモード]
     init6-->init10[カスタム構造化処理]
     init7-->init10
     init8-->init10
     init9-->init10
+    init10 --> init11[入力データのrawフォルダに追加]
+    init11 --> init12[[ユーザー定義の構造化処理実行]]
+    init12 --> init13[サムネイル画像の自動保存]
+    init13 --> init14[magic variable]
+    init14 --> init15[終了]
 ```
 
 ### カスタム用構造化処理関数の作成
@@ -83,6 +95,7 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
 !!! Reference
     - API Documentation: [RdeInputDirPaths - rde2types](rdetoolkit/models/rde2types.md/#rdeinputdirpaths)
     - API Documentation: [RdeOutputResourcePath - rde2types](rdetoolkit/models/rde2types.md/#rdeoutputresourcepath)
+
 
 今回の例では、`modules`以下に、`display_messsage()`, `custom_graph()`, `custom_extract_metadata()`というダミー処理を定義し、独自の構造化処理を定義します。これらの関数は、`modules/process.py`というファイルを作成し定義します。以下の2つの引数を渡す関数でなければ、rdetoolkitは正しく処理が実行できません。
 

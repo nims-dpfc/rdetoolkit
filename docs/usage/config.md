@@ -27,15 +27,15 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 
 - invoiceモード
 - ExcelInvoiceモード
-- マルチファイルモード
+- マルチデータタイル
 - RDEフォーマットモード
 
 !!! Reference
     参考: [Run Mode](mode.md)
 
-このうち、マルチファイルモードとRDEフォーマットモードは拡張モード(`extended_mode`)であるため、上記2つのモードを利用する場合、`mode_type`の指定が必要です。`mode_type`を指定しない場合、デフォルトでinvoiceモードとなります。
+このうち、マルチデータタイルとRDEフォーマットモードは拡張モード(`extended_mode`)であるため、上記2つのモードを利用する場合、`mode_type`の指定が必要です。`mode_type`を指定しない場合、デフォルトでinvoiceモードとなります。
 
-=== "マルチファイルモード"
+=== "マルチデータタイル"
 
     ```yaml
     extended_mode: 'MultiDataTile'
@@ -53,7 +53,7 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 | --- | --- |
 | invoiceモード | デフォルトで起動 |
 | Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチファイルモード | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
+| マルチデータタイル | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
 | RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
 
 ### 入力ファイルの自動保存
