@@ -173,6 +173,7 @@ dev-dependencies = [
     "types-PyYAML>=6.0.12.20240311",
     "mkdocs-mermaid2-plugin>=1.1.1",
     "ruff>=0.4.3",
+    "jsonschema-markdown>=0.3.8",
 ]
 
 [tool.hatch.metadata]

@@ -1,5 +1,7 @@
 site_name: "RDEToolKit Documentation"
 theme:
+  favicon: img/2585322.png
+  logo: img/2585322.png
   name: "material"
   font:
     text: Noto Sans JP
@@ -10,7 +12,7 @@ theme:
         icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
-      primary: teal
+      primary: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -25,13 +27,17 @@ nav:
   - Installation: install.md
   - User Guide:
       - Quick Start: usage/quickstart.md
-      - 構造化処理: usage/structured.md
+      - 構造化処理を構築する: usage/structured.md
       - 設定ファイル: usage/config.md
-      - 起動モード: usage/mode.md
+      - 構造化ディレクトリとパスの取得: usage/directory.md
+      - 起動モードの選択: usage/mode.md
+      - テンプレートファイルについて: usage/metadata_definition_file.md
+      - バリデーション: usage/validation.md
+      - エラーハンドリングの実装: usage/errorhandling.md
       - 説明欄の自動記述: usage/feature_description.md
-      - File Mode / Folder Mode: usage/file_folder_mode.md
+      - File/Folder Mode: usage/file_folder_mode.md
       - Magic Variable: usage/magic_variable.md
-      - Docker: usage/docker.md
+      - Dockerを使う: usage/docker.md
   - API Documentation:
       - impl:
           - rdetoolkit/impl/compressed_controller.md
@@ -47,6 +53,7 @@ nav:
       - rdetoolkit/rde2util.md
       - rdetoolkit/invoicefile.md
       - rdetoolkit/modeproc.md
+      - rdetoolkit/validation.md
       - rdetoolkit/img2thumb.md
       - rdetoolkit/rdelogger.md
       - rdetoolkit/csv2graph.md

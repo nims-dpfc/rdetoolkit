@@ -44,10 +44,13 @@ iniconfig==2.0.0
 isort==5.12.0
 jinja2==3.1.2
 jsbeautifier==1.15.1
+jsonref==1.1.0
 jsonschema==4.21.1
+jsonschema-markdown==0.3.8
 jsonschema-specifications==2023.12.1
 kiwisolver==1.4.5
 lizard==1.17.10
+loguru==0.7.2
 markdown==3.5.1
 markdown-callouts==0.3.0
 markupsafe==2.1.3
