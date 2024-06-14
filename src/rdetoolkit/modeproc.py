@@ -18,7 +18,7 @@ from rdetoolkit.impl.input_controller import (
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.validation import invoice_validate, metadata_def_validate
+from rdetoolkit.validation import invoice_validate, metadata_validate
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
@@ -73,10 +73,10 @@ def rdeformat_mode_process(
     with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(invoice_dst_filepath, schema_path)
 
@@ -135,10 +135,10 @@ def multifile_mode_process(
     with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(invoice_dst_filepath, schema_path)
 
@@ -217,12 +217,16 @@ def excel_invoice_mode_process(
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
-        update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
+        update_description_with_features(
+            resource_paths,
+            resource_paths.invoice.joinpath("invoice.json"),
+            srcpaths.tasksupport.joinpath("metadata-def.json"),
+        )
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
@@ -275,12 +279,16 @@ def invoice_mode_process(
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     with contextlib.suppress(Exception):
-        update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
+        update_description_with_features(
+            resource_paths,
+            resource_paths.invoice.joinpath("invoice.json"),
+            srcpaths.tasksupport.joinpath("metadata-def.json"),
+        )
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 

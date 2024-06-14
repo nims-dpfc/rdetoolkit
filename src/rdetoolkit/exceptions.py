@@ -33,7 +33,7 @@ class InvoiceSchemaValidationError(Exception):
         super().__init__(self.message)
 
 
-class MetadataDefValidationError(Exception):
+class MetadataValidationError(Exception):
     """Raised when a validation error occurs."""
 
     def __init__(self, message: str = "Validation error") -> None:

@@ -10,13 +10,13 @@ from jsonschema import Draft202012Validator, FormatChecker, validate
 from jsonschema import ValidationError as SchemaValidationError
 from pydantic import ValidationError
 
-from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataDefValidationError
+from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson
 from rdetoolkit.models.metadata import MetadataItem
 from rdetoolkit.rde2util import read_from_json_file
 
 
-class MetadataDefValidator:
+class MetadataValidator:
     def __init__(self) -> None:
         self.schema = MetadataItem
 
@@ -56,8 +56,8 @@ class MetadataDefValidator:
         return __data
 
 
-def metadata_def_validate(path: str | Path) -> None:
-    """Validate metadata-def.json file.
+def metadata_validate(path: str | Path) -> None:
+    """Validate metadata.json file.
 
     This function validates the metadata definition file specified by the given path.
     It checks if the file exists and then uses a validator to validate the file against a schema.
@@ -67,7 +67,7 @@ def metadata_def_validate(path: str | Path) -> None:
 
     Raises:
         FileNotFoundError: If the schema and path do not exist.
-        MetadataDefValidationError: If there is an error in validating the metadata definition file.
+        MetadataValidationError: If there is an error in validating the metadata definition file.
     """
     if isinstance(path, str):
         path = Path(path)
@@ -76,12 +76,12 @@ def metadata_def_validate(path: str | Path) -> None:
         emsg = f"The schema and path do not exist: {path.name}"
         raise FileNotFoundError(emsg)
 
-    validator = MetadataDefValidator()
+    validator = MetadataValidator()
     try:
         validator.validate(path=path)
     except ValidationError as validation_error:
         emsg = f"Error in validating metadata_def.json: {validation_error}"
-        raise MetadataDefValidationError(emsg) from validation_error
+        raise MetadataValidationError(emsg) from validation_error
 
 
 class InvoiceValidator:

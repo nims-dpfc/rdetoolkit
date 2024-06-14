@@ -509,6 +509,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
     ]
     for path in input2_path_lists:
         path.mkdir(parents=True, exist_ok=True)
+    shutil.copy(metadata_json, Path("data", "divided", f"{1:04d}", "meta"))
 
     resource_paths2 = RdeOutputResourcePath(
         rawfiles=(inputfile_multi[1],),

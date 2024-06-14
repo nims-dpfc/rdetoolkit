@@ -2,12 +2,12 @@ from _typeshed import Incomplete as Incomplete
 from pathlib import Path
 from typing import Any, Optional, Union
 
-class MetadataDefValidator:
+class MetadataValidator:
     schema: Incomplete
     def __init__(self) -> None: ...
     def validate(self, *, path: Optional[Union[str, Path]] = ..., json_obj: Optional[dict[str, Any]] = ...) -> dict[str, Any]: ...
 
-def metadata_def_validate(path: Union[str, Path]): ...
+def metadata_validate(path: Union[str, Path]): ...
 
 class InvoiceValidator:
     pre_basic_info_schema: Incomplete

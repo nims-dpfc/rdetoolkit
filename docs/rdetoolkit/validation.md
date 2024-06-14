@@ -2,16 +2,16 @@
 
 The `validation.py` defines classes and functions for validating a group of template files.
 
-## MetadataDefValidator
+## MetadataValidator
 
-::: src.rdetoolkit.validation.MetadataDefValidator
+::: src.rdetoolkit.validation.MetadataValidator
     options:
         members:
             - validate
 
-## metadata_def_validate
+## metadata_validate
 
-::: src.rdetoolkit.validation.metadata_def_validate
+::: src.rdetoolkit.validation.metadata_validate
 
 ## InvoiceValidator
 

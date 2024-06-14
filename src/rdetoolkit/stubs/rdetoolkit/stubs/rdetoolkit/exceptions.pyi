@@ -11,7 +11,7 @@ class InvoiceSchemaValidationError(Exception):
     message: Incomplete
     def __init__(self, message: str = ...) -> None: ...
 
-class MetadataDefValidationError(Exception):
+class MetadataValidationError(Exception):
     message: Incomplete
     def __init__(self, message: str = ...) -> None: ...
 
