@@ -80,7 +80,7 @@ def metadata_validate(path: str | Path) -> None:
     try:
         validator.validate(path=path)
     except ValidationError as validation_error:
-        emsg = f"Error in validating metadata_def.json: {validation_error}"
+        emsg = f"Error in validating metadata.json: {validation_error}"
         raise MetadataValidationError(emsg) from validation_error
 
 
