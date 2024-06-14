@@ -129,6 +129,9 @@ schema = {
 }
 ```
 
+!!! Tip
+    詳しい修正方法は、[invoice.schema.json - テンプレートファイルについて](metadata_definition_file.md/#invoiceschemajson_2) を参照ください。
+
 ## invoice.jsonのバリデーション
 
 invoice.schema.jsonのバリデーションは、必要なフィールドが定義されているかチェックします。invoice.jsonのバリデーションには、`invoice.schema.json`が必要になります。
@@ -248,11 +251,31 @@ except ValidationError as validation_error:
     },
 ```
 
-### invoice.jsonのバリデーションエラー
+### 試料情報に関するバリデーションエラー
+
+上記の2つのケースどちらかを満たしていなければ、バリデーションエラーが発生します。
+
+```shell
+jsonschema.exceptions.ValidationError: {'names': [], 'generalAttributes': [{'termId': '3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e'}], 'specificAttributes': [], 'ownerId': 'de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439'} is not valid under any of the given schemas
+
+Failed validating 'anyOf' in schema['properties']['sample']:
+    {'anyOf': [{'$ref': '#/definitions/sample/sampleWhenAdding'},
+               {'$ref': '#/definitions/sample/sampleWhenRef'}]}
+
+On instance['sample']:
+    {'generalAttributes': [{'termId': '3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e'}],
+     'names': [],
+     'ownerId': 'de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439',
+     'specificAttributes': []}
+
+During handling of the above exception, another exception occurred:
+```
+
+### その他invoice.jsonのバリデーションエラー
 
 `invoice.json`の`basic`項目に過不足や値が不正な場合、`jsonschema`のバリデーションエラーが発生します。
 
-```pyhton
+```python
 data = {
     "datasetId": "1s1199df4-0d1v-41b0-1dea-23bf4dh09g12",
     "basic": {
@@ -267,7 +290,7 @@ data = {
 }
 ```
 
-#### エラーメッセージ
+以下のようなエラーメッセージが出力されます。
 
 ```shell
 jsonschema.exceptions.ValidationError: '0c233ef274f28e611de4074638b4dc43e737ab9931323435323434' does not match '^([0-9a-zA-Z]{56})$'
@@ -279,6 +302,58 @@ On instance['basic']['dataOwnerId']:
     '0c233ef274f28e611de4074638b4dc43e737ab9931323435323434
 ```
 
-## metadata-def.json
+!!! Tip
+    詳しい修正方法は、[invoice.json - テンプレートファイルについて](metadata_definition_file.md/#invoice.json_2) を参照ください。
+
+## metadata.jsonのバリデーション
 
 データ構造化が出力するメタデータの名前やデータ型を宣言するファイル。送り状等に入力されるメタデータは、`metadata-def.json`に定義する必要はありません。
+
+```python
+import json
+
+from rdetoolkit.exceptions import MetadataValidationError
+from rdetoolkit.validation import metadata_validate
+
+metadata = {
+    "constant": {"meta1": {"value": "sample_meta"}, "meta2": {"value": 1000, "unit": "mV"}},
+    "variable": [
+        {"meta3": {"value": 100, "unit": "V"}, "meta4": {"value": 200, "unit": "V"}},
+        {"meta3": {"value": 300, "unit": "V"}, "meta4": {"value": 400, "unit": "V"}},
+    ],
+}
+
+with open("temp/metadata.json", "w") as f:
+    json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+try:
+    metadata_validate("temp/metadata.json")
+except ValidationError as validation_error:
+    raise MetadataValidationError from validation_error
+```
+
+### metadata.jsonのバリデーションエラー
+
+`metadata.json`に、`constant`, `variable`が正しく定義されていない場合、エラーが発生します。
+
+```python
+metadata = {
+    "constant": {"value": "sample_meta"},
+    "variable": [
+        {"meta3": {"value": 100, "unit": "V"}, "meta4": {"value": 200, "unit": "V"}},
+        {"meta3": {"value": 300, "unit": "V"}, "meta4": {"value": 400, "unit": "V"}},
+    ],
+}
+```
+
+以下のようなエラーメッセージが出力されます。
+
+```shell
+rdetoolkit.exceptions.MetadataValidationError: Error in validating metadata.json: 1 validation error for MetadataItem
+constant.value
+  Input should be a valid dictionary or instance of MetaValue [type=model_type, input_value='sample_meta', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.7/v/model_type
+```
+
+!!! Tip
+    詳しい修正方法は、[metadata.json - テンプレートファイルについて](metadata_definition_file.md/#metadatajson_1) を参照ください。
