@@ -14,9 +14,9 @@ rdetoolkitでは、起動時の挙動を設定ファイルで制御すること�
 ### サポートする設定ファイル名
 
 - rdeconfig.yaml
-- .rdeconfig.yaml
+- rdeconfig.yaml
 - rdeconfig.yml
-- .rdeconfig.yaml
+- rdeconfig.yaml
 - pyproject.toml
 
 ## 設定可能なオプション
@@ -49,12 +49,12 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 
 #### 起動条件
 
-| モード名 | 起動条件 |
-| --- | --- |
-| invoiceモード | デフォルトで起動 |
-| Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチデータタイル | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
-| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
+| モード名              | 起動条件                                             |
+| --------------------- | ---------------------------------------------------- |
+| invoiceモード         | デフォルトで起動                                     |
+| Excelinvoiceモード    | 入力ファイルに`*._excel_invoice.xlsx`を格納          |
+| マルチデータタイル    | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
+| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加     |
 
 ### 入力ファイルの自動保存
 
@@ -109,7 +109,7 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 
 ## 設定ファイルの設定例
 
-=== ".rdeconfig.yml"
+=== "rdeconfig.yml"
 
     ```yaml
     extended_mode: 'MultiDataTile'

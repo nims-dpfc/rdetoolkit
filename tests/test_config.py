@@ -39,7 +39,7 @@ def config_yaml():
 @pytest.fixture()
 def dot_config_yaml():
     data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
-    test_yaml_path = ".rdeconfig.yaml"
+    test_yaml_path = "rdeconfig.yaml"
     with open(test_yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 
@@ -71,7 +71,7 @@ def dot_config_yml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
     data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
-    test_yaml_path = dirname.joinpath(".rdeconfig.yml")
+    test_yaml_path = dirname.joinpath("rdeconfig.yml")
     with open(test_yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 

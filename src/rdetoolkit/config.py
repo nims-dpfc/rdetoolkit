@@ -10,7 +10,7 @@ from tomlkit.toml_file import TOMLFile
 
 from rdetoolkit.models.rde2types import RdeFsPath
 
-CONFIG_FILE: Final = ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"]
+CONFIG_FILE: Final = ["rdeconfig.yaml", "rdeconfig.yml"]
 PYPROJECT_CONFIG_FILES: Final = ["pyproject.toml"]
 CONFIG_FILES = CONFIG_FILE + PYPROJECT_CONFIG_FILES
 
@@ -55,9 +55,7 @@ def parse_config_file(*, path: str | None = None) -> Config:
 
     Accepted Config Files:
         - "rdeconfig.yaml"
-        - ".rdeconfig.yaml"
         - "rdeconfig.yml"
-        - ".rdeconfig.yml"
         - "pyproject.toml"
 
     Note:
