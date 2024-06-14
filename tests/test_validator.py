@@ -144,7 +144,7 @@ def test_metadata_def_validate(metadata_def_json_file):
 def test_invalid_metadata_def_validate(invalid_metadata_def_json_file):
     with pytest.raises(MetadataValidationError) as e:
         metadata_validate(invalid_metadata_def_json_file)
-    assert "Error in validating metadata_def.json" in str(e.value)
+    assert "Error in validating metadata.json" in str(e.value)
 
 
 def test_invoice_path_metadata_def_validate():
