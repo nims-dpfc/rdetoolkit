@@ -1,4 +1,4 @@
-# Configration
+# RDEToolKit設定ファイル
 
 rdetoolkitでは、起動時の挙動を設定ファイルで制御することは可能です。
 

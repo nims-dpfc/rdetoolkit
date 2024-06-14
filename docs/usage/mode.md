@@ -1,11 +1,13 @@
-RDEの構造化処理でサポートしているモードは、以下4つのモードをサポートしています。
+# RDEToolKitのデータ登録モード
 
-| モード名 | 起動条件 |
-| --- | --- |
-| invoiceモード | デフォルトで起動 |
-| Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチデータタイル | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
-| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
+RDEの構造化処理でサポートしているデータ登録モードは、以下4つのモードをサポートしています。
+
+| モード名              | 起動条件                                             |
+| --------------------- | ---------------------------------------------------- |
+| invoiceモード         | デフォルトで起動                                     |
+| Excelinvoiceモード    | 入力ファイルに`*._excel_invoice.xlsx`を格納          |
+| マルチデータタイル    | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
+| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加     |
 
 ここでは、各種モードの説明と実行例をまとめました。
 
@@ -32,7 +34,6 @@ RDEの構造化処理でサポートしているモードは、以下4つのモ�
 #### 実行前ファイル構成
 
 ```shell
-$ tree data
 data
 ├── inputdata
 │   └── test23_1.csv
@@ -41,14 +42,11 @@ data
 └── tasksupport
     ├── invoice.schema.json
     └── metadata-def.json
-
-4 directories, 4 files
 ```
 
 #### 実行後ファイル構成
 
 ```shell
-$ tree data
 data
 ├── inputdata
 │   └── test23_1.csv
@@ -67,8 +65,6 @@ data
 │   └── metadata-def.json
 ├── temp
 └── thumbnail
-
-12 directories, 6 files
 ```
 
 `inputdata`が`raw`にコピーされている。invoice.jsonの書き換えはしない。
@@ -140,7 +136,7 @@ Archive:  data.zip
 - sample_excel_invoice.xlsxの記入内容に従ってdividedを含むフォルダに展開
 - 各invoice.jsonは、excel_invoiceの各行から読み出した情報が入力される
 
-```console
+```shell
 data
 ├── divided
 │   ├── 0001
@@ -257,15 +253,15 @@ RDEフォーマットモードは、データセットのモックを作成す�
 入力データとして、以下のフォーマットを持つzip形式のファイルを投入する必要があります。zipファイルの中に、`invoice`, `main_image`, `other_image`, `structured`というディレクトリがあり、その中に、それぞれのデータを格納してください。zipファイルは、すでに構造化処理が実行され出力された想定のファイルを格納し、そのデータを指定フォルダに格納するイメージです。
 
 ```text
-|- sample.zip
-    |- invoice/
-    |   |- invoice.json
-    |- main_image/
-    |   |- xxxx.png
-    |- other_image/
-    |   |- xxxx.png
-    |- structured/
-        |- sample.csv
+└── sample.zip
+    ├── invoice/
+    │   └── invoice.json
+    ├── main_image/
+    │   └── xxxx.png
+    ├── other_image/
+    │   └── xxxx.png
+    └── structured/
+        └── sample.csv
 ```
 
 ![rdeformat](../img/rdeformat.svg)
@@ -275,12 +271,12 @@ RDEフォーマットモードは、データセットのモックを作成す�
 #### 投入データ
 
 - 登録ファイル
-    - structured.zip (RDEformat形式で展開されたファイル一式をzipでまとめたもの)
+  - structured.zip (RDEformat形式で展開されたファイル一式をzipでまとめたもの)
 - tasksupport
-    - .rdeconfig.yml
+  - rdeconfig.yml
 
 !!! Note
-    設定ファイル`.rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
+    設定ファイル`rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
 
 structured.zipの内容は下記の通りです。
 
@@ -420,8 +416,6 @@ data
 │       └── test23_0-output.html
 └── thumbnail
     └── test23_0-output.png
-
-51 directories, 45 files
 ```
 
 structured.zipがtempフォルダに展開されたのちに規程のフォルダに展開される。
@@ -434,10 +428,9 @@ RDEformatモードでは、投入した`invoice.json`は利用されず`invoice/
     - RDEformatモードでは、`invoice/invoice.json`が利用される(dividedにもコピー)
     - tempフォルダに展開されるが終了後削除されない
 
-
 ## マルチデータタイル(MultiDataTile)
 
-マルチデータタイルは、一度に複数のデータセットを追加するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`.rdeconfig.yml`をデータセットテンプレートに格納し、`extended_mode: 'MultiDataTile'`を追加すると、登録したデータ数ごとに、データセットタイルが作成されます。`.rdeconfig.yml`がない場合、もしくは、`extended_mode`の指定がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
+マルチデータタイルは、一度に複数のデータセットを追加するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`rdeconfig.yml`をデータセットテンプレートに格納し、`extended_mode: 'MultiDataTile'`を追加すると、登録したデータ数ごとに、データセットタイルが作成されます。`rdeconfig.yml`がない場合、もしくは、`extended_mode`の指定がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
 
 ![multifile_mode](../img/multifile_mode.svg)
 
@@ -449,10 +442,10 @@ RDEformatモードでは、投入した`invoice.json`は利用されず`invoice/
   - tdata0000.dat
   - data0001.dat
 - tasksupport
-  - .rdeconfig.yml
+  - rdeconfig.yml
 
 !!! Note
-    設定ファイル`.rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
+    設定ファイル`rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
 
 #### 実行前ファイル構成
 
@@ -465,7 +458,7 @@ data
 ├── invoice
 │   └── invoice.json
 └── tasksupport
-    ├── .rdeconfig.yml
+    ├── rdeconfig.yml
     ├── invoice.schema.json
     └── metadata-def.json
 ```
@@ -473,7 +466,6 @@ data
 #### 実行後ファイル構成
 
 ```shell
-$ tree data
 data
 ├── divided
 │   └── 0001
@@ -502,7 +494,7 @@ data
 │   └── data0001.dat
 ├── structured
 ├── tasksupport
-│   ├── .rdeconfig.yml
+│   ├── rdeconfig.yml
 │   ├── metadata-def.json
 │   └── invoice.schema.json
 ├── temp

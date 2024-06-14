@@ -1,4 +1,4 @@
-## Magic Variableによるデータ登録について
+# Magic Variableによるデータ登録について
 
 - 起動条件: データ登録時に`${filename}`を入力すると入力したファイル名がデータ名に登録される
 - 対象モード: invoiceモード、Excelinvoiceモード, マルチデータタイル
@@ -9,7 +9,7 @@
 
 ![magic_filename](../img/magic_filename.svg)
 
-### 実行前のinvoice.json
+## 実行前のinvoice.json
 
 ```json
 {
@@ -26,7 +26,7 @@
 }
 ```
 
-### 実行後のinvoice.json
+## 実行後のinvoice.json
 
 ```json
 {
