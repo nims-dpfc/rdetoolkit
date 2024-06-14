@@ -18,26 +18,40 @@ theme:
         name: Switch to light mode
   features:
     - navigation.top
-    # - toc.integrate
+    - toc.integrate
     - navigation.tabs
     - navigation.tabs.sticky
 
 nav:
-  - Getting started: index.md
-  - Installation: install.md
+  - Getting started:
+      - index.md
+  - Installation:
+      - install.md
   - User Guide:
-      - Quick Start: usage/quickstart.md
-      - 構造化処理を構築する: usage/structured.md
-      - 設定ファイル: usage/config.md
-      - 構造化ディレクトリとパスの取得: usage/directory.md
-      - 起動モードの選択: usage/mode.md
-      - テンプレートファイルについて: usage/metadata_definition_file.md
-      - バリデーション: usage/validation.md
-      - エラーハンドリングの実装: usage/errorhandling.md
-      - 説明欄の自動記述: usage/feature_description.md
-      - File/Folder Mode: usage/file_folder_mode.md
-      - Magic Variable: usage/magic_variable.md
-      - Dockerを使う: usage/docker.md
+      - Quick Start:
+          - usage/quickstart.md
+      - 構造化処理を構築する:
+          - usage/structured.md
+      - 設定ファイルを定義する:
+          - usage/config.md
+      - 構造化ディレクトリとパスの取得:
+          - usage/directory.md
+      - 起動モードについて:
+          - usage/mode.md
+      - テンプレートファイルについて:
+          - usage/metadata_definition_file.md
+      - バリデーションについて:
+          - usage/validation.md
+      - エラーハンドリングを実装する:
+          - usage/errorhandling.md
+      - 説明欄の自動記述機能について:
+          - usage/feature_description.md
+      - Fileモード/Folderモード:
+          - usage/file_folder_mode.md
+      - Magic Variableについて:
+          - usage/magic_variable.md
+      - Dockerで動かす:
+          - usage/docker.md
   - API Documentation:
       - impl:
           - rdetoolkit/impl/compressed_controller.md
