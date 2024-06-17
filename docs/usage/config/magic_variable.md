@@ -7,7 +7,7 @@
 このモードは、デフォルトの入力モードinvoiceモードのみで実行される処理になります。下記のように、データ登録時に`${filename}`という名称でデータ名を登録すると、自動的にファイル名をデータ名に転記するモードです。
 以下の例では、データ名に、「`${filename}`」を入力し、ファイル`xrd_CI0034.rasx`を登録すると、データ名が、`xrd_CI0034.rasx`に置換されます。
 
-![magic_filename](../img/magic_filename.svg)
+![magic_filename](../../img/magic_filename.svg)
 
 ## 実行前のinvoice.json
 

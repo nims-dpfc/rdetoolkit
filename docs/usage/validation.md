@@ -11,7 +11,7 @@ RDEToolKitでバリデーションの対象となるファイルは、以下の4
 - metadata-def.json
 - metadata.json
 
-!!! Tip
+!!! Tip "Documents"
     - [テンプレートファイルについて](metadata_definition_file.md)
 
 ## invoice.schema.jsonのバリデーション

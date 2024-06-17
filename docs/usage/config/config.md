@@ -3,9 +3,7 @@
 rdetoolkitでは、起動時の挙動を設定ファイルで制御することは可能です。
 
 !!! Reference
-    API Documents
-
-    [rdetoolkit.config.parse_config_file](rdetoolkit/config.md/#parse_config_file)
+    API Documents: [rdetoolkit.config.parse_config_file](../../rdetoolkit/config.md/#parse_config_file)
 
 ## 設定ファイル
 
@@ -30,8 +28,8 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 - マルチデータタイル
 - RDEフォーマットモード
 
-!!! Reference
-    参考: [Run Mode](mode.md)
+!!! Tip "Documents"
+    参考: [データ登録モードについて](mode.md)
 
 このうち、マルチデータタイルとRDEフォーマットモードは拡張モード(`extended_mode`)であるため、上記2つのモードを利用する場合、`mode_type`の指定が必要です。`mode_type`を指定しない場合、デフォルトでinvoiceモードとなります。
 
@@ -77,7 +75,7 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 このモードは、デフォルトの入力モード`invoiceモード`のみで実行される処理になります。下記のように、データ登録時に`${filename}`という名称でデータ名を登録すると、自動的にファイル名をデータ名に転記するモードです。
 以下の例では、データ名に、「`${filename}`」を入力し、ファイルxrd_CI0034.rasxを登録すると、データ名が、xrd_CI0034.rasxに置換されます。
 
-![magic_filename](../img/magic_filename.svg)
+![magic_filename](../../img/magic_filename.svg)
 
 === "magic variableの有効化"
 

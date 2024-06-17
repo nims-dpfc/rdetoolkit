@@ -30,27 +30,22 @@ nav:
   - User Guide:
       - Quick Start:
           - usage/quickstart.md
-      - 構造化処理を構築する:
-          - usage/structured.md
-      - 設定ファイルを定義する:
-          - usage/config.md
-      - 構造化ディレクトリとパスの取得:
-          - usage/directory.md
-      - 起動モードについて:
-          - usage/mode.md
-      - テンプレートファイルについて:
+      - 構造化処理:
+          - usage/structured_process/structured.md
+          - usage/structured_process/directory.md
+          - usage/structured_process/rdepath.md
+          - usage/structured_process/errorhandling.md
+          - usage/structured_process/feature_description.md
+      - 設定ファイル:
+          - usage/config/config.md
+          - usage/config/mode.md
+          - usage/config/file_folder_mode.md
+          - usage/config/magic_variable.md
+      - テンプレートファイル:
           - usage/metadata_definition_file.md
-      - バリデーションについて:
+      - バリデーション:
           - usage/validation.md
-      - エラーハンドリングを実装する:
-          - usage/errorhandling.md
-      - 説明欄の自動記述機能について:
-          - usage/feature_description.md
-      - Fileモード/Folderモード:
-          - usage/file_folder_mode.md
-      - Magic Variableについて:
-          - usage/magic_variable.md
-      - Dockerで動かす:
+      - Docker:
           - usage/docker.md
   - API Documentation:
       - impl:

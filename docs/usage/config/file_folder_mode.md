@@ -12,7 +12,7 @@ Excelinvoiceのデータ列(A列)にファイル名を列挙し、記載した�
 - 下図の、A列のように`data_file_names`の次の行に`name`と記載する。(デフォルト)
 - ファイル名には、ファイル名を記載する。(zip内のファイルパスではない。)
 
-![filemode_excelinvoice](../img/filemode_excelinvoice.png)
+![filemode_excelinvoice](../../img/filemode_excelinvoice.png)
 
 この時の入力zipファイルの構成は以下の通りです。zipファイル名は仮の名称とします。
 ファイルモードで入力するzipファイルには、ファイルが平置きで格納された状態で圧縮します。
@@ -29,7 +29,7 @@ Excelinvoiceのデータ列(A列)にフォルダ名を列挙し、記載した�
 
 このモードの利用想定は、Excelinvoiceを利用し、複数のファイルを一つのデータタイルに登録したい場合、このモードでデータ登録を行います。
 
-![foldermode_excelinvoice.png](../img/foldermode_excelinvoice.png)
+![foldermode_excelinvoice.png](../../img/foldermode_excelinvoice.png)
 
 この時の入力zipファイルの構成は以下の通りです。zipファイル名は仮の名称とします。
 フォルダモードで入力するzipファイルには、フォルダが格納された状態で圧縮し登録します。このとき、フォルダが登録されるのではなく、フォルダ配下のファイルが登録されるため、あらかじめご注意ください。
@@ -56,4 +56,4 @@ Excelinvoiceに表記したモードと、入力するzipファイルの構成�
 この処理は、RdeToolKitで定義しています。該当ソースコードは以下のリポジトリのリンクを参照してください。
 
 !!! Reference
-    - [parse_compressedfile_mode - compressed_controller](../rdetoolkit/impl/compressed_controller.md/#parse_compressedfile_mode)
+    - [parse_compressedfile_mode - compressed_controller](../../rdetoolkit/impl/compressed_controller.md/#parse_compressedfile_mode)

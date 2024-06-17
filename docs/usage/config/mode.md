@@ -4,10 +4,28 @@ RDEの構造化処理でサポートしているデータ登録モードは、�
 
 | モード名              | 起動条件                                             |
 | --------------------- | ---------------------------------------------------- |
-| invoiceモード         | デフォルトで起動                                     |
+| invoiceモード         | デフォルトの登録モード                               |
 | Excelinvoiceモード    | 入力ファイルに`*._excel_invoice.xlsx`を格納          |
 | マルチデータタイル    | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
 | RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加     |
+
+マルチデータタイルと、RDEフォーマットモードは、invoiceモードの拡張機能になります。
+
+```mermaid
+flowchart LR
+  ModeA-->ModeB
+  ModeA-->ModeE
+  ModeB-->ModeC
+  ModeB-->ModeD
+
+  ModeA[RDEデータ登録モード]
+  ModeB[invoiceモード]
+  subgraph extended mode
+  ModeC[マルチデータタイル]
+  ModeD[RDEフォーマットモード]
+  end
+  ModeE[Excelinvoiceモード]
+```
 
 ここでは、各種モードの説明と実行例をまとめました。
 
@@ -20,7 +38,7 @@ RDEの構造化処理でサポートしているデータ登録モードは、�
 
 以下のように、Entry画面から、データを投入するモードです。
 
-![invoice_mode](../img/invoice_mode.svg)
+![invoice_mode](../../img/invoice_mode.svg)
 
 ### invoiceモード実行例
 
@@ -80,7 +98,7 @@ data
 
 このExcelinvoiceのテンプレートファイルはRDEへ問い合わせください。
 
-![excelinvoice](../img/excelinvoice.svg)
+![excelinvoice](../../img/excelinvoice.svg)
 
 !!! Note
     ExcelInvoiceには、ファイルモードとフォルダモードという概念があります。[File Mode / Folder Mode](file_folder_mode.md)を参照ください。
@@ -128,7 +146,7 @@ Archive:  data.zip
     testing: data0002.dat             OK
 ```
 
-![excelinvoice_demo](../img/excelinvoice_demo.svg)
+![excelinvoice_demo](../../img/excelinvoice_demo.svg)
 
 #### 実行後
 
@@ -264,7 +282,7 @@ RDEフォーマットモードは、データセットのモックを作成す�
         └── sample.csv
 ```
 
-![rdeformat](../img/rdeformat.svg)
+![rdeformat](../../img/rdeformat.svg)
 
 ### RDEformatモード実行例
 
@@ -432,7 +450,7 @@ RDEformatモードでは、投入した`invoice.json`は利用されず`invoice/
 
 マルチデータタイルは、一度に複数のデータセットを追加するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`rdeconfig.yml`をデータセットテンプレートに格納し、`extended_mode: 'MultiDataTile'`を追加すると、登録したデータ数ごとに、データセットタイルが作成されます。`rdeconfig.yml`がない場合、もしくは、`extended_mode`の指定がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
 
-![multifile_mode](../img/multifile_mode.svg)
+![multifile_mode](../../img/multifile_mode.svg)
 
 ### マルチデータタイル(MultiDataTile) 実行例
 

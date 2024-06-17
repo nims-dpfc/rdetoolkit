@@ -18,7 +18,7 @@ ErrorCode=1
 ErrorMessage=ERROR: failed in data processing
 ```
 
-![error](../img/error.svg)
+![error](../../img/error.svg)
 
 ## RDEToolKitを使ってエラーハンドリングを実装する
 
