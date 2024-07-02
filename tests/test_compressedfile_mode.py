@@ -64,6 +64,28 @@ class TestCompressedFolderParser:
         assert len(files) == 1
         assert {f.name for f in files} == {"test_child1.txt"}
 
+    # def test_japanese_temp_file_unpacked(self, inputfile_japanese_tempfile_zip_with_folder, temp_dir):
+    #     # 日本語名を含むzipファイルを解凍できるかテスト
+    #     xlsx_invoice = pd.DataFrame()
+    #     parser = CompressedFolderParser(xlsx_invoice)
+    #     files = parser._unpacked(inputfile_japanese_tempfile_zip_with_folder, temp_dir)
+    #     assert len(files) == 10
+    #     expect_files = {
+    #         "テストファイル名１.txt": "これはテストファイル１です。",
+    #         "漢字ファイル名.txt": "これは漢字ファイルです。",
+    #         "かなファイル名.txt": "これはかなファイルです。",
+    #         "カナファイル名.txt": "これはカナファイルです。",
+    #         "全角スペースファイル名　.txt": "これは全角スペースファイルです。",
+    #         "特殊記号！@＃$.txt": "これは特殊記号ファイルです。",
+    #         "括弧（カッコ）.txt": "これは括弧ファイルです。",
+    #         "波ダッシュ〜.txt": "これは波ダッシュファイルです。",
+    #         "ファイル名_令和３年.txt": "これは令和３年ファイルです。",
+    #         "テストデータ①.txt": "これはテストデータ１です。",
+    #     }
+    #     for file in files:
+    #         with open(file, "r", encoding="utf-8") as f:
+    #             assert f.read() == expect_files[file.name]
+
     def test_validation_uniq_fspath(self, temp_dir):
         compressed_filepath1 = pathlib.Path("tests", "temp", "test1.txt")
         compressed_filepath2 = pathlib.Path("tests", "temp", "test2.txt")
