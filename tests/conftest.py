@@ -111,12 +111,19 @@ def inputfile_mac_zip_with_folder() -> Generator[str, None, None]:
     macfolder = pathlib.Path(zip_root_dirpath, "__MACOSX")
     macfolder.mkdir(parents=True, exist_ok=True)
     compressed_filepath3 = pathlib.Path(macfolder, "dummy.txt")
+    deepfolder = pathlib.Path(zip_root_dirpath, "dir1", "dir2", "dir3", "dir4")
+    deepfolder.mkdir(parents=True, exist_ok=True)
+    compressed_filepath4 = pathlib.Path(deepfolder, ".DS_Store")
+    deepmacfolder = pathlib.Path(zip_root_dirpath, "dir1", "dir2", "__MACOSX", "dir4")
+    deepmacfolder.mkdir(parents=True, exist_ok=True)
+    compressed_filepath4 = pathlib.Path(deepmacfolder, "dummy.txt")
 
     # setup
     zip_root_dirpath.mkdir(exist_ok=True)
     compressed_filepath1.touch()
     compressed_filepath2.touch()
     compressed_filepath3.touch()
+    compressed_filepath4.touch()
     zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
     zip_file = shutil.make_archive(str(test_zip_filepath), format="zip", root_dir=zip_root_dirpath)
 
@@ -157,6 +164,48 @@ def inputfile_microsoft_tempfile_zip_with_folder() -> Generator[str, None, None]
     # teardown
     if os.path.exists(zip_root_dirpath):
         shutil.rmtree(zip_root_dirpath)
+    if os.path.exists("data"):
+        shutil.rmtree("data")
+
+
+def create_zip_with_multiple_filenames(zip_path, files):
+    # zipファイルを作成
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        for filename, content in files.items():
+            zipf.writestr(filename, content)
+
+
+@pytest.fixture
+def inputfile_japanese_tempfile_zip_with_folder() -> Generator[str, None, None]:
+    """タイトルに日本語を含むファイルを圧縮したzip"""
+    input_dir = pathlib.Path("data", "inputdata")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    test_zip_filepath = pathlib.Path(input_dir, "test_input_multi.zip")
+
+    zip_root_dirpath = pathlib.Path("compdir")
+
+    files = {
+        "テストファイル名１.txt": "これはテストファイル１です。",
+        "漢字ファイル名.txt": "これは漢字ファイルです。",
+        "かなファイル名.txt": "これはかなファイルです。",
+        "カナファイル名.txt": "これはカナファイルです。",
+        "全角スペースファイル名　.txt": "これは全角スペースファイルです。",
+        "特殊記号！@＃$.txt": "これは特殊記号ファイルです。",
+        "括弧（カッコ）.txt": "これは括弧ファイルです。",
+        "波ダッシュ〜.txt": "これは波ダッシュファイルです。",
+        "ファイル名_令和３年.txt": "これは令和３年ファイルです。",
+        "テストデータ①.txt": "これはテストデータ１です。",
+    }
+
+    with zipfile.ZipFile(test_zip_filepath, "w") as zipf:
+        for filename, content in files.items():
+            zipf.writestr(str(pathlib.Path(zip_root_dirpath, filename)), content)
+
+    yield str(test_zip_filepath)
+
+    # teardown
+    if os.path.exists(test_zip_filepath):
+        os.remove(test_zip_filepath)
     if os.path.exists("data"):
         shutil.rmtree("data")
 
