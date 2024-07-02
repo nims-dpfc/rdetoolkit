@@ -8,6 +8,7 @@ In `compressed_controller`, processes are defined for handling compressed files 
     options:
         members:
             - read
+            - _extract_zip_with_encoding
             - _unpacked
             - _is_excluded
 
@@ -19,6 +20,7 @@ In `compressed_controller`, processes are defined for handling compressed files 
         members:
             - read
             - _unpacked
+            - _extract_zip_with_encoding
             - validation_uniq_fspath
             - _is_excluded
 

@@ -4,7 +4,7 @@ rdetoolkitを使った構造化処理をDocker上で動作させる手順をま�
 
 ## ディレクトリ構造
 
-```bash
+```shell
 (構造化プロジェクトディレクトリ)
 ├── container
 │   ├── data/
@@ -46,15 +46,13 @@ COPY modules/ /app/modules/
 ```
 
 !!! Reference
-    docker hub
-
-    [docker hub](https://hub.docker.com/)
+    [Docker Hub Container Image Library | App Containerization](https://hub.docker.com/)
 
 ## イメージの作成
 
 `Dockerfile`が配置されているディレクトリに移動してください。docker buildコマンドを使用してビルドを実行します。コマンドの形式は次のようになります
 
-```bash
+```shell
 # コマンド
 $ docker build -t イメージ名:タグ パス
 # 実行例
@@ -98,7 +96,7 @@ COPY modules/ /app/modules/
 ビルドしたイメージを実行するには、`docker run`コマンドを使用します。
 Docker上で構造化処理をテストするため、入力ファイルのディレクトリ(dataなど)をマウントします。
 
-```bash
+```shell
 $ docker run [オプション] イメージ名 [コマンド]
 # 実行例
 $ docker run -it -v ${HOME}/sample_tif/container/data:/app2/data --name "sample_tifv1" sample_tif:v1 "/bin/bash"
@@ -116,7 +114,7 @@ $ docker run -it -v ${HOME}/sample_tif/container/data:/app2/data --name "sample_
 
 開発したプログラムを起動させます。
 
-```bash
+```shell
 $ cd /app2
 $ python3 /app/main.py
 ```
@@ -125,6 +123,6 @@ $ python3 /app/main.py
 
 以下のコマンドでコンテナを終了させます。
 
-```bash
+```shell
 exit
 ```

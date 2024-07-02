@@ -240,7 +240,7 @@ def test_selected_input_checker_multi_file():
         tasksupport=Path("data/tasksupport"),
     )
     unpacked_dir_path = Path("data/temp")
-    fmtflags = Config(extended_mode="multifile", save_raw=True, save_thumbnail_image=False)
+    fmtflags = Config(extended_mode="MultiDataTile", save_raw=True, save_thumbnail_image=False)
     assert isinstance(selected_input_checker(src_paths, unpacked_dir_path, fmtflags.extended_mode), MultiFileChecker)
 
 

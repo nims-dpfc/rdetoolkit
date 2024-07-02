@@ -1,19 +1,22 @@
+from __future__ import annotations
+
 import logging
 import os
-from logging import DEBUG, INFO, FileHandler, Formatter, Logger, NullHandler, StreamHandler, getLogger
-from typing import Optional
+from logging import DEBUG, INFO, FileHandler, Formatter, Handler, Logger, NullHandler, StreamHandler, getLogger
+from typing import Callable
 
+from rdetoolkit.models.rde2types import RdeFsPath
 from rdetoolkit.rde2util import StorageDir
 
 
-def get_logger(name: str, *, file_path: Optional[str] = None) -> logging.Logger:
+def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logger:
     """Creates a logger using Python's logging module.
 
     The logger is a tool for generating log messages, tracking processes, and facilitating debugging.
 
     Args:
         name (str): The identifier's name, usually the module name is specified (__name__).
-        file_path (Optional[str], optional): The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.
+        file_path (Optional[RdeFsPath], optional): The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.
 
     Returns:
         logging.Logger: A configured logger object.
@@ -123,7 +126,7 @@ class CustomLog:
 
         return self.logger
 
-    def _set_handler(self, handler, verbose: bool):
+    def _set_handler(self, handler: Handler, verbose: bool) -> None:
         level = DEBUG if verbose else INFO
         handler.setLevel(level)
         formatter = Formatter(
@@ -136,7 +139,7 @@ class CustomLog:
         self.logger.addHandler(handler)
 
 
-def log_decorator():
+def log_decorator() -> Callable:
     """A decorator function that logs the start and end of a decorated function.
 
     Returns:
@@ -155,8 +158,8 @@ def log_decorator():
         ```
     """
 
-    def _log_decorator(func):
-        def wrapper(*args, **kargs):
+    def _log_decorator(func: Callable) -> Callable:
+        def wrapper(*args, **kargs) -> Callable:
             logger = CustomLog().get_logger()
             logger.info(f"{func.__name__:15} --> Start")
             try:

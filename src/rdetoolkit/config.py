@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Any, Final, Optional, Union
+from typing import Any, Final
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from tomlkit.toml_file import TOMLFile
 
-CONFIG_FILE: Final = ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"]
+from rdetoolkit.models.rde2types import RdeFsPath
+
+CONFIG_FILE: Final = ["rdeconfig.yaml", "rdeconfig.yml"]
 PYPROJECT_CONFIG_FILES: Final = ["pyproject.toml"]
 CONFIG_FILES = CONFIG_FILE + PYPROJECT_CONFIG_FILES
 
@@ -15,7 +19,7 @@ class Config(BaseModel):
     """The configuration class used in RDEToolKit.
 
     Attributes:
-        extended_mode (Optional[str]): The mode to run the RDEToolKit in. It can be either 'rdeformat' or 'multifile'. If not specified, it defaults to None.
+        extended_mode (Optional[str]): The mode to run the RDEToolKit in. It can be either 'rdeformat' or 'MultiDataTile'. If not specified, it defaults to None.
         save_raw (bool): A boolean flag that indicates whether to automatically save raw data to the raw directory. It defaults to True.
         save_thumbnail_image (bool): A boolean flag that indicates whether to automatically save the main image to the thumbnail directory. It defaults to False.
         magic_variable (bool): A boolean flag that indicates whether to use the feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name. It defaults to False.
@@ -23,13 +27,16 @@ class Config(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    extended_mode: Optional[str] = Field(default=None, description="The mode to run the RDEtoolkit in. select: rdeformat, multifile")
+    extended_mode: str | None = Field(default=None, description="The mode to run the RDEtoolkit in. select: rdeformat, MultiDataTile")
     save_raw: bool = Field(default=True, description="Auto Save raw data to the raw directory")
     save_thumbnail_image: bool = Field(default=False, description="Auto Save main image to the thumbnail directory")
-    magic_variable: bool = Field(default=False, description="The feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name.")
+    magic_variable: bool = Field(
+        default=False,
+        description="The feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name.",
+    )
 
 
-def parse_config_file(*, path: Optional[str] = None) -> Config:
+def parse_config_file(*, path: str | None = None) -> Config:
     """Parse the configuration file and return a Config object.
 
     Args:
@@ -48,9 +55,7 @@ def parse_config_file(*, path: Optional[str] = None) -> Config:
 
     Accepted Config Files:
         - "rdeconfig.yaml"
-        - ".rdeconfig.yaml"
         - "rdeconfig.yml"
-        - ".rdeconfig.yml"
         - "pyproject.toml"
 
     Note:
@@ -117,28 +122,29 @@ def is_yaml(filename: str) -> bool:
     return filename.lower().endswith(".yaml") or filename.lower().endswith(".yml")
 
 
-def find_config_files(target_dir_path: Union[str, Path]) -> list[str]:
+def find_config_files(target_dir_path: RdeFsPath) -> list[str]:
     """Find and return a list of configuration files in the given input directory.
 
     Args:
-        target_dir_path: (Union[str, Path]): An object containing the paths to the input directories.
+        target_dir_path: (RdeFsPath): An object containing the paths to the input directories.
 
     Returns:
         list[str]: A list of configuration file paths.
 
     """
     files: list[str] = []
+    if isinstance(target_dir_path, Path):
+        target_dir_path = str(target_dir_path)
     existing_files = os.listdir(target_dir_path)
     if not existing_files:
         return files
     for config_file in CONFIG_FILES:
         if config_file in existing_files:
             files.append(os.path.join(target_dir_path, config_file))
-    files = sorted(files, key=lambda x: (is_toml(x), is_yaml(x)))
-    return files
+    return sorted(files, key=lambda x: (is_toml(x), is_yaml(x)))
 
 
-def get_pyproject_toml() -> Optional[Path]:
+def get_pyproject_toml() -> Path | None:
     """Get the pyproject.toml file.
 
     Returns:
@@ -148,7 +154,7 @@ def get_pyproject_toml() -> Optional[Path]:
     return pyproject_toml_path.exists() and pyproject_toml_path or None
 
 
-def get_config(target_dir_path: Union[str, Path]):
+def get_config(target_dir_path: RdeFsPath) -> Config | None:
     """Retrieves the configuration from the specified directory path.
 
     This function searches for configuration files in the specified directory.
@@ -158,16 +164,21 @@ def get_config(target_dir_path: Union[str, Path]):
     if valid. If no valid configuration is found, it returns None.
 
     Args:
-        target_dir_path (Union[str, Path]): The path of the directory to search for configuration files.
+        target_dir_path (RdeFsPath): The path of the directory to search for configuration files.
 
     Returns:
-        Optional[dict]: The first valid configuration found, or None if no valid configuration is found.
+        Optional[Config]: The first valid configuration found, or None if no valid configuration is found.
     """
+    if isinstance(target_dir_path, str):
+        target_dir_path = Path(target_dir_path)
+    if not target_dir_path.exists():
+        return None
     for cfg_file in find_config_files(target_dir_path):
         try:
             __config = parse_config_file(path=cfg_file)
         except ValidationError as e:
-            raise ValueError(f"Invalid configuration file: {cfg_file}") from e
+            emsg = f"Invalid configuration file: {cfg_file}"
+            raise ValueError(emsg) from e
         if __config is not None:
             return __config
 
@@ -176,7 +187,28 @@ def get_config(target_dir_path: Union[str, Path]):
         try:
             __config = parse_config_file(path=str(pyproject_toml_path))
         except ValidationError as e:
-            raise ValueError(f"Invalid configuration file: {pyproject_toml_path}") from e
+            emsg = f"Invalid configuration file: {pyproject_toml_path}"
+            raise ValueError(emsg) from e
         if __config is not None:
             return __config
     return None
+
+
+def load_config(tasksupport_path: RdeFsPath, *, config: Config | None = None) -> Config:
+    """Loads the configuration for the RDE Toolkit.
+
+    Args:
+        tasksupport_path (RdeFsPath): The path to the tasksupport directory.
+        config (Optional[Config]): An optional existing configuration object.
+
+    Returns:
+        Config: The loaded configuration object.
+
+    """
+    __config: Config = Config()
+    if config is not None:
+        __config = config
+    else:
+        __rtn_config = get_config(tasksupport_path)
+        __config = Config() if __rtn_config is None else __rtn_config
+    return __config

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from rdetoolkit.config import Config
 from rdetoolkit.invoicefile import backup_invoice_json_files
 
 
@@ -18,7 +17,7 @@ def test_backup_invoice_json_files_with_excel_invoice_file(
     上記のファイルはテストで実態として必要なためファイル内容はダミーデータ
     """
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
-    mode = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    mode = None
     result = backup_invoice_json_files(inputfile_single_header_merge_excelinvoice, mode)
 
     assert result == Path("data", "temp").joinpath("invoice_org.json")
@@ -36,8 +35,13 @@ def test_backup_invoice_json_files_with_rdeformat_enabled(inputfile_rdeformat, i
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     input_excel_invoice_path = None
 
-    mode = Config(extended_mode='rdeformat', save_raw=True, save_thumbnail_image=False, magic_variable=False)
-    result = backup_invoice_json_files(input_excel_invoice_path, mode.extended_mode)
+    mode = "rdeformat"
+    result = backup_invoice_json_files(input_excel_invoice_path, mode)
+
+    assert result == Path("data", "temp").joinpath("invoice_org.json")
+
+    mode = "RDEformat"
+    result = backup_invoice_json_files(input_excel_invoice_path, mode)
 
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
@@ -54,8 +58,13 @@ def test_backup_invoice_json_files_with_multifile_enabled(inputfile_multimode, i
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     input_excel_invoice_path = None
 
-    mode = Config(extended_mode='multifile', save_raw=True, save_thumbnail_image=False, magic_variable=False)
-    result = backup_invoice_json_files(input_excel_invoice_path, mode.extended_mode)
+    mode = "MultiDataTile"
+    result = backup_invoice_json_files(input_excel_invoice_path, mode)
+
+    assert result == Path("data", "temp").joinpath("invoice_org.json")
+
+    mode = "MULTIDATATILE"
+    result = backup_invoice_json_files(input_excel_invoice_path, mode)
 
     assert result == Path("data", "temp").joinpath("invoice_org.json")
 
@@ -72,7 +81,7 @@ def test_backup_invoice_json_files_with_no_modes(inputfile_single, ivnoice_json_
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
     input_excel_invoice_path = None
 
-    mode = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    mode = None
     result = backup_invoice_json_files(input_excel_invoice_path, mode)
 
     assert result == Path("data", "invoice").joinpath("invoice.json")

@@ -4,9 +4,8 @@ from rdetoolkit.cmd.command import InitCommand, VersionCommand
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """CLI generates template projects for RDE structured programs."""
-    pass
 
 
 @click.command()
@@ -17,7 +16,7 @@ def init() -> None:
 
 
 @click.command()
-def version():
+def version() -> None:
     """Command to display version."""
     cmd = VersionCommand()
     cmd.invoke()

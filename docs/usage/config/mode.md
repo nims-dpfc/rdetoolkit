@@ -1,54 +1,85 @@
-RDEの構造化処理でサポートしているモードは、以下4つのモードをサポートしています。
+# RDEToolKitのデータ登録モード
 
-| モード名 | 起動条件 |
-| --- | --- |
-| invoiceモード | デフォルトで起動 |
-| Excelinvoiceモード | 入力ファイルに`*._excel_invoice.xlsx`を格納 |
-| マルチファイルモード | 設定ファイルに`extended_mode: 'multifile'`を追加 |
-| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加 |
+RDEの構造化処理でサポートしているデータ登録モードは、以下4つのモードをサポートしています。
+
+| モード名              | 起動条件                                             |
+| --------------------- | ---------------------------------------------------- |
+| invoiceモード         | デフォルトのデータ登録モード                         |
+| Excelinvoiceモード    | 入力ファイルに`*._excel_invoice.xlsx`を格納          |
+| マルチデータタイル    | 設定ファイルに`extended_mode: 'MultiDataTile'`を追加 |
+| RDEフォーマットモード | 設定ファイルに`extended_mode: 'rdeformat'`を追加     |
+
+マルチデータタイルと、RDEフォーマットモードは、invoiceモードの拡張機能になります。
+
+```mermaid
+flowchart LR
+  ModeA-->ModeB
+  ModeA-->ModeE
+  ModeB-->ModeC
+  ModeB-->ModeD
+  ModeA[RDEデータ登録モード]
+  ModeB[invoiceモード]
+  subgraph extended mode
+  ModeC[マルチデータタイル]
+  ModeD[RDEフォーマットモード]
+  end
+  ModeE[Excelinvoiceモード]
+```
 
 ここでは、各種モードの説明と実行例をまとめました。
 
 ## invoiceモード
 
-- 起動条件: デフォルトで起動
-- 備考: モード切り替えはRdeToolKitで定義
+### 説明
 
 このモードは、通常のRDE登録画面でデータを登録するモードを指します。一番、基本的かつデフォルトのモードになります。
 
 以下のように、Entry画面から、データを投入するモードです。
 
-![invoice_mode](../img/invoice_mode.svg)
+![invoice_mode](../../img/invoice_mode.svg)
+
+### 起動条件
+
+デフォルトのデータ登録モード。設定等は必要ありません。
 
 ### invoiceモード実行例
 
 #### 投入データ
 
-- 登録ファイル
-    - test23_1.csv
-- tasksupport
-    - 追加なし
-
-#### 実行前ファイル構成
+| 登録ファイル                           | 説明                                              |
+| -------------------------------------- | ------------------------------------------------- |
+| `data/inputdata/test23_1.csv`          | 登録するデータ                                    |
+| `data/invoice/invoice.json`            | ローカルで事前に準備・作成/システムが自動的に生成 |
+| `data/tasksupport/invoice.schema.json` | ローカルで事前に準備・作成/システムに事前に登録   |
+| `data/tasksupport/metadata-def.json`   | ローカルで事前に準備・作成/システムに事前に登録   |
 
 ```shell
-$ tree data
 data
 ├── inputdata
 │   └── test23_1.csv
 ├── invoice
 │   └── invoice.json
 └── tasksupport
+    ├── rdeconfig.yaml
     ├── invoice.schema.json
     └── metadata-def.json
-
-4 directories, 4 files
 ```
 
-#### 実行後ファイル構成
+#### configファイル
+
+モードの指定等を指定する必要はありません。
+
+```yaml
+save_raw: true
+magic_variable: false
+save_thumbnail_image: ture
+```
+
+#### 構造化処理実行実行後ファイル構成
+
+上記の設定で、構造化処理を実行すると、以下の出力が得られます。
 
 ```shell
-$ tree data
 data
 ├── inputdata
 │   └── test23_1.csv
@@ -63,20 +94,16 @@ data
 │   └── test23_1.csv
 ├── structured
 ├── tasksupport
+│   ├── rdeconfig.yaml
 │   ├── invoice.schema.json
 │   └── metadata-def.json
 ├── temp
 └── thumbnail
-
-12 directories, 6 files
 ```
-
-`inputdata`が`raw`にコピーされている。invoice.jsonの書き換えはしない。
 
 ## ExcelInvoiceモード
 
-- 起動条件: 入力ファイルに`*._excel_invoice.xlsx`を格納
-- 備考: モード切り替えはRdeToolKitで定義
+### 説明
 
 このモードは、一度に複数件のデータセットを登録するものモードです。通常のinvoiceモードでは、一件ずつしかデータセットの登録実行できませんが、Excelinvoiceモードを使うと、一度に複数データセットを登録することができます。
 
@@ -84,21 +111,24 @@ data
 
 このExcelinvoiceのテンプレートファイルはRDEへ問い合わせください。
 
-![excelinvoice](../img/excelinvoice.svg)
+![excelinvoice](../../img/excelinvoice.svg)
 
-!!! Note
+!!! Tip "Documents"
     ExcelInvoiceには、ファイルモードとフォルダモードという概念があります。[File Mode / Folder Mode](file_folder_mode.md)を参照ください。
 
+### 起動条件
+
+入力ファイルに`*._excel_invoice.xlsx`を格納する
 
 ### ExcelInvoiceモード実行例
 
 #### 投入データ
 
 - 登録ファイル(data/inputdata)
-    - data.zip (投入ファイルをzip圧縮したもの)
-    - sample_excel_invoice.xlsx (この事例では3行3データタイル分を記載)
+  - data.zip (投入ファイルをzip圧縮したもの)
+  - sample_excel_invoice.xlsx (この事例では3行3データタイル分を記載)
 - tasksupport
-    - 追加なし
+  - 追加なし
 
 #### 実行前ディレクトリ構成
 
@@ -121,27 +151,27 @@ container/
         └── metadata-def.json
 ```
 
-#### data.zipの内容
-
-エクセルインボイスに3行追加するため3ファイルzip化する。
+data.zipの内容は、エクセルインボイスに3行追加するため3ファイルzip化する。
 
 ```shell
 $ unzip -t data.zip
 Archive:  data.zip
-    testing: data0000.dat             OK
-    testing: data0001.dat             OK
-    testing: data0002.dat             OK
+    testing: data0000.dat
+    testing: data0001.dat
+    testing: data0002.dat
 ```
 
-![excelinvoice_demo](../img/excelinvoice_demo.svg)
+![excelinvoice_demo](../../img/excelinvoice_demo.svg)
 
-#### 実行後
+#### 構造化処理実行後のディレクトリ構造
+
+上記の設定で、構造化処理を実行すると、以下の出力が得られます。
 
 - data.zipの内容は展開される
 - sample_excel_invoice.xlsxの記入内容に従ってdividedを含むフォルダに展開
 - 各invoice.jsonは、excel_invoiceの各行から読み出した情報が入力される
 
-```console
+```shell
 data
 ├── divided
 │   ├── 0001
@@ -239,7 +269,7 @@ data
 
 フォルダを含むzipファイルを登録する方法は、zipファイルは以下の通りです。
 
-!!! Note
+!!! Tip "Documents"
     ExcelInvoiceには、ファイルモードとフォルダモードという概念があります。[File Mode / Folder Mode](file_folder_mode.md)を参照ください。
 
 ```shell
@@ -253,77 +283,87 @@ $ zip data_folder.zip -r ./inputdata -x \*/.DS_Store *\.xlsx
 
 ## RDEformatモード
 
+### 説明
+
 RDEフォーマットモードは、データセットのモックを作成するモードです。データ登録時に、具体的な構造化処理は行わず、指定された入力データをRDEデータセットの形式に登録をします。
 
 入力データとして、以下のフォーマットを持つzip形式のファイルを投入する必要があります。zipファイルの中に、`invoice`, `main_image`, `other_image`, `structured`というディレクトリがあり、その中に、それぞれのデータを格納してください。zipファイルは、すでに構造化処理が実行され出力された想定のファイルを格納し、そのデータを指定フォルダに格納するイメージです。
 
 ```text
-|- sample.zip
-    |- invoice/
-    |   |- invoice.json
-    |- main_image/
-    |   |- xxxx.png
-    |- other_image/
-    |   |- xxxx.png
-    |- structured/
-        |- sample.csv
+└── sample.zip
+    ├── invoice/
+    │   └── invoice.json
+    ├── main_image/
+    │   └── xxxx.png
+    ├── other_image/
+    │   └── xxxx.png
+    └── structured/
+        └── sample.csv
 ```
 
-![rdeformat](../img/rdeformat.svg)
+![rdeformat](../../img/rdeformat.svg)
+
+### 起動条件
+
+設定ファイルに`extended_mode: 'rdeformat'`を追加
+
+```yaml
+extended_mode: 'rdeformat'
+```
 
 ### RDEformatモード実行例
 
 #### 投入データ
 
 - 登録ファイル
-    - structured.zip (RDEformat形式で展開されたファイル一式をzipでまとめたもの)
+  - structured.zip (RDEformat形式で展開されたファイル一式をzipでまとめたもの)
 - tasksupport
-    - .rdeconfig.yml
+  - rdeconfig.yml
 
-!!! Note
-    設定ファイル`.rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
+!!! Tip "Documents"
+    設定ファイル`rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
 
 structured.zipの内容は下記の通りです。
 
 ```shell
 # unzip -t structured.zip
 Archive: structured.zip
-    testing: divided/                 OK
-    testing: divided/0002/            OK
-    testing: divided/0002/meta/       OK
-    testing: divided/0002/meta/metadata.json   OK
-    testing: divided/0002/structured/   OK
-    testing: divided/0002/structured/test23_2-output.html   OK
-    testing: divided/0002/structured/test23_2-output.csv   OK
-    testing: divided/0002/main_image/   OK
-    testing: divided/0002/main_image/test23_2-output.png   OK
-    testing: divided/0002/raw/        OK
-    testing: divided/0002/raw/test23_2.csv   OK
-    testing: divided/0001/            OK
-    testing: divided/0001/meta/       OK
-    testing: divided/0001/meta/metadata.json   OK
-    testing: divided/0001/structured/   OK
-    testing: divided/0001/structured/test23_1-output.html   OK
-    testing: divided/0001/structured/test23_1-output.csv   OK
-    testing: divided/0001/main_image/   OK
-    testing: divided/0001/main_image/test23_1-output.png   OK
-    testing: divided/0001/raw/        OK
-    testing: divided/0001/raw/test23_1.csv   OK
-    testing: meta/                    OK
-    testing: meta/metadata.json       OK
-    testing: structured/              OK
-    testing: structured/test23_0-output.html   OK
-    testing: structured/test23_0-output.csv   OK
-    testing: main_image/              OK
-    testing: main_image/test23_0-output.png   OK
-    testing: raw/                     OK
-    testing: raw/test23_0.csv         OK
+    testing: divided/
+    testing: divided/0002/
+    testing: divided/0002/meta/
+    testing: divided/0002/meta/metadata.json
+    testing: divided/0002/structured/
+    testing: divided/0002/structured/test23_2-output.html
+    testing: divided/0002/structured/test23_2-output.csv
+    testing: divided/0002/main_image/
+    testing: divided/0002/main_image/test23_2-output.png
+    testing: divided/0002/raw/
+    testing: divided/0002/raw/test23_2.csv
+    testing: divided/0001/
+    testing: divided/0001/meta/
+    testing: divided/0001/meta/metadata.json
+    testing: divided/0001/structured/
+    testing: divided/0001/structured/test23_1-output.html
+    testing: divided/0001/structured/test23_1-output.csv
+    testing: divided/0001/main_image/
+    testing: divided/0001/main_image/test23_1-output.png
+    testing: divided/0001/raw/
+    testing: divided/0001/raw/test23_1.csv
+    testing: meta/
+    testing: meta/metadata.json
+    testing: structured/
+    testing: structured/test23_0-output.html
+    testing: structured/test23_0-output.csv
+    testing: main_image/
+    testing: main_image/test23_0-output.png
+    testing: raw/
+    testing: raw/test23_0.csv
 No errors detected in compressed data of data/inputdata/structured.zip.
 ```
 
-上記の出力はinvoice.jsonファイルを含んでいたときのものではないが、invoice.jsonも含めたものもテストをしている。
-
 #### 実行後ファイル構成
+
+上記の設定で、構造化処理を実行すると、以下の出力が得られます。
 
 ```shell
 data
@@ -421,11 +461,9 @@ data
 │       └── test23_0-output.html
 └── thumbnail
     └── test23_0-output.png
-
-51 directories, 45 files
 ```
 
-structured.zipがtempフォルダに展開されたのちに規程のフォルダに展開される。
+structured.zipがtempフォルダに展開されたのちに規程のフォルダに展開されます。
 
 #### invoice.jsonをzipに含めた場合
 
@@ -435,26 +473,34 @@ RDEformatモードでは、投入した`invoice.json`は利用されず`invoice/
     - RDEformatモードでは、`invoice/invoice.json`が利用される(dividedにもコピー)
     - tempフォルダに展開されるが終了後削除されない
 
+## マルチデータタイル(MultiDataTile)
 
+### 説明
 
-## Multifileモード
+マルチデータタイルは、一度に複数のデータセットを追加するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`rdeconfig.yml`をデータセットテンプレートに格納し、`extended_mode: 'MultiDataTile'`を追加すると、登録したデータ数ごとに、データセットタイルが作成されます。`rdeconfig.yml`がない場合、もしくは、`extended_mode`の指定がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
 
-マルチファイルモードは、一度に複数のデータセットを格納するモードです。このモードは、ブラウザのRDEデータ受け入れ画面より登録します。下記の例の場合、`multifile.txt`をデータセットテンプレートに格納すると、登録したデータ数ごとに、データセットタイルが作成されますが、`multifile.txt`がない場合、一つのデータセットタイルに登録したファイルがすべて登録されます。
+![multifile_mode](../../img/multifile_mode.svg)
 
-![multifile_mode](../img/multifile_mode.svg)
+### 起動条件
 
-### Multifileモード実行例
+設定ファイルに`extended_mode: 'MultiDataTile'`を追加
+
+```yaml
+extended_mode: 'MultiDataTile'
+```
+
+!!! Tip "Documents"
+    設定ファイル`rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
+
+### マルチデータタイル(MultiDataTile) 実行例
 
 #### 投入データ
 
 - 登録ファイル
-    - tdata0000.dat
-    - data0001.dat
+  - tdata0000.dat
+  - data0001.dat
 - tasksupport
-    - .rdeconfig.yml
-
-!!! Note
-    設定ファイル`.rdeconfig.yml`は、[設定ファイル - config](config.md)を参照ください。
+  - rdeconfig.yaml
 
 #### 実行前ファイル構成
 
@@ -467,14 +513,16 @@ data
 ├── invoice
 │   └── invoice.json
 └── tasksupport
+    ├── rdeconfig.yml
     ├── invoice.schema.json
     └── metadata-def.json
 ```
 
 #### 実行後ファイル構成
 
+上記の設定で、構造化処理を実行すると、以下の出力が得られます。
+
 ```shell
-$ tree data
 data
 ├── divided
 │   └── 0001
@@ -503,9 +551,9 @@ data
 │   └── data0001.dat
 ├── structured
 ├── tasksupport
-│   ├── invoice.schema.json
+│   ├── rdeconfig.yml
 │   ├── metadata-def.json
-│   └── multifile.txt
+│   └── invoice.schema.json
 ├── temp
 │   └── invoice_org.json
 └── thumbnail

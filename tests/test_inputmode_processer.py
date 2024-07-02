@@ -101,7 +101,7 @@ def test_copy_input_to_rawfile_rdeformat(dummy_files_rdeformat):
         invoice=Path(),
         invoice_org=Path(),
         invoice_schema_json=Path(),
-        nonshared_raw=Path("tests", "result", "nonshared_raw")
+        nonshared_raw=Path("tests", "result", "nonshared_raw"),
     )
 
     copy_input_to_rawfile_for_rdeformat(paths)
@@ -288,14 +288,7 @@ def test_excel_invoice_mode_process_calls_functions(
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
-    excel_invoice_mode_process(
-        srcpaths,
-        resource_paths,
-        inputfile_single_dummy_header_excelinvoice,
-        0,
-        mock_datasets_process_function,
-        config=config
-    )
+    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -367,12 +360,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     # テスト対象の関数を実行
     config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     excel_invoice_mode_process(
-        srcpaths,
-        resource_paths,
-        inputfile_single_dummy_header_excelinvoice_with_magic_variable,
-        0,
-        mock_datasets_process_function,
-        config=config
+        srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice_with_magic_variable, 0, mock_datasets_process_function, config=config
     )
 
     # 関数が呼び出されたかどうかをチェック
@@ -436,7 +424,7 @@ def test_multifile_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    config = Config(extended_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
     multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
     # 関数が呼び出されたかどうかをチェック
@@ -521,6 +509,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
     ]
     for path in input2_path_lists:
         path.mkdir(parents=True, exist_ok=True)
+    shutil.copy(metadata_json, Path("data", "divided", f"{1:04d}", "meta"))
 
     resource_paths2 = RdeOutputResourcePath(
         rawfiles=(inputfile_multi[1],),
@@ -552,7 +541,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
             expected_filename = expected_filename2
             invoice = Path("data", "divided", f"{1:04d}", "invoice", "invoice.json")
 
-        config = Config(extended_mode="multifile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+        config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
         multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
 
         # 関数が呼び出されたかどうかをチェック

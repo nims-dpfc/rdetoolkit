@@ -1,4 +1,6 @@
-from typing import Any, Final, Optional
+from __future__ import annotations
+
+from typing import Any, Final
 
 from pydantic import BaseModel, Field, RootModel, field_validator
 
@@ -12,7 +14,7 @@ class Variable(BaseModel):
 
     @field_validator("variable")
     @classmethod
-    def check_value_size(cls, v):
+    def check_value_size(cls, v: dict[str, Any]) -> dict[str, Any]:
         """Validator that verifies that the size of the 'variable' type metadata value does not exceed 1024 bytes.
 
         Args:
@@ -25,7 +27,8 @@ class Variable(BaseModel):
             if not isinstance(v, str):
                 continue
             if len(str(value).encode("utf-8")) > MAX_VALUE_SIZE:
-                raise ValueError(f"Value size exceeds {MAX_VALUE_SIZE} bytes: {v}")
+                emsg = f"Value size exceeds {MAX_VALUE_SIZE} bytes: {v}"
+                raise ValueError(emsg)
         return v
 
 
@@ -33,11 +36,11 @@ class MetaValue(BaseModel):
     """Metadata class for the 'value' and 'unit' attributes."""
 
     value: Any
-    unit: Optional[str] = None
+    unit: str | None = None
 
     @field_validator("value")
     @classmethod
-    def check_value_size(cls, v):
+    def check_value_size(cls, v: Any) -> Any:
         """Validator that verifies that the size of the 'value' does not exceed 1024 bytes if it is a string.
 
         Args:
@@ -49,7 +52,8 @@ class MetaValue(BaseModel):
         if not isinstance(v, str):
             return v
         if len(str(v).encode("utf-8")) > MAX_VALUE_SIZE:
-            raise ValueError(f"Value size exceeds {MAX_VALUE_SIZE} bytes")
+            emsg = f"Value size exceeds {MAX_VALUE_SIZE} bytes"
+            raise ValueError(emsg)
         return v
 
 
@@ -76,5 +80,5 @@ class MetadataItem(BaseModel):
         variable (ValidableItems): An array of metadata sets that vary with each measurement.
     """
 
-    constant: Optional[dict[str, MetaValue]] = Field(default=None)
+    constant: dict[str, MetaValue] | None = Field(default=None)
     variable: ValidableItems = Field(default=None)

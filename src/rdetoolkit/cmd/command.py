@@ -1,16 +1,22 @@
+from __future__ import annotations
+
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import click
+
 from rdetoolkit import __version__
 from rdetoolkit.cmd.default import INVOICE_JSON, PROPATIES
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, Properties
+from rdetoolkit.rdelogger import get_logger
+
+logger = get_logger(__name__)
 
 
 class Command(click.Command):
-    def __init__(self, name, **attrs):
+    def __init__(self, name: str, **attrs: Any) -> None:
         super().__init__(name, **attrs)
 
 
@@ -25,7 +31,7 @@ class InitCommand:
         Path("templates/tasksupport"),
     ]
 
-    def invoke(self):
+    def invoke(self) -> None:
         """Invokes the command and performs the necessary actions.
 
         Args:
@@ -53,14 +59,14 @@ class InitCommand:
             self._info_msg(f"\nCheck the folder: {current_dir}")
             self._success_msg("Done!")
         except Exception as e:
-            print(e)
+            logger.exception(e)
             self._error_msg("Failed to create files required for structured RDE programs.")
-            raise click.Abort()
+            raise click.Abort from e
 
     def __make_template_json(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = InvoiceSchemaJsonGenerator(path)
         generator.generate()
@@ -69,7 +75,7 @@ class InitCommand:
     def __make_metadata_def_json(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = MetadataDefJsonGenerator(path)
         generator.generate()
@@ -78,24 +84,25 @@ class InitCommand:
     def __make_invoice_json(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = InvoiceJsonGenerator(path)
         generator.generate()
         self._info_msg(f"Created: {path}")
 
-    def __make_dirs(self):
-        for dir in self.default_dirs:
+    def __make_dirs(self) -> None:
+        for d in self.default_dirs:
             try:
-                dir.mkdir(parents=True, exist_ok=True)
-            except Exception:
-                self._error_msg(f"Failed to create directory: {dir}")
-                raise click.Abort()
+                d.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.exception(e)
+                self._error_msg(f"Failed to create directory: {d}")
+                raise click.Abort from e
 
     def __make_requirements_txt(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
 
         generator = RequirementsTxtGenerator(path)
         generator.generate()
@@ -104,35 +111,35 @@ class InitCommand:
     def __make_main_script(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
         generator = MainScriptGenerator(path)
         generator.generate()
 
     def __make_dockerfile(self, path: Path) -> None:
         if Path(path).exists():
             self._info_msg(f"Skip: {path} already exists.")
-            return None
+            return
         generator = DockerfileGenerator(path)
         generator.generate()
         self._info_msg(f"Created: {path}")
 
-    def __delete_dirs(self):
-        for dir in self.default_dirs:
-            if dir.exists():
-                shutil.rmtree(dir)
+    def __delete_dirs(self) -> None:
+        for d in self.default_dirs:
+            if d.exists():
+                shutil.rmtree(d)
 
-    def _info_msg(self, msg):
+    def _info_msg(self, msg: str) -> None:
         click.echo(msg)
 
-    def _success_msg(self, msg):
+    def _success_msg(self, msg: str) -> None:
         click.echo(click.style(msg, fg="green"))
 
-    def _error_msg(self, msg):
+    def _error_msg(self, msg: str) -> None:
         click.echo(click.style(f"Error! {msg}", fg="red"))
 
 
 class VersionCommand:
-    def invoke(self):
+    def invoke(self) -> None:
         """Invokes the command and prints the version number.
 
         Args:
@@ -145,7 +152,7 @@ class VersionCommand:
 
 
 class DockerfileGenerator:
-    def __init__(self, path: Union[str, Path] = "Dockerfile"):
+    def __init__(self, path: str | Path = "Dockerfile"):
         self.path = path
 
     def generate(self) -> list[str]:
@@ -154,10 +161,7 @@ class DockerfileGenerator:
         Returns:
             list[str]: The content of the generated Dockerfile.
         """
-        if isinstance(self.path, str):
-            dockerfile_path = Path(self.path)
-        else:
-            dockerfile_path = Path(self.path)
+        dockerfile_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
             "FROM python:3.11.9\n",
@@ -175,7 +179,7 @@ class DockerfileGenerator:
 
 
 class RequirementsTxtGenerator:
-    def __init__(self, path: Union[str, Path] = "requirements.txt"):
+    def __init__(self, path: str | Path = "requirements.txt"):
         self.path = path
 
     def generate(self) -> list[str]:
@@ -184,10 +188,7 @@ class RequirementsTxtGenerator:
         Returns:
             list[str]: The content of the generated requirements.txt file.
         """
-        if isinstance(self.path, str):
-            requirements_path = Path(self.path)
-        else:
-            requirements_path = self.path
+        requirements_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
             "# ----------------------------------------------------",
@@ -211,7 +212,7 @@ class RequirementsTxtGenerator:
 
 
 class InvoiceSchemaJsonGenerator:
-    def __init__(self, path: Union[str, Path] = "invoice.schema.json"):
+    def __init__(self, path: str | Path = "invoice.schema.json"):
         self.path = path
 
     def generate(self) -> dict[str, Any]:
@@ -220,10 +221,7 @@ class InvoiceSchemaJsonGenerator:
         Returns:
             dict[str, Any]: The content of the generated invoice.schema.json file.
         """
-        if isinstance(self.path, str):
-            invoice_schema_path = Path(self.path)
-        else:
-            invoice_schema_path = self.path
+        invoice_schema_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         obj = InvoiceSchemaJson(
             version="https://json-schema.org/draft/2020-12/schema",
@@ -243,7 +241,7 @@ class InvoiceSchemaJsonGenerator:
 
 
 class MetadataDefJsonGenerator:
-    def __init__(self, path: Union[str, Path] = "metadata-def.json"):
+    def __init__(self, path: str | Path = "metadata-def.json"):
         self.path = path
 
     def generate(self) -> dict[str, Any]:
@@ -252,10 +250,7 @@ class MetadataDefJsonGenerator:
         Returns:
             dict[str, Any]: The content of the metadata-def.json file.
         """
-        if isinstance(self.path, str):
-            matadata_def_path = Path(self.path)
-        else:
-            matadata_def_path = self.path
+        matadata_def_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         obj: dict[str, Any] = {"constant": {}, "variable": []}
 
@@ -266,7 +261,7 @@ class MetadataDefJsonGenerator:
 
 
 class InvoiceJsonGenerator:
-    def __init__(self, path: Union[str, Path] = "invoice.json"):
+    def __init__(self, path: str | Path = "invoice.json"):
         self.path = path
 
     def generate(self) -> dict[str, Any]:
@@ -275,10 +270,7 @@ class InvoiceJsonGenerator:
         Returns:
             dict[str, Any]: The content of the invoice.json file.
         """
-        if isinstance(self.path, str):
-            invoice_path = Path(self.path)
-        else:
-            invoice_path = self.path
+        invoice_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         with open(invoice_path, mode="w", encoding="utf-8") as f:
             json.dump(INVOICE_JSON, f, indent=4, ensure_ascii=False)
@@ -287,7 +279,7 @@ class InvoiceJsonGenerator:
 
 
 class MainScriptGenerator:
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         self.path = path
 
     def generate(self) -> list[str]:
@@ -296,13 +288,11 @@ class MainScriptGenerator:
         Returns:
             list[str]: A list of strings representing the contents of the generated script.
         """
-        if isinstance(self.path, str):
-            main_path = Path(self.path)
-        else:
-            main_path = self.path
+        main_path = Path(self.path) if isinstance(self.path, str) else self.path
 
         contents = [
-            "# The following script is a template for the source code.\n\n" "import rdetoolkit\n",
+            "# The following script is a template for the source code.\n",
+            "import rdetoolkit\n",
             "rdetoolkit.workflows.run()\n",
         ]
 

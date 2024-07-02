@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import os
 import warnings
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence, TypedDict, Union
+from typing import TypedDict, Union
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
@@ -37,10 +40,10 @@ class RdeFormatFlags:  # pragma: no cover
     _is_rdeformat_enabled: bool = False
     _is_multifile_enabled: bool = False
 
-    def __init__(self):
-        warnings.warn("The RdeFormatFlags class is scheduled to be deleted in the next update.", FutureWarning)
+    def __init__(self) -> None:
+        warnings.warn("The RdeFormatFlags class is scheduled to be deleted in the next update.", FutureWarning, stacklevel=2)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Method called after object initialization.
 
         This method checks for the existence of files named rdeformat.txt and multifile.txt in the data/tasksupport directory,
@@ -59,7 +62,7 @@ class RdeFormatFlags:  # pragma: no cover
         return self._is_rdeformat_enabled
 
     @is_rdeformat_enabled.setter
-    def is_rdeformat_enabled(self, value):
+    def is_rdeformat_enabled(self, value: bool) -> None:
         """Setter to change the enabled state of the RDE format.
 
         Args:
@@ -69,7 +72,8 @@ class RdeFormatFlags:  # pragma: no cover
             ValueError: If both flags are set to True
         """
         if value and self.is_multifile_enabled:
-            raise ValueError("both flags cannot be True")
+            emsg = "both flags cannot be True"
+            raise ValueError(emsg)
         self._is_rdeformat_enabled = value
 
     @property
@@ -82,7 +86,7 @@ class RdeFormatFlags:  # pragma: no cover
         return self._is_multifile_enabled
 
     @is_multifile_enabled.setter
-    def is_multifile_enabled(self, value):
+    def is_multifile_enabled(self, value: bool) -> None:
         """Setter to change the enabled state of multi-file support.
 
         Args:
@@ -92,7 +96,8 @@ class RdeFormatFlags:  # pragma: no cover
             ValueError: If both flags are set to True
         """
         if value and self.is_rdeformat_enabled:
-            raise ValueError("both flags cannot be True")
+            emsg = "both flags cannot be True"
+            raise ValueError(emsg)
         self._is_multifile_enabled = value
 
 
@@ -126,10 +131,7 @@ class RdeInputDirPaths:
         Returns:
             Path: Path to the 'default_value.csv' file.
         """
-        if self.tasksupport:
-            tasksupport = self.tasksupport
-        else:
-            tasksupport = Path("data", "tasksupport")
+        tasksupport = self.tasksupport if self.tasksupport else Path("data", "tasksupport")
         return tasksupport.joinpath("default_value.csv")
 
 
@@ -167,10 +169,10 @@ class RdeOutputResourcePath:
     invoice: Path
     invoice_schema_json: Path
     invoice_org: Path
-    temp: Optional[Path] = None
-    invoice_patch: Optional[Path] = None
-    attachment: Optional[Path] = None
-    nonshared_raw: Optional[Path] = None
+    temp: Path | None = None
+    invoice_patch: Path | None = None
+    attachment: Path | None = None
+    nonshared_raw: Path | None = None
 
 
 class Name(TypedDict):

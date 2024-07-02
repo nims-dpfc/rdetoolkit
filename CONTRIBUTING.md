@@ -6,7 +6,7 @@ RDEToolKitへのコントリビュートをしていただくには、以下の�
 
 ### リポジトリのクローンをローカルに作成する
 
-```bash
+```shell
 cd <任意のディレクトリ>
 
 # SSH
@@ -30,20 +30,20 @@ ryeは以下の公式ドキュメントを参考にインストールしてく�
 
 ryeをインストール後、以下の手順で開発環境をセットアップしてください。`rye sync`で仮想環境が作成され、必要なパッケージが仮想環境にインストールされます。
 
-```bash
+```shell
 cd <rdetoolkitのローカルリポジトリ>
 rye sync
 ```
 
 仮想環境を起動します。
 
-```bash
+```shell
 source .venv/bin/activate
 ```
 
 また、RDEToolKitではコード品質の観点から、`pre-commit`を採用しています。pre-commitのセットアップを実行するため、以下の処理を実行してください。
 
-```bash
+```shell
 pre-commit install
 ```
 
@@ -86,7 +86,7 @@ rdetoolkitのドキュメントは、本リポジトリの`docs`フォルダに�
 
 変更方法は、ローカルリポジトリからブランチを変更して、変更をPushしてください。ブランチ名の先頭に`docs-***`という接頭辞をつけてください。
 
-```bash
+```shell
 git checkout -b docs-***
 # 実行例
 git checkout -b docs-install-manual
@@ -94,7 +94,7 @@ git checkout -b docs-install-manual
 
 ドキュメントを変更し、リモートリポジトリにPushします。
 
-```bash
+```shell
 git add <変更したドキュメント>
 git commit -m "コミットメッセージ"
 git push origin <対象のブランチ名>
@@ -132,7 +132,7 @@ git push origin <対象のブランチ名>
 
 - ブランチ名の接頭辞は、`develop-v<x.y.z>`というブランチから、末尾に任意の文字列を追加して作成してください。
 
-```bash
+```shell
 git checkout -b develop-v<x.y.z>-<任意の機能名など> origin/develop-v<x.y.z>
 ```
 
@@ -155,7 +155,7 @@ RDEToolKitでは、`Ruff`と`mypy`を使用してフォーマット、リンタ�
 
 変更を行った後は、テストを実行して正常に動作することを確認してください。
 
-```bash
+```shell
 tox
 ```
 
@@ -163,7 +163,7 @@ tox
 
 変更をコミットし、リモートリポジトリにプッシュします。
 
-```bash
+```shell
 git add .
 git commit -m "#[issue番号] [変更内容の簡単な説明]"
 git push origin develop-v<x.y.z>-<先ほどつけた名称>

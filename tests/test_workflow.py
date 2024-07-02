@@ -4,6 +4,7 @@ import shutil
 from typing import Optional
 import pytest
 import yaml
+import toml
 
 from rdetoolkit.workflows import run
 from rdetoolkit.config import Config
@@ -40,43 +41,11 @@ def metadata_def_json_file():
     Path("data/tasksupport").mkdir(parents=True, exist_ok=True)
     json_path = Path("data/tasksupport").joinpath("metadata-def.json")
     json_data = {
-        "constant": {
-            "test_meta1": {
-                "value": "value"
-            },
-            "test_meta2": {
-                "value": 100
-            },
-            "test_meta3": {
-                "value": True
-            }
-        },
+        "constant": {"test_meta1": {"value": "value"}, "test_meta2": {"value": 100}, "test_meta3": {"value": True}},
         "variable": [
-            {
-                "test_meta1": {
-                    "value": "v1"
-                },
-                "test_meta2": {
-                    "value": 200,
-                    "unit": "m"
-                },
-                "test_meta3": {
-                    "value": False
-                }
-            },
-            {
-                "test_meta1": {
-                    "value": "v1"
-                },
-                "test_meta2": {
-                    "value": 200,
-                    "unit": "m"
-                },
-                "test_meta3": {
-                    "value": False
-                }
-            },
-        ]
+            {"test_meta1": {"value": "v1"}, "test_meta2": {"value": 200, "unit": "m"}, "test_meta3": {"value": False}},
+            {"test_meta1": {"value": "v1"}, "test_meta2": {"value": 200, "unit": "m"}, "test_meta3": {"value": False}},
+        ],
     }
     with open(json_path, mode="w", encoding="utf-8") as json_file:
         json.dump(json_data, json_file, ensure_ascii=False, indent=4)
@@ -91,18 +60,19 @@ def metadata_def_json_file():
 
 def custom_config_yaml_file(mode: Optional[str], filename: str):
     dirname = Path("data/tasksupport")
-    data = {
-        "extended_mode": mode,
-        "save_raw": True,
-        "magic_variable": False,
-        "save_thumbnail_image": True
-    }
-    test_yaml_path = dirname.joinpath(filename)
-    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+    data = {"extended_mode": mode, "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
+
+    if Path(filename).suffix == ".toml":
+        test_toml_path = dirname.joinpath(filename)
+        with open(test_toml_path, mode="w", encoding="utf-8") as f:
+            toml.dump(data, f)
+    elif Path(filename).suffix in [".yaml", ".yml"]:
+        test_yaml_path = dirname.joinpath(filename)
+        with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 
 
-def test_run_config_args(inputfile_single, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath):
+def test_run_config_args(inputfile_single, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, metadata_json):
     """configが引数として渡された場合"""
     config = Config(extended_mode=None, save_raw=False, save_thumbnail_image=False, magic_variable=False)
     run(config=config)
@@ -113,11 +83,13 @@ def test_run_config_args(inputfile_single, tasksupport, metadata_def_json_file, 
     assert config.magic_variable is False
 
 
-@pytest.mark.parametrize("config_file", ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"])
-def test_run_config_file_rdeformat_mode(inputfile_rdeformat, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, config_file):
+@pytest.mark.parametrize("config_file", ["rdeconfig.yaml", "pyproject.toml", "rdeconfig.yml"])
+def test_run_config_file_rdeformat_mode(
+    inputfile_rdeformat, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, metadata_json, config_file
+):
     """configが引数Noneでファイルとして渡された場合"""
-    if Path("data/tasksupport/.rdeconfig.yml").exists():
-        Path("data/tasksupport/.rdeconfig.yml").unlink()
+    if Path("data/tasksupport/rdeconfig.yml").exists():
+        Path("data/tasksupport/rdeconfig.yml").unlink()
     custom_config_yaml_file("rdeformat", config_file)
     config = Config(extended_mode="rdeformat", save_raw=False, save_thumbnail_image=False, magic_variable=False)
     run()
@@ -128,22 +100,26 @@ def test_run_config_file_rdeformat_mode(inputfile_rdeformat, tasksupport, metada
     assert config.magic_variable is False
 
 
-@pytest.mark.parametrize("config_file", ["rdeconfig.yaml", ".rdeconfig.yaml", "rdeconfig.yml", ".rdeconfig.yml"])
-def test_run_config_file_multifile_mode(inputfile_multimode, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, config_file):
+@pytest.mark.parametrize("config_file", ["rdeconfig.yaml", "pyproject.toml", "rdeconfig.yml"])
+def test_run_config_file_multifile_mode(
+    inputfile_multimode, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, metadata_json, config_file
+):
     """configが引数Noneでファイルとして渡された場合"""
-    if Path("data/tasksupport/.rdeconfig.yml").exists():
-        Path("data/tasksupport/.rdeconfig.yml").unlink()
-    custom_config_yaml_file("multifile", config_file)
-    config = Config(extended_mode="multifile", save_raw=False, save_thumbnail_image=False, magic_variable=False)
+    if Path("data/tasksupport/rdeconfig.yml").exists():
+        Path("data/tasksupport/rdeconfig.yml").unlink()
+    custom_config_yaml_file("MultiDataTile", config_file)
+    config = Config(extended_mode="MultiDataTile", save_raw=False, save_thumbnail_image=False, magic_variable=False)
     run()
     assert config is not None
-    assert config.extended_mode == "multifile"
+    assert config.extended_mode == "MultiDataTile"
     assert config.save_raw is False
     assert config.save_thumbnail_image is False
     assert config.magic_variable is False
 
 
-def test_run_empty_config(inputfile_single, tasksupport_empty_config, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath):
+def test_run_empty_config(
+    inputfile_single, tasksupport_empty_config, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, metadata_json
+):
     """configファイルの実態はあるがファイル内容が空の場合"""
     config = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
     run()

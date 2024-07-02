@@ -8,9 +8,9 @@
 
 ::: src.rdetoolkit.exceptions.InvoiceSchemaValidationError
 
-## MetadataDefValidationError
+## MetadataValidationError
 
-::: src.rdetoolkit.exceptions.MetadataDefValidationError
+::: src.rdetoolkit.exceptions.MetadataValidationError
 
 ## catch_exception_with_message
 

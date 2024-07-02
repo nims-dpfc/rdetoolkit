@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+import contextlib
 import os
 import shutil
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from rdetoolkit import img2thumb
 from rdetoolkit.config import Config
@@ -15,12 +18,17 @@ from rdetoolkit.impl.input_controller import (
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.validation import invoice_validate, metadata_def_validate
+from rdetoolkit.validation import invoice_validate, metadata_validate
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
 
-def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def rdeformat_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
+) -> None:
     """Process the source data and apply specific transformations using the provided callback function.
 
     This function performs several steps:
@@ -48,9 +56,8 @@ def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     if config is None:
         config = Config()
     # rewriting the invoice
-    invoice = InvoiceFile(resource_paths.invoice_org)
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
-    invoice.overwrite(invoice_dst_filepath)
+    InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
     copy_input_to_rawfile_for_rdeformat(resource_paths)
 
     # run custom dataset process
@@ -63,20 +70,23 @@ def rdeformat_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
             resource_paths.main_image,
         )
 
-    try:
+    with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(invoice_dst_filepath, schema_path)
 
 
-def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def multifile_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
+) -> None:
     """Processes multiple source files and applies transformations using the provided callback function.
 
     This function performs several steps:
@@ -105,9 +115,8 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     if config is None:
         config = Config()
 
-    invoice = InvoiceFile(resource_paths.invoice_org)
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
-    invoice.overwrite(invoice_dst_filepath)
+    InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
 
     if config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
@@ -123,20 +132,25 @@ def multifile_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutput
     if config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
-    try:
+    with contextlib.suppress(Exception):
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(invoice_dst_filepath, schema_path)
 
 
-def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, excel_invoice_file: Path, idx: int, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def excel_invoice_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    excel_invoice_file: Path,
+    idx: int,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
+) -> None:
     """Processes invoice data from an Excel file and applies dataset transformations using the provided callback function.
 
     This function performs several steps:
@@ -180,10 +194,11 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
     except StructuredError:
         raise
     except Exception as e:
+        emsg = f"ERROR: failed to generate invoice file for data {idx:04d}"
         raise StructuredError(
-            f"ERROR: failed to generate invoice file for data {idx:04d}",
+            emsg,
             eobj=e,
-        )
+        ) from e
 
     if config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
@@ -201,20 +216,27 @@ def excel_invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOu
     if config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
-    try:
-        update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
+    with contextlib.suppress(Exception):
+        update_description_with_features(
+            resource_paths,
+            resource_paths.invoice.joinpath("invoice.json"),
+            srcpaths.tasksupport.joinpath("metadata-def.json"),
+        )
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
 
-def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath, datasets_process_function: Optional[_CallbackType] = None, config: Optional[Config] = None):
+def invoice_mode_process(
+    srcpaths: RdeInputDirPaths,
+    resource_paths: RdeOutputResourcePath,
+    datasets_process_function: _CallbackType | None = None,
+    config: Config | None = None,
+) -> None:
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
     This function performs several steps:
@@ -256,20 +278,22 @@ def invoice_mode_process(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputRe
     if config.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    try:
-        update_description_with_features(resource_paths, resource_paths.invoice.joinpath("invoice.json"), srcpaths.tasksupport.joinpath("metadata-def.json"))
-    except Exception:
-        pass
+    with contextlib.suppress(Exception):
+        update_description_with_features(
+            resource_paths,
+            resource_paths.invoice.joinpath("invoice.json"),
+            srcpaths.tasksupport.joinpath("metadata-def.json"),
+        )
 
-    # validate metadata-def.json
-    metadata_def_validate(srcpaths.tasksupport.joinpath("metadata-def.json"))
+    # validate metadata.json
+    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
-    # validate metadata-def.json
+    # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
 
-def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath):
+def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath) -> None:
     """Copy the input raw files to their respective directories based on the file's part names.
 
     This function scans through the parts of each file's path in `resource_paths.rawfiles`. If the file path
@@ -298,7 +322,7 @@ def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath):
                 break
 
 
-def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]):
+def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]) -> None:
     """Copy the input raw files to the specified directory.
 
     This function takes a list of raw file paths and copies each file to the given `raw_dir_path`.
@@ -314,7 +338,7 @@ def copy_input_to_rawfile(raw_dir_path: Path, raw_files: tuple[Path, ...]):
         shutil.copy(f, os.path.join(raw_dir_path, f.name))
 
 
-def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: str) -> IInputFileChecker:
+def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: str | None) -> IInputFileChecker:
     """Determine the appropriate input file checker based on the provided format flags and source paths.
 
     The function scans the source paths to identify the type of input files present. Based on the file type
@@ -323,7 +347,7 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     Args:
         src_paths (RdeInputDirPaths): Paths for the source input files.
         unpacked_dir_path (Path): Directory path for unpacked files.
-        mode (str): Format flags indicating which checker mode is enabled.
+        mode (Optional[str]): Format flags indicating which checker mode is enabled.
 
     Returns:
         IInputFileChecker: An instance of the appropriate input file checker based on the provided criteria.
@@ -331,13 +355,13 @@ def selected_input_checker(src_paths: RdeInputDirPaths, unpacked_dir_path: Path,
     Raises:
         None, but callers should be aware that downstream exceptions can be raised by individual checker initializations.
     """
-    input_files = [f for f in src_paths.inputdata.glob("*")]
+    input_files = list(src_paths.inputdata.glob("*"))
     excel_invoice_files = [f for f in input_files if f.suffix.lower() in [".xls", ".xlsx"] and f.stem.endswith("_excel_invoice")]
+    mode = mode.lower() if mode is not None else ""
     if mode == "rdeformat":
         return RDEFormatChecker(unpacked_dir_path)
-    elif mode == "multifile":
+    if mode == "multidatatile":
         return MultiFileChecker(unpacked_dir_path)
-    elif excel_invoice_files:
+    if excel_invoice_files:
         return ExcelInvoiceChecker(unpacked_dir_path)
-    else:
-        return InvoiceChecker(unpacked_dir_path)
+    return InvoiceChecker(unpacked_dir_path)

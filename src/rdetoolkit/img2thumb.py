@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import itertools
 import os
 import shutil
 from glob import glob
-from typing import Optional, Union
 
 from rdetoolkit.exceptions import catch_exception_with_message
 
 
-def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: Union[str, list[str]]):
+def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: str | list[str]) -> None:
     """Copies the other images to the thumbnail directory.
 
     Args:
@@ -25,15 +26,20 @@ def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: Union[str, lis
 
 def __find_img_path(dirname: str, target_name: str) -> str:
     search_pattern = os.path.join(dirname, "**", target_name)
-    matching_files = [f for f in glob(search_pattern, recursive=True)]
+    matching_files = list(glob(search_pattern, recursive=True))
     if matching_files:
         return matching_files[0]
-    else:
-        return ""
+    return ""
 
 
 @catch_exception_with_message(error_message="ERROR: failed to copy image files", error_code=50)
-def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, target_image_name: Optional[str] = None, img_ext: Optional[str] = None) -> None:
+def copy_images_to_thumbnail(
+    out_dir_thumb_img: str,
+    out_dir_main_img: str,
+    *,
+    target_image_name: str | None = None,
+    img_ext: str | None = None,
+) -> None:
     """Copy the image files in the other image folder and the main image folder to the thumbnail folder.
 
     Args:
@@ -42,10 +48,7 @@ def copy_images_to_thumbnail(out_dir_thumb_img: str, out_dir_main_img: str, *, t
         target_image_name (str, optional): Specify the name of the image file to be copied to the thumbnail folder.
         img_ext (str, optional): image file extension.
     """
-    if img_ext is None:
-        img_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"]
-    else:
-        img_exts = [img_ext]
+    img_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"] if img_ext is None else [img_ext]
 
     img_paths_main = [glob(os.path.join(out_dir_main_img, "*" + ext)) for ext in img_exts]
     img_path_main = list(itertools.chain.from_iterable(img_paths_main))

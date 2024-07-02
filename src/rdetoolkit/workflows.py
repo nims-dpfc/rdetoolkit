@@ -1,18 +1,27 @@
+from __future__ import annotations
+
 import sys
 import traceback
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, Optional
 
-from rdetoolkit.config import Config, get_config
+from rdetoolkit.config import Config, load_config
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process, invoice_mode_process, multifile_mode_process, rdeformat_mode_process, selected_input_checker
+from rdetoolkit.modeproc import (
+    _CallbackType,
+    excel_invoice_mode_process,
+    invoice_mode_process,
+    multifile_mode_process,
+    rdeformat_mode_process,
+    selected_input_checker,
+)
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
 
 
-def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[RawFiles, Optional[Path]]:
+def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFiles, Path | None]:
     """Classify input files to determine if the input pattern is appropriate.
 
     1. Invoice
@@ -71,7 +80,11 @@ def check_files(srcpaths: RdeInputDirPaths, *, mode: Optional[str]) -> tuple[Raw
     return rawfiles, excelinvoice
 
 
-def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepath: Path, invoice_schema_filepath: Path) -> Generator[RdeOutputResourcePath, None, None]:
+def generate_folder_paths_iterator(
+    raw_files_group: RawFiles,
+    invoice_org_filepath: Path,
+    invoice_schema_filepath: Path,
+) -> Generator[RdeOutputResourcePath, None, None]:
     """Generates iterator for RDE output folder paths.
 
     Create data folders for registration in the RDE system.
@@ -116,7 +129,7 @@ def generate_folder_paths_iterator(raw_files_group: RawFiles, invoice_org_filepa
         yield rdeoutput_resource_path
 
 
-def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Optional[Config] = None):  # pragma: no cover
+def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> None:  # pragma: no cover
     """RDE Structuring Processing Function.
 
     This function executes the structuring process for RDE data. If you want to implement custom processing for the input data,
@@ -168,13 +181,7 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
         )
 
         # Loading configuration file
-        __config = Config()
-        if config is not None:
-            __config = config
-        else:
-            __config = get_config(srcpaths.tasksupport)
-            if __config is None:
-                __config = Config()
+        __config = load_config(str(srcpaths.tasksupport), config=config)
         raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
 
         # Backup of invoice.json
@@ -183,9 +190,9 @@ def run(*, custom_dataset_function: Optional[_CallbackType] = None, config: Opti
 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if __config.extended_mode == "rdefotmat":
+            if __config.extended_mode is not None and __config.extended_mode.lower() == "rdeformat":
                 rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
-            elif __config.extended_mode == "multifile":
+            elif __config.extended_mode is not None and __config.extended_mode.lower() == "multidatatile":
                 multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
             elif excel_invoice_files is not None:
                 excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function, config=__config)

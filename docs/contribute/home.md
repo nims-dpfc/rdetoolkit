@@ -6,7 +6,7 @@ RDEToolKitへのコントリビュートをしていただくには、以下の�
 
 ### リポジトリのクローンをローカルに作成する
 
-```bash
+```shell
 cd <任意のディレクトリ>
 
 # SSH
@@ -30,20 +30,20 @@ ryeは以下の公式ドキュメントを参考にインストールしてく�
 
 ryeをインストール後、以下の手順で開発環境をセットアップしてください。`rye sync`で仮想環境が作成され、必要なパッケージが仮想環境にインストールされます。
 
-```bash
+```shell
 cd <rdetoolkitのローカルリポジトリ>
 rye sync
 ```
 
 仮想環境を起動します。
 
-```bash
+```shell
 source .venv/bin/activate
 ```
 
 また、RDEToolKitではコード品質の観点から、`pre-commit`を採用しています。pre-commitのセットアップを実行するため、以下の処理を実行してください。
 
-```bash
+```shell
 pre-commit install
 ```
 

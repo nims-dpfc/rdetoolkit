@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from rdetoolkit.models.rde2types import RawFiles, UnZipFilesPathList, ZipFilesPathList
 
@@ -49,7 +50,7 @@ class IInputFileChecker(ABC):
     """
 
     @abstractmethod
-    def parse(self, src_input_path: Path) -> tuple[RawFiles, Optional[Path]]:
+    def parse(self, src_input_path: Path) -> tuple[RawFiles, Path | None]:
         """Parses the given source input path and extracts relevant information.
 
         This method should analyze the file or files located at the specified path and extract
@@ -73,7 +74,7 @@ class ICompressedFileStructParser(ABC):
     """
 
     @abstractmethod
-    def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
+    def read(self, zipfile: Path, target_path: Path) -> list[tuple[Path, ...]]:
         """Reads and parses the structure of the compressed file.
 
         This method should open and inspect the contents of a compressed file, extracting information about its internal structure, such as file paths and organization.

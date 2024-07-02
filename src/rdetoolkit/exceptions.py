@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from functools import wraps
-from typing import Optional
+from typing import Any, Callable
 
 
 class StructuredError(Exception):
@@ -16,7 +18,7 @@ class StructuredError(Exception):
                     provide more context to the error.
     """
 
-    def __init__(self, emsg: str = "", ecode=1, eobj=None):
+    def __init__(self, emsg: str = "", ecode: int = 1, eobj: Any | None = None):
         super().__init__(emsg)
         self.emsg = emsg
         self.ecode = ecode
@@ -26,20 +28,20 @@ class StructuredError(Exception):
 class InvoiceSchemaValidationError(Exception):
     """Raised when a validation error occurs."""
 
-    def __init__(self, message="Validation error"):
+    def __init__(self, message: str = "Validation error") -> None:
         self.message = message
         super().__init__(self.message)
 
 
-class MetadataDefValidationError(Exception):
+class MetadataValidationError(Exception):
     """Raised when a validation error occurs."""
 
-    def __init__(self, message="Validation error"):
+    def __init__(self, message: str = "Validation error") -> None:
         self.message = message
         super().__init__(self.message)
 
 
-def catch_exception_with_message(*, error_message: Optional[str] = None, error_code: Optional[int] = None):
+def catch_exception_with_message(*, error_message: str | None = None, error_code: int | None = None) -> Callable:
     """A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.
 
     This decorator catches StructuredError thrown within the function and re-raises it with a specified error message
@@ -53,30 +55,18 @@ def catch_exception_with_message(*, error_message: Optional[str] = None, error_c
         A function decorator that provides customized error handling on exception occurrence.
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             try:
                 return func(*args, **kwargs)
             except StructuredError as e:
-                if error_message is not None:
-                    msg = error_message
-                else:
-                    msg = str(e)
-
-                if error_code is not None:
-                    ecode = error_code
-                else:
-                    ecode = 1
-
-                raise StructuredError(msg, ecode=ecode, eobj=e)
-
+                msg = error_message if error_message is not None else str(e)
+                ecode = error_code if error_code is not None else 1
+                raise StructuredError(msg, ecode=ecode, eobj=e) from e
             except Exception as e:
-                if error_message is not None:
-                    msg = error_message
-                else:
-                    msg = str(e)
-                raise Exception(msg)
+                msg = error_message if error_message is not None else str(e)
+                raise Exception(msg) from e
 
         return wrapper
 

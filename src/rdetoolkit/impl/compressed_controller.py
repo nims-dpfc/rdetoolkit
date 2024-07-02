@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 import os
 import re
-import shutil
+import zipfile
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Final
 
+import charset_normalizer
 import pandas as pd
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser
 from rdetoolkit.invoicefile import check_exist_rawfiles
+from rdetoolkit.rdelogger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CompressedFlatFileParser(ICompressedFileStructParser):
@@ -25,7 +31,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
     def __init__(self, xlsx_invoice: pd.DataFrame):
         self.xlsx_invoice = xlsx_invoice
 
-    def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
+    def read(self, zipfile: Path, target_path: Path) -> list[tuple[Path, ...]]:
         """Extracts the contents of the zipfile to the target path and checks their existence against the Excelinvoice.
 
         Args:
@@ -39,11 +45,45 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         _extracted_files = self._unpacked(zipfile, target_path)
         return [(f,) for f in check_exist_rawfiles(self.xlsx_invoice, _extracted_files)]
 
-    def _unpacked(self, zipfile: Union[Path, str], target_dir: Union[Path, str]):
+    def _unpacked(self, zipfile: Path | str, target_dir: Path | str) -> list[Path]:
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
-        shutil.unpack_archive(zipfile, target_dir)
+        self._extract_zip_with_encoding(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
+
+    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str) -> None:
+        """Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.
+
+        This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.
+
+        Args:
+            zip_path (Path | str): The path to the ZIP file to be extracted.
+            extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.
+
+        Raises:
+            ValueError: If encoding detection fails for any filename within the ZIP archive.
+            UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.
+
+        Example:
+            >>> zip_path = 'path/to/your/archive.zip'
+            >>> extract_path = 'path/to/extract/directory'
+            >>> encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
+            >>> self._extract_zip_with_encoding(zip_path, extract_path)
+        """
+        lang_enc_flag: Final = 0x800
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            for zip_info in zip_ref.infolist():
+                old_filename = zip_info.filename
+                encoding = "utf-8" if zip_info.flag_bits & lang_enc_flag else "cp437"
+                enc = charset_normalizer.detect(zip_info.filename.encode(encoding))
+                if not enc.get("encoding"):
+                    enc["encoding"] = encoding
+
+                zip_info.filename = zip_info.filename.encode(encoding).decode(str(enc["encoding"]))
+                zip_ref.NameToInfo[zip_info.filename] = zip_info
+                del zip_ref.NameToInfo[old_filename]
+
+                zip_ref.extract(zip_info, extract_path)
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded.
@@ -90,7 +130,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
     def __init__(self, xlsx_invoice: pd.DataFrame):
         self.xlsx_invoice = xlsx_invoice
 
-    def read(self, zipfile: Path, target_path: Path) -> List[Tuple[Path, ...]]:
+    def read(self, zipfile: Path, target_path: Path) -> list[tuple[Path, ...]]:
         """Extracts the contents of the zipfile and returns validated file paths.
 
         Args:
@@ -105,11 +145,45 @@ class CompressedFolderParser(ICompressedFileStructParser):
         safe_verification_files = self.validation_uniq_fspath(target_path, exclude_names=["invoice_org.json"])
         return [tuple(f) for f in safe_verification_files.values()]
 
-    def _unpacked(self, zipfile: Union[Path, str], target_dir: Union[Path, str]):
+    def _unpacked(self, zipfile: Path | str, target_dir: Path | str) -> list[Path]:
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
-        shutil.unpack_archive(zipfile, target_dir)
+        self._extract_zip_with_encoding(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
+
+    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str) -> None:
+        """Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.
+
+        This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.
+
+        Args:
+            zip_path (Path | str): The path to the ZIP file to be extracted.
+            extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.
+
+        Raises:
+            ValueError: If encoding detection fails for any filename within the ZIP archive.
+            UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.
+
+        Example:
+            >>> zip_path = 'path/to/your/archive.zip'
+            >>> extract_path = 'path/to/extract/directory'
+            >>> encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
+            >>> self._extract_zip_with_encoding(zip_path, extract_path)
+        """
+        lang_enc_flag: Final = 0x800
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            for zip_info in zip_ref.infolist():
+                old_filename = zip_info.filename
+                encoding = "utf-8" if zip_info.flag_bits & lang_enc_flag else "cp437"
+                enc = charset_normalizer.detect(zip_info.filename.encode(encoding))
+                if not enc.get("encoding"):
+                    enc["encoding"] = encoding
+
+                zip_info.filename = zip_info.filename.encode(encoding).decode(str(enc["encoding"]))
+                zip_ref.NameToInfo[zip_info.filename] = zip_info
+                del zip_ref.NameToInfo[old_filename]
+
+                zip_ref.extract(zip_info, extract_path)
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded.
@@ -141,7 +215,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
 
         return False
 
-    def validation_uniq_fspath(self, target_path: Union[str, Path], exclude_names: list[str]) -> dict[str, list[Path]]:
+    def validation_uniq_fspath(self, target_path: str | Path, exclude_names: list[str]) -> dict[str, list[Path]]:
         """Check if there are any non-unique directory names under the target directory.
 
         Args:
@@ -164,20 +238,22 @@ class CompressedFolderParser(ICompressedFileStructParser):
         """
         verification_files: dict[str, list[Path]] = {}
         unique_dirname_set = set()
-        for dir, _, fnames in os.walk(target_path):
+        for d, _, fnames in os.walk(target_path):
             if not fnames:
                 continue
             # check file
-            _filered_paths = [Path(dir) / Path(f) for f in fnames if f not in exclude_names]
+            _filered_paths = [Path(d) / Path(f) for f in fnames if f not in exclude_names]
             for f in _filered_paths:
                 if str(f).lower() in unique_dirname_set:
-                    raise StructuredError("ERROR: folder paths and file paths stored in a zip file must always have unique names.")
+                    emsg = "ERROR: folder paths and file paths stored in a zip file must always have unique names."
+                    raise StructuredError(emsg)
                 unique_dirname_set.add(str(f).lower())
 
             # check folder
-            lower_dir = str(dir).lower()
+            lower_dir = str(d).lower()
             if lower_dir in unique_dirname_set:
-                raise StructuredError("ERROR: folder paths and file paths stored in a zip file must always have unique names.")
+                emsg = "ERROR: folder paths and file paths stored in a zip file must always have unique names."
+                raise StructuredError(emsg)
             unique_dirname_set.add(lower_dir)
             verification_files[lower_dir] = _filered_paths
 
@@ -198,6 +274,4 @@ def parse_compressedfile_mode(
     if "data_file_names/name" in xlsx_invoice.columns:
         # File Mode
         return CompressedFlatFileParser(xlsx_invoice)
-    else:
-        # Folder Mode
-        return CompressedFolderParser(xlsx_invoice)
+    return CompressedFolderParser(xlsx_invoice)

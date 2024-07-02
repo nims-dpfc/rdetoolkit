@@ -19,6 +19,7 @@ click==8.1.7
 contourpy==1.1.0
 cycler==0.11.0
 et-xmlfile==1.1.0
+eval-type-backport==0.2.0
 fonttools==4.42.1
 importlib-metadata==6.8.0
 importlib-resources==6.0.1

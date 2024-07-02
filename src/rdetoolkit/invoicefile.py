@@ -1,20 +1,22 @@
+from __future__ import annotations
+
 import copy
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 import chardet
 import pandas as pd
 
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
-from rdetoolkit.models.rde2types import RdeOutputResourcePath
+from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
 from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
 
 
-def read_excelinvoice(excelinvoice_filepath):
+def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Reads an ExcelInvoice and processes each sheet into a dataframe.
 
     This function reads an ExcelInvoice file and processes various sheets within the file, specifically looking for sheets named `invoiceList_format_id`,`generalTerm`, and `specificTerm`.
@@ -37,8 +39,9 @@ def read_excelinvoice(excelinvoice_filepath):
     for sh_name, df in dct_sheets.items():
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfexcelinvoice is not None:
-                raise StructuredError("ERROR: multiple sheet in invoiceList files")
-            ExcelInvoiceFile._check_intermittent_empty_rows(df)
+                emsg = "ERROR: multiple sheet in invoiceList files"
+                raise StructuredError(emsg)
+            ExcelInvoiceFile.check_intermittent_empty_rows(df)
             dfexcelinvoice = __process_invoice_sheet(df)
         elif sh_name == "generalTerm":
             df_general = __process_general_term_sheet(df)
@@ -46,7 +49,8 @@ def read_excelinvoice(excelinvoice_filepath):
             df_specific = __process_specific_term_sheet(df)
 
     if dfexcelinvoice is None:
-        raise StructuredError("ERROR: no sheet in invoiceList files")
+        emsg = "ERROR: no sheet in invoiceList files"
+        raise StructuredError(emsg)
     return dfexcelinvoice, df_general, df_specific
 
 
@@ -90,35 +94,43 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
     file_set_group = {f.name for f in excel_rawfiles}
     file_set_invoice = set(dfexcelinvoice["data_file_names/name"])
     if file_set_invoice - file_set_group:
-        raise StructuredError(f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}")
-    else:
-        # excel_rawfilesを、インボイス出現順に並び替える
-        _tmp = {f.name: f for f in excel_rawfiles}
-        return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
+        emsg = f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}"
+        raise StructuredError(emsg)
+    # excel_rawfilesを、インボイス出現順に並び替える
+    _tmp = {f.name: f for f in excel_rawfiles}
+    return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
 
 
-def _assign_invoice_val(invoiceobj, key1, key2, valobj, invoiceschema_obj):
+def _assign_invoice_val(invoiceobj: dict[str, Any], key1: str, key2: str, valobj: Any, invoiceschema_obj: dict[str, Any]) -> None:
     """When the destination key, which is the first key 'keys1', is 'custom', valobj is cast according to the invoiceschema_obj. In all other cases, valobj is assigned without changing its type."""
     if key1 == "custom":
         dct_schema = invoiceschema_obj["properties"][key1]["properties"][key2]
         try:
             invoiceobj[key1][key2] = rde2util.castval(valobj, dct_schema["type"], dct_schema.get("format"))
-        except rde2util._CastError:
-            raise StructuredError(f"ERROR: failed to cast invoice value for key [{key1}][{key2}]")
+        except StructuredError as struct_err:
+            emsg = f"ERROR: failed to cast invoice value for key [{key1}][{key2}]"
+            raise StructuredError(emsg) from struct_err
     else:
         invoiceobj[key1][key2] = valobj
 
 
-def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoiceschema_filepath, invoice_info):
+def overwrite_invoicefile_for_dpfterm(
+    invoiceobj: dict[str, Any],
+    invoice_dst_filepath: RdeFsPath,
+    invoiceschema_filepath: RdeFsPath,
+    invoice_info: dict[str, Any],
+) -> None:
     """A function to overwrite DPF metadata into an invoice file.
 
     Args:
-        invoiceobj (object): The object of invoice.json.
-        invoice_dst_filepath (pathlib.Path): The file path for the destination invoice.json.
-        invoiceschema_filepath (pathlib.Path): The file path of invoice.schema.json.
-        invoice_info (object): Information about the invoice file.
+        invoiceobj (dict[str, Any]): The object of invoice.json.
+        invoice_dst_filepath (RdeFsPath): The file path for the destination invoice.json.
+        invoiceschema_filepath (RdeFsPath): The file path of invoice.schema.json.
+        invoice_info (dict[str, Any]): Information about the invoice file.
     """
-    enc = chardet.detect(open(invoiceschema_filepath, "rb").read())["encoding"]
+    with open(invoiceschema_filepath, "rb") as f:
+        data = f.read()
+    enc = chardet.detect(data)["encoding"]
     with open(invoiceschema_filepath, encoding=enc) as f:
         invoiceschema_obj = json.load(f)
     for k, v in invoice_info.items():
@@ -127,7 +139,7 @@ def overwrite_invoicefile_for_dpfterm(invoiceobj, invoice_dst_filepath, invoices
         json.dump(invoiceobj, fout, indent=4, ensure_ascii=False)
 
 
-def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
+def check_exist_rawfiles_for_folder(dfexcelinvoice: pd.DataFrame, rawfiles_tpl: tuple) -> list:
     """Function to check the existence of rawfiles_tpl specified for a folder.
 
     It checks whether rawfiles_tpl, specified as an index, exists in all indexes of ExcelInvoice.
@@ -151,12 +163,15 @@ def check_exist_rawfiles_for_folder(dfexcelinvoice, rawfiles_tpl):
     if dir_setglob == dir_set_invoice:
         # Reorder rawfiles_tpl according to the order of appearance in the invoice
         return [dcttpl[d] for d in dfexcelinvoice["data_folder"]]
-    elif dir_setglob - dir_set_invoice:
-        raise StructuredError(f"ERROR: unused raw data: {(dir_setglob-dir_set_invoice).pop()}")
-    elif dir_set_invoice - dir_setglob:
-        raise StructuredError(f"ERROR: raw data not found: {(dir_set_invoice-dir_setglob).pop()}")
+    if dir_setglob - dir_set_invoice:
+        emsg = f"ERROR: unused raw data: {(dir_setglob-dir_set_invoice).pop()}"
+        raise StructuredError(emsg)
+    if dir_set_invoice - dir_setglob:
+        emsg = f"ERROR: raw data not found: {(dir_set_invoice-dir_setglob).pop()}"
+        raise StructuredError(emsg)
 
-    raise StructuredError("ERROR: unknown error")  # This line should never be reached
+    emsg = "ERROR: unknown error"
+    raise StructuredError(emsg)  # This line should never be reached
 
 
 class InvoiceFile:
@@ -168,13 +183,47 @@ class InvoiceFile:
 
     Note:
         - The class uses an external utility `rde2util.CharDecEncoding.detect_text_file_encoding` to detect the encoding of the file.
+
+    Args:
+        invoice_path (Path): The path to the invoice file.
+
+    Raises:
+        ValueError: If `invoice_obj` is not a dictionary.
+
+    Example:
+        # Usage
+        invoice = InvoiceFile("invoice.json")
+        invoice.invoice_obj["basic"]["dataName"] = "new_data_name"
+        invoice.overwrite("invoice_new.json")
     """
 
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
-        self.invoice_obj = self.read()
+        self._invoice_obj = self.read()
 
-    def read(self, *, target_path: Optional[Path] = None) -> dict:
+    @property
+    def invoice_obj(self) -> dict[str, Any]:
+        """Gets the invoice object."""
+        return self._invoice_obj
+
+    @invoice_obj.setter
+    def invoice_obj(self, value: dict[str, Any]) -> None:
+        """Sets the invoice object."""
+        if not isinstance(value, dict):
+            emsg = "invoice_obj must be a dictionary"
+            raise ValueError(emsg)
+        self._invoice_obj = value
+
+    def __getitem__(self, key: str) -> Any:
+        return self._invoice_obj[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self._invoice_obj[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self._invoice_obj[key]
+
+    def read(self, *, target_path: Path | None = None) -> dict:
         """Reads the content of the invoice file and returns it as a dictionary.
 
         Args:
@@ -189,26 +238,53 @@ class InvoiceFile:
 
         enc = CharDecEncoding.detect_text_file_encoding(target_path)
         with open(target_path, encoding=enc) as f:
-            self.invoice_json = json.load(f)
-        return self.invoice_json
+            self.invoice_obj = json.load(f)
+        return self.invoice_obj
 
-    def overwrite(self, dist_file_path: Path, *, src_file_path: Optional[Path] = None):
-        """Overwrites the destination file with the content of the source invoice file.
+    def overwrite(self, dst_file_path: Path, *, src_obj: Path | None = None) -> None:
+        """Overwrites the contents of the destination file with the invoice JSON data.
 
         Args:
-            dist_file_path (Path): Path to the destination file to be overwritten.
-            src_file_path (Optional[Path], optional): Path to the source invoice file. If not provided,
-                uses the path from `self.invoice_path`. Defaults to None.
+            dst_file_path (Path): The path to the destination file.
+            src_obj (Optional[Path], optional): The path to the source object. Defaults to None.
 
         Raises:
-            StructuredError: If the source file is not found.
+            StructuredError: If the destination file does not exist.
+
+        Example:
+            # Usage
+            invoice = InvoiceFile("invoice.json")
+            invoice.invoice_obj["basic"]["dataName"] = "new_data_name"
+            invoice.overwrite("invoice_new.json")
+
         """
-        if src_file_path is None:
-            src_file_path = self.invoice_path
+        if src_obj is None:
+            src_obj = self.invoice_path
+        parent_dir = os.path.dirname(dst_file_path)
+        os.makedirs(parent_dir, exist_ok=True)
+        enc = CharDecEncoding.detect_text_file_encoding(self.invoice_path)
+        with open(dst_file_path, "w", encoding=enc) as f:
+            json.dump(self.invoice_obj, f, indent=4, ensure_ascii=False)
+
+    @classmethod
+    def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path) -> None:
+        """Copies the original invoice file from the source file path to the destination file path.
+
+        Args:
+            src_file_path (Path): The source file path of the original invoice file.
+            dst_file_path (Path): The destination file path where the original invoice file will be copied to.
+
+        Raises:
+            StructuredError: If the source file path does not exist.
+
+        Returns:
+            None
+        """
         if not os.path.exists(src_file_path):
-            raise StructuredError(f"File Not Found: {src_file_path}")
-        if src_file_path != dist_file_path:
-            shutil.copy(str(src_file_path), str(dist_file_path))
+            emsg = f"File Not Found: {src_file_path}"
+            raise StructuredError(emsg)
+        if src_file_path != dst_file_path:
+            shutil.copy(str(src_file_path), str(dst_file_path))
 
 
 class ExcelInvoiceFile:
@@ -225,7 +301,7 @@ class ExcelInvoiceFile:
         self.invoice_path = invoice_path
         self.dfexcelinvoice, self.df_general, self.df_specific = self.read()
 
-    def read(self, *, target_path: Optional[Path] = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def read(self, *, target_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
 
         Args:
@@ -243,7 +319,8 @@ class ExcelInvoiceFile:
             target_path = self.invoice_path
 
         if not os.path.exists(target_path):
-            raise StructuredError(f"ERROR: excelinvoice not found {target_path}")
+            emsg = f"ERROR: excelinvoice not found {target_path}"
+            raise StructuredError(emsg)
 
         dct_sheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
 
@@ -253,8 +330,9 @@ class ExcelInvoiceFile:
         for sh_name, df in dct_sheets.items():
             if df.iat[0, 0] == "invoiceList_format_id":
                 if dfexcelinvoice is not None:
-                    raise StructuredError("ERROR: multiple sheet in invoiceList files")
-                ExcelInvoiceFile._check_intermittent_empty_rows(df)
+                    emsg = "ERROR: multiple sheet in invoiceList files"
+                    raise StructuredError(emsg)
+                ExcelInvoiceFile.check_intermittent_empty_rows(df)
                 dfexcelinvoice = self._process_invoice_sheet(df)
             elif sh_name == "generalTerm":
                 df_general = self._process_general_term_sheet(df)
@@ -262,7 +340,8 @@ class ExcelInvoiceFile:
                 df_specific = self._process_specific_term_sheet(df)
 
         if dfexcelinvoice is None:
-            raise StructuredError("ERROR: no sheet in invoiceList files")
+            emsg = "ERROR: no sheet in invoiceList files"
+            raise StructuredError(emsg)
 
         return dfexcelinvoice, df_general, df_specific
 
@@ -313,7 +392,7 @@ class ExcelInvoiceFile:
         self._write_json(dist_path, invoice_obj, enc)
 
     @staticmethod
-    def _check_intermittent_empty_rows(df: pd.DataFrame) -> None:
+    def check_intermittent_empty_rows(df: pd.DataFrame) -> None:
         """Function to detect if there are empty rows between data rows in the ExcelInvoice (in DataFrame format).
 
         If an empty row exists, an exception is raised.
@@ -328,13 +407,14 @@ class ExcelInvoiceFile:
             if not ExcelInvoiceFile.__is_empty_row(row):
                 continue
             if any(not ExcelInvoiceFile.__is_empty_row(r) for r in df.iloc[i + 1]):
-                raise StructuredError("Error! Blank lines exist between lines")
+                emsg = "Error! Blank lines exist between lines"
+                raise StructuredError(emsg)
 
     @staticmethod
-    def __is_empty_row(row) -> bool:
+    def __is_empty_row(row: pd.Series) -> bool:
         return all(cell == "" or pd.isnull(cell) for cell in row)
 
-    def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict):
+    def _assign_value_to_invoice(self, key: str, value: str, invoice_obj: dict, schema_obj: dict) -> None:
         assign_funcs: dict[str, Callable[[str, str, dict[Any, Any], dict[Any, Any]], None]] = {
             "basic/": self._assign_basic,
             "sample/": self._assign_sample,
@@ -379,7 +459,7 @@ class ExcelInvoiceFile:
         cval = key.replace("custom/", "")
         _assign_invoice_val(invoice_obj, "custom", cval, value, schema_obj)
 
-    def _ensure_sample_id_order(self, invoice_obj: dict):
+    def _ensure_sample_id_order(self, invoice_obj: dict) -> None:
         sample_info_value = invoice_obj.get("sample")
         if sample_info_value is None:
             return
@@ -389,19 +469,19 @@ class ExcelInvoiceFile:
         sampleid_value = invoice_obj["sample"].pop("sampleId")
         invoice_obj["sample"] = {"sampleId": sampleid_value, **invoice_obj["sample"]}
 
-    def _detect_encoding(self, file_path: Path):
+    def _detect_encoding(self, file_path: Path) -> str:
         return CharDecEncoding.detect_text_file_encoding(file_path)
 
-    def _load_json(self, file_path: Path):
+    def _load_json(self, file_path: Path) -> dict[str, Any]:
         enc = self._detect_encoding(file_path)
         with open(file_path, encoding=enc) as f:
             return json.load(f)
 
-    def _write_json(self, file_path: Path, obj: Any, enc: str):
+    def _write_json(self, file_path: Path, obj: Any, enc: str) -> None:
         with open(file_path, "w", encoding=enc) as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
 
-    def _initialize_sample(self, sample_obj: Any):
+    def _initialize_sample(self, sample_obj: Any) -> None:
         for item, val in sample_obj.items():
             if item in ["sampleId", "composition", "referenceUrl", "description", "ownerId"]:
                 sample_obj[item] = None
@@ -409,17 +489,17 @@ class ExcelInvoiceFile:
                 for attribute in val:
                     attribute["value"] = None
 
-    def _initialize_non_sample(self, key: str, value: Any):
+    def _initialize_non_sample(self, key: str, value: Any) -> None:
         if key not in ["datasetId", "sample"]:
             for item in value:
                 if item not in ["dateSubmitted", "instrumentId"]:
                     value[item] = None
 
 
-def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional[str]) -> Path:
+def backup_invoice_json_files(excel_invoice_file: Path | None, mode: str | None) -> Path:
     """Backs up invoice files and retrieves paths based on the mode specified in the input.
 
-    For excelinvoice and rdeformat modes, it backs up invoice.json as the original file in the temp directory in multifile mode.
+    For excelinvoice and rdeformat modes, it backs up invoice.json as the original file in the temp directory in MultiDataTile mode.
     For other modes, it treats the files in the invoice directory as the original files.
     After backing up, it returns the file paths for invoice_org.json and invoice.schema.json.
 
@@ -433,34 +513,32 @@ def backup_invoice_json_files(excel_invoice_file: Optional[Path], mode: Optional
     if mode is None:
         mode = ""
     invoice_org_filepath = StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json")
-    if excel_invoice_file is not None:
+    if (excel_invoice_file is not None) or (mode is not None and mode.lower() in ["rdeformat", "multidatatile"]):
         invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
         shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
-    elif mode in ["rdeformat", "multifile"]:
-        invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
-        shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
+    # elif mode is not None and mode.lower() in ["rdeformat", "multidatatile"]:
+    #     invoice_org_filepath = StorageDir.get_specific_outputdir(True, "temp").joinpath("invoice_org.json")
+    #     shutil.copy(StorageDir.get_specific_outputdir(False, "invoice").joinpath("invoice.json"), invoice_org_filepath)
 
     return invoice_org_filepath
 
 
-def __serch_key_from_constant_variable_obj(key, metadata_json_obj: dict) -> Optional[dict]:
+def __serch_key_from_constant_variable_obj(key: str, metadata_json_obj: dict) -> dict | None:
     if key in metadata_json_obj["constant"]:
         return metadata_json_obj["constant"]
-    elif metadata_json_obj.get("variable"):
+    if metadata_json_obj.get("variable"):
         _variable = metadata_json_obj["variable"]
         if len(_variable) > 0:
             return metadata_json_obj["variable"][0]
-        else:
-            return None
-    else:
         return None
+    return None
 
 
 def update_description_with_features(
     rde_resource: RdeOutputResourcePath,
     dst_invoice_json: Path,
     metadata_def_json: Path,
-):
+) -> None:
     """Writes the provided features to the description field RDE.
 
     This function takes a dictionary of features and formats them to be written
@@ -474,25 +552,28 @@ def update_description_with_features(
     Returns:
         None: The function does not return a value but writes the features to the invoice.json file in the description field.
     """
-    enc = chardet.detect(open(dst_invoice_json, "rb").read())["encoding"]
+    with open(dst_invoice_json, "rb") as dst_invoice:
+        enc_dst_invoice_data = dst_invoice.read()
+    enc = chardet.detect(enc_dst_invoice_data)["encoding"]
     with open(dst_invoice_json, encoding=enc) as f:
         invoice_obj = json.load(f)
 
-    enc = chardet.detect(open(rde_resource.invoice_schema_json, "rb").read())["encoding"]
+    with open(rde_resource.invoice_schema_json, "rb") as rde_resource_invoice_schema:
+        enc_rde_invoice_schema_data = rde_resource_invoice_schema.read()
+    enc = chardet.detect(enc_rde_invoice_schema_data)["encoding"]
     with open(rde_resource.invoice_schema_json, encoding=enc) as f:
         invoice_schema_obj = json.load(f)
 
-    enc = chardet.detect(open(metadata_def_json, "rb").read())["encoding"]
+    with open(metadata_def_json, "rb") as metadata_def_json_f:
+        enc_rde_invoice_schema_data = metadata_def_json_f.read()
+    enc = chardet.detect(enc_rde_invoice_schema_data)["encoding"]
     with open(metadata_def_json, encoding=enc) as f:
         metadata_def_obj = json.load(f)
 
     with open(rde_resource.meta.joinpath("metadata.json"), encoding=enc) as f:
         metadata_json_obj = json.load(f)
 
-    if invoice_obj["basic"]["description"]:
-        description = invoice_obj["basic"]["description"]
-    else:
-        description = ""
+    description = invoice_obj["basic"]["description"] if invoice_obj["basic"]["description"] else ""
     for key, value in metadata_def_obj.items():
         if not value.get("_feature"):
             continue
@@ -529,7 +610,7 @@ class RuleBasedReplacer:
         rule_file_path (Optional[Union[str, Path]]): Path to the rule file. If specified, rules are loaded from this path.
     """
 
-    def __init__(self, *, rule_file_path: Optional[Union[str, Path]] = None):
+    def __init__(self, *, rule_file_path: str | Path | None = None):
         self.rules: dict[str, str] = {}
         self.last_apply_result: dict[str, Any] = {}
 
@@ -538,7 +619,7 @@ class RuleBasedReplacer:
         if rule_file_path and rule_file_path.exists():
             self.load_rules(rule_file_path)
 
-    def load_rules(self, filepath: Union[str, Path]) -> None:
+    def load_rules(self, filepath: str | Path) -> None:
         """Function to read file mapping rules.
 
         The file containing the mapping rules must be in JSON format.
@@ -552,14 +633,21 @@ class RuleBasedReplacer:
         if isinstance(filepath, str):
             filepath = Path(filepath)
         if filepath.suffix != ".json":
-            raise StructuredError(f"Error. File format/extension is not correct: {filepath}")
+            emsg = f"Error. File format/extension is not correct: {filepath}"
+            raise StructuredError(emsg)
 
         enc = CharDecEncoding.detect_text_file_encoding(filepath)
         with open(filepath, encoding=enc) as f:
             data = json.load(f)
             self.rules = data.get("filename_mapping", {})
 
-    def get_apply_rules_obj(self, replacements: dict[str, Any], source_json_obj: Optional[dict[str, Any]], *, mapping_rules: Optional[dict[str, str]] = None) -> dict[str, Any]:
+    def get_apply_rules_obj(
+        self,
+        replacements: dict[str, Any],
+        source_json_obj: dict[str, Any] | None,
+        *,
+        mapping_rules: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Function to convert file mapping rules into a JSON format.
 
         This function takes string mappings separated by dots ('.') and converts them into a dictionary format, making it easier to handle within a target JsonObject.
@@ -592,7 +680,7 @@ class RuleBasedReplacer:
         if mapping_rules is None:
             mapping_rules = self.rules
         if source_json_obj is None:
-            source_json_obj = dict()
+            source_json_obj = {}
 
         for key, value in self.rules.items():
             keys = key.split(".")
@@ -624,7 +712,7 @@ class RuleBasedReplacer:
         """
         self.rules[path] = variable
 
-    def write_rule(self, replacements_rule: dict[str, Any], save_file_path: Union[str, Path]) -> str:
+    def write_rule(self, replacements_rule: dict[str, Any], save_file_path: str | Path) -> str:
         """Function to write file mapping rules to a target JSON file.
 
         Writes the set mapping rules (in JSON format) to the target file
@@ -646,7 +734,8 @@ class RuleBasedReplacer:
             save_file_path = Path(save_file_path)
 
         if save_file_path.suffix != ".json":
-            raise StructuredError(f"Extension error. Incorrect extension: {save_file_path}")
+            emsg = f"Extension error. Incorrect extension: {save_file_path}"
+            raise StructuredError(emsg)
 
         if save_file_path.exists():
             enc = CharDecEncoding.detect_text_file_encoding(save_file_path)
@@ -655,7 +744,7 @@ class RuleBasedReplacer:
             _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
             data_to_write = copy.deepcopy(exists_contents)
         else:
-            new_contents: dict[str, Any] = dict()
+            new_contents: dict[str, Any] = {}
             _ = self.get_apply_rules_obj(replacements_rule, new_contents)
             data_to_write = copy.deepcopy(new_contents)
             enc = "utf-8"
@@ -664,13 +753,14 @@ class RuleBasedReplacer:
             with open(save_file_path, mode="w", encoding=enc) as f:
                 json.dump(data_to_write, f, indent=4, ensure_ascii=False)
                 contents = json.dumps({"filename_mapping": self.rules})
-        except json.JSONDecodeError:
-            raise StructuredError("Error. No write was performed on the target json")
+        except json.JSONDecodeError as json_err:
+            emsg = "Error. No write was performed on the target json"
+            raise StructuredError(emsg) from json_err
 
         return contents
 
 
-def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: Union[str, Path]) -> dict[str, Any]:
+def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_file_path: str | Path) -> dict[str, Any]:
     """Applies a default filename mapping rule based on the basename of the save file path.
 
     This function creates an instance of RuleBasedReplacer and applies a default mapping rule. If the basename
@@ -700,7 +790,7 @@ def apply_default_filename_mapping_rule(replacement_rule: dict[str, Any], save_f
     return replacer.last_apply_result
 
 
-def apply_magic_variable(invoice_path: Union[str, Path], rawfile_path: Union[str, Path], *, save_filepath: Optional[Union[str, Path]] = None) -> dict[str, Any]:
+def apply_magic_variable(invoice_path: str | Path, rawfile_path: str | Path, *, save_filepath: str | Path | None = None) -> dict[str, Any]:
     """Converts the magic variable ${filename}.
 
     If ${filename} is present in basic.dataName of invoice.json, it is replaced with the filename of rawfile_path.

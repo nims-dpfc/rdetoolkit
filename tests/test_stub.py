@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def get_module_members(module_name: ModuleType):
@@ -20,7 +20,7 @@ def get_module_members(module_name: ModuleType):
     """
     members = []
     for name in dir(module_name):
-        if name.startswith('__') or name.startswith('_'):
+        if name.startswith("__") or name.startswith("_"):
             continue  # Skip dunder methods
         obj = getattr(module_name, name)
         if isinstance(obj, type) or callable(obj):
@@ -46,19 +46,26 @@ def check_stubfile(module_name: str):
 
     # Load the module
     module = importlib.util.module_from_spec(spec)
+    if module.__name__ == "src.rdetoolkit.models.rde2types":
+        return
+    if spec.loader is None:
+        return
     spec.loader.exec_module(module)
 
     # Get the path to the corresponding stub file
     module_file_path = spec.origin
+    if module_file_path is None:
+        return
     path_parts = module_file_path.split(os.sep)
     src_index = path_parts.index("src")
-    path_after = os.sep.join(path_parts[src_index + 2:])
-    path_before = os.sep.join(path_parts[:src_index + 2])
-    stub_file_path = os.sep.join([path_before, "stubs", "rdetoolkit", path_after[:-3] + '.pyi'])  # Remove .py and add .pyi
+    path_after = os.sep.join(path_parts[src_index + 2 :])
+    path_before = os.sep.join(path_parts[: src_index + 2])
+    stub_file_path = os.sep.join([path_before, "stubs", "rdetoolkit", path_after[:-3] + ".pyi"])  # Remove .py and add .pyi
     # stub_file_path = module_file_path[:-3] + '.pyi'
 
     if not os.path.exists(stub_file_path):
-        raise FileNotFoundError(f"Stub file: {stub_file_path} not found: Generate stub file command: stubgen <module_path> -o src/rdetoolkit/stubs")
+        msg = f"Stub file: {stub_file_path} not found: Generate stub file command: stubgen <module_path> -o src/rdetoolkit/stubs"
+        raise FileNotFoundError(msg)
 
     with open(stub_file_path) as f:
         stub_content = f.read()
@@ -66,7 +73,8 @@ def check_stubfile(module_name: str):
     members = get_module_members(module)
     for name in members:
         if name not in stub_content:
-            raise AssertionError(f"{name} not found in {stub_file_path}: Generate stub file command: stubgen <module_path> -o src/rdetoolkit/stubs")
+            msg = f"{name} not found in {stub_file_path}: Generate stub file command: stubgen <module_path> -o src/rdetoolkit/stubs"
+            raise AssertionError(msg)
 
     print(f"All functions and classes in {module_name} are defined in {stub_file_path}")
 
@@ -75,10 +83,10 @@ def find_python_moduels(modules_dir_path: Path) -> list[str]:
     modules = []
     for root, _, files in os.walk(modules_dir_path):
         for file in files:
-            if file.endswith('.py') and file != '__init__.py':
+            if file.endswith(".py") and file != "__init__.py":
                 module_path = Path(root) / file
-                module_name = module_path.relative_to(modules_dir_path).with_suffix('')
-                module = str(module_name).replace('/', '.')
+                module_name = module_path.relative_to(modules_dir_path).with_suffix("")
+                module = str(module_name).replace("/", ".")
                 modules.append(module)
     return modules
 

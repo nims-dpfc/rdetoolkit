@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import json
 import os
@@ -5,7 +7,7 @@ import pathlib
 import re
 import zipfile
 from copy import deepcopy
-from typing import Any, Final, Optional, TypedDict, Union, cast
+from typing import Any, Callable, Final, TypedDict, cast
 
 import chardet  # for following failure cases
 import dateutil.parser
@@ -24,7 +26,7 @@ class _ChardetType(TypedDict):
     confidence: float
 
 
-def get_default_values(default_values_filepath):
+def get_default_values(default_values_filepath: RdeFsPath) -> dict[str, Any]:
     """Reads default values from a default_value.csv file and returns them as a dictionary.
 
     This function opens a file specified by 'default_values_filepath', detects its encoding,
@@ -32,13 +34,15 @@ def get_default_values(default_values_filepath):
     The function constructs and returns a dictionary mapping keys to their corresponding values.
 
     Args:
-        default_values_filepath (str | Path): The file path to the CSV file containing default values.
+        default_values_filepath (RdeFsPath): The file path to the CSV file containing default values.
 
     Returns:
         dict: A dictionary containing the keys and their corresponding default values.
     """
     dct_default_values = {}
-    enc = chardet.detect(open(default_values_filepath, "rb").read())["encoding"]
+    with open(default_values_filepath, "rb") as rf:
+        enc_default_values_data = rf.read()
+    enc = chardet.detect(enc_default_values_data)["encoding"]
     with open(default_values_filepath, encoding=enc) as fin:
         for row in csv.DictReader(fin):
             dct_default_values[row["key"]] = row["value"]
@@ -69,12 +73,10 @@ class CharDecEncoding:
         if isinstance(text_filepath, pathlib.Path):
             text_filepath = str(text_filepath)
 
-        bcontents = open(text_filepath, "rb").read()
+        with open(text_filepath, "rb") as tf:
+            bcontents = tf.read()
         _cast_detect_ret: _ChardetType = cast(_ChardetType, detect(bcontents))
-        if _cast_detect_ret["encoding"] is not None:
-            enc = _cast_detect_ret["encoding"].replace("-", "_").lower()
-        else:
-            enc = ""
+        enc = _cast_detect_ret["encoding"].replace("-", "_").lower() if _cast_detect_ret["encoding"] is not None else ""
 
         if enc not in cls.USUAL_ENCs:
             enc = cls.__detect(text_filepath)
@@ -109,8 +111,7 @@ class CharDecEncoding:
         ret = detector.result["encoding"]
         if ret:
             return ret.replace("-", "_").lower()
-        else:
-            return ""
+        return ""
 
 
 def _split_value_unit(target_char: str) -> ValueUnitPair:  # pragma: no cover
@@ -182,11 +183,10 @@ def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # prag
     """
     enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
     with open(invoice_file_path, encoding=enc) as f:
-        invoiceobj = json.load(f)
-    return invoiceobj
+        return json.load(f)
 
 
-def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8"):  # pragma: no cover
+def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8") -> None:  # pragma: no cover
     """Writes an content to a JSON file.
 
     Args:
@@ -231,7 +231,7 @@ class StorageDir:
     __nDigit = 4  # 分割データインデックスの桁数。固定値
 
     @classmethod
-    def get_datadir(cls, is_mkdir: bool, idx: int = 0):
+    def get_datadir(cls, is_mkdir: bool, idx: int = 0) -> str:
         """Generates a data directory path based on an index and optionally creates it.
 
         This method generates a directory path under 'data' or 'data/divided' based on the provided index.
@@ -270,7 +270,7 @@ class StorageDir:
         return pathlib.Path(target_dir)
 
     @classmethod
-    def get_specific_outputdir(cls, is_mkdir: bool, dir_basename: str, idx: int = 0):
+    def get_specific_outputdir(cls, is_mkdir: bool, dir_basename: str, idx: int = 0) -> pathlib.Path:
         """Generates and optionally creates a specific output directory based on a base name and index.
 
         This method facilitates creating directories for specific outputs like 'invoice_patch', 'temp', etc.,
@@ -294,7 +294,7 @@ class Meta:
         self,
         metadef_filepath: RdeFsPath,
         *,
-        metafilepath: Optional[RdeFsPath] = None,
+        metafilepath: RdeFsPath | None = None,
     ):
         """Initializes the Meta class.
 
@@ -323,9 +323,10 @@ class Meta:
         self.metaConst: dict[str, MetaItem] = {}
         self.metaVar: list[dict[str, MetaItem]] = []
         self.actions: list[str] = []
-        self.referedmap: dict[str, Optional[Union[str, list]]] = {}
+        self.referedmap: dict[str, str | list | None] = {}
         if metafilepath is not None:
-            raise StructuredError("ERROR: not supported yet")
+            emsg = "ERROR: not supported yet"
+            raise StructuredError(emsg)
         self.metaDef: dict[str, MetadataDefJson] = self._read_metadef_file(metadef_filepath)
 
     def _read_metadef_file(self, metadef_filepath: RdeFsPath) -> dict[str, MetadataDefJson]:  # pragma: no cover
@@ -360,10 +361,10 @@ class Meta:
 
     def assign_vals(
         self,
-        entry_dict_meta: Union[MetaType, RepeatedMetaType],
+        entry_dict_meta: MetaType | RepeatedMetaType,
         *,
-        ignore_empty_strvalue=True,
-    ) -> "dict[str, set]":
+        ignore_empty_strvalue: bool = True,
+    ) -> dict[str, set]:
         """Register the value of metadata.
 
         Perform validation and casting on the input metadata value in the specified format, and register it.
@@ -408,7 +409,7 @@ class Meta:
         ret["unknown"] = {k for k in entry_dict_meta if k not in ret["assigned"]}
         return ret
 
-    def __register_refered_values(self, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> None:
+    def __register_refered_values(self, entry_dict_meta: MetaType | RepeatedMetaType) -> None:
         """Register referred values in the reference table.
 
         This method converts the values from the input metadata dictionary to strings
@@ -423,7 +424,7 @@ class Meta:
             _vsrc = self.__convert_to_str(vsrc)
             self.__registerd_refered_table(keysrc, _vsrc)
 
-    def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: Union[MetaType, RepeatedMetaType]) -> Optional[str]:
+    def __get_source_key(self, kdef: str, vdef: MetadataDefJson, entry_dict_meta: MetaType | RepeatedMetaType) -> str | None:
         keysrc = kdef
         if kdef not in entry_dict_meta and "originalName" in vdef:
             keysrc = vdef["originalName"]
@@ -431,9 +432,10 @@ class Meta:
             return None
         return keysrc
 
-    def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: Union[str, list[str]], ignore_empty_strvalue: bool) -> None:
+    def __process_meta_value(self, kdef: str, vdef: MetadataDefJson, _vsrc: str | list[str], ignore_empty_strvalue: bool) -> None:
         if vdef.get("action"):
-            raise StructuredError("ERROR: this meta value should set by action")
+            emsg = "ERROR: this meta value should set by action"
+            raise StructuredError(emsg)
 
         if vdef.get("variable"):
             self.__set_variable_metadata(kdef, _vsrc, vdef, ignore_empty_strvalue)
@@ -442,7 +444,7 @@ class Meta:
                 return
             self.__set_const_metadata(kdef, _vsrc, vdef)
 
-    def _process_unit(self, vobj, idx):  # pragma: no cover
+    def _process_unit(self, vobj: dict[str, Any], idx: int | None) -> None:  # pragma: no cover
         _unit = vobj.get("unit", "")
         # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
         if _unit.startswith("$"):
@@ -453,10 +455,10 @@ class Meta:
                 del vobj["unit"]
             elif isinstance(srcval, str):
                 vobj["unit"] = srcval
-            else:
+            elif idx is not None:
                 vobj["unit"] = srcval[idx]
 
-    def _process_action(self, vobj, k, idx):  # pragma: no cover
+    def _process_action(self, vobj: dict[str, Any], k: str, idx: int | None) -> None:  # pragma: no cover
         # actionの処理
         stract = self.metaDef[k].get("action")
         if not stract:
@@ -465,11 +467,12 @@ class Meta:
         for srckey, srcval in self.referedmap.items():
             if srckey not in stract:
                 continue
-            realval = srcval[idx] if isinstance(srcval, list) else srcval
-            stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
+            if idx is not None:
+                realval = srcval[idx] if isinstance(srcval, list) else srcval
+                stract = stract.replace(srckey, f'"{realval}"' if isinstance(realval, str) else str(realval))
         vobj["value"] = eval(stract)
 
-    def __convert_to_str(self, value: Union[str, int, float, list]) -> Union[str, list[str]]:
+    def __convert_to_str(self, value: str | float | list) -> str | list[str]:
         """Convert the given value to string or list of strings."""
         if isinstance(value, (str, int, float, bool)):
             return str(value)
@@ -478,7 +481,7 @@ class Meta:
         return ""
 
     @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
-    def writefile(self, meta_filepath, enc="utf_8"):
+    def writefile(self, meta_filepath: str, enc: str = "utf_8") -> dict[str, Any]:
         """Writes the metadata to a file after processing units and actions.
 
         This method serializes the metadata into JSON format and writes it to the specified file.
@@ -523,7 +526,7 @@ class Meta:
     def __sort_by_metadef(self, data_dict: dict[str, Any]) -> dict[str, Any]:
         return {k: data_dict[k] for k in self.metaDef if k in data_dict}
 
-    def __registerd_refered_table(self, key: str, value: Union[str, list[str]]) -> None:  # pragma: no cover
+    def __registerd_refered_table(self, key: str, value: str | list[str]) -> None:  # pragma: no cover
         """Registers the referenced value in the referred value table for actions and referred units, using the raw name.
 
         This method updates the referred value table with the provided key and value. If the key already exists in the table,
@@ -551,7 +554,7 @@ class Meta:
     def __set_variable_metadata(
         self,
         key: str,
-        metavalues: Union[str, list[str]],
+        metavalues: str | list[str],
         metadefvalue: MetadataDefJson,
         opt_ignore_emptystr: bool,
     ) -> None:  # pragma: no cover
@@ -571,7 +574,7 @@ class Meta:
     def __set_const_metadata(
         self,
         key: str,
-        metavalue: Union[str, list[str]],
+        metavalue: str | list[str],
         metadefvalue: MetadataDefJson,
     ) -> None:  # pragma: no cover
         outtype = metadefvalue["schema"].get("type")
@@ -584,11 +587,11 @@ class Meta:
     def _metadata_validation(
         self,
         vsrc: str,
-        outtype: Optional[str],
-        outfmt: Optional[str],
-        orgtype: Optional[str],
-        outunit: Optional[str],
-    ) -> "dict[str, Union[bool, int, float, str]]":  # pragma: no cover
+        outtype: str | None,
+        outfmt: str | None,
+        orgtype: str | None,
+        outunit: str | None,
+    ) -> dict[str, bool | int | float | str]:  # pragma: no cover
         """Casts the input metadata to the specified format and performs validation to check.
 
         if it can be cast to the specified data type. The formats for various metadata are described in metadata-def.json.
@@ -628,69 +631,94 @@ class Meta:
                 "value": _casted_value,
                 "unit": outunit,
             }
-        else:
-            return {"value": _casted_value}
+        return {"value": _casted_value}
 
 
-def castval(valstr: str, outtype: Optional[str], outfmt: Optional[str]) -> Union[bool, int, float, str]:
-    """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
+class ValueCaster:
+    """A utility class for casting values and converting date formats."""
 
-    The function returns a formatted value of the string valstr according to
-    the specified outtype and outfmt. The outtype must be a string ("string")
-    for outfmt to be used. If valstr contains a value with units,
-    the assignment of units is not handled within this function.
-    It should be assigned separately as needed.
+    @staticmethod
+    def trycast(valstr: str, tp: Callable[[str], Any]) -> Any:
+        """Tries to cast the given value string to the specified type.
 
-    Args:
-        valstr (str): String to be converted of type
-        outtype (str): Type information at output
-        outfmt (str): Formatting at output (related to date data)
-    """
+        Args:
+            valstr (str): The value string to be casted.
+            tp (Callable[[str], Any]): The type to cast the value to.
 
-    def _trycast(valstr, tp):
+        Returns:
+            Any: The casted value if successful, otherwise None.
+        """
         try:
             return tp(valstr)
-        except Exception:
+        except ValueError:
             return None
 
-    def _convert_to_date_format(value: str, fmt: str) -> str:
+    @staticmethod
+    def convert_to_date_format(value: str, fmt: str) -> str:
+        """Converts the given value to the specified date format.
+
+        Args:
+            value (str): The value to be converted.
+            fmt (str): The desired date format.
+
+        Returns:
+            str: The converted value in the specified date format.
+
+        Raises:
+            StructuredError: If the specified format is unknown.
+        """
         dtobj = dateutil.parser.parse(value)
         if fmt == "date-time":
             return dtobj.isoformat()
-        elif fmt == "date":
+        if fmt == "date":
             return dtobj.strftime("%Y-%m-%d")
-        elif fmt == "time":
+        if fmt == "time":
             return dtobj.strftime("%H:%M:%S")
-        else:
-            raise StructuredError("ERROR: unknown format in metaDef")
+        emsg = "ERROR: unknown format in metaDef"
+        raise StructuredError(emsg)
 
+
+def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int | float | str:
+    """The function formats the string valstr based on outtype and outfmt and returns the formatted value.
+
+    The function returns a formatted value of the string valstr according to the specified outtype and outfmt.
+    The outtype must be a string ("string") for outfmt to be used. If valstr contains a value with units, the assignment of units is not handled within this function.
+    It should be assigned separately as needed.
+
+    Args:
+        valstr (Any): String to be converted of type
+        outtype (str): Type information at output
+        outfmt (str): Formatting at output (related to date data)
+    """
     if outtype == "boolean":
-        if _trycast(valstr, bool) is not None:
+        if ValueCaster.trycast(valstr, bool) is not None:
             return bool(valstr)
 
     elif outtype == "integer":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
-        if _trycast(val_unit_pair.value, int) is not None:
+        if ValueCaster.trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
 
     elif outtype == "number":
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
-        if _trycast(val_unit_pair.value, int) is not None:
+        if ValueCaster.trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
-        if _trycast(val_unit_pair.value, float) is not None:
+        if ValueCaster.trycast(val_unit_pair.value, float) is not None:
             return float(val_unit_pair.value)
 
     elif outtype == "string":
         if not outfmt:
             return valstr
-        return _convert_to_date_format(valstr, outfmt)
+        return ValueCaster.convert_to_date_format(valstr, outfmt)
 
     else:
-        raise StructuredError("ERROR: unknown value type in metaDef")
+        emsg = "ERROR: unknown value type in metaDef"
+        raise StructuredError(emsg)
 
-    raise StructuredError("ERROR: failed to cast metaDef value")
+    emsg = "ERROR: failed to cast metaDef value"
+    raise StructuredError(emsg)
 
 
 def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, const_info: MetaType, val_info: MetaType) -> dict[str, set[Any]]:
@@ -720,5 +748,4 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
     meta_obj.assign_vals(const_info)
     meta_obj.assign_vals(val_info)
 
-    ret = meta_obj.writefile(metaout_filepath)
-    return ret
+    return meta_obj.writefile(metaout_filepath)
