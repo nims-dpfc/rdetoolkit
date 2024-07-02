@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import os
 import re
-import shutil
+import zipfile
 from pathlib import Path
 
+import charset_normalizer
 import pandas as pd
 
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser
 from rdetoolkit.invoicefile import check_exist_rawfiles
+from rdetoolkit.rdelogger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CompressedFlatFileParser(ICompressedFileStructParser):
@@ -43,8 +47,41 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
     def _unpacked(self, zipfile: Path | str, target_dir: Path | str) -> list[Path]:
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
-        shutil.unpack_archive(zipfile, target_dir)
+        self._extract_zip_with_encoding(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
+
+    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str, encoding: str = "utf-8") -> None:
+        """Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.
+
+        This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.
+
+        Args:
+            zip_path (Path | str): The path to the ZIP file to be extracted.
+            extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.
+            encoding (str, optional): The encoding to attempt decoding filenames within the ZIP file. Defaults to 'utf-8'.
+
+        Raises:
+            ValueError: If encoding detection fails for any filename within the ZIP archive.
+            UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.
+
+        Example:
+            >>> zip_path = 'path/to/your/archive.zip'
+            >>> extract_path = 'path/to/extract/directory'
+            >>> encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
+            >>> self._extract_zip_with_encoding(zip_path, extract_path, encoding)
+        """
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            for info in zf.infolist():
+                bad_filename = info.filename
+                try:
+                    info.filename = info.filename.encode("cp437").decode(encoding)
+                except UnicodeDecodeError:
+                    logger.debug(f"Failed to decode filename: {bad_filename}")
+                    continue
+
+                zf.NameToInfo[info.filename] = info
+                del zf.NameToInfo[bad_filename]
+                zf.extract(info, extract_path)
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded.
@@ -109,8 +146,46 @@ class CompressedFolderParser(ICompressedFileStructParser):
     def _unpacked(self, zipfile: Path | str, target_dir: Path | str) -> list[Path]:
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
-        shutil.unpack_archive(zipfile, target_dir)
+        self._extract_zip_with_encoding(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
+
+    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str, encoding: str = "utf-8") -> None:
+        """Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.
+
+        This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.
+
+        Args:
+            zip_path (Path | str): The path to the ZIP file to be extracted.
+            extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.
+            encoding (str, optional): The encoding to attempt decoding filenames within the ZIP file. Defaults to 'utf-8'.
+
+        Raises:
+            ValueError: If encoding detection fails for any filename within the ZIP archive.
+            UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.
+
+        Example:
+            >>> zip_path = 'path/to/your/archive.zip'
+            >>> extract_path = 'path/to/extract/directory'
+            >>> encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
+            >>> self._extract_zip_with_encoding(zip_path, extract_path, encoding)
+        """
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            for info in zf.infolist():
+                bad_filename = info.filename
+                detected = charset_normalizer.detect(info.filename.encode(encoding))
+                if not detected.get("encoding"):
+                    msg = f"Failed to detect encoding: {bad_filename}"
+                    raise ValueError(msg)
+                correct_name: str = str(detected["encoding"])
+                try:
+                    info.filename = info.filename.encode(encoding).decode(correct_name)
+                except UnicodeDecodeError:
+                    logger.debug(f"Failed to decode filename: {bad_filename}")
+                    continue
+
+                zf.NameToInfo[info.filename] = info
+                del zf.NameToInfo[bad_filename]
+                zf.extract(info, extract_path)
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded.
