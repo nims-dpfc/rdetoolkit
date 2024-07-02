@@ -4,6 +4,7 @@ import os
 import re
 import zipfile
 from pathlib import Path
+from typing import Final
 
 import charset_normalizer
 import pandas as pd
@@ -50,7 +51,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         self._extract_zip_with_encoding(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
 
-    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str, encoding: str = "utf-8") -> None:
+    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str) -> None:
         """Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.
 
         This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.
@@ -58,7 +59,6 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         Args:
             zip_path (Path | str): The path to the ZIP file to be extracted.
             extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.
-            encoding (str, optional): The encoding to attempt decoding filenames within the ZIP file. Defaults to 'utf-8'.
 
         Raises:
             ValueError: If encoding detection fails for any filename within the ZIP archive.
@@ -68,20 +68,22 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
             >>> zip_path = 'path/to/your/archive.zip'
             >>> extract_path = 'path/to/extract/directory'
             >>> encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
-            >>> self._extract_zip_with_encoding(zip_path, extract_path, encoding)
+            >>> self._extract_zip_with_encoding(zip_path, extract_path)
         """
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            for info in zf.infolist():
-                bad_filename = info.filename
-                try:
-                    info.filename = info.filename.encode("cp437").decode(encoding)
-                except UnicodeDecodeError:
-                    logger.debug(f"Failed to decode filename: {bad_filename}")
-                    continue
+        lang_enc_flag: Final = 0x800
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            for zip_info in zip_ref.infolist():
+                old_filename = zip_info.filename
+                encoding = "utf-8" if zip_info.flag_bits & lang_enc_flag else "cp437"
+                enc = charset_normalizer.detect(zip_info.filename.encode(encoding))
+                if not enc.get("encoding"):
+                    enc["encoding"] = encoding
 
-                zf.NameToInfo[info.filename] = info
-                del zf.NameToInfo[bad_filename]
-                zf.extract(info, extract_path)
+                zip_info.filename = zip_info.filename.encode(encoding).decode(str(enc["encoding"]))
+                zip_ref.NameToInfo[zip_info.filename] = zip_info
+                del zip_ref.NameToInfo[old_filename]
+
+                zip_ref.extract(zip_info, extract_path)
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded.
@@ -149,7 +151,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
         self._extract_zip_with_encoding(zipfile, target_dir)
         return [f for f in target_dir.glob("**/*") if f.is_file() and not self._is_excluded(f)]
 
-    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str, encoding: str = "utf-8") -> None:
+    def _extract_zip_with_encoding(self, zip_path: Path | str, extract_path: Path | str) -> None:
         """Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.
 
         This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.
@@ -157,7 +159,6 @@ class CompressedFolderParser(ICompressedFileStructParser):
         Args:
             zip_path (Path | str): The path to the ZIP file to be extracted.
             extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.
-            encoding (str, optional): The encoding to attempt decoding filenames within the ZIP file. Defaults to 'utf-8'.
 
         Raises:
             ValueError: If encoding detection fails for any filename within the ZIP archive.
@@ -167,25 +168,22 @@ class CompressedFolderParser(ICompressedFileStructParser):
             >>> zip_path = 'path/to/your/archive.zip'
             >>> extract_path = 'path/to/extract/directory'
             >>> encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
-            >>> self._extract_zip_with_encoding(zip_path, extract_path, encoding)
+            >>> self._extract_zip_with_encoding(zip_path, extract_path)
         """
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            for info in zf.infolist():
-                bad_filename = info.filename
-                detected = charset_normalizer.detect(info.filename.encode(encoding))
-                if not detected.get("encoding"):
-                    msg = f"Failed to detect encoding: {bad_filename}"
-                    raise ValueError(msg)
-                correct_name: str = str(detected["encoding"])
-                try:
-                    info.filename = info.filename.encode(encoding).decode(correct_name)
-                except UnicodeDecodeError:
-                    logger.debug(f"Failed to decode filename: {bad_filename}")
-                    continue
+        lang_enc_flag: Final = 0x800
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            for zip_info in zip_ref.infolist():
+                old_filename = zip_info.filename
+                encoding = "utf-8" if zip_info.flag_bits & lang_enc_flag else "cp437"
+                enc = charset_normalizer.detect(zip_info.filename.encode(encoding))
+                if not enc.get("encoding"):
+                    enc["encoding"] = encoding
 
-                zf.NameToInfo[info.filename] = info
-                del zf.NameToInfo[bad_filename]
-                zf.extract(info, extract_path)
+                zip_info.filename = zip_info.filename.encode(encoding).decode(str(enc["encoding"]))
+                zip_ref.NameToInfo[zip_info.filename] = zip_info
+                del zip_ref.NameToInfo[old_filename]
+
+                zip_ref.extract(zip_info, extract_path)
 
     def _is_excluded(self, file: Path) -> bool:
         """Checks a specific file pattern to determine whether it should be excluded.
