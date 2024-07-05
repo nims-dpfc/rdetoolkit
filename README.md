@@ -10,6 +10,10 @@ RDEToolKitは、RDE2.0構造化プログラムのワークフローを作成す�
 RDEToolKitの各種モジュールを使うことで、RDEへの研究・実験データの登録処理を簡単に構築できます。
 また、ユーザーが研究や実験データに対して使用されているPythonモジュールと組み合わせることで、データの登録から加工、グラフ化などより多様な処理を実現できます。
 
+## Documents
+
+See [documentation](https://nims-dpfc.github.io/rdetoolkit/) for more details.
+
 ## Contributing
 
 変更を加える場合、以下のドキュメントを一読お願いします。
@@ -23,7 +27,6 @@ RDEToolKitの各種モジュールを使うことで、RDEへの研究・実験�
 ```shell
 pip install rdetoolkit
 ```
-
 
 ## Usage
 

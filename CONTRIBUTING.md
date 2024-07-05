@@ -10,9 +10,9 @@ RDEToolKitへのコントリビュートをしていただくには、以下の�
 cd <任意のディレクトリ>
 
 # SSH
-git clone git@gitlab.nims.go.jp:dpfc/data_registry/rde/rde_containers/rdetoolkit.git
+git clone git@github.com:nims-dpfc/rdetoolkit.git
 # HTTPS
-git clone https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit.git
+git clone https://github.com/nims-dpfc/rdetoolkit.git
 
 # ローカルリポジトリに移動
 cd rdetoolkit
@@ -80,7 +80,7 @@ rdetoolkitのドキュメントは、本リポジトリの`docs`フォルダに�
 以下のURLより、RDEToolKitのリポジトリにアクセスし、issueを発行してください。
 この時、ラベルは`Type:documentation`というラベルを付与してください。
 
-> [RDEToolKit - gitlab.nims.go.jp](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit)
+> [RDEToolKit - github.com](https://github.com/nims-dpfc/rdetoolkit/issues)
 
 ### ローカル環境で変更する
 
@@ -102,7 +102,9 @@ git push origin <対象のブランチ名>
 
 ### ドキュメントをWeb上で確認する
 
-ドキュメントをWebで確認する場合、ドキュメントの変更が完了し、プルリクエストを発行した時点でCIのワークフローが実行され、問題なくビルドが完了すると、ドキュメントが`artifacts`に追加されます。RDEToolKitのリポジトリページより、[Pipline](https://gitlab.nims.go.jp/dpfc/data_registry/rde/rde_containers/rdetoolkit/-/pipelines)にアクセスし、`Download artifact`ボタンをクリックし、zipファイルをダウンロードしてください。zipファイルを展開すると、HTMLファイル群があるため、そのファイルをブラウザ上で確認してください。
+Github Pagesに掲載しています。
+
+<https://nims-dpfc.github.io/rdetoolkit/>
 
 ### ドキュメントをmainブランチにマージする
 
@@ -124,7 +126,7 @@ git push origin <対象のブランチ名>
 
 問題や不具合が発生した場合、以下のisuueへ起票お願いします。この時、ラベルは`Type:improvement`, `Type: new feature`のどちらかの付与をお願いします。
 
-> <https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/boards>
+> <https://github.com/nims-dpfc/rdetoolkit/issues>
 
 ### ブランチの作成
 
@@ -186,7 +188,7 @@ git push origin develop-v<x.y.z>-<先ほどつけた名称>
 
 また、全ての開発がfixしたら、mainブランチにマージしてください。mainブランチにマージ後、デプロイが正しく実行できたら、tagの作成とReleaseページを作成してください。
 
-> Releaseページ: <https://gitlab.nims.go.jp/dpfc/data_registry/rde20/rdetoolkit/-/releases>
+> Releaseページ: <https://github.com/nims-dpfc/rdetoolkit/releases>
 
 ## 関連ページ
 
