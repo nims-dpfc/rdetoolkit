@@ -31,10 +31,4 @@ jobs:
           pip install -r requirements-dev.lock
 
       - name: Deploy HTML files
-        run: mkdocs build --clean --quiet
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+        run: mkdocs gh-deploy
