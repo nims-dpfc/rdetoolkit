@@ -82,9 +82,6 @@ class CustomLog:
     To create an instance of this class, call `CustomLog` with the module name as an argument.
     Then, by calling the `get_log` method, you can get a logger for writing logs.
 
-    Returns:
-        logger: A logger instance for writing logs. If `False` is passed to `get_log`, the logger will not write any logs.
-
     Example:
         ```python
         logger = CustomLog(__name__).get_log()
