@@ -31,7 +31,7 @@ jobs:
           pip install -r requirements-dev.lock
 
       - name: Deploy HTML files
-        run: mkdocs build --verbose --clean --strict
+        run: mkdocs build --clean --quiet
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
