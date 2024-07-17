@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from pathlib import Path
 from rdetoolkit.config import Config as Config, load_config as load_config
-from rdetoolkit.exceptions import StructuredError as StructuredError
+from rdetoolkit.exceptions import StructuredError as StructuredError, handle_exception as handle_exception
 from rdetoolkit.invoicefile import backup_invoice_json_files as backup_invoice_json_files
 from rdetoolkit.models.rde2types import RawFiles as RawFiles, RdeInputDirPaths as RdeInputDirPaths, RdeOutputResourcePath as RdeOutputResourcePath
 from rdetoolkit.modeproc import _CallbackType, excel_invoice_mode_process as excel_invoice_mode_process, invoice_mode_process as invoice_mode_process, multifile_mode_process as multifile_mode_process, rdeformat_mode_process as rdeformat_mode_process, selected_input_checker as selected_input_checker
