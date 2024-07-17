@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import sys
-import traceback
 from collections.abc import Generator
 from pathlib import Path
 
 from rdetoolkit.config import Config, load_config
-from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.exceptions import StructuredError, handle_exception
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.modeproc import (
@@ -200,12 +199,13 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
                 invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
 
     except StructuredError as e:
-        traceback.print_exc(file=sys.stderr)
+        sys.stderr.write((e.traceback_info or "") + "\n")
         write_job_errorlog_file(e.ecode, e.emsg)
         logger.exception(e.emsg)
         sys.exit(1)
     except Exception as e:
-        traceback.print_exc(file=sys.stderr)
-        write_job_errorlog_file(999, "ERROR: unknown error")
+        structured_error = handle_exception(e, verbose=True)
+        sys.stderr.write((structured_error.traceback_info or "") + "\n")
+        write_job_errorlog_file(999, "Error: Please check the logs and code, then try again.")
         logger.exception(str(e))
         sys.exit(1)
