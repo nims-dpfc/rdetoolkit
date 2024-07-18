@@ -4,6 +4,9 @@ from pathlib import Path
 from rdetoolkit.exceptions import StructuredError as StructuredError
 from rdetoolkit.interfaces.filechecker import ICompressedFileStructParser as ICompressedFileStructParser
 from rdetoolkit.invoicefile import check_exist_rawfiles as check_exist_rawfiles
+from rdetoolkit.rdelogger import get_logger as get_logger
+
+logger: Incomplete
 
 class CompressedFlatFileParser(ICompressedFileStructParser):
     xlsx_invoice: Incomplete
