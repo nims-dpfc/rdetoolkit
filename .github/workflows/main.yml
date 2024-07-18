@@ -3,12 +3,16 @@ name: test
 on:
   push:
     branches:
-      - main
-      - develop
+      - "*"
+      - "!docs-*"
+      - "!doc-*"
   pull_request:
     branches:
       - main
-      - develop
+      - develop-*
+    branches-ignore:
+      - "docs-*"
+      - "doc-*"
 
 jobs:
   test:
