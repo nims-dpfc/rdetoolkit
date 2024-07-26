@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sys
 from collections.abc import Generator
 from pathlib import Path
@@ -128,6 +129,33 @@ def generate_folder_paths_iterator(
         yield rdeoutput_resource_path
 
 
+def handle_and_exit_on_structured_error(e: StructuredError, logger: logging.Logger) -> None:
+    """Catch StructuredError and write to log file.
+
+    Args:
+        e (StructuredError): StructuredError instance
+        logger (logging.Logger): Logger instance
+    """
+    sys.stderr.write((e.traceback_info or "") + "\n")
+    write_job_errorlog_file(e.ecode, e.emsg)
+    logger.exception(e.emsg)
+    sys.exit(1)
+
+
+def handle_generic_error(e: Exception, logger: logging.Logger):
+    """Catch generic error and write to log file.
+
+    Args:
+        e (Exception): Exception instance
+        logger (logging.Logger): Logger instance
+    """
+    structured_error = handle_exception(e, verbose=True)
+    sys.stderr.write((structured_error.traceback_info or "") + "\n")
+    write_job_errorlog_file(999, "Error: Please check the logs and code, then try again.")
+    logger.exception(str(e))
+    sys.exit(1)
+
+
 def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> None:  # pragma: no cover
     """RDE Structuring Processing Function.
 
@@ -199,13 +227,6 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
                 invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
 
     except StructuredError as e:
-        sys.stderr.write((e.traceback_info or "") + "\n")
-        write_job_errorlog_file(e.ecode, e.emsg)
-        logger.exception(e.emsg)
-        sys.exit(1)
+        handle_and_exit_on_structured_error(e, logger)
     except Exception as e:
-        structured_error = handle_exception(e, verbose=True)
-        sys.stderr.write((structured_error.traceback_info or "") + "\n")
-        write_job_errorlog_file(999, "Error: Please check the logs and code, then try again.")
-        logger.exception(str(e))
-        sys.exit(1)
+        handle_generic_error(e, logger)

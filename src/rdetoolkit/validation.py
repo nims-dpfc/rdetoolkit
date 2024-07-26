@@ -123,17 +123,20 @@ class InvoiceValidator:
         try:
             validate(instance=data, schema=basic_info)
         except SchemaValidationError as schema_error:
-            emsg = "Error in validating system standard item in invoice.schema.json"
+            emsg = "Error in validating system standard field.\nPlease correct the following fields in invoice.json\n"
+            emsg += f"Field: {'.'.join([p for p in schema_error.path])}\n"
+            emsg += f"Type: {schema_error.validator}\n"
+            emsg += f"Context: {schema_error.message}\n"
             raise InvoiceSchemaValidationError(emsg) from schema_error
 
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
         errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
-        all_error_msg: str = ""
-        for error in errors:
-            err_fmt = f"{error.message}\n{error.schema}\n\n"
-            all_error_msg += err_fmt
-        if all_error_msg:
-            emsg = f"Error in validating invoice.schema.json:\n{all_error_msg}"
+        emsg = "Error in validating invoice.json:\n"
+        for idx, error in enumerate(errors, start=1):
+            emsg += f"{idx}. Field: {'.'.join([p for p in error.path])}\n"
+            emsg += f"   Type: {error.validator}\n"
+            emsg += f"   Context: {error.message}\n"
+        if errors:
             raise InvoiceSchemaValidationError(emsg)
 
         return data
@@ -164,9 +167,14 @@ class InvoiceValidator:
 
         if __path.name == "invoice.schema.json":
             try:
+                # _data, line_map = load_json_with_line_numbers(data)
                 InvoiceSchemaJson(**data)
             except ValidationError as validation_error:
-                emsg = "Error in schema validation"
+                emsg = "Validation Errors in invoice.schema.json. Please correct the following fields\n"
+                for idx, error in enumerate(validation_error.errors(), start=1):
+                    emsg += f"{idx}. Field: {'.'.join([str(e) for e in error['loc']])}\n"
+                    emsg += f"   Type: {error['type']}\n"
+                    emsg += f"   Context: {error['msg']}\n"
                 raise InvoiceSchemaValidationError(emsg) from validation_error
             except ValueError as value_error:
                 emsg = "Error in schema validation"
