@@ -142,7 +142,7 @@ def handle_and_exit_on_structured_error(e: StructuredError, logger: logging.Logg
     sys.exit(1)
 
 
-def handle_generic_error(e: Exception, logger: logging.Logger):
+def handle_generic_error(e: Exception, logger: logging.Logger) -> None:
     """Catch generic error and write to log file.
 
     Args:
