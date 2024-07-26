@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field as Field, RootModel
+from pydantic import BaseModel, RootModel
 from typing import Any, Final
 
 MAX_VALUE_SIZE: Final[int]
@@ -18,5 +18,5 @@ class ValidableItems(RootModel):
     root: list[dict[str, MetaValue]]
 
 class MetadataItem(BaseModel):
-    constant: dict[str, MetaValue]
+    constant: dict[str, MetaValue] | None
     variable: ValidableItems
