@@ -101,13 +101,19 @@ except ValidationError as validation_error:
 
 invoice.schema.jsonのバリデーションエラーは、`invoice.schema.json`の属性が不正、欠損が生じた場合に発生します。そのため、再度定義を確認してください。`invoice.schema.json`の定義については、[invoice.schema.jsonについて - テンプレートファイル](metadata_definition_file.md)を参照ください。
 
+エラーメッセージは、以下の情報が表示されます。
+
+- エラー原因となったフィールド
+- エラータイプ
+- エラーメッセージ
+
 ```shell
-pydantic_core._pydantic_core.ValidationError: 1 validation error for InvoiceSchemaJson
-  Value error, sample is required but is None [type=value_error, input_value={'$schema': 'https://json...array', 'items': []}}}}}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.7/v/value_error
+1. Field: required.0
+   Type: literal_error
+   Context: Input should be 'custom' or 'sample'
 ```
 
-この例では、`Value error, sample is required but is None`と書かれている通り、`required`に、`sample`が含まれていないことを指しています。
+この例では、`Input should be 'custom' or 'sample'`と書かれている通り、`required`に、`custom`か`sample`が含まれている必要があります。
 
 ```python
 schema = {
@@ -251,22 +257,18 @@ except ValidationError as validation_error:
 
 ### 試料情報に関するバリデーションエラー
 
-上記の2つのケースどちらかを満たしていなければ、バリデーションエラーが発生します。
+上記の2つのケースどちらかを満たしていなければ、バリデーションエラーが発生します。エラーメッセージは、以下の情報が表示されます。
+
+- エラー原因となったフィールド
+- エラータイプ
+- エラーメッセージ
 
 ```shell
-jsonschema.exceptions.ValidationError: {'names': [], 'generalAttributes': [{'termId': '3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e'}], 'specificAttributes': [], 'ownerId': 'de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439'} is not valid under any of the given schemas
-
-Failed validating 'anyOf' in schema['properties']['sample']:
-    {'anyOf': [{'$ref': '#/definitions/sample/sampleWhenAdding'},
-               {'$ref': '#/definitions/sample/sampleWhenRef'}]}
-
-On instance['sample']:
-    {'generalAttributes': [{'termId': '3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e'}],
-     'names': [],
-     'ownerId': 'de17c7b3f0ff5126831c2d519f481055ba466ddb6238666132316439',
-     'specificAttributes': []}
-
-During handling of the above exception, another exception occurred:
+Error: Error in validating system standard field.
+Please correct the following fields in invoice.json
+Field: sample
+Type: anyOf
+Context: {'sampleId': '', 'names': 'test', 'generalAttributes': [{'termId': '3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e'}, {'termId': 'e2d20d02-2e38-2cd3-b1b3-66fdb8a11057'}, {'termId': 'efcf34e7-4308-c195-6691-6f4d28ffc9bb'}, {'termId': '7cc57dfb-8b70-4b3a-5315-fbce4cbf73d0'}, {'termId': '1e70d11d-cbdd-bfd1-9301-9612c29b4060'}, {'termId': '5e166ac4-bfcd-457a-84bc-8626abe9188f'}, {'termId': '0d0417a3-3c3b-496a-b0fb-5a26f8a74166'}, {'termId': '0d0417a3-3c3b-496a-b0fb-5a26f8a74166'}], 'specificAttributes': [], 'ownerId': ''} is not valid under any of the given schemas
 ```
 
 ### その他invoice.jsonのバリデーションエラー
@@ -288,16 +290,20 @@ data = {
 }
 ```
 
-以下のようなエラーメッセージが出力されます。
+以下のようなエラーメッセージが出力されます。エラーメッセージは、以下の情報が表示されます。
+
+- 該当フィールド
+- エラー種別
+- エラーメッセージ
+
+以下のケースの場合、基本情報である`basic.dataOwnerId`が正しいパターンで記述されていないことを示しています。エラー内容の指示に沿って修正してください。
 
 ```shell
-jsonschema.exceptions.ValidationError: '0c233ef274f28e611de4074638b4dc43e737ab9931323435323434' does not match '^([0-9a-zA-Z]{56})$'
-
-Failed validating 'pattern' in schema['properties']['basic']['properties']['dataOwnerId']:
-    {'pattern': '^([0-9a-zA-Z]{56})$', 'type': 'string'}
-
-On instance['basic']['dataOwnerId']:
-    '0c233ef274f28e611de4074638b4dc43e737ab9931323435323434
+Error: Error in validating system standard item in invoice.schema.json.
+Please correct the following fields in invoice.json
+Field: basic.dataOwnerId
+Type: pattern
+Context: '153cbe4798cb8c' does not match '^([0-9a-zA-Z]{56})$'
 ```
 
 !!! Tip
@@ -344,13 +350,16 @@ metadata = {
 }
 ```
 
-以下のようなエラーメッセージが出力されます。
+以下のようなエラーメッセージが出力されます。以下のケースでは、定義された型が想定と異なることを示しています。
 
 ```shell
-rdetoolkit.exceptions.MetadataValidationError: Error in validating metadata.json: 1 validation error for MetadataItem
-constant.value
-  Input should be a valid dictionary or instance of MetaValue [type=model_type, input_value='sample_meta', input_type=str]
-    For further information visit https://errors.pydantic.dev/2.7/v/model_type
+Error: Validation Errors in metadata.json. Please correct the following fields
+1. Field: constant.key
+   Type: model_type
+   Context: Input should be a valid dictionary or instance of MetaValue
+2. Field: variable
+   Type: list_type
+   Context: Input should be a valid list
 ```
 
 !!! Tip
