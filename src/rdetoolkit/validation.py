@@ -80,7 +80,11 @@ def metadata_validate(path: str | Path) -> None:
     try:
         validator.validate(path=path)
     except ValidationError as validation_error:
-        emsg = f"Error in validating metadata.json: {validation_error}"
+        emsg = "Validation Errors in metadata.json. Please correct the following fields\n"
+        for idx, error in enumerate(validation_error.errors(), start=1):
+            emsg += f"{idx}. Field: {'.'.join([str(e) for e in error['loc']])}\n"
+            emsg += f"   Type: {error['type']}\n"
+            emsg += f"   Context: {error['msg']}\n"
         raise MetadataValidationError(emsg) from validation_error
 
 

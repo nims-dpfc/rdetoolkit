@@ -76,9 +76,9 @@ class MetadataItem(BaseModel):
     Stores metadata extracted by the data structuring process.
 
     Attributes:
-        constant (Optional[dict[str, MetaValue]]): A set of metadata common to all measurements.
+        constant (dict[str, MetaValue]): A set of metadata common to all measurements.
         variable (ValidableItems): An array of metadata sets that vary with each measurement.
     """
 
-    constant: dict[str, MetaValue] | None = Field(default=None)
-    variable: ValidableItems = Field(default=None)
+    constant: dict[str, MetaValue]
+    variable: ValidableItems

@@ -61,9 +61,9 @@ def test_metadata_def_json_validation(metadata_def_json_file):
 
 
 def test_metadata_def_empty_json_validation():
-    instance = MetadataValidator()
-    obj = instance.validate(json_obj={})
-    assert isinstance(obj, dict)
+    with pytest.raises(ValueError):
+        instance = MetadataValidator()
+        _ = instance.validate(json_obj={})
 
 
 def test_invliad_metadata_def_json_validation(invalid_metadata_def_json_file):
@@ -142,9 +142,23 @@ def test_metadata_def_validate(metadata_def_json_file):
 
 
 def test_invalid_metadata_def_validate(invalid_metadata_def_json_file):
+    exception_msg = """Validation Errors in metadata.json. Please correct the following fields
+1. Field: constant
+   Type: missing
+   Context: Field required
+2. Field: variable.0
+   Type: dict_type
+   Context: Input should be a valid dictionary
+3. Field: variable.1
+   Type: dict_type
+   Context: Input should be a valid dictionary
+4. Field: variable.2
+   Type: dict_type
+   Context: Input should be a valid dictionary
+"""
     with pytest.raises(MetadataValidationError) as e:
         metadata_validate(invalid_metadata_def_json_file)
-    assert "Error in validating metadata.json" in str(e.value)
+    assert exception_msg == str(e.value)
 
 
 def test_invoice_path_metadata_def_validate():
