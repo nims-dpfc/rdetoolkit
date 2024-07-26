@@ -150,7 +150,10 @@ def catch_exception_with_message(
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                raise handle_exception(e, error_message=error_message, error_code=error_code, eobj=eobj, verbose=verbose) from e
+                _emsg = e.emsg if hasattr(e, "emsg") else error_message
+                _ecode = e.ecode if hasattr(e, "ecode") else error_code
+                _eobj = e.eobj if hasattr(e, "eobj") else eobj
+                raise handle_exception(e, error_message=_emsg, error_code=_ecode, eobj=_eobj, verbose=verbose) from e
 
         return wrapper
 
