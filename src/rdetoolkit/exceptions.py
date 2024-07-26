@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import sys
+import traceback
 from functools import wraps
 from typing import Any, Callable
-import traceback
-import sys
 
 
 class StructuredError(Exception):
@@ -74,7 +74,11 @@ def format_simplified_traceback(tb_list: list[traceback.FrameSummary]) -> str:
 
 
 def handle_exception(
-    e: Exception, error_message: str | None = None, error_code: int | None = None, eobj: Any | None = None, verbose: bool = False
+    e: Exception,
+    error_message: str | None = None,
+    error_code: int | None = None,
+    eobj: Any | None = None,
+    verbose: bool = False,
 ) -> StructuredError:
     """Handles exceptions and formats them into a StructuredError with optional custom message, error code, and additional object.
 
@@ -118,7 +122,11 @@ def handle_exception(
 
 
 def catch_exception_with_message(
-    *, error_message: str | None = None, error_code: int | None = None, eobj: Any | None = None, verbose: bool = False
+    *,
+    error_message: str | None = None,
+    error_code: int | None = None,
+    eobj: Any | None = None,
+    verbose: bool = False,
 ) -> Callable:
     """A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.
 

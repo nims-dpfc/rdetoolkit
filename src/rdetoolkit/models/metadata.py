@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from pydantic import BaseModel, Field, RootModel, field_validator
+from pydantic import BaseModel, RootModel, field_validator
 
 MAX_VALUE_SIZE: Final[int] = 1024
 
