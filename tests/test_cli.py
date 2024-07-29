@@ -86,13 +86,16 @@ def test_make_requirements_txt():
 # ex.
 # pandas==2.0.3
 # numpy
-rdetoolkit==0.9.0
+rdetoolkit==1.0.0
 """
     assert content == expected_content
     test_path.unlink()
 
     if os.path.exists("container"):
         shutil.rmtree("container")
+
+    if os.path.exists("test_requirements.txt"):
+        os.remove("test_requirements.txt")
 
 
 def test_make_template_json():
