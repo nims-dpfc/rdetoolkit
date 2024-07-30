@@ -2,8 +2,6 @@ name: Pytest and coverage measurement and create badges
 
 on:
   push:
-    branches:
-      - main
 
 jobs:
   test:
