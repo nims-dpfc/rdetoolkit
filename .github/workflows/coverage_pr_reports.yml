@@ -25,11 +25,3 @@ jobs:
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./pytest.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
