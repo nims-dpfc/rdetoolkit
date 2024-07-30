@@ -119,11 +119,11 @@ def dataset(srcpaths, resource_paths):
 今回の例では、`main.py`を作成し、`modules/process.py`で定義した`dataset()`を実行します。
 
 ```python
-from modules import process #独自で定義した構造化処理関数
 import rdetoolkit
+from modules.modules import dataset #独自で定義した構造化処理関数
 
 #独自で定義した構造化処理関数を引数として渡す
-rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
+rdetoolkit.workflows.run(custom_dataset_function=dataset)
 ```
 
 もし、独自の構造化処理を渡さない場合、以下のように定義してください。
@@ -143,7 +143,7 @@ container/
 ├── main.py
 ├── requirements.txt
 ├── modules/
-│   ├── process.py
+│   └── modules.py
 └── data/
     ├── inputdata/
     │   └── <処理したい実験データ>
@@ -151,8 +151,7 @@ container/
     │   └── invoice.json
     └── tasksupport/
         ├── metadata-def.json
-        ├── invoice.schema.json
-        └── invoice.json
+        └── invoice.schema.json
 ```
 
 > 上記のディレクトリ構造は、あくまで一例です。data/inputdataディレクトリ、tasksupportディレクトリは、必要なファイルを適宜追加/修正してください。
