@@ -1,0 +1,37 @@
+name: Pytest and coverage measurement and create badges
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.lock
+          pip install coverage-badge
+      - name: Run pytest
+        run: python -m pytest --junitxml=pytest.xml --cov-report=term-missing --cov=src tests/
+      - name: Generate coverage badge
+        run: |
+          coverage-badge -o docs/img/coverage.svg -f
+      - name: Commit coverage badge
+        run: |
+          git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull origin ${GITHUB_HEAD_REF} --rebase
+          if (git diff --shortstat | grep '[0-9]'); then
+            git add docs/img/coverage.svg
+            git commit -m "[Auto] from GitHub Actions"
+            git push origin HEAD:refs/heads/${GITHUB_HEAD_REF}
+          fi
