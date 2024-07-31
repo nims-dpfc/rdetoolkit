@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence, TypedDict, Union
+from typing import TypedDict, Union
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
@@ -41,10 +42,10 @@ class RdeOutputResourcePath:
     invoice: Path
     invoice_schema_json: Path
     invoice_org: Path
-    temp: Optional[Path]
-    invoice_patch: Optional[Path]
-    attachment: Optional[Path]
-    nonshared_raw: Optional[Path]
+    temp: Path | None
+    invoice_patch: Path | None
+    attachment: Path | None
+    nonshared_raw: Path | None
     def __init__(self, raw, rawfiles, struct, main_image, other_image, meta, thumbnail, logs, invoice, invoice_schema_json, invoice_org, temp, invoice_patch, attachment, nonshared_raw) -> None: ...
 
 class Name(TypedDict):

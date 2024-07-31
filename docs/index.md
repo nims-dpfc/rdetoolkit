@@ -5,6 +5,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://github.com/nims-dpfc/rdetoolkit/blob/main/LICENSE)
 [![Issue](https://img.shields.io/badge/issue_tracking-github-orange)](https://github.com/nims-dpfc/rdetoolkit/issues)
 ![workflow](https://github.com/nims-dpfc/rdetoolkit/actions/workflows/main.yml/badge.svg)
+![coverage](img/coverage.svg)
 
 RDEToolKitは、RDE2.0構造化プログラムのワークフローを作成するための基本的なPythonパッケージです。
 RDEToolKitの各種モジュールを使うことで、RDEへの研究・実験データの登録処理を簡単に構築できます。

@@ -3,6 +3,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://github.com/nims-dpfc/rdetoolkit/blob/main/LICENSE)
 [![Issue](https://img.shields.io/badge/issue_tracking-github-orange)](https://github.com/nims-dpfc/rdetoolkit/issues)
 ![workflow](https://github.com/nims-dpfc/rdetoolkit/actions/workflows/main.yml/badge.svg)
+![coverage](docs/img/coverage.svg)
 
 # RDEToolKit
 
@@ -106,11 +107,11 @@ def dataset(srcpaths, resource_paths):
 - ユーザーごとで定義した具体的な構造化処理を実行
 
 ```python
-from modules import process #独自で定義した構造化処理関数
 import rdetoolkit
+from modules.modules import dataset#独自で定義した構造化処理関数
 
 #独自で定義した構造化処理関数を引数として渡す
-rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
+rdetoolkit.workflows.run(custom_dataset_function=dataset)
 ```
 
 もし、独自の構造化処理を渡さない場合、以下のように定義してください。
@@ -130,7 +131,7 @@ container/
 ├── main.py
 ├── requirements.txt
 ├── modules/
-│   ├── process.py
+│   └── modules.py
 └── data/
     ├── inputdata/
     │   └── <処理したい実験データ>
@@ -138,6 +139,5 @@ container/
     │   └── invoice.json
     └── tasksupport/
         ├── metadata-def.json
-        ├── invoice.schema.json
-        └── invoice.json
+        └── invoice.schema.json
 ```

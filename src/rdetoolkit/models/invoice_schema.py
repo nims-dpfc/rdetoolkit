@@ -74,14 +74,28 @@ class MetaProperty(BaseModel):
     default: Optional[Union[bool, int, float, str]] = Field(default=None)
     const: Optional[Union[bool, int, float, str]] = Field(default=None)
     enum: Optional[list[Union[bool, int, float, str]]] = Field(default=None)
-    maximum: Optional[int] = Field(default=None, description="Declare that the number is less than or equal to the specified value. Only applicable when the type is a numeric type (integer, number).")
-    exclusiveMaximum: Optional[int] = Field(default=None, description="Declare that the number is less than the specified value. Only applicable when the type is a numeric type (integer, number).")
-    minimum: Optional[int] = Field(default=None, description="Declare that the number is greater than or equal to the specified value. Only applicable when the type is a numeric type (integer, number).")
-    exclusiveMinimum: Optional[int] = Field(default=None, description="Declare that the number is greater than the specified value. Only applicable when the type is a numeric type (integer, number).")
+    maximum: Optional[int] = Field(
+        default=None,
+        description="Declare that the number is less than or equal to the specified value. Only applicable when the type is a numeric type (integer, number).",
+    )
+    exclusiveMaximum: Optional[int] = Field(
+        default=None,
+        description="Declare that the number is less than the specified value. Only applicable when the type is a numeric type (integer, number).",
+    )
+    minimum: Optional[int] = Field(
+        default=None,
+        description="Declare that the number is greater than or equal to the specified value. Only applicable when the type is a numeric type (integer, number).",
+    )
+    exclusiveMinimum: Optional[int] = Field(
+        default=None,
+        description="Declare that the number is greater than the specified value. Only applicable when the type is a numeric type (integer, number).",
+    )
     maxLength: Optional[int] = Field(default=None, description="Specify the maximum length of the string.")
     minLength: Optional[int] = Field(default=None, description="Specify the minimum length of the string. Must be 0 or more.")
     pattern: Optional[str] = Field(default=None, description="Declare that it has a pattern specified by a regular expression.")
-    format: Optional[Literal["date", "time", "uri", "uuid", "markdown"]] = Field(default=None, description="Specify the format of the string. Refer to date, time, uri, uuid, markdown for possible values.")
+    format: Optional[Literal["date", "time", "uri", "uuid", "markdown"]] = Field(
+        default=None, description="Specify the format of the string. Refer to date, time, uri, uuid, markdown for possible values."
+    )
 
     @model_validator(mode="after")
     def __check_numeric_type(self):
@@ -288,7 +302,9 @@ class BasicItems(BaseModel):
     dateSubmitted: BasicItemsValue = Field(default=BasicItemsValue(type="string", format="date"))
     dataOwnerId: BasicItemsValue = Field(default=BasicItemsValue(type="string", pattern="^([0-9a-zA-Z]{56})$"))
     dateName: BasicItemsValue = Field(default=BasicItemsValue(type="string", pattern="^([0-9a-zA-Z]{56})$"))
-    instrumentId: Optional[BasicItemsValue] = Field(default=BasicItemsValue(type="string", pattern="^$|^([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})$"))
+    instrumentId: Optional[BasicItemsValue] = Field(
+        default=BasicItemsValue(type="string", pattern="^$|^([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})$")
+    )
     experimentId: Optional[BasicItemsValue] = Field(default=None)
     description: Optional[BasicItemsValue] = Field(default=None)
 

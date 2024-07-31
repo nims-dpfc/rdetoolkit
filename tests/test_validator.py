@@ -61,9 +61,9 @@ def test_metadata_def_json_validation(metadata_def_json_file):
 
 
 def test_metadata_def_empty_json_validation():
-    instance = MetadataValidator()
-    obj = instance.validate(json_obj={})
-    assert isinstance(obj, dict)
+    with pytest.raises(ValueError):
+        instance = MetadataValidator()
+        _ = instance.validate(json_obj={})
 
 
 def test_invliad_metadata_def_json_validation(invalid_metadata_def_json_file):
@@ -142,9 +142,23 @@ def test_metadata_def_validate(metadata_def_json_file):
 
 
 def test_invalid_metadata_def_validate(invalid_metadata_def_json_file):
+    exception_msg = """Validation Errors in metadata.json. Please correct the following fields
+1. Field: constant
+   Type: missing
+   Context: Field required
+2. Field: variable.0
+   Type: dict_type
+   Context: Input should be a valid dictionary
+3. Field: variable.1
+   Type: dict_type
+   Context: Input should be a valid dictionary
+4. Field: variable.2
+   Type: dict_type
+   Context: Input should be a valid dictionary
+"""
     with pytest.raises(MetadataValidationError) as e:
         metadata_validate(invalid_metadata_def_json_file)
-    assert "Error in validating metadata.json" in str(e.value)
+    assert exception_msg == str(e.value)
 
 
 def test_invoice_path_metadata_def_validate():
@@ -168,20 +182,50 @@ def test_invalid_invoice_validate():
         ....
     }
     """
+    expect_msg = """Error in validating invoice.json:
+1. Field: custom
+   Type: required
+   Context: 'sample1' is a required property
+2. Field: custom
+   Type: required
+   Context: 'sample2' is a required property
+3. Field: custom.sample4
+   Type: format
+   Context: '20:20:39+00:00' is not a 'time'
+"""
     invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid.json")
     schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
-    expected_value = "'sample1' is a required property"
     with pytest.raises(InvoiceSchemaValidationError) as e:
         invoice_validate(invoice_path, schema_path)
-    assert expected_value in str(e.value)
+    assert expect_msg == str(e.value)
 
 
 def test_invalid_basic_info_invoice_validate():
+    expect_msg = "Error in validating system standard field.\nPlease correct the following fields in invoice.json\nField: basic.dataOwnerId\nType: pattern\nContext: '' does not match '^([0-9a-zA-Z]{56})$'\n"
     invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid_none_basic.json")
     schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
     with pytest.raises(InvoiceSchemaValidationError) as e:
         invoice_validate(invoice_path, schema_path)
-    assert "Error in validating system standard item in invoice.schema.json" in str(e.value)
+    assert expect_msg == str(e.value)
+
+
+def test_invalid_sample_anyof_invoice_validate():
+    """Test for error if anyOf conditions are not met"""
+    expect_msg = "Type: anyOf"
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid_sample_anyof.json")
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    with pytest.raises(InvoiceSchemaValidationError) as e:
+        invoice_validate(invoice_path, schema_path)
+    assert expect_msg in str(e.value)
+
+
+def test_invalid_invoice_schema_not_support_value_validate():
+    expect_msg = "Type: anyOf"
+    invoice_path = Path(__file__).parent.joinpath("samplefile", "invoice_invalid_sample_anyof.json")
+    schema_path = Path(__file__).parent.joinpath("samplefile", "invoice.schema.json")
+    with pytest.raises(InvoiceSchemaValidationError) as e:
+        invoice_validate(invoice_path, schema_path)
+    assert expect_msg in str(e.value)
 
 
 def test_invalid_filepath_invoice_json():
