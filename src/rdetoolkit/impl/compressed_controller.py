@@ -106,14 +106,7 @@ class CompressedFlatFileParser(ICompressedFileStructParser):
         """
         excluded_patterns = ["__MACOSX", ".DS_Store"]
         excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
-
-        if any(pattern in file.parts for pattern in excluded_patterns):
-            return True
-
-        if excluded_regex.search(str(file)):
-            return True
-
-        return False
+        return any(pattern in file.parts for pattern in excluded_patterns) or bool(excluded_regex.search(str(file)))
 
 
 class CompressedFolderParser(ICompressedFileStructParser):
@@ -206,14 +199,7 @@ class CompressedFolderParser(ICompressedFileStructParser):
         """
         excluded_patterns = ["__MACOSX", ".DS_Store"]
         excluded_regex = re.compile(r"~\$.*\.(docx|xlsx|pptx)")
-
-        if any(pattern in file.parts for pattern in excluded_patterns):
-            return True
-
-        if excluded_regex.search(str(file)):
-            return True
-
-        return False
+        return any(pattern in file.parts for pattern in excluded_patterns) or bool(excluded_regex.search(str(file)))
 
     def validation_uniq_fspath(self, target_path: str | Path, exclude_names: list[str]) -> dict[str, list[Path]]:
         """Check if there are any non-unique directory names under the target directory.
