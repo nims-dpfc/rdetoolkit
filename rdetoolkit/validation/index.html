@@ -1084,7 +1084,11 @@ It checks if the file exists and then uses a validator to validate the file agai
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">81</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">82</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">83</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">84</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">metadata_validate</span>(path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">84</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">85</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">86</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">87</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">88</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">metadata_validate</span>(path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Validate metadata.json file.</span>
 
 <span style="color: #DD4422">    This function validates the metadata definition file specified by the given path.</span>
@@ -1108,7 +1112,11 @@ It checks if the file exists and then uses a validator to validate the file agai
     <span style="color: #008800; font-weight: bold">try</span>:
         validator<span style="color: #333333">.</span>validate(path<span style="color: #333333">=</span>path)
     <span style="color: #008800; font-weight: bold">except</span> ValidationError <span style="color: #008800; font-weight: bold">as</span> validation_error:
-        emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"Error in validating metadata.json: </span><span style="background-color: #eeeeee">{</span>validation_error<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Validation Errors in metadata.json. Please correct the following fields</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        <span style="color: #008800; font-weight: bold">for</span> idx, error <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(validation_error<span style="color: #333333">.</span>errors(), start<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">1</span>):
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>idx<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">. Field: </span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'.'</span><span style="color: #333333">.</span>join([<span style="color: #007020">str</span>(e)<span style="color: #bbbbbb"> </span><span style="color: #008800; font-weight: bold">for</span><span style="color: #bbbbbb"> </span>e<span style="color: #bbbbbb"> </span><span style="color: #000000; font-weight: bold">in</span><span style="color: #bbbbbb"> </span>error[<span style="background-color: #fff0f0">'loc'</span>]])<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Type: </span><span style="background-color: #eeeeee">{</span>error[<span style="background-color: #fff0f0">'type'</span>]<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Context: </span><span style="background-color: #eeeeee">{</span>error[<span style="background-color: #fff0f0">'msg'</span>]<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
         <span style="color: #008800; font-weight: bold">raise</span> MetadataValidationError(emsg) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">validation_error</span>
 </code></pre></div></td></tr></table></div>
 </details>
@@ -1118,11 +1126,7 @@ It checks if the file exists and then uses a validator to validate the file agai
 <div class="doc doc-contents first">
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/validation.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 87</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 88</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 89</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 90</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 91</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 91</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 92</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 93</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 94</span>
@@ -1265,7 +1269,19 @@ It checks if the file exists and then uses a validator to validate the file agai
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">231</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">232</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">233</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">234</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">InvoiceValidator</span>:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">234</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">235</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">236</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">237</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">238</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">239</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">240</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">241</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">242</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">243</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">244</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">245</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">246</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">InvoiceValidator</span>:
     pre_basic_info_schema <span style="color: #333333">=</span> os<span style="color: #333333">.</span>path<span style="color: #333333">.</span>join(os<span style="color: #333333">.</span>path<span style="color: #333333">.</span>dirname(<span style="color: #996633">__file__</span>), <span style="background-color: #fff0f0">"static"</span>, <span style="background-color: #fff0f0">"invoice_basic_and_sample.schema_.json"</span>)
 
     <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, schema_path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path):
@@ -1304,17 +1320,20 @@ It checks if the file exists and then uses a validator to validate the file agai
         <span style="color: #008800; font-weight: bold">try</span>:
             validate(instance<span style="color: #333333">=</span>data, schema<span style="color: #333333">=</span>basic_info)
         <span style="color: #008800; font-weight: bold">except</span> SchemaValidationError <span style="color: #008800; font-weight: bold">as</span> schema_error:
-            emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in validating system standard item in invoice.schema.json"</span>
+            emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in validating system standard field.</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">Please correct the following fields in invoice.json</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"Field: </span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'.'</span><span style="color: #333333">.</span>join(<span style="color: #007020">list</span>(schema_error<span style="color: #333333">.</span>path))<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"Type: </span><span style="background-color: #eeeeee">{</span>schema_error<span style="color: #333333">.</span>validator<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"Context: </span><span style="background-color: #eeeeee">{</span>schema_error<span style="color: #333333">.</span>message<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
             <span style="color: #008800; font-weight: bold">raise</span> InvoiceSchemaValidationError(emsg) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">schema_error</span>
 
         validator <span style="color: #333333">=</span> Draft202012Validator(<span style="color: #007020">self</span><span style="color: #333333">.</span>schema, format_checker<span style="color: #333333">=</span>FormatChecker())
         errors <span style="color: #333333">=</span> <span style="color: #007020">sorted</span>(validator<span style="color: #333333">.</span>iter_errors(data), key<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">lambda</span> e: e<span style="color: #333333">.</span>path)
-        all_error_msg: <span style="color: #007020">str</span> <span style="color: #333333">=</span> <span style="background-color: #fff0f0">""</span>
-        <span style="color: #008800; font-weight: bold">for</span> error <span style="color: #000000; font-weight: bold">in</span> errors:
-            err_fmt <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>message<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>schema<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n\n</span><span style="background-color: #fff0f0">"</span>
-            all_error_msg <span style="color: #333333">+=</span> err_fmt
-        <span style="color: #008800; font-weight: bold">if</span> all_error_msg:
-            emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"Error in validating invoice.schema.json:</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #eeeeee">{</span>all_error_msg<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in validating invoice.json:</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        <span style="color: #008800; font-weight: bold">for</span> idx, error <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(errors, start<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">1</span>):
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>idx<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">. Field: </span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'.'</span><span style="color: #333333">.</span>join(<span style="color: #007020">list</span>(error<span style="color: #333333">.</span>path))<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Type: </span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>validator<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+            emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Context: </span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>message<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        <span style="color: #008800; font-weight: bold">if</span> errors:
             <span style="color: #008800; font-weight: bold">raise</span> InvoiceSchemaValidationError(emsg)
 
         <span style="color: #008800; font-weight: bold">return</span> data
@@ -1345,9 +1364,14 @@ It checks if the file exists and then uses a validator to validate the file agai
 
         <span style="color: #008800; font-weight: bold">if</span> __path<span style="color: #333333">.</span>name <span style="color: #333333">==</span> <span style="background-color: #fff0f0">"invoice.schema.json"</span>:
             <span style="color: #008800; font-weight: bold">try</span>:
+                <span style="color: #888888"># _data, line_map = load_json_with_line_numbers(data)</span>
                 InvoiceSchemaJson(<span style="color: #333333">**</span>data)
             <span style="color: #008800; font-weight: bold">except</span> ValidationError <span style="color: #008800; font-weight: bold">as</span> validation_error:
-                emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in schema validation"</span>
+                emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Validation Errors in invoice.schema.json. Please correct the following fields</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+                <span style="color: #008800; font-weight: bold">for</span> idx, error <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(validation_error<span style="color: #333333">.</span>errors(), start<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">1</span>):
+                    emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>idx<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">. Field: </span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'.'</span><span style="color: #333333">.</span>join([<span style="color: #007020">str</span>(e)<span style="color: #bbbbbb"> </span><span style="color: #008800; font-weight: bold">for</span><span style="color: #bbbbbb"> </span>e<span style="color: #bbbbbb"> </span><span style="color: #000000; font-weight: bold">in</span><span style="color: #bbbbbb"> </span>error[<span style="background-color: #fff0f0">'loc'</span>]])<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+                    emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Type: </span><span style="background-color: #eeeeee">{</span>error[<span style="background-color: #fff0f0">'type'</span>]<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+                    emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Context: </span><span style="background-color: #eeeeee">{</span>error[<span style="background-color: #fff0f0">'msg'</span>]<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
                 <span style="color: #008800; font-weight: bold">raise</span> InvoiceSchemaValidationError(emsg) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">validation_error</span>
             <span style="color: #008800; font-weight: bold">except</span> <span style="color: #FF0000; font-weight: bold">ValueError</span> <span style="color: #008800; font-weight: bold">as</span> value_error:
                 emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in schema validation"</span>
@@ -1517,11 +1541,7 @@ It checks if the file exists and then uses a validator to validate the file agai
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/validation.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 95</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 96</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 97</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 98</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 99</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 99</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">100</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">101</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">102</span>
@@ -1561,7 +1581,14 @@ It checks if the file exists and then uses a validator to validate the file agai
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">136</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">137</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">138</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">139</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">validate</span>(<span style="color: #007020">self</span>, <span style="color: #333333">*</span>, path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>, obj: <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, Any] <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>) <span style="color: #333333">-&gt;</span> <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, Any]:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">139</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">140</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">141</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">142</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">143</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">144</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">145</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">146</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">validate</span>(<span style="color: #007020">self</span>, <span style="color: #333333">*</span>, path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>, obj: <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, Any] <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>) <span style="color: #333333">-&gt;</span> <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, Any]:
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Validate the provided JSON data against the schema.</span>
 
 <span style="color: #DD4422">    Args:</span>
@@ -1592,17 +1619,20 @@ It checks if the file exists and then uses a validator to validate the file agai
     <span style="color: #008800; font-weight: bold">try</span>:
         validate(instance<span style="color: #333333">=</span>data, schema<span style="color: #333333">=</span>basic_info)
     <span style="color: #008800; font-weight: bold">except</span> SchemaValidationError <span style="color: #008800; font-weight: bold">as</span> schema_error:
-        emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in validating system standard item in invoice.schema.json"</span>
+        emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in validating system standard field.</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">Please correct the following fields in invoice.json</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"Field: </span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'.'</span><span style="color: #333333">.</span>join(<span style="color: #007020">list</span>(schema_error<span style="color: #333333">.</span>path))<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"Type: </span><span style="background-color: #eeeeee">{</span>schema_error<span style="color: #333333">.</span>validator<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"Context: </span><span style="background-color: #eeeeee">{</span>schema_error<span style="color: #333333">.</span>message<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
         <span style="color: #008800; font-weight: bold">raise</span> InvoiceSchemaValidationError(emsg) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">schema_error</span>
 
     validator <span style="color: #333333">=</span> Draft202012Validator(<span style="color: #007020">self</span><span style="color: #333333">.</span>schema, format_checker<span style="color: #333333">=</span>FormatChecker())
     errors <span style="color: #333333">=</span> <span style="color: #007020">sorted</span>(validator<span style="color: #333333">.</span>iter_errors(data), key<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">lambda</span> e: e<span style="color: #333333">.</span>path)
-    all_error_msg: <span style="color: #007020">str</span> <span style="color: #333333">=</span> <span style="background-color: #fff0f0">""</span>
-    <span style="color: #008800; font-weight: bold">for</span> error <span style="color: #000000; font-weight: bold">in</span> errors:
-        err_fmt <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>message<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>schema<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n\n</span><span style="background-color: #fff0f0">"</span>
-        all_error_msg <span style="color: #333333">+=</span> err_fmt
-    <span style="color: #008800; font-weight: bold">if</span> all_error_msg:
-        emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"Error in validating invoice.schema.json:</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #eeeeee">{</span>all_error_msg<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span>
+    emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Error in validating invoice.json:</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+    <span style="color: #008800; font-weight: bold">for</span> idx, error <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(errors, start<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">1</span>):
+        emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>idx<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">. Field: </span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'.'</span><span style="color: #333333">.</span>join(<span style="color: #007020">list</span>(error<span style="color: #333333">.</span>path))<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Type: </span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>validator<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        emsg <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"   Context: </span><span style="background-color: #eeeeee">{</span>error<span style="color: #333333">.</span>message<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+    <span style="color: #008800; font-weight: bold">if</span> errors:
         <span style="color: #008800; font-weight: bold">raise</span> InvoiceSchemaValidationError(emsg)
 
     <span style="color: #008800; font-weight: bold">return</span> data
@@ -1700,19 +1730,7 @@ It checks if the file exists and then uses a validator to validate the file agai
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/validation.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">237</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">238</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">239</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">240</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">241</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">242</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">243</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">244</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">245</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">246</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">247</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">248</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">249</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">249</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">250</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">251</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">252</span>
@@ -1728,7 +1746,19 @@ It checks if the file exists and then uses a validator to validate the file agai
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">262</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">263</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">264</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">265</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">invoice_validate</span>(path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path, schema: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">265</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">266</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">267</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">268</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">269</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">270</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">271</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">272</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">273</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">274</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">275</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">276</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">277</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">invoice_validate</span>(path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path, schema: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""invoice.json validation function.</span>
 
 <span style="color: #DD4422">    Args:</span>

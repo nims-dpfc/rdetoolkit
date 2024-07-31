@@ -329,6 +329,17 @@
       RDEToolKitを使ってエラーハンドリングを実装する
     </span>
 </a>
+<nav aria-label="RDEToolKitを使ってエラーハンドリングを実装する" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#_2">
+<span class="md-ellipsis">
+      スタックトレース整形する
+    </span>
+</a>
+</li>
+</ul>
+</nav>
 </li>
 </ul>
 </nav>
@@ -754,10 +765,67 @@ ErrorMessage=ERROR: failed in data processing
 <span style="color: #008800; font-weight: bold">if</span> <span style="color: #996633">__name__</span> <span style="color: #333333">==</span> <span style="background-color: #fff0f0">"__main__"</span>:
     rdetoolkit<span style="color: #333333">.</span>workflows<span style="color: #333333">.</span>run(custom_dataset_function<span style="color: #333333">=</span>dataset)
 </code></pre></div></td></tr></table></div>
-<p>出力結果</p>
+<p><code>job.failed</code>の出力結果は以下のようになります。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>ErrorCode=3
 ErrorMessage=Config file not found
+</code></pre></div></td></tr></table></div>
+<h3 id="_2">スタックトレース整形する</h3>
+<p><code>rdetoolkit.exceptions.catch_exception_with_message</code>を使用すると、構造化処理のスタックトレースを整形することが可能です。例えば、上記の<code>dataset</code>に、<code>catch_exception_with_message</code>でデコレーターとして付与します。</p>
+<p>デコレータを使用すると、スタックトレースの整形、エラーメッセージ、エラーコードの上書き、デフォルトのスタックトレースの表示・非表示を設定できます。</p>
+<ul>
+<li><code>error_message</code>： 上書きするエラーメッセージ</li>
+<li><code>error_code</code>: 上書きするエラーコード</li>
+<li><code>verbose</code>: デフォルトのスタックトレースの表示・非表示</li>
+</ul>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 1</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 2</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 3</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 4</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 5</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 6</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 7</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 8</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 9</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">10</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #555555; font-weight: bold">@catch_exception_with_message</span>(error_message<span style="color: #333333">=</span><span style="background-color: #fff0f0">"Overwrite message!"</span>, error_code<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">100</span>, verbose<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">False</span>)
+<span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">dataset</span>(srcpaths, resource_paths):
+    <span style="color: #008800; font-weight: bold">try</span>:
+        config <span style="color: #333333">=</span> read_experiment_data(<span style="background-color: #fff0f0">"not_found_file_path.txt"</span>)
+    <span style="color: #008800; font-weight: bold">except</span> <span style="color: #FF0000; font-weight: bold">FileNotFoundError</span> <span style="color: #008800; font-weight: bold">as</span> e:
+        <span style="color: #888888"># Add the error message and the error code</span>
+        <span style="color: #008800; font-weight: bold">raise</span> StructuredError(<span style="background-color: #fff0f0">"Config file not found"</span>, ecode<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">3</span>, eobj<span style="color: #333333">=</span>e) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">e</span>
+
+    <span style="color: #888888"># Do something with the dataset</span>
+    passs
+</code></pre></div></td></tr></table></div>
+<p>この時のスタックトレースは、以下の通りです。</p>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">3</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">4</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">5</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">6</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">7</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">8</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>Traceback<span style="color: #bbbbbb"> </span><span style="color: #333333">(</span>simplified<span style="color: #bbbbbb"> </span>message<span style="color: #333333">)</span>:
+Call<span style="color: #bbbbbb"> </span>Path:
+<span style="color: #bbbbbb">   </span>File:<span style="color: #bbbbbb"> </span>/Users/myproject/container/modules/custom_modules.py,<span style="color: #bbbbbb"> </span>Line:<span style="color: #bbbbbb"> </span><span style="color: #6600EE; font-weight: bold">109</span><span style="color: #bbbbbb"> </span><span style="color: #008800; font-weight: bold">in</span><span style="color: #bbbbbb"> </span>wrapper<span style="color: #333333">()</span>
+<span style="color: #bbbbbb">    </span>└─<span style="color: #bbbbbb"> </span>File:<span style="color: #bbbbbb"> </span>/Users/myproject/container/main.py,<span style="color: #bbbbbb"> </span>Line:<span style="color: #bbbbbb"> </span><span style="color: #6600EE; font-weight: bold">27</span><span style="color: #bbbbbb"> </span><span style="color: #008800; font-weight: bold">in</span><span style="color: #bbbbbb"> </span>dataset<span style="color: #333333">()</span>
+<span style="color: #bbbbbb">        </span>└─&gt;<span style="color: #bbbbbb"> </span>L27:<span style="color: #bbbbbb"> </span>raise<span style="color: #bbbbbb"> </span>StructuredError<span style="color: #333333">(</span><span style="background-color: #fff0f0">"Config file not found"</span>,<span style="color: #bbbbbb"> </span><span style="color: #996633">ecode</span><span style="color: #333333">=</span><span style="color: #6600EE; font-weight: bold">3</span>,<span style="color: #bbbbbb"> </span><span style="color: #996633">eobj</span><span style="color: #333333">=</span>e<span style="color: #333333">)</span><span style="color: #bbbbbb"> </span>from<span style="color: #bbbbbb"> </span>e<span style="color: #bbbbbb"> </span>🔥
+
+Exception<span style="color: #bbbbbb"> </span>Type:<span style="color: #bbbbbb"> </span>StructuredError
+Error:<span style="color: #bbbbbb"> </span>Config<span style="color: #bbbbbb"> </span>file<span style="color: #bbbbbb"> </span>not<span style="color: #bbbbbb"> </span>found
+</code></pre></div></td></tr></table></div>
+<p>また、デコレーターを使用する場合の<code>job.failed</code>は、デコレータを付与する前と同様の出力となります。<strong>これは、内部で明示的に定義した<code>raise &lt;例外クラス&gt;</code>の内容を捕捉し、詳細情報を<code>job.faild</code>に書き込みます。</strong></p>
+<p>デコレーターを付与した関数内部で明示的に定義した例外クラスでエラーを捕捉した場合、その例外情報が優先されるため、デコレータ引数で与えたメッセージやエラーコードでは上書きされません。</p>
+<p>このデコレータを使用すると、事前に例外処理を定義していないかつ、予期しないエラーが発生し捕捉したとき、デコレータの引数で事前に定義したエラーメッセージとエラーコードを<code>job.faild</code>に書き込むことができます。</p>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>ErrorCode=3
+ErrorMessage=Error: Config file not found
+</code></pre></div></td></tr></table></div>
+<p>もし、デコレータを使わなず、予期しないエラーが発生した場合、<code>job.faild</code>には以下のデフォルトメッセージが書き込まれます。そのため、Web UIで確認したとき、エラーの特定が難しいです。</p>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>ErrorCode=999
+ErrorMessage=Error: Please check the logs and code, then try again.
 </code></pre></div></td></tr></table></div>
 </article>
 </div>

@@ -866,11 +866,11 @@
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">3</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">4</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">5</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">modules</span> <span style="color: #008800; font-weight: bold">import</span> process <span style="color: #888888">#独自で定義した構造化処理関数</span>
-<span style="color: #008800; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">rdetoolkit</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">5</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">rdetoolkit</span>
+<span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">modules.modules</span> <span style="color: #008800; font-weight: bold">import</span> dataset <span style="color: #888888">#独自で定義した構造化処理関数</span>
 
 <span style="color: #888888">#独自で定義した構造化処理関数を引数として渡す</span>
-rdetoolkit<span style="color: #333333">.</span>workflows<span style="color: #333333">.</span>run(custom_dataset_function<span style="color: #333333">=</span>process<span style="color: #333333">.</span>dataset)
+rdetoolkit<span style="color: #333333">.</span>workflows<span style="color: #333333">.</span>run(custom_dataset_function<span style="color: #333333">=</span>dataset)
 </code></pre></div></td></tr></table></div>
 <p>もし、独自の構造化処理を渡さない場合、以下のように定義してください。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
@@ -893,12 +893,11 @@ rdetoolkit<span style="color: #333333">.</span>workflows<span style="color: #333
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">10</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">11</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">12</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">13</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">14</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>container/
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">13</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>container/
 ├──<span style="color: #bbbbbb"> </span>main.py
 ├──<span style="color: #bbbbbb"> </span>requirements.txt
 ├──<span style="color: #bbbbbb"> </span>modules/
-│<span style="color: #bbbbbb">   </span>├──<span style="color: #bbbbbb"> </span>process.py
+│<span style="color: #bbbbbb">   </span>└──<span style="color: #bbbbbb"> </span>modules.py
 └──<span style="color: #bbbbbb"> </span>data/
 <span style="color: #bbbbbb">    </span>├──<span style="color: #bbbbbb"> </span>inputdata/
 <span style="color: #bbbbbb">    </span>│<span style="color: #bbbbbb">   </span>└──<span style="color: #bbbbbb"> </span>&lt;処理したい実験データ&gt;
@@ -906,8 +905,7 @@ rdetoolkit<span style="color: #333333">.</span>workflows<span style="color: #333
 <span style="color: #bbbbbb">    </span>│<span style="color: #bbbbbb">   </span>└──<span style="color: #bbbbbb"> </span>invoice.json
 <span style="color: #bbbbbb">    </span>└──<span style="color: #bbbbbb"> </span>tasksupport/
 <span style="color: #bbbbbb">        </span>├──<span style="color: #bbbbbb"> </span>metadata-def.json
-<span style="color: #bbbbbb">        </span>├──<span style="color: #bbbbbb"> </span>invoice.schema.json
-<span style="color: #bbbbbb">        </span>└──<span style="color: #bbbbbb"> </span>invoice.json
+<span style="color: #bbbbbb">        </span>└──<span style="color: #bbbbbb"> </span>invoice.schema.json
 </code></pre></div></td></tr></table></div>
 <blockquote>
 <p>上記のディレクトリ構造は、あくまで一例です。data/inputdataディレクトリ、tasksupportディレクトリは、必要なファイルを適宜追加/修正してください。</p>

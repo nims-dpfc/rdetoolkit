@@ -651,6 +651,20 @@
     </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#handle_exception">
+<span class="md-ellipsis">
+      handle_exception
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#format_simplified_traceback">
+<span class="md-ellipsis">
+      format_simplified_traceback
+    </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -710,8 +724,8 @@
             Bases: <code>Exception</code></p>
 <p>A custom exception class providing structured error information.</p>
 <p>This class extends the standard Exception class to include additional information
-such as an error message, an error code, and an error object. This allows for a
-more detailed representation of errors.</p>
+such as an error message, an error code, an error object, and traceback information.
+This allows for a more detailed representation of errors.</p>
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -758,8 +772,21 @@ more detailed representation of errors.</p>
 </td>
 <td>
 <div class="doc-md-description">
-<p>An additional error object. This can be an object of any type to
-        provide more context to the error.</p>
+<p>An additional error object. This can be an object of any type to provide more context to the error.</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr>
+<td><code>traceback_info</code></td>
+<td>
+<code>str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Additional traceback information. Defaults to None.</p>
 </div>
 </td>
 <td>
@@ -770,9 +797,7 @@ more detailed representation of errors.</p>
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/exceptions.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 7</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 8</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 9</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 9</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">10</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">11</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">12</span>
@@ -788,25 +813,29 @@ more detailed representation of errors.</p>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">22</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">23</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">24</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">25</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">StructuredError</span>(<span style="color: #FF0000; font-weight: bold">Exception</span>):
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">25</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">26</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">27</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">28</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">StructuredError</span>(<span style="color: #FF0000; font-weight: bold">Exception</span>):
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""A custom exception class providing structured error information.</span>
 
 <span style="color: #DD4422">    This class extends the standard Exception class to include additional information</span>
-<span style="color: #DD4422">    such as an error message, an error code, and an error object. This allows for a</span>
-<span style="color: #DD4422">    more detailed representation of errors.</span>
+<span style="color: #DD4422">    such as an error message, an error code, an error object, and traceback information.</span>
+<span style="color: #DD4422">    This allows for a more detailed representation of errors.</span>
 
 <span style="color: #DD4422">    Args:</span>
 <span style="color: #DD4422">        emsg (str): The error message.</span>
 <span style="color: #DD4422">        ecode (int): The error code. Defaults to 1.</span>
-<span style="color: #DD4422">        eobj (any): An additional error object. This can be an object of any type to</span>
-<span style="color: #DD4422">                    provide more context to the error.</span>
+<span style="color: #DD4422">        eobj (any): An additional error object. This can be an object of any type to provide more context to the error.</span>
+<span style="color: #DD4422">        traceback_info (str, optional): Additional traceback information. Defaults to None.</span>
 <span style="color: #DD4422">    """</span>
 
-    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, emsg: <span style="color: #007020">str</span> <span style="color: #333333">=</span> <span style="background-color: #fff0f0">""</span>, ecode: <span style="color: #007020">int</span> <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>, eobj: Any <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>):
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, emsg: <span style="color: #007020">str</span> <span style="color: #333333">=</span> <span style="background-color: #fff0f0">""</span>, ecode: <span style="color: #007020">int</span> <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>, eobj: Any <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>, traceback_info: <span style="color: #007020">str</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
         <span style="color: #007020">super</span>()<span style="color: #333333">.</span><span style="color: #0066BB; font-weight: bold">__init__</span>(emsg)
         <span style="color: #007020">self</span><span style="color: #333333">.</span>emsg <span style="color: #333333">=</span> emsg
         <span style="color: #007020">self</span><span style="color: #333333">.</span>ecode <span style="color: #333333">=</span> ecode
         <span style="color: #007020">self</span><span style="color: #333333">.</span>eobj <span style="color: #333333">=</span> eobj
+        <span style="color: #007020">self</span><span style="color: #333333">.</span>traceback_info <span style="color: #333333">=</span> traceback_info
 </code></pre></div></td></tr></table></div>
 </details>
 <div class="doc doc-children">
@@ -820,12 +849,12 @@ more detailed representation of errors.</p>
 <p>Raised when a validation error occurs.</p>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/exceptions.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">28</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">29</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">30</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">31</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">31</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">32</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">33</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">InvoiceSchemaValidationError</span>(<span style="color: #FF0000; font-weight: bold">Exception</span>):
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">33</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">34</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">35</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">36</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">InvoiceSchemaValidationError</span>(<span style="color: #FF0000; font-weight: bold">Exception</span>):
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Raised when a validation error occurs."""</span>
 
     <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, message: <span style="color: #007020">str</span> <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Validation error"</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
@@ -844,12 +873,12 @@ more detailed representation of errors.</p>
 <p>Raised when a validation error occurs.</p>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/exceptions.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">36</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">37</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">38</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">39</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">39</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">40</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">41</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">MetadataValidationError</span>(<span style="color: #FF0000; font-weight: bold">Exception</span>):
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">41</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">42</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">43</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">44</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">MetadataValidationError</span>(<span style="color: #FF0000; font-weight: bold">Exception</span>):
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Raised when a validation error occurs."""</span>
 
     <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, message: <span style="color: #007020">str</span> <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"Validation error"</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
@@ -864,8 +893,9 @@ more detailed representation of errors.</p>
 <div class="doc doc-object doc-function">
 <div class="doc doc-contents first">
 <p>A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.</p>
-<p>This decorator catches StructuredError thrown within the function and re-raises it with a specified error message
-and error code. If a StructuredError is not raised, it still re-raises other exceptions as a standard Exception.</p>
+<p>This decorator catches exceptions thrown within the decorated function.
+If a StructuredError is raised, it re-raises it with the specified error message, error code, and optional additional error object.
+For other exceptions, it re-raises them as standard Exceptions. The verbosity level of the error message can be controlled via the verbose parameter.</p>
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -884,7 +914,7 @@ and error code. If a StructuredError is not raised, it still re-raises other exc
 </td>
 <td>
 <div class="doc-md-description">
-<p>Customized message to be used in case of an error.</p>
+<p>Customized message to be used in case of an error. Defaults to None.</p>
 </div>
 </td>
 <td>
@@ -905,19 +935,47 @@ and error code. If a StructuredError is not raised, it still re-raises other exc
 <code>None</code>
 </td>
 </tr>
+<tr>
+<td><code>eobj</code></td>
+<td>
+<code>Optional[<span title="typing.Any">Any</span>]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Additional object to include in the error. Defaults to None.</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td>
+<code>bool</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If set to True, provides detailed error messages. Defaults to False.</p>
+</div>
+</td>
+<td>
+<code>False</code>
+</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Returns:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Type</th>
+<th>Name</th> <th>Type</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td><code>Callable</code></td> <td>
 <code><span title="typing.Callable">Callable</span></code>
 </td>
 <td>
@@ -930,10 +988,358 @@ and error code. If a StructuredError is not raised, it still re-raises other exc
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/exceptions.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">44</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">45</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">46</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">47</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">124</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">125</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">126</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">127</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">128</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">129</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">130</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">131</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">132</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">133</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">134</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">135</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">136</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">137</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">138</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">139</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">140</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">141</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">142</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">143</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">144</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">145</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">146</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">147</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">148</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">149</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">150</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">151</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">152</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">153</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">154</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">155</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">156</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">157</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">158</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">159</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">160</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">catch_exception_with_message</span>(
+    <span style="color: #333333">*</span>,
+    error_message: <span style="color: #007020">str</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
+    error_code: <span style="color: #007020">int</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
+    eobj: Any <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
+    verbose: <span style="color: #007020">bool</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">False</span>,
+) <span style="color: #333333">-&gt;</span> Callable:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.</span>
+
+<span style="color: #DD4422">    This decorator catches exceptions thrown within the decorated function.</span>
+<span style="color: #DD4422">    If a StructuredError is raised, it re-raises it with the specified error message, error code, and optional additional error object.</span>
+<span style="color: #DD4422">    For other exceptions, it re-raises them as standard Exceptions. The verbosity level of the error message can be controlled via the verbose parameter.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        error_message (Optional[str]): Customized message to be used in case of an error. Defaults to None.</span>
+<span style="color: #DD4422">        error_code (Optional[int]): Error code to be used in case of an error. Defaults to None.</span>
+<span style="color: #DD4422">        eobj (Optional[Any]): Additional object to include in the error. Defaults to None.</span>
+<span style="color: #DD4422">        verbose (bool): If set to True, provides detailed error messages. Defaults to False.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        Callable: A function decorator that provides customized error handling on exception occurrence.</span>
+<span style="color: #DD4422">    """</span>
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">decorator</span>(func: Callable) <span style="color: #333333">-&gt;</span> Callable:
+        <span style="color: #555555; font-weight: bold">@wraps</span>(func)
+        <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">wrapper</span>(<span style="color: #333333">*</span>args, <span style="color: #333333">**</span>kwargs) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+            <span style="color: #008800; font-weight: bold">try</span>:
+                <span style="color: #008800; font-weight: bold">return</span> func(<span style="color: #333333">*</span>args, <span style="color: #333333">**</span>kwargs)
+            <span style="color: #008800; font-weight: bold">except</span> <span style="color: #FF0000; font-weight: bold">Exception</span> <span style="color: #008800; font-weight: bold">as</span> e:
+                _emsg <span style="color: #333333">=</span> e<span style="color: #333333">.</span>emsg <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">hasattr</span>(e, <span style="background-color: #fff0f0">"emsg"</span>) <span style="color: #008800; font-weight: bold">else</span> error_message
+                _ecode <span style="color: #333333">=</span> e<span style="color: #333333">.</span>ecode <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">hasattr</span>(e, <span style="background-color: #fff0f0">"ecode"</span>) <span style="color: #008800; font-weight: bold">else</span> error_code
+                _eobj <span style="color: #333333">=</span> e<span style="color: #333333">.</span>eobj <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">hasattr</span>(e, <span style="background-color: #fff0f0">"eobj"</span>) <span style="color: #008800; font-weight: bold">else</span> eobj
+                <span style="color: #008800; font-weight: bold">raise</span> handle_exception(e, error_message<span style="color: #333333">=</span>_emsg, error_code<span style="color: #333333">=</span>_ecode, eobj<span style="color: #333333">=</span>_eobj, verbose<span style="color: #333333">=</span>verbose) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">e</span>
+
+        <span style="color: #008800; font-weight: bold">return</span> wrapper
+
+    <span style="color: #008800; font-weight: bold">return</span> decorator
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div><h2 id="handle_exception">handle_exception</h2>
+<div class="doc doc-object doc-function">
+<div class="doc doc-contents first">
+<p>Handles exceptions and formats them into a StructuredError with optional custom message, error code, and additional object.</p>
+<p>This function captures the exception type and traceback, then formats a simplified version of the traceback.
+It constructs a custom error message, optionally including the full original traceback if verbose mode is enabled.
+The function returns a StructuredError containing the error message, error code, optional additional object,
+and simplified traceback information.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>e</code></td>
+<td>
+<code>Exception</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The exception to handle.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td>
+<code>Optional[str]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Customized message to be used in case of an error. Defaults to the exception message.</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr>
+<td><code>error_code</code></td>
+<td>
+<code>Optional[int]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Error code to be used in case of an error. Defaults to 1.</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr>
+<td><code>eobj</code></td>
+<td>
+<code>Optional[<span title="typing.Any">Any</span>]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Additional object to include in the error. Defaults to None.</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td>
+<code>bool</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If set to True, includes the original traceback in the error message. Defaults to False.</p>
+</div>
+</td>
+<td>
+<code>False</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th> <th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StructuredError</code></td> <td>
+<code><span title="src.rdetoolkit.exceptions.StructuredError">StructuredError</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>A structured error object containing the error message, error code, additional object,</p>
+</div>
+</td>
+</tr>
+<tr>
+<td></td> <td>
+<code><span title="src.rdetoolkit.exceptions.StructuredError">StructuredError</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>and simplified traceback information.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/exceptions.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 76</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 77</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 78</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 79</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 80</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 81</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 82</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 83</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 84</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 85</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 86</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 87</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 88</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 89</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 90</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 91</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 92</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 93</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 94</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 95</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 96</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 97</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 98</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 99</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">100</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">101</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">102</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">103</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">104</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">105</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">106</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">107</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">108</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">109</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">110</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">111</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">112</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">113</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">114</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">115</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">116</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">117</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">118</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">119</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">120</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">121</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">handle_exception</span>(
+    e: <span style="color: #FF0000; font-weight: bold">Exception</span>,
+    error_message: <span style="color: #007020">str</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
+    error_code: <span style="color: #007020">int</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
+    eobj: Any <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
+    verbose: <span style="color: #007020">bool</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">False</span>,
+) <span style="color: #333333">-&gt;</span> StructuredError:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Handles exceptions and formats them into a StructuredError with optional custom message, error code, and additional object.</span>
+
+<span style="color: #DD4422">    This function captures the exception type and traceback, then formats a simplified version of the traceback.</span>
+<span style="color: #DD4422">    It constructs a custom error message, optionally including the full original traceback if verbose mode is enabled.</span>
+<span style="color: #DD4422">    The function returns a StructuredError containing the error message, error code, optional additional object,</span>
+<span style="color: #DD4422">    and simplified traceback information.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        e (Exception): The exception to handle.</span>
+<span style="color: #DD4422">        error_message (Optional[str]): Customized message to be used in case of an error. Defaults to the exception message.</span>
+<span style="color: #DD4422">        error_code (Optional[int]): Error code to be used in case of an error. Defaults to 1.</span>
+<span style="color: #DD4422">        eobj (Optional[Any]): Additional object to include in the error. Defaults to None.</span>
+<span style="color: #DD4422">        verbose (bool): If set to True, includes the original traceback in the error message. Defaults to False.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        StructuredError: A structured error object containing the error message, error code, additional object,</span>
+<span style="color: #DD4422">        and simplified traceback information.</span>
+<span style="color: #DD4422">    """</span>
+    _message <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"Error: </span><span style="background-color: #eeeeee">{</span>error_message<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span> <span style="color: #008800; font-weight: bold">if</span> error_message <span style="color: #008800; font-weight: bold">else</span> <span style="background-color: #fff0f0">f"Error: </span><span style="background-color: #eeeeee">{</span><span style="color: #007020">str</span>(e)<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span>
+    _code <span style="color: #333333">=</span> error_code <span style="color: #008800; font-weight: bold">if</span> error_code <span style="color: #008800; font-weight: bold">else</span> <span style="color: #0000DD; font-weight: bold">1</span>
+
+    exc_type, _, exc_traceback <span style="color: #333333">=</span> sys<span style="color: #333333">.</span>exc_info()
+    exc_type_name <span style="color: #333333">=</span> exc_type<span style="color: #333333">.</span><span style="color: #996633">__name__</span> <span style="color: #008800; font-weight: bold">if</span> exc_type <span style="color: #008800; font-weight: bold">else</span> <span style="background-color: #fff0f0">"UnknownException"</span>
+    tb_list <span style="color: #333333">=</span> traceback<span style="color: #333333">.</span>extract_tb(exc_traceback)
+
+    simplifed_traceback: <span style="color: #007020">str</span> <span style="color: #333333">=</span> format_simplified_traceback(tb_list)
+    error_messages <span style="color: #333333">=</span> (
+        <span style="background-color: #fff0f0">"</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">Traceback (simplified message):</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>,
+        <span style="background-color: #fff0f0">f"Call Path:</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #eeeeee">{</span>simplifed_traceback<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>,
+        <span style="background-color: #fff0f0">f"</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">Exception Type: </span><span style="background-color: #eeeeee">{</span>exc_type_name<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>,
+        _message,
+    )
+
+    <span style="color: #008800; font-weight: bold">if</span> verbose:
+        original_traceback <span style="color: #333333">=</span> traceback<span style="color: #333333">.</span>format_exc()
+        error_msg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>original_traceback<span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n\n</span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'='</span><span style="color: #bbbbbb"> </span><span style="color: #333333">*</span><span style="color: #bbbbbb"> </span><span style="color: #0000DD; font-weight: bold">60</span><span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">Custom Traceback (simplified and more readable):</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #eeeeee">{</span><span style="background-color: #fff0f0">'='</span><span style="color: #bbbbbb"> </span><span style="color: #333333">*</span><span style="color: #bbbbbb"> </span><span style="color: #0000DD; font-weight: bold">60</span><span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
+        sys<span style="color: #333333">.</span>stderr<span style="color: #333333">.</span>write(error_msg)
+
+    <span style="color: #008800; font-weight: bold">return</span> StructuredError(emsg<span style="color: #333333">=</span>_message, ecode<span style="color: #333333">=</span>_code, eobj<span style="color: #333333">=</span>eobj, traceback_info<span style="color: #333333">=</span><span style="background-color: #fff0f0">""</span><span style="color: #333333">.</span>join(error_messages))
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div><h2 id="format_simplified_traceback">format_simplified_traceback</h2>
+<div class="doc doc-object doc-function">
+<div class="doc doc-contents first">
+<p>Formats a simplified version of the traceback information.</p>
+<p>This function takes a list of traceback frame summaries and constructs a formatted string representing the call stack.
+The formatted string includes indentation and node characters to indicate the call path,
+highlighting the file, line number, and function name. The final line of the traceback is marked with a fire emoji.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tb_list</code></td>
+<td>
+<code>list[<span title="traceback.FrameSummary">FrameSummary</span>]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>A list of traceback frame summaries to format.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th> <th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>str</code></td> <td>
+<code>str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>A formatted string representing the simplified traceback information.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/exceptions.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">47</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">48</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">49</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">50</span>
@@ -959,36 +1365,33 @@ and error code. If a StructuredError is not raised, it still re-raises other exc
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">70</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">71</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">72</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">73</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">catch_exception_with_message</span>(<span style="color: #333333">*</span>, error_message: <span style="color: #007020">str</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>, error_code: <span style="color: #007020">int</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>) <span style="color: #333333">-&gt;</span> Callable:
-<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""A decorator that catches exceptions and re-raises a StructuredError with a customized message and error code.</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">73</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">format_simplified_traceback</span>(tb_list: <span style="color: #007020">list</span>[traceback<span style="color: #333333">.</span>FrameSummary]) <span style="color: #333333">-&gt;</span> <span style="color: #007020">str</span>:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Formats a simplified version of the traceback information.</span>
 
-<span style="color: #DD4422">    This decorator catches StructuredError thrown within the function and re-raises it with a specified error message</span>
-<span style="color: #DD4422">    and error code. If a StructuredError is not raised, it still re-raises other exceptions as a standard Exception.</span>
+<span style="color: #DD4422">    This function takes a list of traceback frame summaries and constructs a formatted string representing the call stack.</span>
+<span style="color: #DD4422">    The formatted string includes indentation and node characters to indicate the call path,</span>
+<span style="color: #DD4422">    highlighting the file, line number, and function name. The final line of the traceback is marked with a fire emoji.</span>
 
 <span style="color: #DD4422">    Args:</span>
-<span style="color: #DD4422">        error_message (Optional[str]): Customized message to be used in case of an error.</span>
-<span style="color: #DD4422">        error_code (Optional[int]): Error code to be used in case of an error. Defaults to None.</span>
+<span style="color: #DD4422">        tb_list (list[traceback.FrameSummary]): A list of traceback frame summaries to format.</span>
 
 <span style="color: #DD4422">    Returns:</span>
-<span style="color: #DD4422">        A function decorator that provides customized error handling on exception occurrence.</span>
+<span style="color: #DD4422">        str: A formatted string representing the simplified traceback information.</span>
 <span style="color: #DD4422">    """</span>
+    formatted_traceback <span style="color: #333333">=</span> <span style="background-color: #fff0f0">""</span>
+    indent <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"  "</span>
+    node_char <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"└─"</span>
+    last_index <span style="color: #333333">=</span> <span style="color: #007020">len</span>(tb_list) <span style="color: #333333">-</span> <span style="color: #0000DD; font-weight: bold">1</span>
+    fire_mark <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\U0001F525</span><span style="background-color: #fff0f0">"</span>
+    <span style="color: #008800; font-weight: bold">for</span> index, tb <span style="color: #000000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(tb_list):
+        prefix <span style="color: #333333">=</span> (indent <span style="color: #333333">*</span> <span style="color: #0000DD; font-weight: bold">2</span> <span style="color: #333333">*</span> index) <span style="color: #333333">+</span> node_char <span style="color: #008800; font-weight: bold">if</span> index <span style="color: #333333">!=</span> <span style="color: #0000DD; font-weight: bold">0</span> <span style="color: #008800; font-weight: bold">else</span> indent
+        formatted_traceback <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>prefix<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0"> File: </span><span style="background-color: #eeeeee">{</span>tb<span style="color: #333333">.</span>filename<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">, Line: </span><span style="background-color: #eeeeee">{</span>tb<span style="color: #333333">.</span>lineno<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0"> in </span><span style="background-color: #eeeeee">{</span>tb<span style="color: #333333">.</span>name<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">()</span><span style="color: #666666; font-weight: bold; background-color: #fff0f0">\n</span><span style="background-color: #fff0f0">"</span>
 
-    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">decorator</span>(func: Callable) <span style="color: #333333">-&gt;</span> Callable:
-        <span style="color: #555555; font-weight: bold">@wraps</span>(func)
-        <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">wrapper</span>(<span style="color: #333333">*</span>args, <span style="color: #333333">**</span>kwargs) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
-            <span style="color: #008800; font-weight: bold">try</span>:
-                <span style="color: #008800; font-weight: bold">return</span> func(<span style="color: #333333">*</span>args, <span style="color: #333333">**</span>kwargs)
-            <span style="color: #008800; font-weight: bold">except</span> StructuredError <span style="color: #008800; font-weight: bold">as</span> e:
-                msg <span style="color: #333333">=</span> error_message <span style="color: #008800; font-weight: bold">if</span> error_message <span style="color: #000000; font-weight: bold">is</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #008800; font-weight: bold">else</span> <span style="color: #007020">str</span>(e)
-                ecode <span style="color: #333333">=</span> error_code <span style="color: #008800; font-weight: bold">if</span> error_code <span style="color: #000000; font-weight: bold">is</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #008800; font-weight: bold">else</span> <span style="color: #0000DD; font-weight: bold">1</span>
-                <span style="color: #008800; font-weight: bold">raise</span> StructuredError(msg, ecode<span style="color: #333333">=</span>ecode, eobj<span style="color: #333333">=</span>e) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">e</span>
-            <span style="color: #008800; font-weight: bold">except</span> <span style="color: #FF0000; font-weight: bold">Exception</span> <span style="color: #008800; font-weight: bold">as</span> e:
-                msg <span style="color: #333333">=</span> error_message <span style="color: #008800; font-weight: bold">if</span> error_message <span style="color: #000000; font-weight: bold">is</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #008800; font-weight: bold">else</span> <span style="color: #007020">str</span>(e)
-                <span style="color: #008800; font-weight: bold">raise</span> <span style="color: #FF0000; font-weight: bold">Exception</span>(msg) <span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">e</span>
+        <span style="color: #008800; font-weight: bold">if</span> index <span style="color: #333333">==</span> last_index:
+            final_prefix <span style="color: #333333">=</span> (indent <span style="color: #333333">*</span> <span style="color: #0000DD; font-weight: bold">2</span> <span style="color: #333333">*</span> (index <span style="color: #333333">+</span> <span style="color: #0000DD; font-weight: bold">1</span>)) <span style="color: #333333">+</span> node_char
+            formatted_traceback <span style="color: #333333">+=</span> <span style="background-color: #fff0f0">f"</span><span style="background-color: #eeeeee">{</span>final_prefix<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">&gt; L</span><span style="background-color: #eeeeee">{</span>tb<span style="color: #333333">.</span>lineno<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">: </span><span style="background-color: #eeeeee">{</span>tb<span style="color: #333333">.</span>line<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0"> </span><span style="background-color: #eeeeee">{</span>fire_mark<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span>
 
-        <span style="color: #008800; font-weight: bold">return</span> wrapper
-
-    <span style="color: #008800; font-weight: bold">return</span> decorator
+    <span style="color: #008800; font-weight: bold">return</span> formatted_traceback
 </code></pre></div></td></tr></table></div>
 </details>
 </div>

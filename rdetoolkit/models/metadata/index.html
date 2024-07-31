@@ -742,7 +742,7 @@
 <tr>
 <td><code>constant</code></td>
 <td>
-<code>Optional[dict[str, <span title="src.rdetoolkit.models.metadata.MetaValue">MetaValue</span>]]</code>
+<code>dict[str, <span title="src.rdetoolkit.models.metadata.MetaValue">MetaValue</span>]</code>
 </td>
 <td>
 <div class="doc-md-description">
@@ -782,12 +782,12 @@
 <span style="color: #DD4422">    Stores metadata extracted by the data structuring process.</span>
 
 <span style="color: #DD4422">    Attributes:</span>
-<span style="color: #DD4422">        constant (Optional[dict[str, MetaValue]]): A set of metadata common to all measurements.</span>
+<span style="color: #DD4422">        constant (dict[str, MetaValue]): A set of metadata common to all measurements.</span>
 <span style="color: #DD4422">        variable (ValidableItems): An array of metadata sets that vary with each measurement.</span>
 <span style="color: #DD4422">    """</span>
 
-    constant: <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, MetaValue] <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> Field(default<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">None</span>)
-    variable: ValidableItems <span style="color: #333333">=</span> Field(default<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">None</span>)
+    constant: <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, MetaValue]
+    variable: ValidableItems
 </code></pre></div></td></tr></table></div>
 </details>
 <div class="doc doc-children">
