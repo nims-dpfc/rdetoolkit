@@ -74,7 +74,8 @@ def rdeformat_mode_process(
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
 
     # validate metadata.json
-    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
+    if resource_paths.meta.joinpath("metadata.json").exists():
+        metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
     # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
@@ -136,7 +137,8 @@ def multifile_mode_process(
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths.tasksupport.joinpath("metadata-def.json"))
 
     # validate metadata.json
-    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
+    if resource_paths.meta.joinpath("metadata.json").exists():
+        metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
     # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
@@ -224,7 +226,8 @@ def excel_invoice_mode_process(
         )
 
     # validate metadata.json
-    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
+    if resource_paths.meta.joinpath("metadata.json").exists():
+        metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
     # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
@@ -286,7 +289,8 @@ def invoice_mode_process(
         )
 
     # validate metadata.json
-    metadata_validate(resource_paths.meta.joinpath("metadata.json"))
+    if resource_paths.meta.joinpath("metadata.json").exists():
+        metadata_validate(resource_paths.meta.joinpath("metadata.json"))
 
     # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")

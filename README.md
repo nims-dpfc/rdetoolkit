@@ -86,10 +86,10 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
     ...
 ```
 
-今回の例では、`modules`以下に、`def display_messsage()`というダミー処理を定義し、独自の構造化処理を定義したいと思います。`modules/process.py`というファイルを作成します。
+今回の例では、`modules`以下に、`def display_messsage()`というダミー処理を定義し、独自の構造化処理を定義したいと思います。`modules/modules.py`というファイルを作成します。
 
 ```python
-# modules/process.py
+# modules/modules.py
 def display_messsage(path):
     print(f"Test Message!: {path}")
 
