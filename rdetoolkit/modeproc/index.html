@@ -831,10 +831,7 @@
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/modeproc.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">234</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">235</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">236</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">237</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">237</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">238</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">239</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">240</span>
@@ -890,7 +887,11 @@
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">290</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">291</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">292</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">293</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">invoice_mode_process</span>(
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">293</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">294</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">295</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">296</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">297</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">invoice_mode_process</span>(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
@@ -945,7 +946,8 @@
         )
 
     <span style="color: #888888"># validate metadata.json</span>
-    metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
+    <span style="color: #008800; font-weight: bold">if</span> resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>)<span style="color: #333333">.</span>exists():
+        metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
 
     <span style="color: #888888"># validate invoice.schema.json / invoice.json</span>
     schema_path <span style="color: #333333">=</span> srcpaths<span style="color: #333333">.</span>tasksupport<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"invoice.schema.json"</span>)
@@ -1109,9 +1111,7 @@
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/modeproc.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">146</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">147</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">148</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">148</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">149</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">150</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">151</span>
@@ -1194,7 +1194,10 @@
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">228</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">229</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">230</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">231</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">excel_invoice_mode_process</span>(
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">231</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">232</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">233</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">234</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">excel_invoice_mode_process</span>(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     excel_invoice_file: Path,
@@ -1275,7 +1278,8 @@
         )
 
     <span style="color: #888888"># validate metadata.json</span>
-    metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
+    <span style="color: #008800; font-weight: bold">if</span> resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>)<span style="color: #333333">.</span>exists():
+        metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
 
     <span style="color: #888888"># validate invoice.schema.json / invoice.json</span>
     schema_path <span style="color: #333333">=</span> srcpaths<span style="color: #333333">.</span>tasksupport<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"invoice.schema.json"</span>)
@@ -1444,7 +1448,8 @@
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">78</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">79</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">80</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">81</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">rdeformat_mode_process</span>(
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">81</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">82</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">rdeformat_mode_process</span>(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
@@ -1495,7 +1500,8 @@
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths<span style="color: #333333">.</span>tasksupport<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata-def.json"</span>))
 
     <span style="color: #888888"># validate metadata.json</span>
-    metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
+    <span style="color: #008800; font-weight: bold">if</span> resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>)<span style="color: #333333">.</span>exists():
+        metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
 
     <span style="color: #888888"># validate invoice.schema.json / invoice.json</span>
     schema_path <span style="color: #333333">=</span> srcpaths<span style="color: #333333">.</span>tasksupport<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"invoice.schema.json"</span>)
@@ -1560,11 +1566,7 @@ directory.</p>
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/modeproc.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">296</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">297</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">298</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">299</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">300</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">300</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">301</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">302</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">303</span>
@@ -1586,7 +1588,11 @@ directory.</p>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">319</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">320</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">321</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">322</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">copy_input_to_rawfile_for_rdeformat</span>(resource_paths: RdeOutputResourcePath) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">322</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">323</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">324</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">325</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">326</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">copy_input_to_rawfile_for_rdeformat</span>(resource_paths: RdeOutputResourcePath) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Copy the input raw files to their respective directories based on the file's part names.</span>
 
 <span style="color: #DD4422">    This function scans through the parts of each file's path in `resource_paths.rawfiles`. If the file path</span>
@@ -1723,8 +1729,7 @@ directory.</p>
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/modeproc.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 84</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 85</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 85</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 86</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 87</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 88</span>
@@ -1782,7 +1787,9 @@ directory.</p>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">140</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">141</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">142</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">143</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">multifile_mode_process</span>(
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">143</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">144</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">145</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">multifile_mode_process</span>(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span> <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">None</span>,
@@ -1837,7 +1844,8 @@ directory.</p>
         update_description_with_features(resource_paths, invoice_dst_filepath, srcpaths<span style="color: #333333">.</span>tasksupport<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata-def.json"</span>))
 
     <span style="color: #888888"># validate metadata.json</span>
-    metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
+    <span style="color: #008800; font-weight: bold">if</span> resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>)<span style="color: #333333">.</span>exists():
+        metadata_validate(resource_paths<span style="color: #333333">.</span>meta<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"metadata.json"</span>))
 
     <span style="color: #888888"># validate invoice.schema.json / invoice.json</span>
     schema_path <span style="color: #333333">=</span> srcpaths<span style="color: #333333">.</span>tasksupport<span style="color: #333333">.</span>joinpath(<span style="background-color: #fff0f0">"invoice.schema.json"</span>)
@@ -1914,11 +1922,7 @@ directory.</p>
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/modeproc.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">325</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">326</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">327</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">328</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">329</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">329</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">330</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">331</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">332</span>
@@ -1927,7 +1931,11 @@ directory.</p>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">335</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">336</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">337</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">338</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">copy_input_to_rawfile</span>(raw_dir_path: Path, raw_files: <span style="color: #007020">tuple</span>[Path, <span style="color: #333333">...</span>]) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">338</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">339</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">340</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">341</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">342</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">copy_input_to_rawfile</span>(raw_dir_path: Path, raw_files: <span style="color: #007020">tuple</span>[Path, <span style="color: #333333">...</span>]) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Copy the input raw files to the specified directory.</span>
 
 <span style="color: #DD4422">    This function takes a list of raw file paths and copies each file to the given `raw_dir_path`.</span>
@@ -2028,11 +2036,7 @@ and format flags provided, it instantiates and returns the appropriate checker.<
 </table>
 <details class="quote">
 <summary>Source code in <code>src/rdetoolkit/modeproc.py</code></summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">341</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">342</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">343</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">344</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">345</span>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">345</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">346</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">347</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">348</span>
@@ -2054,7 +2058,11 @@ and format flags provided, it instantiates and returns the appropriate checker.<
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">364</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">365</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">366</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">367</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">selected_input_checker</span>(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: <span style="color: #007020">str</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span>) <span style="color: #333333">-&gt;</span> IInputFileChecker:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">367</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">368</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">369</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">370</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">371</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">selected_input_checker</span>(src_paths: RdeInputDirPaths, unpacked_dir_path: Path, mode: <span style="color: #007020">str</span> <span style="color: #333333">|</span> <span style="color: #008800; font-weight: bold">None</span>) <span style="color: #333333">-&gt;</span> IInputFileChecker:
 <span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Determine the appropriate input file checker based on the provided format flags and source paths.</span>
 
 <span style="color: #DD4422">    The function scans the source paths to identify the type of input files present. Based on the file type</span>

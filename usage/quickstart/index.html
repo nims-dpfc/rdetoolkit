@@ -815,7 +815,7 @@
 <li>API Documentation: <a href="rdetoolkit/models/rde2types.md/#rdeoutputresourcepath">RdeOutputResourcePath - rde2types</a></li>
 </ul>
 </div>
-<p>今回の例では、<code>modules</code>以下に、<code>display_messsage()</code>, <code>custom_graph()</code>, <code>custom_extract_metadata()</code>というダミー処理を定義し、独自の構造化処理を定義します。これらの関数は、<code>modules/process.py</code>というファイルを作成し定義します。以下の2つの引数を渡す関数でなければ、rdetoolkitは正しく処理が実行できません。</p>
+<p>今回の例では、<code>modules</code>以下に、<code>display_messsage()</code>, <code>custom_graph()</code>, <code>custom_extract_metadata()</code>というダミー処理を定義し、独自の構造化処理を定義します。これらの関数は、<code>modules/modules.py</code>というファイルを作成し定義します。以下の2つの引数を渡す関数でなければ、rdetoolkitは正しく処理が実行できません。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 1</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 2</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 3</span>
@@ -830,7 +830,7 @@
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">12</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">13</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">14</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">15</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #888888"># modules/process.py</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">15</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #888888"># modules/modules.py</span>
 <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">display_messsage</span>(path):
     <span style="color: #007020">print</span>(<span style="background-color: #fff0f0">f"Test Message!: </span><span style="background-color: #eeeeee">{</span>path<span style="background-color: #eeeeee">}</span><span style="background-color: #fff0f0">"</span>)
 
@@ -861,7 +861,7 @@
 <li>API Documentation: <a href="rdetoolkit/workflows.md/#run">run - workflows</a></li>
 </ul>
 </div>
-<p>今回の例では、<code>main.py</code>を作成し、<code>modules/process.py</code>で定義した<code>dataset()</code>を実行します。</p>
+<p>今回の例では、<code>main.py</code>を作成し、<code>modules/modules.py</code>で定義した<code>dataset()</code>を実行します。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">3</span>
