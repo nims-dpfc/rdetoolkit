@@ -87,8 +87,24 @@ def test_two_argments_metadata_def_json_validation(invalid_metadata_def_json_fil
     assert str(e.value) == "Both 'path' and 'json_obj' cannot be provided at the same time"
 
 
+def test_metadata_json_validator():
+    json_data = {
+        "constant": {"test_meta1": {"value": 1}, "test_meta2": {"value": 100}, "test_meta3": {"value": True}},
+        "variable": [
+            {"test_meta1": {"value": "v1"}, "test_meta2": {"value": 200, "unit": "m"}, "test_meta3": {"value": False}},
+            {"test_meta1": {"value": "v1"}, "test_meta2": {"value": 200, "unit": "m"}, "test_meta3": {"value": False}},
+        ],
+    }
+
+    validator = MetadataValidator()
+    try:
+        validator.validate(json_obj=json_data)
+    except Exception as e:
+        pytest.fail(f"Validation raise an {e}")
+
+
 @pytest.mark.parametrize("case, longchar", [("success", "a" * 1024), ("faild", "a" * 1025)])
-def test_char_too_long_metadata_def_json_validation(case, longchar):
+def test_char_too_long_metadata_json_validation(case, longchar):
     json_data = {
         "constant": {"test_meta1": {"value": longchar}, "test_meta2": {"value": 100}, "test_meta3": {"value": True}},
         "variable": [
