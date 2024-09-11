@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - "*"
-      - "!docs-*"
-      - "!doc-*"
+      - "!docs*"
+      - "!doc*"
   pull_request:
     branches:
       - main
-      - develop-*
+      - develop*
 
 jobs:
   test:
