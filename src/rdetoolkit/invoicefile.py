@@ -37,6 +37,8 @@ def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, p
     df_general = None
     df_specific = None
     for sh_name, df in dct_sheets.items():
+        if df.empty:
+            continue
         if df.iat[0, 0] == "invoiceList_format_id":
             if dfexcelinvoice is not None:
                 emsg = "ERROR: multiple sheet in invoiceList files"
