@@ -320,19 +320,17 @@ class ExcelInvoiceFile:
         if target_path is None:
             target_path = self.invoice_path
 
-        if not os.path.exists(target_path):
-            emsg = f"ERROR: excelinvoice not found {target_path}"
-            raise StructuredError(emsg)
+        self.__check_exist_rawfiles(target_path)
 
         dct_sheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
 
-        dfexcelinvoice = None
-        df_general = None
-        df_specific = None
+        dfexcelinvoice, df_general, df_specific = None, None, None
         for sh_name, df in dct_sheets.items():
             if df.empty:
                 continue
-            if df.iat[0, 0] == "invoiceList_format_id":
+
+            target_comment_value = df.iat[0, 0]
+            if target_comment_value == "invoiceList_format_id":
                 if dfexcelinvoice is not None:
                     emsg = "ERROR: multiple sheet in invoiceList files"
                     raise StructuredError(emsg)
@@ -365,6 +363,11 @@ class ExcelInvoiceFile:
         _df_specific = df[1:].copy()
         _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
         return _df_specific
+
+    def __check_exist_rawfiles(self, excel_rawfiles: Path) -> None:
+        if not os.path.exists(excel_rawfiles):
+            emsg = f"ERROR: excelinvoice not found {excel_rawfiles}"
+            raise StructuredError(emsg)
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.
