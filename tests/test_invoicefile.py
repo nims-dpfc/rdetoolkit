@@ -323,6 +323,7 @@ def test_update_description_none_features_none_variable(
 def test_read_excelinvoice(inputfile_single_excelinvoice):
     """read_excelinvoiceのテスト
     dfexcelinvoice, df_general, dfSpecificが正しい値で返ってくるかテスト
+    また、空のシートが含まれるエクセルインボイスを入れた時に想定通りの値を出力するかテスト
     """
     expect_sheet1 = [
         [
