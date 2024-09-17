@@ -34,5 +34,5 @@ jobs:
           if (git diff --shortstat | grep '[0-9]'); then
             git add docs/img/coverage.svg
             git commit -m "[Auto] Update coverage badge based on latest test results"
-            git push origin HEAD:refs/heads/${GITHUB_REF_NAME}"
+            git push origin HEAD:refs/heads/${GITHUB_REF_NAME}
           fi
