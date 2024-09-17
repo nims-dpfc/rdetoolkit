@@ -27,9 +27,10 @@ jobs:
           git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git stash
           git pull origin ${GITHUB_HEAD_REF} --rebase
-          if (git diff --shortstat | grep '[0-9]'); then
-            git add docs/img/coverage.svg
-            git commit -m "[Auto] from GitHub Actions"
-            git push origin HEAD:refs/heads/${GITHUB_HEAD_REF}
+          git stash pop
+          git add docs/img/coverage.svg
+          git diff-index --quiet HEAD || git commit -m "[Auto] Update coverage badge"
+          git push origin HEAD:refs/heads/${GITHUB_HEAD_REF}
           fi
