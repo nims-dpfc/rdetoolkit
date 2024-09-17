@@ -28,6 +28,9 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           echo ${GITHUB_HEAD_REF}
+          git stash
+          git pull origin ${GITHUB_HEAD_REF} --rebase
+          git stash pop
           git pull origin ${GITHUB_HEAD_REF} --rebase
           if (git diff --shortstat | grep '[0-9]'); then
             git add docs/img/coverage.svg
