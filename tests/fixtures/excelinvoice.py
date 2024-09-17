@@ -993,7 +993,7 @@ EXCELINVOICE_ENTRYDATA_SHEET3 = [
 
 @pytest.fixture
 def inputfile_single_excelinvoice() -> Generator[str, None, None]:
-    """ExcelInvoice / One input file"""
+    """ExcelInvoice / One input file / add empty sheet"""
     input_dir = pathlib.Path("data", "inputdata")
     input_dir.mkdir(parents=True, exist_ok=True)
     test_excel_invoice = pathlib.Path(input_dir, "test_excel_invoice.xlsx")
@@ -1002,11 +1002,13 @@ def inputfile_single_excelinvoice() -> Generator[str, None, None]:
         EXCELINVOICE_ENTRYDATA_SHEET1_SINGLE,
         columns=["invoiceList_format_id", "Sample_RDE_DataSet", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
     )
+    empty_df = pd.DataFrame()
     df2 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET2, columns=["term_id", "key_name"])
     df3 = pd.DataFrame(EXCELINVOICE_ENTRYDATA_SHEET3, columns=["sample_class_id", "term_id", "key_name"])
 
     with pd.ExcelWriter(test_excel_invoice) as writer:
         df1.to_excel(writer, sheet_name="invoice_form", index=False)
+        empty_df.to_excel(writer, sheet_name="empty_sheet", index=False)
         df2.to_excel(writer, sheet_name="generalTerm", index=False)
         df3.to_excel(writer, sheet_name="specificTerm", index=False)
 
