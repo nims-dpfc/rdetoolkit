@@ -27,9 +27,9 @@ jobs:
           git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          echo ${GITHUB_HEAD_REF}
+          echo "Debug: ${GITHUB_REF_NAME}"
           git stash
-          git pull origin ${GITHUB_HEAD_REF} --rebase
+          git pull origin ${GITHUB_REF_NAME} --rebase
           git stash pop
           if (git diff --shortstat | grep '[0-9]'); then
             git add docs/img/coverage.svg
