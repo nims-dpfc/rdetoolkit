@@ -1,0 +1,19 @@
+[package]
+name = "rdetoolkit-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "core"
+crate-type = ["cdylib", "rlib"]
+path = "rdetoolkit_core/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pyo3 = { version = "0.22.3", features = ["auto-initialize"] }
+image = "0.24.6"
+
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]
