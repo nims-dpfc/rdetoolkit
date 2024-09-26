@@ -17,3 +17,7 @@ image = "0.24.6"
 [features]
 default = ["extension-module"]
 extension-module = ["pyo3/extension-module"]
+
+[lints.clippy]
+dbg_macro = "warn"
+print_stdout = "warn"
