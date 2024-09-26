@@ -1,0 +1,40 @@
+name: Core Module
+
+on:
+  push:
+    branches:
+      - "*"
+      - "!docs*"
+      - "!doc*"
+  pull_request:
+    branches:
+      - main
+      - develop*
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@nightly
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+      - name: Run check
+        run: cargo check
+      - name: Run test
+        run: cargo test --no-default-features
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Set Toolchain
+        uses: actions-rs/toolchain@nightly
+      - name: Run Test
+        run: cargo test --no-default-features
