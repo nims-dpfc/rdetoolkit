@@ -1,11 +1,11 @@
-name: pytest and coverage
+name: Coverage PR reports
 on:
   pull_request:
 
 permissions: write-all
 
 jobs:
-  test:
+  coverage_py:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,3 +25,44 @@ jobs:
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
+
+  coverage_rs:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchin@v1
+        with:
+          toolchain: stable
+          override: true
+          components: llvm-tools-preview
+
+      - name: Install grcov
+        run: cargo install grcov
+
+      - name: Build with coverage
+        env:
+          RUSTFLAGS: "-C instument-coverage"
+        run: cargo build --verbose
+
+      - name: Run tests with coverage
+        env:
+          LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
+        run: cargo test --verbose
+
+      - name: Generate coverage report
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+
+      - name: Post coverage comment
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          lcov-file: lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN}}
