@@ -70,11 +70,11 @@ mkdocstrings-python==1.11.1
 mypy==1.11.2
 mypy-extensions==1.0.0
 nodeenv==1.9.1
-numpy==2.1.1
+numpy==1.26.4
 openpyxl==3.1.5
 packaging==24.1
 paginate==0.5.7
-pandas==2.2.3
+pandas==2.2.0
 pathspec==0.12.1
 pillow==10.4.0
 platformdirs==4.3.6

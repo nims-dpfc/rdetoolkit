@@ -25,10 +25,10 @@ jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
 kiwisolver==1.4.7
 matplotlib==3.9.2
-numpy==2.1.1
+numpy==1.26.4
 openpyxl==3.1.5
 packaging==24.1
-pandas==2.2.3
+pandas==2.2.0
 pillow==10.4.0
 pydantic==2.9.2
 pydantic-core==2.23.4
