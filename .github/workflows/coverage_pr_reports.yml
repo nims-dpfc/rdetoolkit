@@ -45,7 +45,7 @@ jobs:
 
       - name: Build with coverage
         env:
-          RUSTFLAGS: "-C instument-coverage"
+          RUSTFLAGS: "-C instrument-coverage"
         run: cargo build --verbose
 
       - name: Run tests with coverage
