@@ -6,6 +6,7 @@ permissions: write-all
 
 jobs:
   coverage_py:
+    name: Code Coverage with pytest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,13 +28,13 @@ jobs:
           junitxml-path: ./pytest.xml
 
   coverage_rs:
-    name: Code Coverage
+    name: Code Coverage with grcov
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchin@v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
