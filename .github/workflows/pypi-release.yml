@@ -56,23 +56,24 @@ jobs:
             target: aarch64
           - runner: ubuntu-latest
             target: armv7
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: 3.x
-        - name: Build wheels
-          uses: PyO3/maturin-action@v1
-          with:
-            target: ${{ matrix.platform.target }}
-            args: --release -out dist --find-interpreter
-            sccache: "true"
-            manylinue: muslinux_1_2
-        - name: Upload wheel
-          uses: actions/upload-artifact@v4
-          with:
-            name: wheels-musllinux-${{ matrix.platform.target }}
-            path: dist
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release -out dist --find-interpreter
+          sccache: "true"
+          manylinue: muslinux_1_2
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-${{ matrix.platform.target }}
+          path: dist
+
   windows:
     runs-on: ${{ matrix.platform.runner }}
     strategy:
