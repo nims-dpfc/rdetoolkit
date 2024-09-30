@@ -36,7 +36,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           override: true
           components: llvm-tools-preview
 
@@ -51,6 +51,7 @@ jobs:
       - name: Run tests with coverage
         env:
           LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
+          CARGO_INCREMENTAL: 0
         run: cargo test --verbose
 
       - name: Generate coverage report
