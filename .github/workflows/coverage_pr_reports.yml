@@ -57,7 +57,7 @@ jobs:
         env:
           LLVM_PROFILE_FILE: "your-project-name.profraw"
           CARGO_INCREMENTAL: 0
-        run: cargo test
+        run: cargo test --no-default-features
 
       - name: Generate coverage report
         run: |
