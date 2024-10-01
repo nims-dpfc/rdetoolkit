@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict, Union
 
+from rdetoolkit.models.config import Config
+
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
 ExcelInvoicePathList = Sequence[Path]
@@ -111,6 +113,7 @@ class RdeInputDirPaths:
         inputdata (Path): Path to the folder where input data is stored.
         invoice (Path): Path to the folder where invoice.json is stored.
         tasksupport (Path): Path to the folder where task support data is stored.
+        config (Config): The configuration object.
 
     Properties:
         default_csv (Path): Provides the path to the `default_value.csv` file. If `tasksupport` is specified, it uses the path under it; otherwise,
@@ -120,6 +123,7 @@ class RdeInputDirPaths:
     inputdata: Path
     invoice: Path
     tasksupport: Path
+    config: Config = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
 
     @property
     def default_csv(self) -> Path:
