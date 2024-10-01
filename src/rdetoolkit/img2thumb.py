@@ -93,6 +93,8 @@ def resize_image(path: str | Path, width: int = 640, height: int = 480, output_p
         _output_path = image_path
     elif isinstance(output_path, Path):
         _output_path = str(output_path)
+    else:
+        _output_path = output_path
 
     try:
         resize_image_aspect_ratio(image_path, _output_path, width, height)
