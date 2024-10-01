@@ -1,9 +1,11 @@
 import os
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from rdetoolkit.img2thumb import copy_images_to_thumbnail
+from rdetoolkit.img2thumb import copy_images_to_thumbnail, resize_image
+from rdetoolkit.exceptions import StructuredError
 
 
 @pytest.fixture
@@ -86,8 +88,7 @@ def test_only_one_representative_image_exists(dummy_out_dir_thumb, dummy_out_dir
 
 
 def test_specifying_a_file(dummy_out_dir_thumb, dummy_out_dir_main, dummy_out_dir_other):
-    """main_imageに存在する指定したファイル名の画像が代表画像にコピーされるかテスト
-    """
+    """main_imageに存在する指定したファイル名の画像が代表画像にコピーされるかテスト"""
     # ダミー画像ファイルを作成
     with open(dummy_out_dir_main.joinpath("dummy_main_img1.png"), "w") as f:
         f.write("dummy")
@@ -110,3 +111,43 @@ def test_copy_images_to_thumbnail_mismatch_extension(dummy_out_dir_thumb, dummy_
     copy_images_to_thumbnail(dummy_out_dir_thumb, dummy_out_dir_main)
 
     assert not os.path.isfile(dummy_out_dir_thumb.joinpath("!_dummy_main_img.png"))
+
+
+def test_resize_image():
+    """resize_image_aspect_ratioが正しく呼び出され、画像がリサイズされるかテスト"""
+    image_path = "dummy_image.jpg"
+    output_path = "dummy_image_resized.jpg"
+    width = 300
+    height = 300
+
+    with patch("rdetoolkit.img2thumb.resize_image_aspect_ratio") as mock_resize_image_aspect_ratio:
+        mock_resize_image_aspect_ratio.return_value = None  # モックの戻り値を設定
+
+        result = resize_image(image_path, width, height, output_path)
+
+        mock_resize_image_aspect_ratio.assert_called_once_with(image_path, output_path, width, height)
+        assert result == output_path
+
+
+def test_resize_image_invalid_dimensions():
+    """無効な画像サイズが指定された場合に例外が発生するかテスト"""
+    image_path = "dummy_image.jpg"
+    width = 0
+    height = 300
+
+    with pytest.raises(StructuredError, match="Width and height must be greater than 0."):
+        resize_image(image_path, width, height)
+
+
+def test_resize_image_exception_handling():
+    """resize_image_aspect_ratioで例外が発生した場合にStructuredErrorが発生するかテスト"""
+    image_path = "dummy_image.jpg"
+    output_path = "dummy_image_resized.jpg"
+    width = 300
+    height = 300
+
+    with patch("rdetoolkit.img2thumb.resize_image_aspect_ratio") as mock_resize_image_aspect_ratio:
+        mock_resize_image_aspect_ratio.side_effect = Exception("Mocked exception")
+
+        with pytest.raises(StructuredError, match="Failed to resize image: Mocked exception"):
+            resize_image(image_path, width, height, output_path)
