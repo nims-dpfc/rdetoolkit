@@ -5,9 +5,10 @@ import sys
 from collections.abc import Generator
 from pathlib import Path
 
-from rdetoolkit.config import Config, load_config
+from rdetoolkit.config import load_config
 from rdetoolkit.exceptions import StructuredError, handle_exception
 from rdetoolkit.invoicefile import backup_invoice_json_files
+from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.modeproc import (
     _CallbackType,
@@ -125,6 +126,8 @@ def generate_folder_paths_iterator(
             invoice_org=invoice_org_filepath,
             temp=StorageDir.get_specific_outputdir(True, "temp", idx),
             nonshared_raw=StorageDir.get_specific_outputdir(True, "nonshared_raw", idx),
+            invoice_patch=StorageDir.get_specific_outputdir(True, "invoice_patch", idx),
+            attachment=StorageDir.get_specific_outputdir(True, "attachment", idx),
         )
         yield rdeoutput_resource_path
 
@@ -209,6 +212,8 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
 
         # Loading configuration file
         __config = load_config(str(srcpaths.tasksupport), config=config)
+        srcpaths.config = __config
+
         raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
 
         # Backup of invoice.json
@@ -218,13 +223,13 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
             if __config.extended_mode is not None and __config.extended_mode.lower() == "rdeformat":
-                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
+                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif __config.extended_mode is not None and __config.extended_mode.lower() == "multidatatile":
-                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
+                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
-                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function, config=__config)
+                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
             else:
-                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
+                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
 
     except StructuredError as e:
         handle_and_exit_on_structured_error(e, logger)
