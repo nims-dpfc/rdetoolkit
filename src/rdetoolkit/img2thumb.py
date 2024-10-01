@@ -38,8 +38,8 @@ def __find_img_path(dirname: str, target_name: str) -> str:
 
 @catch_exception_with_message(error_message="ERROR: failed to copy image files", error_code=50)
 def copy_images_to_thumbnail(
-    out_dir_thumb_img: str,
-    out_dir_main_img: str,
+    out_dir_thumb_img: str | Path,
+    out_dir_main_img: str | Path,
     *,
     target_image_name: str | None = None,
     img_ext: str | None = None,
@@ -60,12 +60,12 @@ def copy_images_to_thumbnail(
     # When there are multiple images in the main image folder, copy one at the leading index as the representative image.
     __main_img_path: str = ""
     if target_image_name is not None:
-        __main_img_path = __find_img_path(out_dir_main_img, target_image_name)
+        __main_img_path = __find_img_path(str(out_dir_main_img), target_image_name)
     elif len(img_path_main) >= 1:
         __main_img_path = img_path_main[0]
 
     if __main_img_path:
-        __copy_img_to_thumb(out_dir_thumb_img, __main_img_path)
+        __copy_img_to_thumb(str(out_dir_thumb_img), __main_img_path)
 
 
 def resize_image(path: str | Path, width: int = 640, height: int = 480, output_path: str | Path | None = None) -> str:
