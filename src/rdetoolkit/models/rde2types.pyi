@@ -2,6 +2,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict, Union
 
+from rdetoolkit.models.config import Config
+
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
 ExcelInvoicePathList = Sequence[Path]
@@ -26,6 +28,7 @@ class RdeInputDirPaths:
     inputdata: Path
     invoice: Path
     tasksupport: Path
+    config: Config
     @property
     def default_csv(self) -> Path: ...
     def __init__(self, inputdata, invoice, tasksupport) -> None: ...
