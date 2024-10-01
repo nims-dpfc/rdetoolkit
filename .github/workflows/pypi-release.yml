@@ -1,60 +1,188 @@
-name: release
+name: PyPI Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*.*.*"
 
 jobs:
-  build:
+  linux:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64
+          - runner: ubuntu-latest
+            target: x86
+          - runner: ubuntu-latest
+            target: aarch64
+          - runner: ubuntu-latest
+            target: armv7
+          - runner: ubuntu-latest
+            target: s390x
+          - runner: ubuntu-latest
+            target: ppc64le
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release -out dist --find-interpreter
+          sccache: "true"
+          manylinue: auto
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.platform.target }}
+          path: dist
+
+  musllinux:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64
+          - runner: ubuntu-latest
+            target: x86
+          - runner: ubuntu-latest
+            target: aarch64
+          - runner: ubuntu-latest
+            target: armv7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release -out dist --find-interpreter
+          sccache: "true"
+          manylinue: muslinux_1_2
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-${{ matrix.platform.target }}
+          path: dist
+
+  windows:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: windows-latest
+            target: x86_64
+          - runner: windows-latest
+            target: x86
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-${{ matrix.platform.target }}
+          path: dist
+
+  macos:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: macos-latest
+            target: x86_64
+          - runner: macos-latest
+            target: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.platform.target }}
+          path: dist
+
+  sdist:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
         with:
-          python-version: "3.12"
-      - name: Install pypa/build
-        run: |
-          python3 -m pip install build setuptools --user
-      - name: Build a binary wheel and a source tarball
-        run: python3 -m build
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
+          command: sdist
+          args: --release --out dist
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
         with:
-          name: python-package-distributions
-          path: dist/
+          name: wheels-sdist
+          path: dist
 
-  publish-to-pypi:
-    needs: build
+  release-to-testpypi:
+    name: Release to TestPyPI
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/rdetoolkit
-    permissions:
-      id-token: write
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [linux, musllinux, windows, macos, sdist]
     steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
+      - name: Publish to TestPyPI
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
         with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          command: upload
+          args: --non-interactive --skip-existing --repository-url https://test.pypi.org/legacy/ wheels-*/*
+
+  release-to-pypi:
+    name: Relase to PyPI
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    needs: [linux, musllinux, windows, macos, sdist]
+    steps:
+      - name: Publish to PyPI
+        uses: actions/download-artifact@v4
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
-          skip-existing: true
+          command: upload
+          args: --non-interactive --skip-existing wheels-*/*
 
   github-release:
-    needs: publish-to-pypi
+    name: Create GitHub Release
+    needs: [release-to-pypi]
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
       id-token: write
     steps:
+      - uses: actions/checkout@v4
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: python-package-distributions
           path: dist/
       - name: Sign the distribution 📦 with Sigstore
         uses: sigstore/gh-action-sigstore-python@v2.1.1
@@ -66,31 +194,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
-          gh release create ${{ github.ref_name }}
-          --repo '${{ github.repository }}'
-          --target main
+          gh release create ${{ github.ref_name }} \
+            --repo '${{ github.repository }}' \
+            --title '${{ github.ref_name }}' \
+            --generate-notes
       - name: Upload artifact signatures to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
-          gh release upload ${{ github.ref_name }} dist/** --repo '${{ github.repository }}'
-
-  publish-to-testpypi:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/rdetoolkit
-    permissions:
-      id-token: write
-    steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@v3
-        with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution 📦 to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
-          repository-url: https://test.pypi.org/legacy/
+          gh release upload ${{ github.ref_name }} ./dist/**/* \
+            --repo '${{ github.repository }}' \
+            --clobber
