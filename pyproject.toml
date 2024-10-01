@@ -138,7 +138,7 @@ exclude = [
     "venv",
     "tests",
     "stubs",
-    "csv2graph.py",
+    "src/rdetoolkit/**/*.pyi",
     "src/rdetoolkit/models/invoice_schema.py", # Ignore pydocstyle warnings for this file as it is for defining pydantic models.
 ]
 # The team has agreed not to enforce a maximum character limit per line.
