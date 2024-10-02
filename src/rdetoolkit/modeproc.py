@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Callable
 
 from rdetoolkit import img2thumb
-from rdetoolkit.config import Config
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl.input_controller import (
     ExcelInvoiceChecker,
@@ -27,7 +26,6 @@ def rdeformat_mode_process(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
 ) -> None:
     """Process the source data and apply specific transformations using the provided callback function.
 
@@ -53,8 +51,6 @@ def rdeformat_mode_process(
     Returns:
         None
     """
-    if config is None:
-        config = Config()
     # rewriting the invoice
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
@@ -64,7 +60,7 @@ def rdeformat_mode_process(
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(
             resource_paths.thumbnail,
             resource_paths.main_image,
@@ -86,7 +82,6 @@ def multifile_mode_process(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
 ) -> None:
     """Processes multiple source files and applies transformations using the provided callback function.
 
@@ -113,13 +108,10 @@ def multifile_mode_process(
     Returns:
         None
     """
-    if config is None:
-        config = Config()
-
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
 
-    if config.save_raw:
+    if srcpaths.config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
@@ -127,10 +119,10 @@ def multifile_mode_process(
         datasets_process_function(srcpaths, resource_paths)
 
     # rewriting support for ${filename} by default
-    if config.magic_variable:
+    if srcpaths.config.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
@@ -151,7 +143,6 @@ def excel_invoice_mode_process(
     excel_invoice_file: Path,
     idx: int,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
 ) -> None:
     """Processes invoice data from an Excel file and applies dataset transformations using the provided callback function.
 
@@ -181,9 +172,6 @@ def excel_invoice_mode_process(
     Returns:
         None
     """
-    if config is None:
-        config = Config()
-
     # rewriting the invoice
     excel_invoice = ExcelInvoiceFile(excel_invoice_file)
     try:
@@ -202,7 +190,7 @@ def excel_invoice_mode_process(
             eobj=e,
         ) from e
 
-    if config.save_raw:
+    if srcpaths.config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
@@ -212,10 +200,10 @@ def excel_invoice_mode_process(
     # rewriting support for ${filename} by default
     # Excelinvoice applies to file mode only, folder mode is not supported.
     # FileMode has only one element in resource_paths.rawfiles.
-    if config.magic_variable:
+    if srcpaths.config.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
@@ -238,7 +226,6 @@ def invoice_mode_process(
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
 ) -> None:
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
@@ -264,21 +251,18 @@ def invoice_mode_process(
     Returns:
         None
     """
-    if config is None:
-        config = Config()
-
-    if config.save_raw:
+    if srcpaths.config.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     # rewriting support for ${filename} by default
-    if config.magic_variable:
+    if srcpaths.config.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     with contextlib.suppress(Exception):

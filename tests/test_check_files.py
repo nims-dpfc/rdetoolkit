@@ -16,7 +16,7 @@ Note:
 
 from pathlib import Path
 
-from rdetoolkit.config import Config
+from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RdeInputDirPaths
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.workflows import check_files
@@ -34,6 +34,7 @@ def test_check_files_single(inputfile_single, ivnoice_json_none_sample_info, tas
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -53,6 +54,7 @@ def test_check_files_multi(tasksupport, ivnoice_json_with_sample_info, inputfile
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -73,6 +75,7 @@ def test_check_files_invoice_non_file(tasksupport, ivnoice_json_with_sample_info
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -99,6 +102,7 @@ def test_check_files_excelinvoice_zip_with_file(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -126,6 +130,7 @@ def test_check_files_excelinvoice_zip_with_folder(
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -143,6 +148,7 @@ def test_check_files_excelinvoice_non_file(tasksupport, ivnoice_json_with_sample
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -176,6 +182,7 @@ def test_check_files_rdeformat_single(inputfile_rdeformat_divived, tasksupport, 
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
 
@@ -201,6 +208,7 @@ def test_check_files_invoice_multiformat(tasksupport, ivnoice_json_with_sample_i
         inputdata=StorageDir.get_specific_outputdir(False, "inputdata"),
         invoice=StorageDir.get_specific_outputdir(False, "invoice"),
         tasksupport=StorageDir.get_specific_outputdir(False, "tasksupport"),
+        config=format_flags,
     )
     raw_files_group, excel_invoice_files = check_files(srcpaths, mode=format_flags.extended_mode)
     assert set(raw_files_group) == set(expect_rawfiles)

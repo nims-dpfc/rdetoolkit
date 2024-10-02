@@ -7,7 +7,7 @@ import yaml
 import toml
 
 from rdetoolkit.workflows import run
-from rdetoolkit.config import Config
+from rdetoolkit.models.config import Config
 
 
 @pytest.fixture

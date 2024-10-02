@@ -4,7 +4,8 @@ import shutil
 
 import pytest
 import yaml
-from rdetoolkit.config import Config, is_toml, is_yaml, parse_config_file, get_config, load_config
+from rdetoolkit.config import is_toml, is_yaml, parse_config_file, get_config, load_config
+from rdetoolkit.models.config import Config
 from tomlkit import document, table
 from tomlkit.toml_file import TOMLFile
 
@@ -200,6 +201,16 @@ def test_parse_config_file_current_project_pyprojecttoml(test_cwd_pyproject_toml
     assert config.save_raw is True
     assert config.save_thumbnail_image is True
     assert config.magic_variable is False
+
+
+def test_config_extra_allow():
+    config = Config(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False, magic_variable=False, extra_item="extra")
+    assert isinstance(config, Config)
+    assert config.extended_mode == "rdeformat"
+    assert config.save_raw is True
+    assert config.save_thumbnail_image is False
+    assert config.magic_variable is False
+    assert config.extra_item == "extra"
 
 
 def test_sucess_get_config_yaml(config_yaml):
