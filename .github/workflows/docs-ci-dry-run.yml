@@ -43,14 +43,6 @@ jobs:
       - name: Test documentation build
         run: mkdocs build
 
-      - name: Test mike deployment (dry run)
-        run: |
-          # Simulate tag deployment
-          mike deploy --dry-run test-version latest
-
-          # Simulate dev deployment
-          mike deploy --dry-run dev
-
       - name: Test full deployment process
         run: |
           # Simulate tag deployment
