@@ -54,13 +54,10 @@ jobs:
       - name: Test full deployment process
         run: |
           # Simulate tag deployment
-          mike deploy --dry-run test-version latest
-
-          # Simulate setting default version
-          mike set-default --dry-run latest
+          mike deploy test-version latest --allow-empty
 
           # Simulate dev deployment
-          mike deploy --dry-run dev
+          mike deploy dev --allow-empty
 
           # Check the current state
           git status
@@ -69,4 +66,4 @@ jobs:
       - name: Cleanup
         run: |
           git checkout ${{ github.ref }}
-          git branch -D test-deployment
+          git branch -D gh-pages
