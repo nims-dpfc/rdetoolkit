@@ -11,7 +11,7 @@ on:
 
 jobs:
   test-deploy:
-    runs-on: ubunu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
