@@ -1,0 +1,72 @@
+name: Test Documentation Build and Deploy
+
+on:
+  push:
+    branches-ignore:
+      - master
+      - main
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  test-deploy:
+    runs-on: ubunu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        with:
+          key: mkdocs-material-${{ env.cache_id }}
+          path: .cache
+          restore-keys: |
+            mkdocs-material-
+
+      - name: Install dependencies and Deploy
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.lock
+
+      - name: Test documentation build
+        run: mkdocs build
+
+      - name: Test mike deployment (dry run)
+        run: |
+          # Simulate tag deployment
+          mike deploy --dry-run test-version latest
+
+          # Simulate dev deployment
+          mike deploy --dry-run dev
+
+      - name: Test full deployment process
+        run: |
+          # Simulate tag deployment
+          mike deploy --dry-run test-version latest
+
+          # Simulate setting default version
+          mike set-default --dry-run latest
+
+          # Simulate dev deployment
+          mike deploy --dry-run dev
+
+          # Check the current state
+          git status
+          git log --oneline -n 5
+
+      - name: Cleanup
+        run: |
+          git checkout ${{ github.ref }}
+          git branch -D test-deployment

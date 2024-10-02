@@ -4,34 +4,58 @@ on:
     branches:
       - master
       - main
+    tags:
+      - "v*.*.*"
+
 permissions:
   contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+
       - uses: actions/cache@v4
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
           restore-keys: |
             mkdocs-material-
+
       - name: Install dependencies and Deploy
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.lock
-      - name: Fetch gh-pages branch
-        run: |
-          git fetch origin gh-pages:gh-pages
 
-      - name: Deploy HTML files
-        run: mkdocs gh-deploy --force
+      # - name: Fetch gh-pages branch
+      #   run: |
+      #     git fetch origin gh-pages:gh-pages
+
+      # - name: Deploy HTML files
+      #   run: mkdocs gh-deploy --force
+
+      - name: Deploy documentation
+        run: |
+          if [[ ${{ github.ref }} =~ ^refs/tags/ ]]; then
+              # push tag
+              VERSION=${GITHUB_REF#refs/tags/}
+              mike deploy --push --update-aliases $VERSION latest
+              mike set-default --push latest
+          else
+              # push to main/master branch
+              mike deploy --push --update-aliases dev
+          fi
