@@ -3,7 +3,7 @@
 rdetoolkitでは、起動時の挙動を設定ファイルで制御することは可能です。
 
 !!! Reference
-    API Documents: [rdetoolkit.config.parse_config_file](../../rdetoolkit/config.md/#parse_config_file)
+    API Documents: [rdetoolkit.config.parse_config_file](/rdetoolkit/config/#parse_config_file)
 
 ## 設定ファイル
 
@@ -105,6 +105,16 @@ rdetoolkitでは、4つの起動モードをサポートしています。
     save_thumbnail_image: false
     ```
 
+### 独自の設定値を設定する
+
+`rdeconfig.yaml`等の設定ファイルは、ユーザー独自の設定値を記述することができます。例えば、サムネイルの画像にどのファイルにするか指定する場合、`thumbnail_image_name`という設定値を以下のように記述します。
+
+    ```yaml
+    thumbnail_image_name: "inputdata/sample_image.png"
+    ```
+
+> 設定値の書き方については、YAMLフォーマットに従って記述してください。: [YAML Ain’t Markup Language (YAML™) version 1.2](https://yaml.org/spec/1.2.2/)
+
 ## 設定ファイルの設定例
 
 === "rdeconfig.yml"
@@ -124,4 +134,29 @@ rdetoolkitでは、4つの起動モードをサポートしています。
     save_raw = true
     magic_variable = false
     save_thumbnail_image = true
+    ```
+
+### 構造化処理から設定値を参照する
+
+構造化処理内で、`tasksupport`に格納した設定値を参照する方法は、`rdetoolkit.models.rde2types.RdeInputDirPaths.config`で設定値を参照できます。
+
+    ```python
+    def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
+        # この関数内でユーザ自身が定義したクラスや関数を記述する
+        ... #任意の処理
+
+        # Extendeds Modeの設定値を取得する
+        print(srcpaths.config.extended_mode)
+
+        # 入力ファイルの自動保存の設定値を取得する
+        print(srcpaths.config.save_raw)
+
+        # サムネイル画像の自動保存の設定値を参照する
+        print(srcpaths.config.save_thumbnail_image)
+
+        # magic variableの設定値を参照する
+        print(srcpaths.config.magic_variable)
+
+        # 独自に定義した設定値を参照する場合: thumbnail_image_name
+        print(srcpaths.config.magic_variable)
     ```

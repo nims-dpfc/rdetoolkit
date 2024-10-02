@@ -1,9 +1,5 @@
 # config
 
-## Config
-
-::: src.rdetoolkit.config.Config
-
 ## parse_config_file
 
 ::: src.rdetoolkit.config.parse_config_file
