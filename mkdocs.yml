@@ -84,6 +84,11 @@ plugins:
             show_inheritance_diagram: true
             heading_level: 3
             show_root_toc_entry: false
+  - mike:
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+      canonical_version: null
 
 watch:
   - src
