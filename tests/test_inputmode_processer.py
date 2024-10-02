@@ -13,7 +13,7 @@ from rdetoolkit.modeproc import (
     multifile_mode_process,
     rdeformat_mode_process,
 )
-from rdetoolkit.config import Config
+from rdetoolkit.models.config import Config
 
 
 @pytest.fixture
@@ -142,10 +142,12 @@ def test_invoice_mode_process_calls_functions(
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
+    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
     resource_paths = RdeOutputResourcePath(
         rawfiles=(
@@ -166,8 +168,7 @@ def test_invoice_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -204,11 +205,14 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
     expected_description = "desc1"
     mock_datasets_process_function = mocker.Mock()
 
+    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
+
     resource_paths = RdeOutputResourcePath(
         rawfiles=(
             [
@@ -228,8 +232,7 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
     )
 
     # テスト対象の処理を実行
-    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -266,11 +269,14 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     mock_datasets_process_function = mocker.Mock()
 
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
+
     resource_paths = RdeOutputResourcePath(
         rawfiles=(
             [
@@ -290,8 +296,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     )
 
     # テスト対象の処理を実行
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -336,11 +341,14 @@ def test_excel_invoice_mode_process_calls_functions(
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
+
     resource_paths = RdeOutputResourcePath(
         rawfiles=(
             [
@@ -358,13 +366,12 @@ def test_excel_invoice_mode_process_calls_functions(
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
     )
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
 
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
-    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function, config=config)
+    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -414,11 +421,14 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "desc1"
 
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
+
     resource_paths = RdeOutputResourcePath(
         rawfiles=(
             [
@@ -436,13 +446,12 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
     )
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
 
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
-    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function, config=config)
+    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -491,11 +500,14 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     )
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
 
+    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
+
     resource_paths = RdeOutputResourcePath(
         rawfiles=(
             [
@@ -517,9 +529,8 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     mock_datasets_process_function = mocker.Mock()
 
     # テスト対象の関数を実行
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
     excel_invoice_mode_process(
-        srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice_with_magic_variable, 0, mock_datasets_process_function, config=config
+        srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice_with_magic_variable, 0, mock_datasets_process_function
     )
 
     # 関数が呼び出されたかどうかをチェック
@@ -568,10 +579,12 @@ def test_multifile_mode_process_calls_functions(
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
+    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
     resource_paths = RdeOutputResourcePath(
         rawfiles=(inputfile_multi),
@@ -588,8 +601,7 @@ def test_multifile_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
-    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -642,11 +654,14 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     expected_description = "desc1"
     mock_datasets_process_function = mocker.Mock()
 
+    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
+
     resource_paths = RdeOutputResourcePath(
         rawfiles=(inputfile_multi),
         raw=Path("data", "raw"),
@@ -662,8 +677,7 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     )
 
     # テスト対象の処理を実行
-    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
-    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -717,10 +731,12 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         Path("data", "temp", "invoice_org.json"),
     )
 
+    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
     resource_paths1 = RdeOutputResourcePath(
         rawfiles=(inputfile_multi[0],),
@@ -779,8 +795,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
             expected_filename = expected_filename2
             invoice = Path("data", "divided", f"{1:04d}", "invoice", "invoice.json")
 
-        config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
-        multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+        multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
         # 関数が呼び出されたかどうかをチェック
         mock_datasets_process_function.assert_called_with(srcpaths, resource_paths)
@@ -840,10 +855,13 @@ def test_rdeformat_mode_process_alls_functions(
     mock_datasets_process_function = mocker.Mock()
 
     raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
+
+    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
     resource_paths = RdeOutputResourcePath(
         rawfiles=raw_files,
@@ -858,9 +876,8 @@ def test_rdeformat_mode_process_alls_functions(
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=invoice_shcema_json_full,
     )
-    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
     # テスト対象の処理を実行
-    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -913,10 +930,12 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
     mock_datasets_process_function = mocker.Mock()
 
     raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
+    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
         tasksupport=Path("data", "tasksupport"),
+        config=config,
     )
     resource_paths = RdeOutputResourcePath(
         rawfiles=raw_files,
@@ -931,9 +950,8 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=invoice_shcema_json_full,
     )
-    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
     # テスト対象の処理を実行
-    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function, config=config)
+    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
