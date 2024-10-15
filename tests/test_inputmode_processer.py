@@ -143,7 +143,7 @@ def test_invoice_mode_process_calls_functions(
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -206,7 +206,7 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
     expected_description = "desc1"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -259,7 +259,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     - invoice上書き
     - データセット処理
     - ${filename}書き換え処理
-      - invoice.jsonに記載された${filename}が書き換えられるかテスト
+        - invoice.jsonに記載された${filename}が書き換えられるかテスト
     - 各種バリデーションチェック
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
@@ -270,7 +270,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -324,7 +324,7 @@ def test_excel_invoice_mode_process_calls_functions(
     - invoice上書き
     - データセット処理
     - 特徴量書き込み
-      - 既存のdescription: desc1を含む
+        - 既存のdescription: desc1を含む
     - 各種バリデーションチェック
     """
     # 事前準備: フィクスチャ
@@ -342,7 +342,7 @@ def test_excel_invoice_mode_process_calls_functions(
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -403,9 +403,9 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
     - invoice上書き
     - データセット処理
     - 特徴量書き込み
-      - 既存のdescription: desc1を含む
+        - 既存のdescription: desc1を含む
     - 各種バリデーションチェック
-      - metadata.jsonが存在しない
+        - metadata.jsonが存在しない
     """
     # 事前準備: フィクスチャ
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
@@ -422,7 +422,7 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "desc1"
 
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -484,7 +484,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     - invoice上書き
     - データセット処理
     - ${filename}の書き換え処理
-      - ファイルモードのとき、${filename}の書き換えが実行されるか
+        - ファイルモードのとき、${filename}の書き換えが実行されるか
     - 各種バリデーションチェック
     """
     # 事前準備: フィクスチャ
@@ -501,7 +501,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     )
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
 
-    config = Config(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -563,7 +563,7 @@ def test_multifile_mode_process_calls_functions(
     - invoice上書き
     - データセット処理
     - 特徴量書き込み処理
-      - 既存のdescription: desc1を含む
+        - 既存のdescription: desc1を含む
     - 各種バリデーションチェック
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
@@ -580,7 +580,7 @@ def test_multifile_mode_process_calls_functions(
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -655,7 +655,7 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     expected_description = "desc1"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -813,7 +813,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         Path("data", "temp", "invoice_org.json"),
     )
 
-    config = Config(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -938,7 +938,7 @@ def test_rdeformat_mode_process_alls_functions(
 
     raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
 
-    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -1012,7 +1012,7 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
     mock_datasets_process_function = mocker.Mock()
 
     raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
-    config = Config(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True)
+    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
