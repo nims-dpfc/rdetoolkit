@@ -10,5 +10,5 @@ class MultiDataTileSettings(BaseModel):
     ignore_errors: bool
 
 class Config(BaseModel, extra='allow'):
-    system: SystemSettings | None
-    multidata_tile: MultiDataTileSettings | None
+    system: SystemSettings
+    multidata_tile: MultiDataTileSettings
