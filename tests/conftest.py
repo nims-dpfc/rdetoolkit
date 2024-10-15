@@ -253,7 +253,9 @@ def tasksupport() -> Generator[list[str], None, None]:
     empty_defjson.touch()
 
     dirname = pathlib.Path("data/tasksupport")
-    data = {"extended_mode": None, "save_raw": True, "save_thumbnail_image": True, "magic_variable": False}
+    system_data = {"extended_mode": None, "save_raw": True, "save_thumbnail_image": True, "magic_variable": False}
+    multi_data = {"ignore_errors": False}
+    data = {"system": system_data, "multidata_tile": multi_data}
     test_yaml_path = dirname.joinpath("rdeconfig.yml")
     with open(test_yaml_path, mode="w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
