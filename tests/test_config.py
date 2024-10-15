@@ -59,6 +59,24 @@ def config_yml():
 
 
 @pytest.fixture()
+def config_yml_none_multiconfig():
+    dirname = Path("tasksupport")
+    dirname.mkdir(exist_ok=True)
+    system_data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
+    data = {"system": system_data}
+    test_yaml_path = dirname.joinpath("rdeconfig.yml")
+    with open(test_yaml_path, mode="w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    yield test_yaml_path
+
+    if Path(test_yaml_path).exists():
+        Path(test_yaml_path).unlink()
+    if dirname.exists():
+        dirname.rmdir()
+
+
+@pytest.fixture()
 def invalid_config_yaml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
@@ -160,6 +178,25 @@ def test_cwd_pyproject_toml():
         Path(backup_path).unlink()
 
 
+@pytest.fixture
+def test_cwd_pyproject_toml_rename():
+    # 一時的にpyproject.tomlをリネームして、テストの対象ファイルから外す。teardownで元に戻す。
+    test_file = "pyproject.toml"
+    backup_path = Path(test_file).with_suffix(Path(test_file).suffix + ".bak")
+
+    if Path(test_file).exists():
+        # backup
+        shutil.copy(Path(test_file), backup_path)
+        Path(test_file).unlink()  # 元のファイルを削除
+
+    yield
+
+    # teardown: 元に戻す
+    if backup_path.exists():
+        shutil.copy(backup_path, Path(test_file))
+        backup_path.unlink()  # バックアップファイルを削除
+
+
 def test_parse_config_file(config_yaml):
     config = parse_config_file(path=config_yaml)
     assert isinstance(config, Config)
@@ -207,6 +244,16 @@ def test_sucess_get_config_yaml(config_yaml):
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     valid_dir = Path.cwd()
+    config = get_config(valid_dir)
+    assert config == expected_text
+
+
+def test_sucess_get_config_yaml_none_multitile_setting(config_yml_none_multiconfig):
+    # 入力ではmultidata_tileはNoneだが、デフォルト値が格納されることをテスト
+    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    multi = MultiDataTileSettings(ignore_errors=False)
+    expected_text = Config(system=system, multidata_tile=multi)
+    valid_dir = Path("tasksupport")
     config = get_config(valid_dir)
     assert config == expected_text
 

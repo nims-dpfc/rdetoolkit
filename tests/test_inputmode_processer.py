@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -13,7 +14,7 @@ from rdetoolkit.modeproc import (
     multifile_mode_process,
     rdeformat_mode_process,
 )
-from rdetoolkit.models.config import Config
+from rdetoolkit.models.config import Config, SystemSettings, MultiDataTileSettings
 
 
 @pytest.fixture
@@ -700,6 +701,87 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     assert content["basic"]["description"] == expected_description
 
 
+def test_multifile_mode_process_calls_functions_raise_exception_skip(
+    mocker,
+    inputfile_multi,
+    ivnoice_json_magic_filename_variable,
+    tasksupport_skip_multi_setting,
+    metadata_def_json_with_feature,
+    ivnoice_schema_json,
+    caplog,  # warningを検出
+):
+    """multifile mode processテスト
+    テスト対象: 以下の処理が実行されるかテスト
+    - invoice上書き
+    - データセット処理(例外が発生しても処理が継続されるかテスト)
+    - 特徴量書き込み処理
+    - 各種バリデーションチェック(metadata.jsonが存在しない)
+    metadata.jsonが存在しない場合、特徴量の書き込み処理は実行されない
+    """
+    Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "main_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "other_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "meta").mkdir(parents=True, exist_ok=True)
+    Path("data", "structured").mkdir(parents=True, exist_ok=True)
+    Path("data", "logs").mkdir(parents=True, exist_ok=True)
+    Path("data", "temp").mkdir(parents=True, exist_ok=True)
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+    expected_description = "desc1"
+
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=True))
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+        config=config,
+    )
+
+    resource_paths = RdeOutputResourcePath(
+        rawfiles=(inputfile_multi),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path("data", "temp", "invoice_org.json"),
+        invoice_schema_json=Path(ivnoice_schema_json),
+    )
+
+    def custom_dataset_process(srcpaths, resource_paths):
+        raise Exception("test exception")
+
+    # テスト対象の処理を実行
+    with caplog.at_level(logging.WARNING):
+        multifile_mode_process(srcpaths, resource_paths, custom_dataset_process)
+
+    # エラースキップフラグがTrueの場合、Warningを検知できるかテスト
+    warnings = [record for record in caplog.records if record.levelname == "WARNING"]
+    assert len(warnings) > 0
+
+    # invoiceのバックアップが実行されたかチェック
+    # descriptionがバックアップ後に実行されるため内容が一致しない。
+    with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
+        contents_backup = json.load(f)
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
+        contents_origin = json.load(f)
+    assert contents_backup != contents_origin
+
+    # rawfileのバックアップが実行されたかチェック
+    for file in resource_paths.rawfiles:
+        assert os.path.exists(file)
+
+    # descriptionのチェック
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
+        content = json.load(f)
+    assert content["basic"]["description"] == expected_description
+
+
 def test_multifile_mode_process_calls_functions_replace_magic_filename(
     mocker,
     inputfile_multi,
@@ -832,7 +914,7 @@ def test_rdeformat_mode_process_alls_functions(
     - invoice上書き
     - データセット処理
     - 特徴量書き込み処理
-      - 既存のdescription: desc1を含む
+        - 既存のdescription: desc1を含む
     - 各種バリデーションチェック
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
