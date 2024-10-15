@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypedDict, Union
 
-from rdetoolkit.models.config import Config
+from rdetoolkit.models.config import Config, MultiDataTileSettings, SystemSettings
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
@@ -109,7 +109,7 @@ def create_default_config() -> Config:
     Returns:
         Config: A default configuration object.
     """
-    return Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    return Config(system=SystemSettings(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False), multidata_tile=MultiDataTileSettings(ignore_errors=False))
 
 
 @dataclass
