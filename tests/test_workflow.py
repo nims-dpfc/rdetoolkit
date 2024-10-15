@@ -7,7 +7,7 @@ import yaml
 import toml
 
 from rdetoolkit.workflows import run
-from rdetoolkit.models.config import Config
+from rdetoolkit.models.config import Config, SystemSettings, MultiDataTileSettings
 
 
 @pytest.fixture
@@ -74,13 +74,14 @@ def custom_config_yaml_file(mode: Optional[str], filename: str):
 
 def test_run_config_args(inputfile_single, tasksupport, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, metadata_json):
     """configが引数として渡された場合"""
-    config = Config(extended_mode=None, save_raw=False, save_thumbnail_image=False, magic_variable=False)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=False, save_thumbnail_image=False, magic_variable=False), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     run(config=config)
     assert config is not None
-    assert config.extended_mode is None
-    assert config.save_raw is False
-    assert config.save_thumbnail_image is False
-    assert config.magic_variable is False
+    assert config.system.extended_mode is None
+    assert config.system.save_raw is False
+    assert config.system.save_thumbnail_image is False
+    assert config.system.magic_variable is False
+    assert config.multidata_tile.ignore_errors is False
 
 
 @pytest.mark.parametrize("config_file", ["rdeconfig.yaml", "pyproject.toml", "rdeconfig.yml"])
@@ -91,13 +92,14 @@ def test_run_config_file_rdeformat_mode(
     if Path("data/tasksupport/rdeconfig.yml").exists():
         Path("data/tasksupport/rdeconfig.yml").unlink()
     custom_config_yaml_file("rdeformat", config_file)
-    config = Config(extended_mode="rdeformat", save_raw=False, save_thumbnail_image=False, magic_variable=False)
+    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=False, save_thumbnail_image=False, magic_variable=False), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     run()
     assert config is not None
-    assert config.extended_mode == "rdeformat"
-    assert config.save_raw is False
-    assert config.save_thumbnail_image is False
-    assert config.magic_variable is False
+    assert config.system.extended_mode == "rdeformat"
+    assert config.system.save_raw is False
+    assert config.system.save_thumbnail_image is False
+    assert config.system.magic_variable is False
+    assert config.multidata_tile.ignore_errors is False
 
 
 @pytest.mark.parametrize("config_file", ["rdeconfig.yaml", "pyproject.toml", "rdeconfig.yml"])
@@ -108,23 +110,25 @@ def test_run_config_file_multifile_mode(
     if Path("data/tasksupport/rdeconfig.yml").exists():
         Path("data/tasksupport/rdeconfig.yml").unlink()
     custom_config_yaml_file("MultiDataTile", config_file)
-    config = Config(extended_mode="MultiDataTile", save_raw=False, save_thumbnail_image=False, magic_variable=False)
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=False, save_thumbnail_image=False, magic_variable=False), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     run()
     assert config is not None
-    assert config.extended_mode == "MultiDataTile"
-    assert config.save_raw is False
-    assert config.save_thumbnail_image is False
-    assert config.magic_variable is False
+    assert config.system.extended_mode == "MultiDataTile"
+    assert config.system.save_raw is False
+    assert config.system.save_thumbnail_image is False
+    assert config.system.magic_variable is False
+    assert config.multidata_tile.ignore_errors is False
 
 
 def test_run_empty_config(
     inputfile_single, tasksupport_empty_config, metadata_def_json_file, pre_schema_filepath, pre_invoice_filepath, metadata_json
 ):
     """configファイルの実態はあるがファイル内容が空の場合"""
-    config = Config(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     run()
     assert config is not None
-    assert config.extended_mode is None
-    assert config.save_raw is True
-    assert config.save_thumbnail_image is False
-    assert config.magic_variable is False
+    assert config.system.extended_mode is None
+    assert config.system.save_raw is True
+    assert config.system.save_thumbnail_image is False
+    assert config.system.magic_variable is False
+    assert config.multidata_tile.ignore_errors is False
