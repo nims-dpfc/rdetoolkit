@@ -30,8 +30,8 @@ class Config(BaseModel, extra="allow"):
     """The configuration class used in RDEToolKit.
 
     Attributes:
-        system (SystemSettings | None): System related settings.
+        system (SystemSettings): System related settings.
         multidata_tile (MultiDataTileSettings | None): MultiDataTile related settings.
     """
-    system: SystemSettings | None = Field(default_factory=SystemSettings, description="System related settings")
+    system: SystemSettings = Field(default_factory=SystemSettings, description="System related settings")
     multidata_tile: MultiDataTileSettings | None = Field(default_factory=MultiDataTileSettings, description="MultiDataTile related settings")
