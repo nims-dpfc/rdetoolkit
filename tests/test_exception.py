@@ -1,6 +1,6 @@
 import traceback
 import pytest
-from rdetoolkit.exceptions import StructuredError, catch_exception_with_message, format_simplified_traceback, handle_exception
+from rdetoolkit.exceptions import StructuredError, catch_exception_with_message, format_simplified_traceback, handle_exception, InvoiceModeError, ExcelInvoiceModeError, MultiDataTileModeError, RdeFormatModeError
 
 
 def test_structured_error_initialization():
@@ -484,3 +484,101 @@ def test_handle_exception_verbose(capfd):
     assert "Traceback (simplified message):" in structured_error.traceback_info
     assert "Exception Type: ValueError" in structured_error.traceback_info
     assert "Error: An error occurred" in structured_error.traceback_info
+
+
+@pytest.mark.parametrize("error_class, default_ecode", [
+    (InvoiceModeError, 100),
+    (ExcelInvoiceModeError, 101),
+    (MultiDataTileModeError, 102),
+    (RdeFormatModeError, 103),
+])
+def test_custom_mode_error_default(error_class, default_ecode):
+    """Test InvoiceModeError with default parameters."""
+    error = error_class()
+    assert error.emsg == ""
+    assert error.ecode == default_ecode
+    assert error.eobj is None
+    assert error.traceback_info is None
+
+
+@pytest.mark.parametrize("error_class, default_ecode", [
+    (InvoiceModeError, 100),
+    (ExcelInvoiceModeError, 101),
+    (MultiDataTileModeError, 102),
+    (RdeFormatModeError, 103),
+])
+def test_mode_error_custom_message(error_class, default_ecode):
+    """Test custom error with a custom message."""
+    custom_message = "Custom error message"
+    error = error_class(emsg=custom_message)
+    assert error.emsg == custom_message
+    assert error.ecode == default_ecode
+    assert error.eobj is None
+    assert error.traceback_info is None
+
+
+@pytest.mark.parametrize("error_class, default_ecode", [
+    (InvoiceModeError, 100),
+    (ExcelInvoiceModeError, 101),
+    (MultiDataTileModeError, 102),
+    (RdeFormatModeError, 103),
+])
+def test_mode_error_custom_code(error_class, default_ecode):
+    """Test custom error with a custom error code."""
+    custom_code = 999
+    error = error_class(ecode=custom_code)
+    assert error.emsg == ""
+    assert error.ecode == custom_code
+    assert error.eobj is None
+    assert error.traceback_info is None
+
+
+@pytest.mark.parametrize("error_class, default_ecode", [
+    (InvoiceModeError, 100),
+    (ExcelInvoiceModeError, 101),
+    (MultiDataTileModeError, 102),
+    (RdeFormatModeError, 103),
+])
+def test_mode_error_custom_object(error_class, default_ecode):
+    """Test custom error with a custom error object."""
+    custom_object = {"key": "value"}
+    error = error_class(eobj=custom_object)
+    assert error.emsg == ""
+    assert error.ecode == default_ecode
+    assert error.eobj == custom_object
+    assert error.traceback_info is None
+
+
+@pytest.mark.parametrize("error_class, default_ecode", [
+    (InvoiceModeError, 100),
+    (ExcelInvoiceModeError, 101),
+    (MultiDataTileModeError, 102),
+    (RdeFormatModeError, 103),
+])
+def test_mode_error_custom_traceback(error_class, default_ecode):
+    """Test custom error with a custom traceback."""
+    custom_traceback = "Custom traceback info"
+    error = error_class(traceback_info=custom_traceback)
+    assert error.emsg == ""
+    assert error.ecode == default_ecode
+    assert error.eobj is None
+    assert error.traceback_info == custom_traceback
+
+
+@pytest.mark.parametrize("error_class, default_ecode", [
+    (InvoiceModeError, 100),
+    (ExcelInvoiceModeError, 101),
+    (MultiDataTileModeError, 102),
+    (RdeFormatModeError, 103),
+])
+def test_mode_error_all_custom(error_class, default_ecode):
+    """Test custom error with all custom parameters."""
+    custom_message = "Custom error message"
+    custom_code = 999
+    custom_object = {"key": "value"}
+    custom_traceback = "Custom traceback info"
+    error = error_class(emsg=custom_message, ecode=custom_code, eobj=custom_object, traceback_info=custom_traceback)
+    assert error.emsg == custom_message
+    assert error.ecode == custom_code
+    assert error.eobj == custom_object
+    assert error.traceback_info == custom_traceback
