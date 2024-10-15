@@ -1,8 +1,8 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict, Union
-
-from rdetoolkit.models.config import Config
+from rdetoolkit.models.config import Config as Config
+from typing import TypedDict
 
 ZipFilesPathList = Sequence[Path]
 UnZipFilesPathList = Sequence[Path]
@@ -11,28 +11,37 @@ OtherFilesPathList = Sequence[Path]
 PathTuple = tuple[Path, ...]
 InputFilesGroup = tuple[ZipFilesPathList, ExcelInvoicePathList, OtherFilesPathList]
 RawFiles = Sequence[PathTuple]
-MetaType = dict[str, Union[str, int, float, list, bool]]
-RepeatedMetaType = dict[str, list[Union[str, int, float]]]
-MetaItem = dict[str, Union[str, int, float, bool]]
-RdeFsPath = Union[str, Path]
+MetaType = dict[str, str | int | float | list | bool]
+RepeatedMetaType = dict[str, list[str | int | float]]
+MetaItem = dict[str, str | int | float | bool]
+RdeFsPath = str | Path
 
+@dataclass
 class RdeFormatFlags:
     def __init__(self) -> None: ...
     def __post_init__(self) -> None: ...
     @property
     def is_rdeformat_enabled(self) -> bool: ...
+    @is_rdeformat_enabled.setter
+    def is_rdeformat_enabled(self, value: bool) -> None: ...
     @property
     def is_multifile_enabled(self) -> bool: ...
+    @is_multifile_enabled.setter
+    def is_multifile_enabled(self, value: bool) -> None: ...
 
+def create_default_config() -> Config: ...
+
+@dataclass
 class RdeInputDirPaths:
     inputdata: Path
     invoice: Path
     tasksupport: Path
-    config: Config
+    config: Config = ...
     @property
     def default_csv(self) -> Path: ...
-    def __init__(self, inputdata, invoice, tasksupport) -> None: ...
+    def __init__(self, inputdata, invoice, tasksupport, config=...) -> None: ...
 
+@dataclass
 class RdeOutputResourcePath:
     raw: Path
     rawfiles: tuple[Path, ...]
@@ -45,11 +54,11 @@ class RdeOutputResourcePath:
     invoice: Path
     invoice_schema_json: Path
     invoice_org: Path
-    temp: Path | None
-    invoice_patch: Path | None
-    attachment: Path | None
-    nonshared_raw: Path | None
-    def __init__(self, raw, rawfiles, struct, main_image, other_image, meta, thumbnail, logs, invoice, invoice_schema_json, invoice_org, temp, invoice_patch, attachment, nonshared_raw) -> None: ...
+    temp: Path | None = ...
+    invoice_patch: Path | None = ...
+    attachment: Path | None = ...
+    nonshared_raw: Path | None = ...
+    def __init__(self, raw, rawfiles, struct, main_image, other_image, meta, thumbnail, logs, invoice, invoice_schema_json, invoice_org, temp=..., invoice_patch=..., attachment=..., nonshared_raw=...) -> None: ...
 
 class Name(TypedDict):
     ja: str
@@ -72,6 +81,7 @@ class MetadataDefJson(TypedDict):
     valiable: int
     action: str
 
+@dataclass
 class ValueUnitPair:
     value: str
     unit: str

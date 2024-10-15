@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field as Field, RootModel
+from pydantic import BaseModel, RootModel
 from typing import Any, Final
 
 MAX_VALUE_SIZE: Final[int]
