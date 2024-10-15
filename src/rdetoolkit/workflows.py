@@ -214,17 +214,17 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         __config = load_config(str(srcpaths.tasksupport), config=config)
         srcpaths.config = __config
 
-        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
+        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.system.extended_mode)
 
         # Backup of invoice.json
-        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.extended_mode)
+        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.system.extended_mode)
         invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if __config.extended_mode is not None and __config.extended_mode.lower() == "rdeformat":
+            if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
                 rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
-            elif __config.extended_mode is not None and __config.extended_mode.lower() == "multidatatile":
+            elif __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "multidatatile":
                 multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
                 excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
