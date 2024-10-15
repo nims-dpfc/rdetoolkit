@@ -207,3 +207,7 @@ dev-dependencies = [
     "jsonschema-markdown>=0.3.8",
     "mike>=2.1.3",
 ]
+
+[tool.rye.scripts]
+# rye run <script name>
+generate-stubs = "stubgen -o src/ src/rdetoolkit/"
