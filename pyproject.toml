@@ -38,6 +38,8 @@ dependencies = [
     "eval_type_backport>=0.2.0",
     "Pillow>=10.4.0",
     "numpy==1.26.4",
+    "polars>=1.9.0",
+    "pyarrow>=17.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
