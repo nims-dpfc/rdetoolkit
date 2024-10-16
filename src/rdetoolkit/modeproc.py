@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 from rdetoolkit import img2thumb
-from rdetoolkit.exceptions import MultiDataTileModeError, StructuredError
+from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl.input_controller import (
     ExcelInvoiceChecker,
     InvoiceChecker,
