@@ -4,8 +4,9 @@ import contextlib
 import logging
 import sys
 import traceback
+from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generator
+from typing import Any, Callable
 
 
 class StructuredError(Exception):
