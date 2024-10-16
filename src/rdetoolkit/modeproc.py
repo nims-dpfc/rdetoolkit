@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 from rdetoolkit import img2thumb
-from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.exceptions import MultiDataTileModeError, StructuredError
 from rdetoolkit.impl.input_controller import (
     ExcelInvoiceChecker,
     InvoiceChecker,
@@ -120,13 +120,7 @@ def multifile_mode_process(
 
     # run custom dataset process
     if datasets_process_function is not None:
-        if srcpaths.config.multidata_tile is not None and srcpaths.config.multidata_tile.ignore_errors:
-            try:
-                datasets_process_function(srcpaths, resource_paths)
-            except Exception as e:
-                logger.warning(f"Skip flag is set. Error occurred during dataset processing: {e}")
-        else:
-            datasets_process_function(srcpaths, resource_paths)
+        datasets_process_function(srcpaths, resource_paths)
 
     # rewriting support for ${filename} by default
     if srcpaths.config.system.magic_variable:
