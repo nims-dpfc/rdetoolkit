@@ -6,7 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 from rdetoolkit.config import load_config
-from rdetoolkit.exceptions import StructuredError, handle_exception
+from rdetoolkit.exceptions import StructuredError, handle_exception, skip_exception_context
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
@@ -225,7 +225,9 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
             if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
                 rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "multidatatile":
-                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                ignore_error = __config.multidata_tile.ignore_errors if __config.multidata_tile else False
+                with skip_exception_context(Exception, logger=logger, enabled=ignore_error):
+                    multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
                 excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
             else:
