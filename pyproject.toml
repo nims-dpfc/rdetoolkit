@@ -170,7 +170,7 @@ show_error_codes = true
 exclude = ["tests", "src/rdetoolkit/stubs", '.*\.pyi$']
 
 [tool.coverage.run]
-omit = ["tests/*", "interfaces/*"]
+omit = ["tests/*", "interfaces/*", "local/*"]
 
 [tool.coverage.report]
 exclude_also = [
