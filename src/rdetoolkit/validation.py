@@ -128,7 +128,7 @@ class InvoiceValidator:
             validate(instance=data, schema=basic_info)
         except SchemaValidationError as schema_error:
             emsg = "Error in validating system standard field.\nPlease correct the following fields in invoice.json\n"
-            emsg += f"Field: {'.'.join(list(schema_error.path))}\n"
+            emsg += f"Field: {'.'.join(list(map(str, schema_error.path)))}\n"
             emsg += f"Type: {schema_error.validator}\n"
             emsg += f"Context: {schema_error.message}\n"
             raise InvoiceSchemaValidationError(emsg) from schema_error
@@ -137,7 +137,7 @@ class InvoiceValidator:
         errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
         emsg = "Error in validating invoice.json:\n"
         for idx, error in enumerate(errors, start=1):
-            emsg += f"{idx}. Field: {'.'.join(list(error.path))}\n"
+            emsg += f"{idx}. Field: {'.'.join(list(map(str, error.path)))}\n"
             emsg += f"   Type: {error.validator}\n"
             emsg += f"   Context: {error.message}\n"
         if errors:
