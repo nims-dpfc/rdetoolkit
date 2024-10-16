@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import contextlib
+import logging
 import sys
 import traceback
+from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable
 
@@ -26,6 +29,143 @@ class StructuredError(Exception):
         self.ecode = ecode
         self.eobj = eobj
         self.traceback_info = traceback_info
+
+
+class InvoiceModeError(Exception):
+    """Exception raised for errors related to invoice mode.
+
+    Attributes:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 100.
+        eobj (Any | None): Optional object related to the exception. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+
+    Args:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 100.
+        eobj (Any | None): Optional object related to the exception. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+    """
+    def __init__(self, emsg: str = "", ecode: int = 100, eobj: Any | None = None, traceback_info: str | None = None) -> None:
+        emsg = f"InvoiceMode Error: {emsg}" if emsg else "InvoiceMode Error"
+        super().__init__(emsg)
+        self.emsg = emsg
+        self.ecode = ecode
+        self.eobj = eobj
+        self.traceback_info = traceback_info
+
+
+class ExcelInvoiceModeError(Exception):
+    """Exception raised for errors related to Excelinvoice mode.
+
+    Attributes:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 101.
+        eobj (Any | None): Optional object related to the exception. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+
+    Args:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 102.
+        eobj (Any | None): Optional object related to the exception. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+    """
+    def __init__(self, emsg: str = "", ecode: int = 101, eobj: Any | None = None, traceback_info: str | None = None) -> None:
+        emsg = f"ExcelInvoiceMode Error: {emsg}" if emsg else "ExcelInvoiceMode Error"
+        super().__init__(emsg)
+        self.emsg = emsg
+        self.ecode = ecode
+        self.eobj = eobj
+        self.traceback_info = traceback_info
+
+
+class MultiDataTileModeError(Exception):
+    """Exception raised for errors in MultiData tile mode operations.
+
+    Attributes:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 102.
+        eobj (Any | None): Optional object related to the error. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+
+    Args:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 101.
+        eobj (Any | None): Optional object related to the error. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+    """
+
+    def __init__(self, emsg: str = "", ecode: int = 102, eobj: Any | None = None, traceback_info: str | None = None) -> None:
+        emsg = f"MultiDataTileMode Error: {emsg}" if emsg else "MultiDataTileMode Error"
+        super().__init__(emsg)
+        self.emsg = emsg
+        self.ecode = ecode
+        self.eobj = eobj
+        self.traceback_info = traceback_info
+
+
+class RdeFormatModeError(Exception):
+    """Exception raised for errors in the RDE format mode.
+
+    Attributes:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 103.
+        eobj (Any | None): Optional object related to the error. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+
+    Args:
+        emsg (str): Error message describing the exception.
+        ecode (int): Error code associated with the exception. Default is 103.
+        eobj (Any | None): Optional object related to the error. Default is None.
+        traceback_info (str | None): Optional traceback information. Default is None.
+    """
+    def __init__(self, emsg: str = "", ecode: int = 103, eobj: Any | None = None, traceback_info: str | None = None) -> None:
+        emsg = f"RdeFormatMode Error: {emsg}" if emsg else "RdeFormatMode Error"
+        super().__init__(emsg)
+        self.emsg = emsg
+        self.ecode = ecode
+        self.eobj = eobj
+        self.traceback_info = traceback_info
+
+
+@contextlib.contextmanager
+def skip_exception_context(exception_type: type[Exception], logger: logging.Logger | None = None, enabled: bool = False) -> Generator[dict[str, object | None], None, None]:
+    """Context manager to skip exceptions and log them.
+
+    Args:
+        exception_type (type[Exception]): The type of exception to skip.
+        logger (logging.Logger | None): The logger to use for logging. Defaults to None.
+        enabled (bool): Whether to enable the context manager. Defaults to False.
+
+    Yields:
+        dict[str, object | None]: Yields None if no exception occurs, otherwise yields a tuple containing the error code, error message, and stack trace.
+
+    Example:
+        ```python
+        with skip_exception_context(ValueError, logger=logger, enabled=True) as error_info:
+            raise ValueError("Test error")
+        if error_info["code"]:
+            print(f"Code: {error_info['code']}, Message: {error_info['message']}")
+            print(f"Stack Trace: {error_info['stacktrace']}")
+        ```
+    """
+    error_info: dict[str, object | None] = {
+        "code": None,
+        "message": None,
+        "stacktrace": None,
+    }
+    try:
+        yield error_info
+    except exception_type as exc:
+        if enabled:
+            if logger:
+                msg = f"Skipped exception: {exc}"
+                logger.warning(msg)
+            error_info["code"] = getattr(exc, 'ecode', 999)
+            error_info["message"] = f"Error: {exc}"
+            error_info["stacktrace"] = traceback.format_exc()
+        else:
+            raise exc
 
 
 class InvoiceSchemaValidationError(Exception):

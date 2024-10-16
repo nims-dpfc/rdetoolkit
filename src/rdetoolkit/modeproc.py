@@ -17,9 +17,13 @@ from rdetoolkit.impl.input_controller import (
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.rdelogger import get_logger
 from rdetoolkit.validation import invoice_validate, metadata_validate
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
+
+
+logger = get_logger(__name__, file_path="data/log/rdesys.log")
 
 
 def rdeformat_mode_process(
@@ -60,7 +64,7 @@ def rdeformat_mode_process(
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    if srcpaths.config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(
             resource_paths.thumbnail,
             resource_paths.main_image,
@@ -111,7 +115,7 @@ def multifile_mode_process(
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
 
-    if srcpaths.config.save_raw:
+    if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
@@ -119,10 +123,10 @@ def multifile_mode_process(
         datasets_process_function(srcpaths, resource_paths)
 
     # rewriting support for ${filename} by default
-    if srcpaths.config.magic_variable:
+    if srcpaths.config.system.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    if srcpaths.config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
@@ -190,7 +194,7 @@ def excel_invoice_mode_process(
             eobj=e,
         ) from e
 
-    if srcpaths.config.save_raw:
+    if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
@@ -200,10 +204,10 @@ def excel_invoice_mode_process(
     # rewriting support for ${filename} by default
     # Excelinvoice applies to file mode only, folder mode is not supported.
     # FileMode has only one element in resource_paths.rawfiles.
-    if srcpaths.config.magic_variable:
+    if srcpaths.config.system.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    if srcpaths.config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
@@ -251,18 +255,18 @@ def invoice_mode_process(
     Returns:
         None
     """
-    if srcpaths.config.save_raw:
+    if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    if srcpaths.config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     # rewriting support for ${filename} by default
-    if srcpaths.config.magic_variable:
+    if srcpaths.config.system.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     with contextlib.suppress(Exception):

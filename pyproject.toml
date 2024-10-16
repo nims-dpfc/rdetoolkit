@@ -38,6 +38,8 @@ dependencies = [
     "eval_type_backport>=0.2.0",
     "Pillow>=10.4.0",
     "numpy==1.26.4",
+    "polars>=1.9.0",
+    "pyarrow>=17.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
@@ -168,7 +170,7 @@ show_error_codes = true
 exclude = ["tests", "src/rdetoolkit/stubs", '.*\.pyi$']
 
 [tool.coverage.run]
-omit = ["tests/*", "interfaces/*"]
+omit = ["tests/*", "interfaces/*", "local/*"]
 
 [tool.coverage.report]
 exclude_also = [
@@ -205,3 +207,7 @@ dev-dependencies = [
     "jsonschema-markdown>=0.3.8",
     "mike>=2.1.3",
 ]
+
+[tool.rye.scripts]
+# rye run <script name>
+generate-stubs = "stubgen -o src/ src/rdetoolkit/"

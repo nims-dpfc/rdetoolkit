@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from pydantic import BaseModel, RootModel
-from typing import Literal, Optional, Union
+from typing import Literal
 
 class LangLabels(BaseModel):
     ja: str
@@ -11,33 +11,33 @@ class Placeholder(BaseModel):
     en: str
 
 class Options(BaseModel):
-    widget: Optional[Literal['textarea']]
-    rows: Optional[int]
-    unit: Optional[str]
-    placeholder: Optional[Placeholder]
+    widget: Literal['textarea'] | None
+    rows: int | None
+    unit: str | None
+    placeholder: Placeholder | None
 
 class MetaProperty(BaseModel):
     model_config: Incomplete
     label: LangLabels
     value_type: Literal['boolean', 'integer', 'number', 'string']
-    description: Optional[str]
-    examples: Optional[list[Union[bool, int, float, str]]]
-    default: Optional[Union[bool, int, float, str]]
-    const: Optional[Union[bool, int, float, str]]
-    enum: Optional[list[Union[bool, int, float, str]]]
-    maximum: Optional[int]
-    exclusiveMaximum: Optional[int]
-    minimum: Optional[int]
-    exclusiveMinimum: Optional[int]
-    maxLength: Optional[int]
-    minLength: Optional[int]
-    pattern: Optional[str]
-    format: Optional[Literal['date', 'time', 'uri', 'uuid', 'markdown']]
+    description: str | None
+    examples: list[bool | int | float | str] | None
+    default: bool | int | float | str | None
+    const: bool | int | float | str | None
+    enum: list[bool | int | float | str] | None
+    maximum: int | None
+    exclusiveMaximum: int | None
+    minimum: int | None
+    exclusiveMinimum: int | None
+    maxLength: int | None
+    minLength: int | None
+    pattern: str | None
+    format: Literal['date', 'time', 'uri', 'uuid', 'markdown'] | None
 
 class CustomItems(RootModel):
     root: dict[str, MetaProperty]
     def __iter__(self): ...
-    def __getitem__(self, item): ...
+    def __getitem__(self, item) -> None: ...
 
 class CustomField(BaseModel):
     obj_type: Literal['object']
@@ -60,7 +60,7 @@ class GeneralProperty(BaseModel):
     properties: GeneralChildProperty
 
 class SampleGeneralItems(RootModel):
-    root: Optional[list[GeneralProperty]]
+    root: list[GeneralProperty] | None
 
 class GeneralAttribute(BaseModel):
     obj_type: Literal['array']
@@ -83,23 +83,23 @@ class SpecificAttribute(BaseModel):
     items: SampleSpecificItems
 
 class BasicItemsValue(BaseModel):
-    value_type: Union[str, list, None]
-    format: Optional[Literal['date']]
-    pattern: Optional[str]
-    description: Optional[str]
+    value_type: str | list | None
+    format: Literal['date'] | None
+    pattern: str | None
+    description: str | None
 
 class SamplePropertiesWhenAdding(BaseModel):
-    sample_id: Optional[str]
+    sample_id: str | None
     ownerId: str
-    composition: Optional[str]
-    referenceUrl: Optional[str]
-    description: Optional[str]
-    generalAttributes: Optional[GeneralAttribute]
-    specificAttributes: Optional[SpecificAttribute]
+    composition: str | None
+    referenceUrl: str | None
+    description: str | None
+    generalAttributes: GeneralAttribute | None
+    specificAttributes: SpecificAttribute | None
 
 class SampleProperties(BaseModel):
-    generalAttributes: Optional[GeneralAttribute]
-    specificAttributes: Optional[SpecificAttribute]
+    generalAttributes: GeneralAttribute | None
+    specificAttributes: SpecificAttribute | None
 
 class SampleField(BaseModel):
     obj_type: Literal['object']
@@ -111,22 +111,22 @@ class BasicItems(BaseModel):
     dateSubmitted: BasicItemsValue
     dataOwnerId: BasicItemsValue
     dateName: BasicItemsValue
-    instrumentId: Optional[BasicItemsValue]
-    experimentId: Optional[BasicItemsValue]
-    description: Optional[BasicItemsValue]
+    instrumentId: BasicItemsValue | None
+    experimentId: BasicItemsValue | None
+    description: BasicItemsValue | None
 
 class DatasetId(BaseModel):
     value_type: str
 
 class Properties(BaseModel):
-    custom: Optional[CustomField]
-    sample: Optional[SampleField]
+    custom: CustomField | None
+    sample: SampleField | None
 
 class InvoiceSchemaJson(BaseModel):
     model_config: Incomplete
     version: str
     schema_id: str
-    description: Optional[str]
+    description: str | None
     value_type: Literal['object']
-    required: Optional[list[Literal['custom', 'sample']]]
+    required: list[Literal['custom', 'sample']] | None
     properties: Properties
