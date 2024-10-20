@@ -10,7 +10,7 @@ from rdetoolkit.exceptions import StructuredError, handle_exception, skip_except
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.models.result import WorkflowResultManager
+from rdetoolkit.models.result import WorkflowExecutionStatus, WorkflowResultManager
 from rdetoolkit.modeproc import (
     _CallbackType,
     excel_invoice_mode_process,
@@ -233,22 +233,32 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
             if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
+                mode = "rdeformat"
                 status = rdeformat_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
             elif __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "multidatatile":
+                mode = "MultiDataTile"
                 ignore_error = __config.multidata_tile.ignore_errors if __config.multidata_tile else False
                 with skip_exception_context(Exception, logger=logger, enabled=ignore_error) as error_info:
                     status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
+                mode = "Excelinvoice"
                 status = excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
             else:
+                mode = "Invoice"
                 status = invoice_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
 
-            if error_info:
-                status.status = "failed"
+            if error_info and any(value is not None for value in error_info.values()):
                 code = error_info.get("code")
-                status.error_code = int(code) if code and code.isdigit() else 999
-                status.error_message = error_info.get("message")
-                status.stacktrace = error_info.get("stacktrace")
+                status = WorkflowExecutionStatus(
+                    run_id=str(idx),
+                    title=f"Structured Process Faild: {mode}",
+                    status="failed",
+                    mode=mode,
+                    error_code=int(code) if code and code.isdigit() else 999,
+                    error_message=error_info.get("message"),
+                    stacktrace=error_info.get("stacktrace"),
+                    target=",".join(str(file) for file in rdeoutput_resource.rawfiles),
+                )
             wf_manager.add_status(status)
 
     except StructuredError as e:
