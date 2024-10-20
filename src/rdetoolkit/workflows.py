@@ -10,6 +10,7 @@ from rdetoolkit.exceptions import StructuredError, handle_exception, skip_except
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.models.result import WorkflowResultManager
 from rdetoolkit.modeproc import (
     _CallbackType,
     excel_invoice_mode_process,
@@ -159,7 +160,7 @@ def handle_generic_error(e: Exception, logger: logging.Logger) -> None:
     sys.exit(1)
 
 
-def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> None:  # pragma: no cover
+def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> str:  # pragma: no cover
     """RDE Structuring Processing Function.
 
     This function executes the structuring process for RDE data. If you want to implement custom processing for the input data,
@@ -169,6 +170,13 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
     Args:
         custom_dataset_function (Optional[_CallbackType], optional): User-defined structuring function. Defaults to None.
         config (Optional[Config], optional): Configuration class for the structuring process. If not specified, default values are loaded automatically. Defaults to None.
+
+    Returns:
+        str: The JSON representation of the workflow execution results.
+
+    Raises:
+        StructuredError: If a structured error occurs during the process.
+        Exception: If a generic error occurs during the process.
 
     Note:
         If `extended_mode` is specified, the evaluation of the execution mode is performed in the order of `extended_mode -> excelinvoice -> invoice`,
@@ -201,6 +209,8 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         ```
     """
     logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
+    wf_manager = WorkflowResultManager()
+    error_info = None
 
     try:
         # Enabling mode flag and validating input file
@@ -223,17 +233,27 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
             if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
-                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                status = rdeformat_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
             elif __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "multidatatile":
                 ignore_error = __config.multidata_tile.ignore_errors if __config.multidata_tile else False
-                with skip_exception_context(Exception, logger=logger, enabled=ignore_error):
-                    multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                with skip_exception_context(Exception, logger=logger, enabled=ignore_error) as error_info:
+                    status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
-                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
+                status = excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
             else:
-                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function)
+                status = invoice_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
+
+            if error_info:
+                status.status = "failed"
+                code = error_info.get("code")
+                status.error_code = int(code) if code and code.isdigit() else 999
+                status.error_message = error_info.get("message")
+                status.stacktrace = error_info.get("stacktrace")
+            wf_manager.add_status(status)
 
     except StructuredError as e:
         handle_and_exit_on_structured_error(e, logger)
     except Exception as e:
         handle_generic_error(e, logger)
+
+    return wf_manager.to_json()
