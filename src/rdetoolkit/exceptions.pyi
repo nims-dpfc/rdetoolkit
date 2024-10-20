@@ -1,7 +1,8 @@
 import logging
 import traceback
 from _typeshed import Incomplete
-from typing import Any, Callable, Generator
+from collections.abc import Generator
+from typing import Any, Callable
 
 class StructuredError(Exception):
     emsg: Incomplete
@@ -38,7 +39,7 @@ class RdeFormatModeError(Exception):
     traceback_info: Incomplete
     def __init__(self, emsg: str = '', ecode: int = 103, eobj: Any | None = None, traceback_info: str | None = None) -> None: ...
 
-def skip_exception_context(exception_type: type[Exception], logger: logging.Logger | None = None, enabled: bool = False) -> Generator[dict[str, object | None], None, None]: ...
+def skip_exception_context(exception_type: type[Exception], logger: logging.Logger | None = None, enabled: bool = False) -> Generator[dict[str, str | None], None, None]: ...
 
 class InvoiceSchemaValidationError(Exception):
     message: Incomplete
