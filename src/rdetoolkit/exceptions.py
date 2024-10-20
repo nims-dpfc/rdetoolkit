@@ -129,7 +129,7 @@ class RdeFormatModeError(Exception):
 
 
 @contextlib.contextmanager
-def skip_exception_context(exception_type: type[Exception], logger: logging.Logger | None = None, enabled: bool = False) -> Generator[dict[str, object | None], None, None]:
+def skip_exception_context(exception_type: type[Exception], logger: logging.Logger | None = None, enabled: bool = False) -> Generator[dict[str, str | None], None, None]:
     """Context manager to skip exceptions and log them.
 
     Args:
@@ -149,7 +149,7 @@ def skip_exception_context(exception_type: type[Exception], logger: logging.Logg
             print(f"Stack Trace: {error_info['stacktrace']}")
         ```
     """
-    error_info: dict[str, object | None] = {
+    error_info: dict[str, str | None] = {
         "code": None,
         "message": None,
         "stacktrace": None,
@@ -161,7 +161,7 @@ def skip_exception_context(exception_type: type[Exception], logger: logging.Logg
             if logger:
                 msg = f"Skipped exception: {exc}"
                 logger.warning(msg)
-            error_info["code"] = getattr(exc, 'ecode', 999)
+            error_info["code"] = getattr(exc, 'ecode', "999")
             error_info["message"] = f"Error: {exc}"
             error_info["stacktrace"] = traceback.format_exc()
         else:
