@@ -168,7 +168,7 @@ def test_invoice_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    invoice_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -232,7 +232,7 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
     )
 
     # テスト対象の処理を実行
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    invoice_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -296,7 +296,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     )
 
     # テスト対象の処理を実行
-    invoice_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    invoice_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -601,7 +601,7 @@ def test_multifile_mode_process_calls_functions(
     )
 
     # テスト対象の処理を実行
-    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    multifile_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -677,7 +677,7 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     )
 
     # テスト対象の処理を実行
-    multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    multifile_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -876,7 +876,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
             expected_filename = expected_filename2
             invoice = Path("data", "divided", f"{1:04d}", "invoice", "invoice.json")
 
-        multifile_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+        multifile_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
         # 関数が呼び出されたかどうかをチェック
         mock_datasets_process_function.assert_called_with(srcpaths, resource_paths)
@@ -958,7 +958,7 @@ def test_rdeformat_mode_process_alls_functions(
         invoice_schema_json=invoice_shcema_json_full,
     )
     # テスト対象の処理を実行
-    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    rdeformat_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
@@ -1032,7 +1032,7 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
         invoice_schema_json=invoice_shcema_json_full,
     )
     # テスト対象の処理を実行
-    rdeformat_mode_process(srcpaths, resource_paths, mock_datasets_process_function)
+    rdeformat_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
 
     # 関数が呼び出されたかどうかをチェック
     mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
