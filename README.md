@@ -7,7 +7,7 @@
 
 # RDEToolKit
 
-RDEToolKitは、RDE2.0構造化プログラムのワークフローを作成するための基本的なPythonパッケージです。
+RDEToolKitは、RDE構造化プログラムのワークフローを作成するための基本的なPythonパッケージです。
 RDEToolKitの各種モジュールを使うことで、RDEへの研究・実験データの登録処理を簡単に構築できます。
 また、ユーザーが研究や実験データに対して使用されているPythonモジュールと組み合わせることで、データの登録から加工、グラフ化などより多様な処理を実現できます。
 
@@ -90,8 +90,8 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
 
 ```python
 # modules/modules.py
-def display_messsage(path):
-    print(f"Test Message!: {path}")
+def display_messsage(path_list):
+    print(f"Test Message!: {path_list}")
 
 def dataset(srcpaths, resource_paths):
     display_messsage(srcpaths)
@@ -108,7 +108,7 @@ def dataset(srcpaths, resource_paths):
 
 ```python
 import rdetoolkit
-from modules.modules import dataset#独自で定義した構造化処理関数
+from modules.modules import datase  #独自で定義した構造化処理関数
 
 #独自で定義した構造化処理関数を引数として渡す
 rdetoolkit.workflows.run(custom_dataset_function=dataset)
