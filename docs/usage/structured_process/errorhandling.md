@@ -61,7 +61,7 @@ ErrorMessage=Config file not found
 
 ### スタックトレース整形する
 
-`rdetoolkit.exceptions.catch_exception_with_message`を使用すると、構造化処理のスタックトレースを整形することが可能です。例えば、上記の`dataset`に、`catch_exception_with_message`でデコレーターとして付与します。
+`rdetoolkit.errors.catch_exception_with_message`を使用すると、構造化処理のスタックトレースを整形することが可能です。例えば、上記の`dataset`に、`catch_exception_with_message`でデコレーターとして付与します。
 
 デコレータを使用すると、スタックトレースの整形、エラーメッセージ、エラーコードの上書き、デフォルトのスタックトレースの表示・非表示を設定できます。
 
