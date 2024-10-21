@@ -82,6 +82,22 @@ def test_copy_input_to_rawfile(dummy_files_tuple):
 
 
 def test_copy_input_to_rawfile_rdeformat(dummy_files_rdeformat):
+    """Test the `copy_input_to_rawfile_for_rdeformat` function.
+
+    This test verifies that the `copy_input_to_rawfile_for_rdeformat` function correctly copies input files
+    to the appropriate directories in the RDE format.
+
+    Steps:
+    1. Create the necessary directory structure under "tests/result".
+    2. Initialize an `RdeOutputResourcePath` object with paths to the created directories.
+    3. Call the `copy_input_to_rawfile_for_rdeformat` function with the initialized paths.
+    4. Assert that each directory contains exactly one file.
+    5. Clean up by removing the "tests/result" directory.
+
+    Args:
+        dummy_files_rdeformat (list[Path]): List of dummy file paths to be used as input.
+
+    """
     temp_raw_file_dirname = Path("tests", "result")
     temp_raw_file_dirname.mkdir(parents=True, exist_ok=True)
     dirnames = ["raw", "main_image", "other_image", "meta", "structured", "logs", "nonshared_raw"]
@@ -132,8 +148,11 @@ def test_invoice_mode_process_calls_functions(
     - データセット処理
     - 特徴量書き込み(既存のdescription: desc1を含む)
     - 各種バリデーションチェック
+    - nonshared_rawフォルダへのコピー(defualt)
+    - rawへのコピーが実行されないことを確認(defualt)
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -142,7 +161,7 @@ def test_invoice_mode_process_calls_functions(
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -165,6 +184,7 @@ def test_invoice_mode_process_calls_functions(
         invoice=Path("data", "invoice"),
         invoice_org=Path(ivnoice_json_none_sample_info),
         invoice_schema_json=Path(ivnoice_schema_json_none_sample),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # テスト対象の処理を実行
@@ -178,6 +198,72 @@ def test_invoice_mode_process_calls_functions(
     with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
+    # rawへのコピーが実行されないことを確認
+    assert len(list(Path("data", "raw").glob("*"))) == 0
+    # nonshared_rawへのコピーが実行されたかどうかをチェック
+    assert len(list(Path("data", "nonshared_raw").glob("*"))) == 1
+
+
+def test_invoice_mode_save_raw(
+    mocker,
+    inputfile_single,
+    ivnoice_json_none_sample_info,
+    tasksupport,
+    metadata_def_json_with_feature,
+    metadata_json,
+    ivnoice_schema_json_none_sample,
+):
+    """invoice mode processテスト
+    テスト対象: 以下の処理が実行されるかテスト
+    - invoice上書き
+    - データセット処理
+    - nonshared_rawフォルダへのコピーへのコピーが実行されない
+    - rawへのコピーが実行される
+    """
+    Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "main_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "other_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "meta").mkdir(parents=True, exist_ok=True)
+    Path("data", "structured").mkdir(parents=True, exist_ok=True)
+    Path("data", "logs").mkdir(parents=True, exist_ok=True)
+    mock_datasets_process_function = mocker.Mock()
+
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, save_nonshared_raw=False, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+        config=config,
+    )
+    resource_paths = RdeOutputResourcePath(
+        rawfiles=(
+            [
+                Path(inputfile_single),
+            ]
+        ),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path(ivnoice_json_none_sample_info),
+        invoice_schema_json=Path(ivnoice_schema_json_none_sample),
+        nonshared_raw=Path("data", "nonshared_raw"),
+    )
+
+    # テスト対象の処理を実行
+    invoice_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
+
+    # 関数が呼び出されたかどうかをチェック
+    mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
+    # rawへのコピーが実行されないことを確認
+    assert len(list(Path("data", "raw").glob("*"))) == 1
+    # nonshared_rawへのコピーが実行されたかどうかをチェック
+    assert len(list(Path("data", "nonshared_raw").glob("*"))) == 0
 
 
 def test_invoice_mode_process_calls_functions_none_metadata_json(
@@ -194,9 +280,10 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
     - データセット処理
     - 特徴量書き込み処理(特徴量なし)
     - 各種バリデーションチェック(metadata.jsonが存在しないケース)
-    metadata.jsonが存在しない場合、特徴量の書き込み処理は実行されない
+        - metadata.jsonが存在しない場合、特徴量の書き込み処理は実行されない
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -205,7 +292,7 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
     expected_description = "desc1"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -229,6 +316,7 @@ def test_invoice_mode_process_calls_functions_none_metadata_json(
         invoice=Path("data", "invoice"),
         invoice_org=Path(ivnoice_json_none_sample_info),
         invoice_schema_json=Path(ivnoice_schema_json_none_sample),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # テスト対象の処理を実行
@@ -262,6 +350,8 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     - 各種バリデーションチェック
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -269,7 +359,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -293,6 +383,7 @@ def test_invoice_mode_process_calls_functions_with_magic_variable(
         invoice=Path("data", "invoice"),
         invoice_org=Path(ivnoice_json_magic_filename_variable),
         invoice_schema_json=Path(ivnoice_schema_json),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # テスト対象の処理を実行
@@ -325,9 +416,12 @@ def test_excel_invoice_mode_process_calls_functions(
     - 特徴量書き込み
         - 既存のdescription: desc1を含む
     - 各種バリデーションチェック
+    - nonshared_rawフォルダへのコピー(defualt)
+    - rawへのコピーが実行されないことを確認(defualt)
     """
     # 事前準備: フィクスチャ
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -341,7 +435,7 @@ def test_excel_invoice_mode_process_calls_functions(
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
 
-    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -365,6 +459,7 @@ def test_excel_invoice_mode_process_calls_functions(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # 関数のモック
@@ -386,6 +481,98 @@ def test_excel_invoice_mode_process_calls_functions(
     with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
+    # rawへのコピーが実行されないことを確認
+    assert len(list(Path("data", "raw").glob("*"))) == 0
+    # nonshared_rawへのコピーが実行されたかどうかをチェック
+    assert len(list(Path("data", "nonshared_raw").glob("*"))) >= 1
+
+
+def test_excel_invoice_save_raw(
+    mocker,
+    inputfile_single_dummy_header_excelinvoice,
+    inputfile_zip_with_file,
+    ivnoice_json_with_sample_info,
+    tasksupport,
+    metadata_def_json_with_feature,
+    metadata_json,
+    ivnoice_schema_json_none_specificAttributes,
+):
+    """excelinvoice mode processテスト
+    テスト対象: 以下の処理が実行されるかテスト
+    - invoice上書き
+    - データセット処理
+    - 特徴量書き込み
+        - 既存のdescription: desc1を含む
+    - 各種バリデーションチェック
+    - nonshared_rawフォルダへのコピーされない
+    - rawへのコピーが実行
+    """
+    # 事前準備: フィクスチャ
+    Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "main_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "other_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "meta").mkdir(parents=True, exist_ok=True)
+    Path("data", "structured").mkdir(parents=True, exist_ok=True)
+    Path("data", "logs").mkdir(parents=True, exist_ok=True)
+    Path("data", "temp").mkdir(parents=True, exist_ok=True)
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+    shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, save_nonshared_raw=False, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+        config=config,
+    )
+
+    resource_paths = RdeOutputResourcePath(
+        rawfiles=(
+            [
+                Path("data", "temp", "test_child1.txt"),
+            ]
+        ),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path("data", "temp", "invoice_org.json"),
+        invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
+        nonshared_raw=Path("data", "nonshared_raw"),
+    )
+
+    # 関数のモック
+    mock_datasets_process_function = mocker.Mock()
+
+    # テスト対象の関数を実行
+    excel_invoice_mode_process(srcpaths, resource_paths, inputfile_single_dummy_header_excelinvoice, 0, mock_datasets_process_function)
+
+    # 関数が呼び出されたかどうかをチェック
+    mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
+    # invoiceのバックアップが実行されたかチェック
+    # descriptionがバックアップ後に実行されるため内容が一致しない。
+    with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
+        contents_backup = json.load(f)
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
+        contents_origin = json.load(f)
+    assert contents_backup != contents_origin
+    # descriptionのチェック
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
+        content = json.load(f)
+    assert content["basic"]["description"] == expected_description
+    # rawへのコピーが実行されることを確認
+    assert len(list(Path("data", "raw").glob("*"))) >= 1
+    # nonshared_rawへのコピーが実行されないことを確認
+    assert len(list(Path("data", "nonshared_raw").glob("*"))) == 0
 
 
 def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
@@ -408,6 +595,7 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
     """
     # 事前準備: フィクスチャ
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -421,7 +609,7 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
     expected_description = "desc1"
 
-    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, save_nonshared_raw=False, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -445,6 +633,7 @@ def test_excel_invoice_mode_process_calls_functions_none_metadatajson(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json_none_specificAttributes),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # 関数のモック
@@ -494,13 +683,14 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
     Path("data", "structured").mkdir(parents=True, exist_ok=True)
     Path("data", "logs").mkdir(parents=True, exist_ok=True)
     Path("data", "temp").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     shutil.copy(
         Path("data", "invoice").joinpath("invoice.json"),
         Path("data", "temp", "invoice_org.json"),
     )
     shutil.unpack_archive(Path("data", "inputdata", "test_input_multi.zip"), Path("data", "temp"))
 
-    config = Config(system=SystemSettings(extended_mode=None, save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -524,6 +714,7 @@ def test_excel_invoice_mode_process_calls_functions_replace_magic_variable(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json_none_sample),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
     # 関数のモック
     mock_datasets_process_function = mocker.Mock()
@@ -564,8 +755,11 @@ def test_multifile_mode_process_calls_functions(
     - 特徴量書き込み処理
         - 既存のdescription: desc1を含む
     - 各種バリデーションチェック
+    - nonshared_rawフォルダへのコピー(defualt)
+    - rawへのコピーが実行されないことを確認(defualt)
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -579,7 +773,7 @@ def test_multifile_mode_process_calls_functions(
     expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=False, save_nonshared_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -598,6 +792,7 @@ def test_multifile_mode_process_calls_functions(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # テスト対象の処理を実行
@@ -622,6 +817,94 @@ def test_multifile_mode_process_calls_functions(
     with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
         content = json.load(f)
     assert content["basic"]["description"] == expected_description
+    # rawへのコピーが実行されないことを確認
+    assert len(list(Path("data", "raw").glob("*"))) == 0
+    # nonshared_rawへのコピーが実行されたか確認
+    assert len(list(Path("data", "nonshared_raw").glob("*"))) >= 1
+
+
+def test_multifile_save_raw(
+    mocker,
+    inputfile_multi,
+    ivnoice_json_magic_filename_variable,
+    tasksupport,
+    metadata_def_json_with_feature,
+    metadata_json,
+    ivnoice_schema_json,
+):
+    """multifile mode processテスト
+    テスト対象: 以下の処理が実行されるかテスト
+    - invoice上書き
+    - データセット処理
+    - 特徴量書き込み処理
+        - 既存のdescription: desc1を含む
+    - 各種バリデーションチェック
+    - nonshared_rawフォルダへのコピーへ実行されない
+    - rawへのコピーが実行されたことを確認
+    """
+    Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "main_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "other_image").mkdir(parents=True, exist_ok=True)
+    Path("data", "meta").mkdir(parents=True, exist_ok=True)
+    Path("data", "structured").mkdir(parents=True, exist_ok=True)
+    Path("data", "logs").mkdir(parents=True, exist_ok=True)
+    Path("data", "temp").mkdir(parents=True, exist_ok=True)
+    shutil.copy(
+        Path("data", "invoice").joinpath("invoice.json"),
+        Path("data", "temp", "invoice_org.json"),
+    )
+    expected_description = "desc1\n特徴量1:test-value1\n特徴量2(V):test-value2\n特徴量3(V):test-value3"
+    mock_datasets_process_function = mocker.Mock()
+
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, save_nonshared_raw=False, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    srcpaths = RdeInputDirPaths(
+        inputdata=Path("data", "inputdata"),
+        invoice=Path("data", "invoice"),
+        tasksupport=Path("data", "tasksupport"),
+        config=config,
+    )
+    resource_paths = RdeOutputResourcePath(
+        rawfiles=(inputfile_multi),
+        raw=Path("data", "raw"),
+        main_image=Path("data", "main_image"),
+        other_image=Path("data", "other_image"),
+        meta=Path("data", "meta"),
+        struct=Path("data", "structured"),
+        logs=Path("data", "logs"),
+        thumbnail=Path(),
+        invoice=Path("data", "invoice"),
+        invoice_org=Path("data", "temp", "invoice_org.json"),
+        invoice_schema_json=Path(ivnoice_schema_json),
+        nonshared_raw=Path("data", "nonshared_raw"),
+    )
+
+    # テスト対象の処理を実行
+    multifile_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
+
+    # 関数が呼び出されたかどうかをチェック
+    mock_datasets_process_function.assert_called_once_with(srcpaths, resource_paths)
+
+    # invoiceのバックアップが実行されたかチェック
+    # descriptionがバックアップ後に実行されるため内容が一致しない。
+    with open(os.path.join("data", "temp", "invoice_org.json"), encoding="utf-8") as f:
+        contents_backup = json.load(f)
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
+        contents_origin = json.load(f)
+    assert contents_backup != contents_origin
+
+    # rawfileのバックアップが実行されたかチェック
+    for file in resource_paths.rawfiles:
+        assert os.path.exists(file)
+
+    # descriptionのチェック
+    with open(os.path.join("data", "invoice", "invoice.json"), encoding="utf-8") as f:
+        content = json.load(f)
+    assert content["basic"]["description"] == expected_description
+    # rawへのコピーが実行されないことを確認
+    assert len(list(Path("data", "raw").glob("*"))) >= 1
+    # nonshared_rawへのコピーが実行されたか確認
+    assert len(list(Path("data", "nonshared_raw").glob("*"))) == 0
 
 
 def test_multifile_mode_process_calls_functions_none_metadata_json(
@@ -641,6 +924,7 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     metadata.jsonが存在しない場合、特徴量の書き込み処理は実行されない
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -654,7 +938,7 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
     expected_description = "desc1"
     mock_datasets_process_function = mocker.Mock()
 
-    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=False, save_nonshared_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -674,6 +958,7 @@ def test_multifile_mode_process_calls_functions_none_metadata_json(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     # テスト対象の処理を実行
@@ -790,12 +1075,18 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
     metadata_json,
     ivnoice_schema_json,
 ):
-    """multifile_mode_processモード時、invoice上書き、データセット処理、特徴量書き込み
-    既存のdescription: desc1を含む
+    """multifile_mode_processモード時、
+    - invoice上書き
+    - データセット処理
+    - 特徴量書き込み
+    - 既存のdescription: desc1を含む
+    - nonshared_rawフォルダへのコピーへ実行される
+    - rawへのコピーが実行されない
     """
     inputfile_multi.sort()
     input1_path_lists = [
         Path("data", "raw"),
+        Path("data", "nonshared_raw"),
         Path("data", "main_image"),
         Path("data", "other_image"),
         Path("data", "meta"),
@@ -812,7 +1103,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         Path("data", "temp", "invoice_org.json"),
     )
 
-    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode="MultiDataTile", save_raw=False, save_nonshared_raw=True, magic_variable=True, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -831,11 +1122,13 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json),
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
 
     input2_path_lists = [
         Path("data", "divided", f"{1:04d}", "invoice"),
         Path("data", "divided", f"{1:04d}", "raw"),
+        Path("data", "divided", f"{1:04d}", "nonshared_raw"),
         Path("data", "divided", f"{1:04d}", "main_image"),
         Path("data", "divided", f"{1:04d}", "other_image"),
         Path("data", "divided", f"{1:04d}", "meta"),
@@ -858,6 +1151,7 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         invoice=Path("data", "divided", f"{1:04d}", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=Path(ivnoice_schema_json),
+        nonshared_raw=Path("data", "divided", f"{1:04d}", "nonshared_raw"),
     )
 
     expected_filename1 = "test_child1.txt"
@@ -898,6 +1192,11 @@ def test_multifile_mode_process_calls_functions_replace_magic_filename(
         # ${filename}の書き換えの実行
         assert content["basic"]["dataName"] == expected_filename
 
+        # rawへのコピーが実行されないことを確認
+        assert len(list(resource_paths.raw.glob("*"))) == 0
+        # nonshared_rawへのコピーが実行されたか確認
+        assert len(list(resource_paths.nonshared_raw.glob("*"))) >= 1
+
 
 def test_rdeformat_mode_process_alls_functions(
     mocker,
@@ -917,6 +1216,7 @@ def test_rdeformat_mode_process_alls_functions(
     - 各種バリデーションチェック
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -937,7 +1237,7 @@ def test_rdeformat_mode_process_alls_functions(
 
     raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
 
-    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=False, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -956,6 +1256,7 @@ def test_rdeformat_mode_process_alls_functions(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=invoice_shcema_json_full,
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
     # テスト対象の処理を実行
     rdeformat_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
@@ -992,6 +1293,7 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
     metadata.jsonが存在しない場合、特徴量の書き込み処理は実行されない
     """
     Path("data", "raw").mkdir(parents=True, exist_ok=True)
+    Path("data", "nonshared_raw").mkdir(parents=True, exist_ok=True)
     Path("data", "main_image").mkdir(parents=True, exist_ok=True)
     Path("data", "other_image").mkdir(parents=True, exist_ok=True)
     Path("data", "meta").mkdir(parents=True, exist_ok=True)
@@ -1011,7 +1313,7 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
     mock_datasets_process_function = mocker.Mock()
 
     raw_files = tuple(f for f in Path("data", "temp").rglob("*") if f.is_file())
-    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=True, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
+    config = Config(system=SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=False, magic_variable=False, save_thumbnail_image=True), multidata_tile=MultiDataTileSettings(ignore_errors=False))
     srcpaths = RdeInputDirPaths(
         inputdata=Path("data", "inputdata"),
         invoice=Path("data", "invoice"),
@@ -1030,6 +1332,7 @@ def test_rdeformat_mode_process_alls_functions_none_metadata_json(
         invoice=Path("data", "invoice"),
         invoice_org=Path("data", "temp", "invoice_org.json"),
         invoice_schema_json=invoice_shcema_json_full,
+        nonshared_raw=Path("data", "nonshared_raw"),
     )
     # テスト対象の処理を実行
     rdeformat_mode_process("1", srcpaths, resource_paths, mock_datasets_process_function)
