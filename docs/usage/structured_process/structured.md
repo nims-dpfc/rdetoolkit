@@ -124,7 +124,65 @@ from modules import process #独自で定義した構造化処理関数
 import rdetoolkit
 
 # run()にカスタム構造化処理をを渡す
-rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
+result = rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
+```
+
+`result`には、構造化処理の実行ステータスが格納されます。
+
+```shell
+{
+  "statuses": [
+    {
+      "run_id": "0000",
+      "title": "test-dataset",
+      "status": "success",
+      "mode": "MultiDataTile",
+      "error_code": null,
+      "error_message": null,
+      "target": "data/inputdata",
+      "stacktrace": null
+    },
+    {
+      "run_id": "0001",
+      "title": "test-dataset",
+      "status": "success",
+      "mode": "MultiDataTile",
+      "error_code": null,
+      "error_message": null,
+      "target": "data/inputdata",
+      "stacktrace": null
+    }
+  ]
+}
+```
+
+失敗した時の`result`の出力
+
+```shell
+{
+  "statuses": [
+    {
+      "run_id": "0000",
+      "title": "Structured Process Faild: MultiDataTile",
+      "status": "failed",
+      "mode": "MultiDataTile",
+      "error_code": 999,
+      "error_message": "Error: Error in modules",
+      "target": "data/inputdata/sample1.txt",
+      "stacktrace": "Traceback (most recent call last):\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/exceptions.py\", line 158, in skip_exception_context\n    yield error_info\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/workflows.py\", line 242, in run\n    status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/modeproc.py\", line 157, in multifile_mode_process\n    datasets_process_function(srcpaths, resource_paths)\n  File \"/Users/myproject/modules/modules.py\", line 5, in error_modules\n    raise Exception(\"Error in modules\")\nException: Error in modules\n"
+    },
+    {
+      "run_id": "0001",
+      "title": "Structured Process Faild: MultiDataTile",
+      "status": "failed",
+      "mode": "MultiDataTile",
+      "error_code": 999,
+      "error_message": "Error: Error in modules",
+      "target": "data/inputdata/sample2.txt",
+      "stacktrace": "Traceback (most recent call last):\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/exceptions.py\", line 158, in skip_exception_context\n    yield error_info\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/workflows.py\", line 242, in run\n    status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/modeproc.py\", line 157, in multifile_mode_process\n    datasets_process_function(srcpaths, resource_paths)\n  File \"/Users/myproject/modules/modules.py\", line 5, in error_modules\n    raise Exception(\"Error in modules\")\nException: Error in modules\n"
+    }
+  ]
+}
 ```
 
 ## 終了処理について
