@@ -50,32 +50,6 @@ def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logg
     return logger
 
 
-def write_job_errorlog_file(code: int, message: str, *, filename: str = "job.failed") -> None:
-    """Write the error log to a file.
-
-    This function writes the given error code and message to a specified file.
-    The file will be saved in a directory determined by `StorageDir.get_datadir(False)`.
-
-    Args:
-        code (int): The error code to be written to the log file.
-        message (str): The error message to be written to the log file.
-        filename (str, optional): The name of the file to which the error log will be written.
-            Defaults to "job.failed".
-
-    Example:
-        ```python
-        write_job_errorlog_file(404, 'Not Found', filename='error.log')
-        ```
-    """
-    with open(
-        os.path.join(StorageDir.get_datadir(False), filename),
-        "w",
-        encoding="utf_8",
-    ) as f:
-        f.write(f"ErrorCode={code}\n")
-        f.write(f"ErrorMessage={message}\n")
-
-
 class CustomLog:
     """The CustomLog class is a class for writing custom logs to a user's log file.
 
