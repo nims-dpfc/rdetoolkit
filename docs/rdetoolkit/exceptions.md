@@ -4,6 +4,22 @@
 
 ::: src.rdetoolkit.exceptions.StructuredError
 
+## InvoiceModeError
+
+::: src.rdetoolkit.exceptions.InvoiceModeError
+
+## ExcelInvoiceModeError
+
+::: src.rdetoolkit.exceptions.ExcelInvoiceModeError
+
+## MultiDataTileModeError
+
+::: src.rdetoolkit.exceptions.MultiDataTileModeError
+
+## RdeFormatModeError
+
+::: src.rdetoolkit.exceptions.RdeFormatModeError
+
 ## InvoiceSchemaValidationError
 
 ::: src.rdetoolkit.exceptions.InvoiceSchemaValidationError
@@ -11,15 +27,3 @@
 ## MetadataValidationError
 
 ::: src.rdetoolkit.exceptions.MetadataValidationError
-
-## catch_exception_with_message
-
-::: src.rdetoolkit.exceptions.catch_exception_with_message
-
-## handle_exception
-
-::: src.rdetoolkit.exceptions.handle_exception
-
-## format_simplified_traceback
-
-::: src.rdetoolkit.exceptions.format_simplified_traceback

@@ -14,7 +14,7 @@ import dateutil.parser
 from chardet.universaldetector import UniversalDetector
 from charset_normalizer import detect
 
-from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
+from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
 
 LANG_ENC_FLAG: Final[int] = 0x800
@@ -480,7 +480,6 @@ class Meta:
             return list(map(str, value))
         return ""
 
-    @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
     def writefile(self, meta_filepath: str, enc: str = "utf_8") -> dict[str, Any]:
         """Writes the metadata to a file after processing units and actions.
 

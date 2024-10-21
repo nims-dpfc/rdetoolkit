@@ -10,14 +10,6 @@ In `workflows`, modules necessary for building the structuring process are defin
 
 ::: src.rdetoolkit.workflows.generate_folder_paths_iterator
 
-## handle_and_exit_on_structured_error
-
-::: src.rdetoolkit.workflows.handle_and_exit_on_structured_error
-
-## handle_generic_error
-
-::: src.rdetoolkit.workflows.handle_generic_error
-
 ## run
 
 ::: src.rdetoolkit.workflows.run

@@ -6,10 +6,6 @@
 
 ::: src.rdetoolkit.rdelogger.get_logger
 
-## write_job_errorlog_file
-
-::: src.rdetoolkit.rdelogger.write_job_errorlog_file
-
 ## CustomLog
 
 ::: src.rdetoolkit.rdelogger.CustomLog

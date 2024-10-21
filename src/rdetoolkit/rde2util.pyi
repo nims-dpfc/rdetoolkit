@@ -1,6 +1,8 @@
 import pathlib
-from _typeshed import Incomplete as Incomplete
-from rdetoolkit.models.rde2types import MetaType as MetaType, RdeFsPath as RdeFsPath, RepeatedMetaType as RepeatedMetaType
+from _typeshed import Incomplete
+from rdetoolkit.errors import catch_exception_with_message as catch_exception_with_message
+from rdetoolkit.exceptions import StructuredError as StructuredError
+from rdetoolkit.models.rde2types import MetaItem as MetaItem, MetaType as MetaType, MetadataDefJson as MetadataDefJson, RdeFsPath as RdeFsPath, RepeatedMetaType as RepeatedMetaType, ValueUnitPair as ValueUnitPair
 from typing import Any, Callable, Final, TypedDict
 
 LANG_ENC_FLAG: Final[int]

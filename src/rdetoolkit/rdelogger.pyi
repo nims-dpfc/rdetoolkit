@@ -1,11 +1,11 @@
 import logging
-from _typeshed import Incomplete as Incomplete
+from _typeshed import Incomplete
 from logging import Logger
 from rdetoolkit.models.rde2types import RdeFsPath as RdeFsPath
+from rdetoolkit.rde2util import StorageDir as StorageDir
 from typing import Callable
 
 def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logger: ...
-def write_job_errorlog_file(code: int, message: str, *, filename: str = 'job.failed') -> None: ...
 
 class CustomLog:
     logger: Incomplete
