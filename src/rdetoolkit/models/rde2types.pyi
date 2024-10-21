@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from rdetoolkit.models.config import Config as Config
+from rdetoolkit.models.config import Config as Config, MultiDataTileSettings as MultiDataTileSettings, SystemSettings as SystemSettings
 from typing import TypedDict
 
 ZipFilesPathList = Sequence[Path]
@@ -44,6 +44,7 @@ class RdeInputDirPaths:
 @dataclass
 class RdeOutputResourcePath:
     raw: Path
+    nonshared_raw: Path
     rawfiles: tuple[Path, ...]
     struct: Path
     main_image: Path
@@ -57,8 +58,7 @@ class RdeOutputResourcePath:
     temp: Path | None = ...
     invoice_patch: Path | None = ...
     attachment: Path | None = ...
-    nonshared_raw: Path | None = ...
-    def __init__(self, raw, rawfiles, struct, main_image, other_image, meta, thumbnail, logs, invoice, invoice_schema_json, invoice_org, temp=..., invoice_patch=..., attachment=..., nonshared_raw=...) -> None: ...
+    def __init__(self, raw, nonshared_raw, rawfiles, struct, main_image, other_image, meta, thumbnail, logs, invoice, invoice_schema_json, invoice_org, temp=..., invoice_patch=..., attachment=...) -> None: ...
 
 class Name(TypedDict):
     ja: str

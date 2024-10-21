@@ -26,7 +26,7 @@ def test_is_yaml():
 
 @pytest.fixture()
 def config_yaml():
-    system_data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
+    system_data = {"extended_mode": "rdeformat", "save_raw": True, "save_nonshared_raw": False, "magic_variable": False, "save_thumbnail_image": True}
     multi_data = {"ignore_errors": False}
     data = {"system": system_data, "multidata_tile": multi_data}
     test_yaml_path = "rdeconfig.yaml"
@@ -43,7 +43,7 @@ def config_yaml():
 def config_yml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
-    system_data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
+    system_data = {"extended_mode": "rdeformat", "save_raw": True, "save_nonshared_raw": False, "magic_variable": False, "save_thumbnail_image": True}
     multi_data = {"ignore_errors": False}
     data = {"system": system_data, "multidata_tile": multi_data}
     test_yaml_path = dirname.joinpath("rdeconfig.yml")
@@ -62,7 +62,7 @@ def config_yml():
 def config_yml_none_multiconfig():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
-    system_data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
+    system_data = {"extended_mode": "rdeformat", "save_raw": True, "save_nonshared_raw": False, "magic_variable": False, "save_thumbnail_image": True}
     data = {"system": system_data}
     test_yaml_path = dirname.joinpath("rdeconfig.yml")
     with open(test_yaml_path, mode="w", encoding="utf-8") as f:
@@ -80,7 +80,7 @@ def config_yml_none_multiconfig():
 def invalid_config_yaml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
-    system_data = {"extended_mode": "rdeformat", "save_raw": True, "magic_variable": False, "save_thumbnail_image": True}
+    system_data = {"extended_mode": "rdeformat", "save_raw": True, "save_nonshared_raw": False, "magic_variable": False, "save_thumbnail_image": True}
     multi_data = {"ignore_errors": False}
     data = {"system": system_data, "multidata_tile": multi_data}
     test_yaml_path = dirname.joinpath("invalid_rdeconfig.yaml")
@@ -99,7 +99,7 @@ def invalid_config_yaml():
 def invalid_field_config_yaml():
     dirname = Path("tasksupport")
     dirname.mkdir(exist_ok=True)
-    system_data = {"extended_mode": 123, "save_raw": 1, "magic_variable": False, "save_thumbnail_image": True}
+    system_data = {"extended_mode": 123, "save_raw": 1, "save_nonshared_raw": False, "magic_variable": False, "save_thumbnail_image": True}
     multi_data = {"ignore_errors": False}
     data = {"system": system_data, "multidata_tile": multi_data}
     test_yaml_path = dirname.joinpath("invalid_rdeconfig.yaml")
@@ -140,6 +140,7 @@ def test_pyproject_toml():
     doc["tool"]["rdetoolkit"]["multidata_tile"] = table()
     doc["tool"]["rdetoolkit"]["system"]["extended_mode"] = "rdeformat"
     doc["tool"]["rdetoolkit"]["system"]["save_raw"] = True
+    doc["tool"]["rdetoolkit"]["system"]["save_nonshared_raw"] = False
     doc["tool"]["rdetoolkit"]["system"]["magic_variable"] = False
     doc["tool"]["rdetoolkit"]["system"]["save_thumbnail_image"] = True
     doc["tool"]["rdetoolkit"]["multidata_tile"]["ignore_errors"] = False
@@ -164,6 +165,7 @@ def test_cwd_pyproject_toml():
     doc["tool"]["rdetoolkit"]["multidata_tile"] = table()
     doc["tool"]["rdetoolkit"]["system"]["extended_mode"] = "MultiDataTile"
     doc["tool"]["rdetoolkit"]["system"]["save_raw"] = True
+    doc["tool"]["rdetoolkit"]["system"]["save_nonshared_raw"] = False
     doc["tool"]["rdetoolkit"]["system"]["magic_variable"] = False
     doc["tool"]["rdetoolkit"]["system"]["save_thumbnail_image"] = True
     doc["tool"]["rdetoolkit"]["multidata_tile"]["ignore_errors"] = False
@@ -202,6 +204,7 @@ def test_parse_config_file(config_yaml):
     assert isinstance(config, Config)
     assert config.system.extended_mode == "rdeformat"
     assert config.system.save_raw is True
+    assert config.system.save_nonshared_raw is False
     assert config.system.save_thumbnail_image is True
     assert config.system.magic_variable is False
     assert config.multidata_tile.ignore_errors is False
@@ -212,6 +215,7 @@ def test_parse_config_file_specificaton_pyprojecttoml(test_pyproject_toml):
     assert isinstance(config, Config)
     assert config.system.extended_mode == "rdeformat"
     assert config.system.save_raw is True
+    assert config.system.save_nonshared_raw is False
     assert config.system.save_thumbnail_image is True
     assert config.system.magic_variable is False
     assert config.multidata_tile.ignore_errors is False
@@ -228,19 +232,20 @@ def test_parse_config_file_current_project_pyprojecttoml(test_cwd_pyproject_toml
 
 
 def test_config_extra_allow():
-    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=False, save_thumbnail_image=False, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     config = Config(system=system, multidata_tile=multi, extra_item="extra")
     assert isinstance(config, Config)
     assert config.system.extended_mode == "rdeformat"
     assert config.system.save_raw is True
+    assert config.system.save_nonshared_raw is False
     assert config.system.save_thumbnail_image is False
     assert config.system.magic_variable is False
     assert config.extra_item == "extra"
 
 
 def test_sucess_get_config_yaml(config_yaml):
-    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=False, save_thumbnail_image=True, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     valid_dir = Path.cwd()
@@ -250,7 +255,7 @@ def test_sucess_get_config_yaml(config_yaml):
 
 def test_sucess_get_config_yaml_none_multitile_setting(config_yml_none_multiconfig):
     # 入力ではmultidata_tileはNoneだが、デフォルト値が格納されることをテスト
-    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=False, save_thumbnail_image=True, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     valid_dir = Path("tasksupport")
@@ -259,7 +264,7 @@ def test_sucess_get_config_yaml_none_multitile_setting(config_yml_none_multiconf
 
 
 def test_sucess_get_config_yml(config_yml):
-    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=False, save_thumbnail_image=True, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     valid_dir = Path("tasksupport")
@@ -269,7 +274,7 @@ def test_sucess_get_config_yml(config_yml):
 
 def test_invalid_get_config_yml(invalid_config_yaml):
     valid_dir = Path("tasksupport")
-    system = SystemSettings(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    system = SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, save_thumbnail_image=False, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     config = get_config(valid_dir)
@@ -277,7 +282,7 @@ def test_invalid_get_config_yml(invalid_config_yaml):
 
 
 def test_get_config_pyprojecttoml(test_cwd_pyproject_toml):
-    system = SystemSettings(extended_mode="MultiDataTile", save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    system = SystemSettings(extended_mode="MultiDataTile", save_raw=True, save_nonshared_raw=False, save_thumbnail_image=True, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     valid_dir = Path.cwd()
@@ -286,7 +291,7 @@ def test_get_config_pyprojecttoml(test_cwd_pyproject_toml):
 
 
 def test_invalid_get_config_empty_yml(invalid_empty_config_yaml):
-    system = SystemSettings(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    system = SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, save_thumbnail_image=False, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     expected_text = Config(system=system, multidata_tile=multi)
     valid_dir = Path("tasksupport")
@@ -295,7 +300,7 @@ def test_invalid_get_config_empty_yml(invalid_empty_config_yaml):
 
 
 def test_load_config_with_config():
-    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    system = SystemSettings(extended_mode="rdeformat", save_raw=True, save_nonshared_raw=True, save_thumbnail_image=False, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     config = Config(system=system, multidata_tile=multi)
     task_support = Path("tasksupport")
@@ -305,7 +310,7 @@ def test_load_config_with_config():
 
 def test_load_config_without_config(tasksupport):
     tasksupport_path = Path("data/tasksupport")
-    system = SystemSettings(extended_mode=None, save_raw=True, save_thumbnail_image=True, magic_variable=False)
+    system = SystemSettings(extended_mode=None, save_raw=True, save_nonshared_raw=True, save_thumbnail_image=True, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     config = Config(system=system, multidata_tile=multi)
     result = load_config(tasksupport_path)
@@ -314,7 +319,7 @@ def test_load_config_without_config(tasksupport):
 
 def test_load_config_with_none_config_and_none_get_config():
     dummpy_path = Path("tasksupport")
-    system = SystemSettings(extended_mode=None, save_raw=True, save_thumbnail_image=False, magic_variable=False)
+    system = SystemSettings(extended_mode=None, save_raw=False, save_nonshared_raw=True, save_thumbnail_image=False, magic_variable=False)
     multi = MultiDataTileSettings(ignore_errors=False)
     config = Config(system=system, multidata_tile=multi)
     result = load_config(dummpy_path)

@@ -102,6 +102,7 @@ def rdeformat_mode_process(
         error_code=None,
         error_message=None,
         target=str(basedir),
+        stacktrace=None,
     )
 
 
@@ -152,6 +153,9 @@ def multifile_mode_process(
     if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
+    if srcpaths.config.system.save_nonshared_raw:
+        copy_input_to_rawfile(resource_paths.nonshared_raw, resource_paths.rawfiles)
+
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
@@ -182,6 +186,7 @@ def multifile_mode_process(
         error_code=None,
         error_message=None,
         target=str(basedir),
+        stacktrace=None,
     )
 
 
@@ -248,6 +253,9 @@ def excel_invoice_mode_process(
     if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
+    if srcpaths.config.system.save_nonshared_raw:
+        copy_input_to_rawfile(resource_paths.nonshared_raw, resource_paths.rawfiles)
+
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
@@ -286,6 +294,7 @@ def excel_invoice_mode_process(
         error_code=None,
         error_message=None,
         target=str(basedir),
+        stacktrace=None,
     )
 
 
@@ -330,6 +339,9 @@ def invoice_mode_process(
     if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
 
+    if srcpaths.config.system.save_nonshared_raw:
+        copy_input_to_rawfile(resource_paths.nonshared_raw, resource_paths.rawfiles)
+
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
@@ -366,6 +378,7 @@ def invoice_mode_process(
         error_code=None,
         error_message=None,
         target=str(basedir),
+        stacktrace=None,
     )
 
 
