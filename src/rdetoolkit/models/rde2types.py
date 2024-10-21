@@ -156,6 +156,7 @@ class RdeOutputResourcePath:
 
     Attributes:
         raw (Path): Path where raw data is stored.
+        nonshared_raw (Path): Path where nonshared raw data is stored.
         rawfiles (tuple[Path, ...]): Holds a tuple of input file paths, such as those unzipped, for a single tile of data.
         struct (Path): Path for storing structured data.
         main_image (Path): Path for storing the main image file.
@@ -172,6 +173,7 @@ class RdeOutputResourcePath:
     """
 
     raw: Path
+    nonshared_raw: Path
     rawfiles: tuple[Path, ...]
     struct: Path
     main_image: Path
@@ -185,7 +187,6 @@ class RdeOutputResourcePath:
     temp: Path | None = None
     invoice_patch: Path | None = None
     attachment: Path | None = None
-    nonshared_raw: Path | None = None
 
 
 class Name(TypedDict):
