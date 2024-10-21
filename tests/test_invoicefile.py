@@ -185,6 +185,7 @@ def rde_resource():
         invoice=Path("data/invoice"),
         invoice_schema_json=Path("data/tasksupport/invoice.schema.json"),
         invoice_org=Path("data/invoice/invoice.json"),
+        nonshared_raw=Path("dummmy"),
     )
     yield rde_resource
 
