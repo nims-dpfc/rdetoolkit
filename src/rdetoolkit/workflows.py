@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import logging
-import sys
 from collections.abc import Generator
 from pathlib import Path
 
 from rdetoolkit.config import load_config
-from rdetoolkit.exceptions import StructuredError, handle_exception, skip_exception_context
+from rdetoolkit.errors import handle_and_exit_on_structured_error, handle_generic_error, skip_exception_context
+from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
@@ -20,7 +19,7 @@ from rdetoolkit.modeproc import (
     selected_input_checker,
 )
 from rdetoolkit.rde2util import StorageDir
-from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
+from rdetoolkit.rdelogger import get_logger
 
 
 def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFiles, Path | None]:
@@ -131,33 +130,6 @@ def generate_folder_paths_iterator(
             attachment=StorageDir.get_specific_outputdir(True, "attachment", idx),
         )
         yield rdeoutput_resource_path
-
-
-def handle_and_exit_on_structured_error(e: StructuredError, logger: logging.Logger) -> None:
-    """Catch StructuredError and write to log file.
-
-    Args:
-        e (StructuredError): StructuredError instance
-        logger (logging.Logger): Logger instance
-    """
-    sys.stderr.write((e.traceback_info or "") + "\n")
-    write_job_errorlog_file(e.ecode, e.emsg)
-    logger.exception(e.emsg)
-    sys.exit(1)
-
-
-def handle_generic_error(e: Exception, logger: logging.Logger) -> None:
-    """Catch generic error and write to log file.
-
-    Args:
-        e (Exception): Exception instance
-        logger (logging.Logger): Logger instance
-    """
-    structured_error = handle_exception(e, verbose=True)
-    sys.stderr.write((structured_error.traceback_info or "") + "\n")
-    write_job_errorlog_file(999, "Error: Please check the logs and code, then try again.")
-    logger.exception(str(e))
-    sys.exit(1)
 
 
 def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> str:  # pragma: no cover

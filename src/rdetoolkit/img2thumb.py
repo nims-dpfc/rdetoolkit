@@ -7,7 +7,8 @@ from glob import glob
 from pathlib import Path
 
 from rdetoolkit.core import resize_image_aspect_ratio
-from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
+from rdetoolkit.errors import catch_exception_with_message
+from rdetoolkit.exceptions import StructuredError
 
 
 def __copy_img_to_thumb(out_dir_thumb_img: str, source_img_paths: str | list[str]) -> None:
