@@ -36,13 +36,15 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 === "マルチデータタイル"
 
     ```yaml
-    extended_mode: 'MultiDataTile'
+    system:
+        extended_mode: 'MultiDataTile'
     ```
 
 === "RDEフォーマットモード"
 
     ```yaml
-    extended_mode: 'rdeformat'
+    system:
+        extended_mode: 'rdeformat'
     ```
 
 #### 起動条件
@@ -56,18 +58,39 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 
 ### 入力ファイルの自動保存
 
-入力ファイルの自動保存は、`true`にすると、登録したファイルを自動的に、`raw`フォルダへ格納します。`false`にすると、登録したデータの操作はされないため、ユーザー自身でファイル操作する必要があります。
+入力ファイルの自動保存を有効化すると、自動的に`raw`ディレクトリもしくは、`nonshared_raw`ディレクトリに入力ファイルを保存します。保存先は、RDEデータセット公開と共にデータが共有される`raw`, RDEデータセットが公開されても入力ファイルが共有されない`nonshared_raw`があり、利用状況に応じて設定ファイルより設定してください。
 
-=== "入力データの自動保存の有効化"
+| 設定値             | 値               | 説明                                                           |
+| ------------------ | ---------------- | -------------------------------------------------------------- |
+| save_raw           | `true` / `false` | `raw`ディレクトリに保存する。デフォルトは`false`               |
+| save_nonshared_raw | `true` / `false` | `save_nonshared_raw`ディレクトリに保存する。デフォルトは`true` |
+
+=== "入力データの自動保存の有効化(raw)"
 
     ```yaml
-    save_raw: true
+    system:
+        save_raw: true
     ```
 
-=== "入力データの自動保存の無効化"
+=== "入力データの自動保存の無効化(raw)"
 
     ```yaml
-    save_raw: false
+    system:
+        save_raw: false
+    ```
+
+=== "入力データの自動保存の有効化(nonshared_raw)"
+
+    ```yaml
+    system:
+        save_nonshared_raw: true
+    ```
+
+=== "入力データの自動保存の無効化(nonshared_raw)"
+
+    ```yaml
+    system:
+        save_nonshared_raw: false
     ```
 
 ### magic variable
@@ -80,13 +103,15 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 === "magic variableの有効化"
 
     ```yaml
-    magic_variable: true
+    system:
+        magic_variable: true
     ```
 
 === "magic variableの無効化"
 
     ```yaml
-    magic_variable: false
+    system:
+        magic_variable: false
     ```
 
 ### サムネイル画像の自動保存
@@ -96,21 +121,53 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 === "サムネイル画像の自動保存の有効化"
 
     ```yaml
-    save_thumbnail_image: ture
+    system:
+        save_thumbnail_image: ture
     ```
 
 === "サムネイル画像の自動保存の無効化"
 
     ```yaml
-    save_thumbnail_image: false
+    system:
+        save_thumbnail_image: false
     ```
 
 ### 独自の設定値を設定する
 
 `rdeconfig.yaml`等の設定ファイルは、ユーザー独自の設定値を記述することができます。例えば、サムネイルの画像にどのファイルにするか指定する場合、`thumbnail_image_name`という設定値を以下のように記述します。
 
+=== "yml・yaml"
+
     ```yaml
-    thumbnail_image_name: "inputdata/sample_image.png"
+    custom:
+        thumbnail_image_name: "inputdata/sample_image.png"
+    ```
+
+=== "pyproject.toml"
+
+    ```toml
+    [tool.rdetoolkit.custom]
+     thumbnail_image_name: "inputdata/sample_image.png"
+    ```
+
+> 設定値の書き方については、YAMLフォーマットに従って記述してください。: [YAML Ain’t Markup Language (YAML™) version 1.2](https://yaml.org/spec/1.2.2/)
+
+### MultiDataTileモードでエラーによるプログラム終了をスキップする
+
+`MultiDataTile`は、一度に複数のデータを登録できますが、途中でエラーが発生すると、処理が停止し、最後まで構造化処理が実行されません。このとき、入力したファイルに対して処理を最後まで実行したい場合、`multidata_tile`というセクションの`ignore_errors`を有効化してください。デフォルトは、`false`となっており、エラーが発生すると処理が終了します。
+
+=== "エラー処理スキップ機能を有効化"
+
+    ```yaml
+    multidata_tile:
+        ignore_errors: true
+    ```
+
+=== "エラー処理スキップ機能を無効化"
+
+    ```yaml
+    multidata_tile:
+        ignore_errors: false
     ```
 
 > 設定値の書き方については、YAMLフォーマットに従って記述してください。: [YAML Ain’t Markup Language (YAML™) version 1.2](https://yaml.org/spec/1.2.2/)
@@ -120,18 +177,21 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 === "rdeconfig.yml"
 
     ```yaml
-    extended_mode: 'MultiDataTile'
-    save_raw: true
-    magic_variable: false
-    save_thumbnail_image: true
+    system:
+        extended_mode: 'MultiDataTile'
+        save_raw: false
+        save_nonshared_raw: true
+        magic_variable: false
+        save_thumbnail_image: true
     ```
 
 === "pyproject.toml"
 
     ```toml
-    [tool.rdetoolkit]
+    [tool.rdetoolkit.system]
     extended_mode = 'MultiDataTile'
     save_raw = true
+    save_nonshared_raw=true
     magic_variable = false
     save_thumbnail_image = true
     ```
@@ -146,17 +206,17 @@ rdetoolkitでは、4つの起動モードをサポートしています。
         ... #任意の処理
 
         # Extendeds Modeの設定値を取得する
-        print(srcpaths.config.extended_mode)
+        print(srcpaths.config.system.extended_mode)
 
         # 入力ファイルの自動保存の設定値を取得する
-        print(srcpaths.config.save_raw)
+        print(srcpaths.config.system.save_raw)
 
         # サムネイル画像の自動保存の設定値を参照する
-        print(srcpaths.config.save_thumbnail_image)
+        print(srcpaths.config.system.save_thumbnail_image)
 
         # magic variableの設定値を参照する
-        print(srcpaths.config.magic_variable)
+        print(srcpaths.config.system.magic_variable)
 
-        # 独自に定義した設定値を参照する場合: thumbnail_image_name
-        print(srcpaths.config.magic_variable)
+        # 独自の設定値を参照する
+        print(srcpaths.config.custom.thumbnail_image_name)
     ```
