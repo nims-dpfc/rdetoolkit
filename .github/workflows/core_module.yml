@@ -6,6 +6,9 @@ on:
       - "*"
       - "!docs*"
       - "!doc*"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   lint:
