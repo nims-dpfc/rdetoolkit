@@ -41,4 +41,18 @@ fn main() {
 
     println!("cargo:include={}", python_include_dir);
     println!("cargo:rustc-link-search=native={}", python_lib_dir);
+
+    if cfg!(target_os = "windows") {
+        let python_lib_name = format!(
+            "python{}.{}{}",
+            python_version.chars().nth(6).unwrap(),
+            python_version.chars().nth(8).unwrap(),
+            if python_version.chars().nth(9).is_some() {
+                format!("{}", python_version.chars().nth(9).unwrap())
+            } else {
+                "".to_string()
+            }
+        );
+        println!("cargo:rustc-link-lib={}", python_lib_name);
+    }
 }
