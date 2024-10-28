@@ -34,7 +34,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release -out dist --find-interpreter
+          args: --release --out dist --find-interpreter --no-default-features
           sccache: "true"
           manylinux: auto
       - name: Upload wheel
@@ -67,7 +67,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release -out dist --find-interpreter
           sccache: "true"
-          manylinux: muslinux_1_2
+          manylinux: musllinux_1_2
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
@@ -134,7 +134,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --release --out dist
+          args: --out dist
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
