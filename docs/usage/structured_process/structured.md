@@ -24,7 +24,7 @@ graph LR
 起動処理では、カスタム構造化処理を実行する前の処理を実行します。
 
 !!! Reference
-    API Documents: [rdetoolkit.workflows.run](rdetoolkit/workflows.md/#run)
+    API Documents: [rdetoolkit.workflows.run](/rdetoolkit/workflows/#run)
 
 ### 実装例
 
@@ -92,8 +92,8 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
 - resource_paths (RdeOutputResourcePath): 処理結果を保存するための出力リソースパス情報
 
 !!! Reference
-    - API Documentation: [RdeInputDirPaths - rde2types](rdetoolkit/models/rde2types.md/#rdeinputdirpaths)
-    - API Documentation: [RdeOutputResourcePath - rde2types](rdetoolkit/models/rde2types.md/#rdeoutputresourcepath)
+    - API Documentation: [RdeInputDirPaths - rde2types](/rdetoolkit/models/rde2types/#rdeinputdirpaths)
+    - API Documentation: [RdeOutputResourcePath - rde2types](/rdetoolkit/models/rde2types/#rdeoutputresourcepath)
 
 今回の例では、`modules`以下に、`display_messsage()`, `custom_graph()`, `custom_extract_metadata()`というダミー処理を定義し、独自の構造化処理を定義します。これらの関数は、`modules/process.py`というファイルを作成し定義します。以下の2つの引数を渡す関数でなければ、rdetoolkitは正しく処理が実行できません。
 
@@ -124,7 +124,65 @@ from modules import process #独自で定義した構造化処理関数
 import rdetoolkit
 
 # run()にカスタム構造化処理をを渡す
-rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
+result = rdetoolkit.workflows.run(custom_dataset_function=process.dataset)
+```
+
+`result`には、構造化処理の実行ステータスが格納されます。
+
+```shell
+{
+  "statuses": [
+    {
+      "run_id": "0000",
+      "title": "test-dataset",
+      "status": "success",
+      "mode": "MultiDataTile",
+      "error_code": null,
+      "error_message": null,
+      "target": "data/inputdata",
+      "stacktrace": null
+    },
+    {
+      "run_id": "0001",
+      "title": "test-dataset",
+      "status": "success",
+      "mode": "MultiDataTile",
+      "error_code": null,
+      "error_message": null,
+      "target": "data/inputdata",
+      "stacktrace": null
+    }
+  ]
+}
+```
+
+失敗した時の`result`の出力
+
+```shell
+{
+  "statuses": [
+    {
+      "run_id": "0000",
+      "title": "Structured Process Faild: MultiDataTile",
+      "status": "failed",
+      "mode": "MultiDataTile",
+      "error_code": 999,
+      "error_message": "Error: Error in modules",
+      "target": "data/inputdata/sample1.txt",
+      "stacktrace": "Traceback (most recent call last):\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/exceptions.py\", line 158, in skip_exception_context\n    yield error_info\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/workflows.py\", line 242, in run\n    status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/modeproc.py\", line 157, in multifile_mode_process\n    datasets_process_function(srcpaths, resource_paths)\n  File \"/Users/myproject/modules/modules.py\", line 5, in error_modules\n    raise Exception(\"Error in modules\")\nException: Error in modules\n"
+    },
+    {
+      "run_id": "0001",
+      "title": "Structured Process Faild: MultiDataTile",
+      "status": "failed",
+      "mode": "MultiDataTile",
+      "error_code": 999,
+      "error_message": "Error: Error in modules",
+      "target": "data/inputdata/sample2.txt",
+      "stacktrace": "Traceback (most recent call last):\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/exceptions.py\", line 158, in skip_exception_context\n    yield error_info\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/workflows.py\", line 242, in run\n    status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)\n  File \"/Users/myproject/.venv/lib/python3.10/site-packages/rdetoolkit/modeproc.py\", line 157, in multifile_mode_process\n    datasets_process_function(srcpaths, resource_paths)\n  File \"/Users/myproject/modules/modules.py\", line 5, in error_modules\n    raise Exception(\"Error in modules\")\nException: Error in modules\n"
+    }
+  ]
+}
 ```
 
 ## 終了処理について
@@ -160,4 +218,4 @@ graph TD
 
 以下のドキュメントを参照してください。
 
-- [データタイル説明欄への自動転記](feature_description.md)
+- [データタイル説明欄への自動転記](./feature_description.md)

@@ -4,19 +4,19 @@ on:
   push:
     branches:
       - "*"
-      - "!docs-*"
-      - "!doc-*"
+      - "!docs*"
+      - "!doc*"
   pull_request:
     branches:
       - main
-      - develop-*
+      - develop*
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
         tox-env: [module, ruff, lizard, mypy]
     steps:
       - uses: actions/checkout@v4
@@ -33,12 +33,32 @@ jobs:
       - name: Test with tox
         run: tox -e py${{ matrix.python-version }}-${{ matrix.tox-env }}
 
+  test_rs:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Run tests
+        run: cargo test --no-default-features
+
   build-check:
     needs: test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -48,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build setuptools
       - name: Build
         run: python -m build
 

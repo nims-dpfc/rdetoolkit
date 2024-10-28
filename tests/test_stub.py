@@ -60,7 +60,7 @@ def check_stubfile(module_name: str):
     src_index = path_parts.index("src")
     path_after = os.sep.join(path_parts[src_index + 2 :])
     path_before = os.sep.join(path_parts[: src_index + 2])
-    stub_file_path = os.sep.join([path_before, "stubs", "rdetoolkit", path_after[:-3] + ".pyi"])  # Remove .py and add .pyi
+    stub_file_path = os.sep.join([path_before, path_after[:-3] + ".pyi"])  # Remove .py and add .pyi
     # stub_file_path = module_file_path[:-3] + '.pyi'
 
     if not os.path.exists(stub_file_path):

@@ -87,7 +87,7 @@
                         "type": "array"
                     },
                     "ownerId": {
-                        "description": "sample ownere id",
+                        "description": "sample owner id",
                         "type": "string",
                         "pattern": "^([0-9a-zA-Z]{56})$"
                     },
@@ -168,7 +168,7 @@
                         "type": "array"
                     },
                     "ownerId": {
-                        "description": "sample ownere id",
+                        "description": "sample owner id",
                         "type": "string",
                         "pattern": "^([0-9a-zA-Z]{56})$"
                     },
@@ -250,7 +250,7 @@
                         "type": "array"
                     },
                     "ownerId": {
-                        "description": "sample ownere id",
+                        "description": "sample owner id",
                         "type": "string",
                         "pattern": "^([0-9a-zA-Z]{56})$"
                     },

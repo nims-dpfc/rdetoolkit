@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Callable
 
 from rdetoolkit import img2thumb
-from rdetoolkit.config import Config
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.impl.input_controller import (
     ExcelInvoiceChecker,
@@ -18,17 +17,22 @@ from rdetoolkit.impl.input_controller import (
 from rdetoolkit.interfaces.filechecker import IInputFileChecker
 from rdetoolkit.invoicefile import ExcelInvoiceFile, InvoiceFile, apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.models.result import WorkflowExecutionStatus
+from rdetoolkit.rdelogger import get_logger
 from rdetoolkit.validation import invoice_validate, metadata_validate
 
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
 
+logger = get_logger(__name__, file_path="data/log/rdesys.log")
+
+
 def rdeformat_mode_process(
+    index: str,
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
-) -> None:
+) -> WorkflowExecutionStatus:
     """Process the source data and apply specific transformations using the provided callback function.
 
     This function performs several steps:
@@ -42,6 +46,7 @@ def rdeformat_mode_process(
     7. Validates the invoice file against the invoice schema.
 
     Args:
+        index: The workflow execution ID (run_id) is a unique identifier used to distinguish a specific execution of a workflow.
         srcpaths (RdeInputDirPaths): Input paths for the source data.
         resource_paths (RdeOutputResourcePath): Paths to the resources where data will be written or read from.
         datasets_process_function (_CallbackType, optional): A callback function that processes datasets. Defaults to None.
@@ -51,20 +56,28 @@ def rdeformat_mode_process(
         Any exceptions raised by `datasets_process_function` or during the validation steps will propagate upwards. Exceptions during the `update_description_with_features` step are caught and silently ignored.
 
     Returns:
-        None
+        WorkflowExecutionStatus: An object containing the execution status of the workflow, including:
+            - run_id (str): The unique identifier for the workflow execution, zero-padded to four digits.
+            - title (str): A descriptive title for the workflow execution.
+            - status (str): The status of the workflow execution, either "success" or "failed".
+            - mode (str): The mode in which the workflow was executed, e.g., "rdeformat".
+            - error_code (int | None): The error code if an error occurred, otherwise None.
+            - error_message (str | None): The error message if an error occurred, otherwise None.
+            - target (str): The target directory or file path related to the workflow execution.
     """
-    if config is None:
-        config = Config()
+    basedir = resource_paths.rawfiles[0].parent if len(resource_paths.rawfiles) > 0 else ""
+
     # rewriting the invoice
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
     copy_input_to_rawfile_for_rdeformat(resource_paths)
+    invoice = InvoiceFile(invoice_dst_filepath)
 
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(
             resource_paths.thumbnail,
             resource_paths.main_image,
@@ -81,13 +94,24 @@ def rdeformat_mode_process(
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(invoice_dst_filepath, schema_path)
 
+    return WorkflowExecutionStatus(
+        run_id=index,
+        title=invoice.invoice_obj.get("basic", {}).get("dataName", "RDEFormat Mode Process"),
+        status="success",
+        mode="rdeformat",
+        error_code=None,
+        error_message=None,
+        target=str(basedir),
+        stacktrace=None,
+    )
+
 
 def multifile_mode_process(
+    index: str,
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
-) -> None:
+) -> WorkflowExecutionStatus:
     """Processes multiple source files and applies transformations using the provided callback function.
 
     This function performs several steps:
@@ -102,6 +126,7 @@ def multifile_mode_process(
     8. Validates the invoice file against the invoice schema.
 
     Args:
+        index: The workflow execution ID (run_id) is a unique identifier used to distinguish a specific execution of a workflow.
         srcpaths (RdeInputDirPaths): Input paths for the source data.
         resource_paths (RdeOutputResourcePath): Paths to the resources where data will be written or read from.
         datasets_process_function (_CallbackType, optional): A callback function that processes datasets. Defaults to None.
@@ -111,26 +136,35 @@ def multifile_mode_process(
         Any exceptions raised by `datasets_process_function` or during the validation steps will propagate upwards. Exceptions during the `update_description_with_features` step are caught and silently ignored.
 
     Returns:
-        None
+        WorkflowExecutionStatus: An object containing the execution status of the workflow, including:
+            - run_id (str): The unique identifier for the workflow execution, zero-padded to four digits.
+            - title (str): A descriptive title for the workflow execution.
+            - status (str): The status of the workflow execution, either "success" or "failed".
+            - mode (str): The mode in which the workflow was executed, e.g., "rdeformat".
+            - error_code (int | None): The error code if an error occurred, otherwise None.
+            - error_message (str | None): The error message if an error occurred, otherwise None.
+            - target (str): The target directory or file path related to the workflow execution.
     """
-    if config is None:
-        config = Config()
-
+    basedir = resource_paths.rawfiles[0].parent if len(resource_paths.rawfiles) > 0 else ""
     invoice_dst_filepath = resource_paths.invoice.joinpath("invoice.json")
     InvoiceFile.copy_original_invoice(resource_paths.invoice_org, invoice_dst_filepath)
+    invoice = InvoiceFile(invoice_dst_filepath)
 
-    if config.save_raw:
+    if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
+
+    if srcpaths.config.system.save_nonshared_raw:
+        copy_input_to_rawfile(resource_paths.nonshared_raw, resource_paths.rawfiles)
 
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
     # rewriting support for ${filename} by default
-    if config.magic_variable:
+    if srcpaths.config.system.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
@@ -144,6 +178,17 @@ def multifile_mode_process(
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(invoice_dst_filepath, schema_path)
 
+    return WorkflowExecutionStatus(
+        run_id=index,
+        title=invoice.invoice_obj.get("basic", {}).get("dataName", "MultiDataTile Mode Process"),
+        status="success",
+        mode="MultiDataTile",
+        error_code=None,
+        error_message=None,
+        target=str(basedir),
+        stacktrace=None,
+    )
+
 
 def excel_invoice_mode_process(
     srcpaths: RdeInputDirPaths,
@@ -151,8 +196,7 @@ def excel_invoice_mode_process(
     excel_invoice_file: Path,
     idx: int,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
-) -> None:
+) -> WorkflowExecutionStatus:
     """Processes invoice data from an Excel file and applies dataset transformations using the provided callback function.
 
     This function performs several steps:
@@ -179,11 +223,15 @@ def excel_invoice_mode_process(
         Any exceptions raised by `datasets_process_function` will propagate upwards. Exceptions during the `update_description_with_features` step are caught and silently ignored.
 
     Returns:
-        None
+        WorkflowExecutionStatus: An object containing the execution status of the workflow, including:
+            - run_id (str): The unique identifier for the workflow execution, zero-padded to four digits.
+            - title (str): A descriptive title for the workflow execution.
+            - status (str): The status of the workflow execution, either "success" or "failed".
+            - mode (str): The mode in which the workflow was executed, e.g., "rdeformat".
+            - error_code (int | None): The error code if an error occurred, otherwise None.
+            - error_message (str | None): The error message if an error occurred, otherwise None.
+            - target (str): The target directory or file path related to the workflow execution.
     """
-    if config is None:
-        config = Config()
-
     # rewriting the invoice
     excel_invoice = ExcelInvoiceFile(excel_invoice_file)
     try:
@@ -202,8 +250,11 @@ def excel_invoice_mode_process(
             eobj=e,
         ) from e
 
-    if config.save_raw:
+    if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
+
+    if srcpaths.config.system.save_nonshared_raw:
+        copy_input_to_rawfile(resource_paths.nonshared_raw, resource_paths.rawfiles)
 
     # run custom dataset process
     if datasets_process_function is not None:
@@ -212,10 +263,10 @@ def excel_invoice_mode_process(
     # rewriting support for ${filename} by default
     # Excelinvoice applies to file mode only, folder mode is not supported.
     # FileMode has only one element in resource_paths.rawfiles.
-    if config.magic_variable:
+    if srcpaths.config.system.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     with contextlib.suppress(Exception):
@@ -233,13 +284,26 @@ def excel_invoice_mode_process(
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
 
+    invoice = InvoiceFile(resource_paths.invoice.joinpath("invoice.json"))
+    basedir = resource_paths.rawfiles[0].parent if len(resource_paths.rawfiles) > 0 else ""
+    return WorkflowExecutionStatus(
+        run_id=str(idx),
+        title=invoice.invoice_obj.get("basic", {}).get("dataName", "Excelinvoice Mode Process"),
+        status="success",
+        mode="Excelinvoice",
+        error_code=None,
+        error_message=None,
+        target=str(basedir),
+        stacktrace=None,
+    )
+
 
 def invoice_mode_process(
+    index: str,
     srcpaths: RdeInputDirPaths,
     resource_paths: RdeOutputResourcePath,
     datasets_process_function: _CallbackType | None = None,
-    config: Config | None = None,
-) -> None:
+) -> WorkflowExecutionStatus:
     """Processes invoice-related data, applies dataset transformations using the provided callback function, and updates descriptions.
 
     This function performs several steps:
@@ -253,6 +317,7 @@ def invoice_mode_process(
     7. Validates the invoice file against the invoice schema.
 
     Args:
+        index: The workflow execution ID (run_id) is a unique identifier used to distinguish a specific execution of a workflow.
         srcpaths (RdeInputDirPaths): Input paths for the source data.
         resource_paths (RdeOutputResourcePath): Paths to the resources where data will be written or read from.
         datasets_process_function (_CallbackType, optional): A callback function that processes datasets. Defaults to None.
@@ -262,23 +327,30 @@ def invoice_mode_process(
         Any exceptions raised by `datasets_process_function` will propagate upwards. Exceptions during the `update_description_with_features` step are caught and silently ignored.
 
     Returns:
-        None
+        WorkflowExecutionStatus: An object containing the execution status of the workflow, including:
+            - run_id (str): The unique identifier for the workflow execution, zero-padded to four digits.
+            - title (str): A descriptive title for the workflow execution.
+            - status (str): The status of the workflow execution, either "success" or "failed".
+            - mode (str): The mode in which the workflow was executed, e.g., "rdeformat".
+            - error_code (int | None): The error code if an error occurred, otherwise None.
+            - error_message (str | None): The error message if an error occurred, otherwise None.
+            - target (str): The target directory or file path related to the workflow execution.
     """
-    if config is None:
-        config = Config()
-
-    if config.save_raw:
+    if srcpaths.config.system.save_raw:
         copy_input_to_rawfile(resource_paths.raw, resource_paths.rawfiles)
+
+    if srcpaths.config.system.save_nonshared_raw:
+        copy_input_to_rawfile(resource_paths.nonshared_raw, resource_paths.rawfiles)
 
     # run custom dataset process
     if datasets_process_function is not None:
         datasets_process_function(srcpaths, resource_paths)
 
-    if config.save_thumbnail_image:
+    if srcpaths.config.system.save_thumbnail_image:
         img2thumb.copy_images_to_thumbnail(resource_paths.thumbnail, resource_paths.main_image)
 
     # rewriting support for ${filename} by default
-    if config.magic_variable:
+    if srcpaths.config.system.magic_variable:
         apply_magic_variable(resource_paths.invoice.joinpath("invoice.json"), resource_paths.rawfiles[0])
 
     with contextlib.suppress(Exception):
@@ -295,6 +367,19 @@ def invoice_mode_process(
     # validate invoice.schema.json / invoice.json
     schema_path = srcpaths.tasksupport.joinpath("invoice.schema.json")
     invoice_validate(resource_paths.invoice.joinpath("invoice.json"), schema_path)
+
+    invoice = InvoiceFile(resource_paths.invoice.joinpath("invoice.json"))
+    basedir = resource_paths.rawfiles[0].parent if len(resource_paths.rawfiles) > 0 else ""
+    return WorkflowExecutionStatus(
+        run_id=index,
+        title=invoice.invoice_obj.get("basic", {}).get("dataName", "Invoice Mode Process"),
+        status="success",
+        mode="invoice",
+        error_code=None,
+        error_message=None,
+        target=str(basedir),
+        stacktrace=None,
+    )
 
 
 def copy_input_to_rawfile_for_rdeformat(resource_paths: RdeOutputResourcePath) -> None:

@@ -12,13 +12,13 @@ RDEToolKitでバリデーションの対象となるファイルは、以下の4
 - metadata.json
 
 !!! Tip "Documents"
-    - [テンプレートファイルについて](metadata_definition_file.md)
+    - [テンプレートファイルについて](./metadata_definition_file.md)
 
 ## invoice.schema.jsonのバリデーション
 
 `invoice.schema.json`をバリデーションする方法です。invoie.schema.jsonは、RDEの画面を構成するスキーマファイルですが、構造化処理中で変更、ローカルで定義ファイルを作成する点から、必要なフィールドが定義されているか確認するためのチェック機能を実行します。以下のバリデーション機能は、`rdetoolkit.workflows.run()`に組み込まれています。
 
-`invoice.schema.json`の各フィールドのチェックは、[`rdetoolkit.validation.InvoiceValidator`](../rdetoolkit/validation.md#invoicevalidator)で実行します。
+`invoice.schema.json`の各フィールドのチェックは、[`rdetoolkit.validation.InvoiceValidator`](/rdetoolkit/validation/#invoicevalidator)で実行します。
 
 ```python
 import json
@@ -134,7 +134,7 @@ schema = {
 ```
 
 !!! Tip
-    詳しい修正方法は、[invoice.schema.json - テンプレートファイルについて](metadata_definition_file.md/#invoiceschemajson_2) を参照ください。
+    詳しい修正方法は、[invoice.schema.json - テンプレートファイルについて](./metadata_definition_file.md/#invoiceschemajson_2) を参照ください。
 
 ## invoice.jsonのバリデーション
 
@@ -307,7 +307,7 @@ Context: '153cbe4798cb8c' does not match '^([0-9a-zA-Z]{56})$'
 ```
 
 !!! Tip
-    詳しい修正方法は、[invoice.json - テンプレートファイルについて](metadata_definition_file.md/#invoice.json_2) を参照ください。
+    詳しい修正方法は、[invoice.json - テンプレートファイルについて](./metadata_definition_file.md/#invoice.json_2) を参照ください。
 
 ## metadata.jsonのバリデーション
 
@@ -363,4 +363,4 @@ Error: Validation Errors in metadata.json. Please correct the following fields
 ```
 
 !!! Tip
-    詳しい修正方法は、[metadata.json - テンプレートファイルについて](metadata_definition_file.md/#metadatajson_1) を参照ください。
+    詳しい修正方法は、[metadata.json - テンプレートファイルについて](./metadata_definition_file.md/#metadatajson_1) を参照ください。

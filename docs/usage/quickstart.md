@@ -62,7 +62,7 @@ graph LR
 起動処理、終了処理は、rdetoolkitを使うことで簡単に実行できます。そのため、ユーザー自身は、ご自身のデータに対する処理を実行する **カスタム構造化処理** を定義するだけです。
 
 !!! Tip "Documents"
-    [カスタム用構造化処理関数の作成](structured.md/#_5)
+    [カスタム用構造化処理関数の作成](./structured_process/structured.md/#_5)
 
 ### カスタム用構造化処理関数の作成
 
@@ -79,8 +79,8 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
 ```
 
 !!! Reference
-    - API Documentation: [RdeInputDirPaths - rde2types](rdetoolkit/models/rde2types.md/#rdeinputdirpaths)
-    - API Documentation: [RdeOutputResourcePath - rde2types](rdetoolkit/models/rde2types.md/#rdeoutputresourcepath)
+    - API Documentation: [RdeInputDirPaths - rde2types](/rdetoolkit/models/rde2types/#rdeinputdirpaths)
+    - API Documentation: [RdeOutputResourcePath - rde2types](/rdetoolkit/models/rde2types/#rdeoutputresourcepath)
 
 今回の例では、`modules`以下に、`display_messsage()`, `custom_graph()`, `custom_extract_metadata()`というダミー処理を定義し、独自の構造化処理を定義します。これらの関数は、`modules/modules.py`というファイルを作成し定義します。以下の2つの引数を渡す関数でなければ、rdetoolkitは正しく処理が実行できません。
 
@@ -114,7 +114,7 @@ def dataset(srcpaths, resource_paths):
 - 各種入力ファイルのバリデーション
 
 !!! Reference
-    - API Documentation: [run - workflows](rdetoolkit/workflows.md/#run)
+    - API Documentation: [run - workflows](/rdetoolkit/workflows/#run)
 
 今回の例では、`main.py`を作成し、`modules/modules.py`で定義した`dataset()`を実行します。
 
@@ -165,7 +165,7 @@ python3 main.py
 
 ## 次のステップ
 
-- [カスタム構造化処理を実装する](structured_process/structured.md)
-- [RDEToolKitの設定ファイルと制御できる機能を知る](config/config.md)
-- [RDEのデータ登録モードを指定する](config/mode.md)
-- [テンプレートファイルを知る](metadata_definition_file.md)
+- [カスタム構造化処理を実装する](./structured_process/structured.md)
+- [RDEToolKitの設定ファイルと制御できる機能を知る](./config/config.md)
+- [RDEのデータ登録モードを指定する](./config/mode.md)
+- [テンプレートファイルを知る](./metadata_definition_file.md)

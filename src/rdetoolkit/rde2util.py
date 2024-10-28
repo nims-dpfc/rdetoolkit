@@ -14,7 +14,7 @@ import dateutil.parser
 from chardet.universaldetector import UniversalDetector
 from charset_normalizer import detect
 
-from rdetoolkit.exceptions import StructuredError, catch_exception_with_message
+from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
 
 LANG_ENC_FLAG: Final[int] = 0x800
@@ -480,7 +480,6 @@ class Meta:
             return list(map(str, value))
         return ""
 
-    @catch_exception_with_message(error_message="ERROR: failed to generate metadata.json", error_code=50)
     def writefile(self, meta_filepath: str, enc: str = "utf_8") -> dict[str, Any]:
         """Writes the metadata to a file after processing units and actions.
 
@@ -694,24 +693,16 @@ def castval(valstr: Any, outtype: str | None, outfmt: str | None) -> bool | int 
         if ValueCaster.trycast(valstr, bool) is not None:
             return bool(valstr)
 
-    elif outtype == "integer":
+    elif outtype in ("integer", "number"):
         # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
         val_unit_pair = _split_value_unit(valstr)
         if ValueCaster.trycast(val_unit_pair.value, int) is not None:
             return int(val_unit_pair.value)
-
-    elif outtype == "number":
-        # Even if a string with units is passed, the assignment of units is not handled in this function. Assign units separately as necessary.
-        val_unit_pair = _split_value_unit(valstr)
-        if ValueCaster.trycast(val_unit_pair.value, int) is not None:
-            return int(val_unit_pair.value)
-        if ValueCaster.trycast(val_unit_pair.value, float) is not None:
+        if outtype == "number" and ValueCaster.trycast(val_unit_pair.value, float) is not None:
             return float(val_unit_pair.value)
 
     elif outtype == "string":
-        if not outfmt:
-            return valstr
-        return ValueCaster.convert_to_date_format(valstr, outfmt)
+        return valstr if not outfmt else ValueCaster.convert_to_date_format(valstr, outfmt)
 
     else:
         emsg = "ERROR: unknown value type in metaDef"

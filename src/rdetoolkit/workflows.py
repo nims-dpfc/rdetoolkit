@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import logging
-import sys
 from collections.abc import Generator
 from pathlib import Path
 
-from rdetoolkit.config import Config, load_config
-from rdetoolkit.exceptions import StructuredError, handle_exception
+from rdetoolkit.config import load_config
+from rdetoolkit.errors import handle_and_exit_on_structured_error, handle_generic_error, skip_exception_context
+from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.invoicefile import backup_invoice_json_files
+from rdetoolkit.models.config import Config
 from rdetoolkit.models.rde2types import RawFiles, RdeInputDirPaths, RdeOutputResourcePath
+from rdetoolkit.models.result import WorkflowExecutionStatus, WorkflowResultManager
 from rdetoolkit.modeproc import (
     _CallbackType,
     excel_invoice_mode_process,
@@ -18,7 +19,7 @@ from rdetoolkit.modeproc import (
     selected_input_checker,
 )
 from rdetoolkit.rde2util import StorageDir
-from rdetoolkit.rdelogger import get_logger, write_job_errorlog_file
+from rdetoolkit.rdelogger import get_logger
 
 
 def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFiles, Path | None]:
@@ -125,38 +126,13 @@ def generate_folder_paths_iterator(
             invoice_org=invoice_org_filepath,
             temp=StorageDir.get_specific_outputdir(True, "temp", idx),
             nonshared_raw=StorageDir.get_specific_outputdir(True, "nonshared_raw", idx),
+            invoice_patch=StorageDir.get_specific_outputdir(True, "invoice_patch", idx),
+            attachment=StorageDir.get_specific_outputdir(True, "attachment", idx),
         )
         yield rdeoutput_resource_path
 
 
-def handle_and_exit_on_structured_error(e: StructuredError, logger: logging.Logger) -> None:
-    """Catch StructuredError and write to log file.
-
-    Args:
-        e (StructuredError): StructuredError instance
-        logger (logging.Logger): Logger instance
-    """
-    sys.stderr.write((e.traceback_info or "") + "\n")
-    write_job_errorlog_file(e.ecode, e.emsg)
-    logger.exception(e.emsg)
-    sys.exit(1)
-
-
-def handle_generic_error(e: Exception, logger: logging.Logger) -> None:
-    """Catch generic error and write to log file.
-
-    Args:
-        e (Exception): Exception instance
-        logger (logging.Logger): Logger instance
-    """
-    structured_error = handle_exception(e, verbose=True)
-    sys.stderr.write((structured_error.traceback_info or "") + "\n")
-    write_job_errorlog_file(999, "Error: Please check the logs and code, then try again.")
-    logger.exception(str(e))
-    sys.exit(1)
-
-
-def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> None:  # pragma: no cover
+def run(*, custom_dataset_function: _CallbackType | None = None, config: Config | None = None) -> str:  # pragma: no cover
     """RDE Structuring Processing Function.
 
     This function executes the structuring process for RDE data. If you want to implement custom processing for the input data,
@@ -166,6 +142,13 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
     Args:
         custom_dataset_function (Optional[_CallbackType], optional): User-defined structuring function. Defaults to None.
         config (Optional[Config], optional): Configuration class for the structuring process. If not specified, default values are loaded automatically. Defaults to None.
+
+    Returns:
+        str: The JSON representation of the workflow execution results.
+
+    Raises:
+        StructuredError: If a structured error occurs during the process.
+        Exception: If a generic error occurs during the process.
 
     Note:
         If `extended_mode` is specified, the evaluation of the execution mode is performed in the order of `extended_mode -> excelinvoice -> invoice`,
@@ -198,6 +181,8 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         ```
     """
     logger = get_logger(__name__, file_path=StorageDir.get_specific_outputdir(True, "logs").joinpath("rdesys.log"))
+    wf_manager = WorkflowResultManager()
+    error_info = None
 
     try:
         # Enabling mode flag and validating input file
@@ -209,24 +194,48 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
 
         # Loading configuration file
         __config = load_config(str(srcpaths.tasksupport), config=config)
-        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.extended_mode)
+        srcpaths.config = __config
+
+        raw_files_group, excel_invoice_files = check_files(srcpaths, mode=__config.system.extended_mode)
 
         # Backup of invoice.json
-        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.extended_mode)
+        invoice_org_filepath = backup_invoice_json_files(excel_invoice_files, __config.system.extended_mode)
         invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
 
         # Execution of data set structuring process based on various modes
         for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
-            if __config.extended_mode is not None and __config.extended_mode.lower() == "rdeformat":
-                rdeformat_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
-            elif __config.extended_mode is not None and __config.extended_mode.lower() == "multidatatile":
-                multifile_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
+            if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
+                mode = "rdeformat"
+                status = rdeformat_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
+            elif __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "multidatatile":
+                mode = "MultiDataTile"
+                ignore_error = __config.multidata_tile.ignore_errors if __config.multidata_tile else False
+                with skip_exception_context(Exception, logger=logger, enabled=ignore_error) as error_info:
+                    status = multifile_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
             elif excel_invoice_files is not None:
-                excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function, config=__config)
+                mode = "Excelinvoice"
+                status = excel_invoice_mode_process(srcpaths, rdeoutput_resource, excel_invoice_files, idx, custom_dataset_function)
             else:
-                invoice_mode_process(srcpaths, rdeoutput_resource, custom_dataset_function, config=__config)
+                mode = "Invoice"
+                status = invoice_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
+
+            if error_info and any(value is not None for value in error_info.values()):
+                code = error_info.get("code")
+                status = WorkflowExecutionStatus(
+                    run_id=str(idx),
+                    title=f"Structured Process Faild: {mode}",
+                    status="failed",
+                    mode=mode,
+                    error_code=int(code) if code and code.isdigit() else 999,
+                    error_message=error_info.get("message"),
+                    stacktrace=error_info.get("stacktrace"),
+                    target=",".join(str(file) for file in rdeoutput_resource.rawfiles),
+                )
+            wf_manager.add_status(status)
 
     except StructuredError as e:
         handle_and_exit_on_structured_error(e, logger)
     except Exception as e:
         handle_generic_error(e, logger)
+
+    return wf_manager.to_json()

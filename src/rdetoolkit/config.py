@@ -5,35 +5,15 @@ from pathlib import Path
 from typing import Any, Final
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import ValidationError
 from tomlkit.toml_file import TOMLFile
 
+from rdetoolkit.models.config import Config, MultiDataTileSettings, SystemSettings
 from rdetoolkit.models.rde2types import RdeFsPath
 
 CONFIG_FILE: Final = ["rdeconfig.yaml", "rdeconfig.yml"]
 PYPROJECT_CONFIG_FILES: Final = ["pyproject.toml"]
 CONFIG_FILES = CONFIG_FILE + PYPROJECT_CONFIG_FILES
-
-
-class Config(BaseModel):
-    """The configuration class used in RDEToolKit.
-
-    Attributes:
-        extended_mode (Optional[str]): The mode to run the RDEToolKit in. It can be either 'rdeformat' or 'MultiDataTile'. If not specified, it defaults to None.
-        save_raw (bool): A boolean flag that indicates whether to automatically save raw data to the raw directory. It defaults to True.
-        save_thumbnail_image (bool): A boolean flag that indicates whether to automatically save the main image to the thumbnail directory. It defaults to False.
-        magic_variable (bool): A boolean flag that indicates whether to use the feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name. It defaults to False.
-    """
-
-    model_config = ConfigDict(extra="allow")
-
-    extended_mode: str | None = Field(default=None, description="The mode to run the RDEtoolkit in. select: rdeformat, MultiDataTile")
-    save_raw: bool = Field(default=True, description="Auto Save raw data to the raw directory")
-    save_thumbnail_image: bool = Field(default=False, description="Auto Save main image to the thumbnail directory")
-    magic_variable: bool = Field(
-        default=False,
-        description="The feature where specifying '${filename}' as the data name results in the filename being transcribed as the data name.",
-    )
 
 
 def parse_config_file(*, path: str | None = None) -> Config:
@@ -65,9 +45,12 @@ def parse_config_file(*, path: str | None = None) -> Config:
         parse_config_file(path="config.yaml")
 
     """
-    config_data: dict[str, Any] = {}
+    config_data: dict[str, Any] = {
+        "system": SystemSettings().model_dump(),
+        "multidata_tile": MultiDataTileSettings().model_dump(),
+    }
     if path is not None and Path(path).name not in CONFIG_FILES:
-        return Config()
+        return Config(system=SystemSettings(), multidata_tile=MultiDataTileSettings())
 
     if path is not None and is_toml(path):
         config_data = __read_pyproject_toml(path)
@@ -79,10 +62,10 @@ def parse_config_file(*, path: str | None = None) -> Config:
         pyproject_toml = project_path.joinpath(PYPROJECT_CONFIG_FILES[0])
         config_data = __read_pyproject_toml(str(pyproject_toml))
     else:
-        return Config()
+        return Config(system=SystemSettings(), multidata_tile=MultiDataTileSettings())
 
     if config_data is None:
-        return Config()
+        return Config(system=SystemSettings(), multidata_tile=MultiDataTileSettings())
 
     return Config(**config_data)
 
@@ -95,7 +78,8 @@ def __read_pyproject_toml(path: str) -> dict[str, Any]:
     """
     toml = TOMLFile(path)
     obj = toml.read()
-    return obj.get("tool", {}).get("rdetoolkit", {})
+    _obj = obj.unwrap()
+    return _obj.get("tool", {}).get("rdetoolkit", {})
 
 
 def is_toml(filename: str) -> bool:

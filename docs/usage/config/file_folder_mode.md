@@ -56,4 +56,4 @@ Excelinvoiceに表記したモードと、入力するzipファイルの構成�
 この処理は、RdeToolKitで定義しています。該当ソースコードは以下のリポジトリのリンクを参照してください。
 
 !!! Reference
-    - [parse_compressedfile_mode - compressed_controller](../../rdetoolkit/impl/compressed_controller.md/#parse_compressedfile_mode)
+    - [parse_compressedfile_mode - compressed_controller](/rdetoolkit/impl/compressed_controller/#parse_compressedfile_mode)

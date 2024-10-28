@@ -11,8 +11,8 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
 ```
 
 !!! Reference
-    - API Documentation: [RdeInputDirPaths - rde2types](rdetoolkit/models/rde2types.md/#rdeinputdirpaths)
-    - API Documentation: [RdeOutputResourcePath - rde2types](rdetoolkit/models/rde2types.md/#rdeoutputresourcepath)
+    - API Documentation: [RdeInputDirPaths - rde2types](/rdetoolkit/models/rde2types/#rdeinputdirpaths)
+    - API Documentation: [RdeOutputResourcePath - rde2types](/rdetoolkit/models/rde2types/#rdeoutputresourcepath)
 
 `RdeInputDirPaths`は、入力で扱われるディレクトリパスやファイルパス群を格納してます。ディレクトリパスは、`pathlib.Path`オブジェクトで格納されています。
 
