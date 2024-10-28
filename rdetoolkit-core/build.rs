@@ -13,6 +13,9 @@ fn main() {
         .trim()
         .to_string();
 
+    // Pythonのライブラリをリンク
+    println!("cargo:rustc-link-lib={}", python_version);
+
     // Pythonのインクルードディレクトリとライブラリディレクトリを設定
     let python_include_dir = Command::new("python3")
         .arg("-c")
@@ -41,12 +44,15 @@ fn main() {
 
     if cfg!(target_os = "windows") {
         let python_lib_name = format!(
-            "python{}.{}",
+            "python{}.{}{}",
             python_version.chars().nth(6).unwrap(),
-            python_version.chars().nth(8).unwrap()
+            python_version.chars().nth(8).unwrap(),
+            if python_version.chars().nth(9).is_some() {
+                format!("{}", python_version.chars().nth(9).unwrap())
+            } else {
+                "".to_string()
+            }
         );
         println!("cargo:rustc-link-lib={}", python_lib_name);
-    } else {
-        println!("cargo:rustc-link-lib=python={}", python_version);
     }
 }
