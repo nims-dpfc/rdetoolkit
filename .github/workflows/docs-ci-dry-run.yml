@@ -57,5 +57,5 @@ jobs:
 
       - name: Cleanup
         run: |
-          git checkout ${{ github.ref }}
+          git checkout ${{ github.head_ref }}
           git branch -D gh-pages
