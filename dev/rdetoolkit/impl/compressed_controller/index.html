@@ -1,0 +1,2449 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="../../../usage/docker/" rel="prev"/>
+<link href="../input_controller/" rel="next"/>
+<link href="../../../img/2585322.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.5.38" name="generator"/>
+<title>compressed_controller - RDEToolKit Documentation</title>
+<link href="../../../assets/stylesheets/main.8c3ca2c6.min.css" rel="stylesheet"/>
+<link href="../../../assets/stylesheets/palette.06af60db.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Noto Sans JP";--md-code-font:"Roboto Mono"}</style>
+<link href="../../../assets/_mkdocstrings.css" rel="stylesheet"/>
+<script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="default" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#compressed_controller">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="RDEToolKit Documentation" class="md-header__button md-logo" data-md-component="logo" href="../../.." title="RDEToolKit Documentation">
+<img alt="logo" src="../../../img/2585322.png"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            RDEToolKit Documentation
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              compressed_controller
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/nims-dpfc/rdetoolkit" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"></path></svg>
+</div>
+<div class="md-source__repository">
+    nims-dpfc/rdetoolkit
+  </div>
+</a>
+</div>
+</nav>
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../..">
+          
+  
+  Getting started
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../install/">
+          
+  
+  Installation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../usage/quickstart/">
+          
+  
+  User Guide
+
+        </a>
+</li>
+<li class="md-tabs__item md-tabs__item--active">
+<a class="md-tabs__link" href="./">
+          
+  
+  API Documentation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../contribute/home/">
+          
+  
+  Development
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="RDEToolKit Documentation" class="md-nav__button md-logo" data-md-component="logo" href="../../.." title="RDEToolKit Documentation">
+<img alt="logo" src="../../../img/2585322.png"/>
+</a>
+    RDEToolKit Documentation
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/nims-dpfc/rdetoolkit" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"></path></svg>
+</div>
+<div class="md-source__repository">
+    nims-dpfc/rdetoolkit
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+<span class="md-ellipsis">
+    Getting started
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_1_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+            Getting started
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../..">
+<span class="md-ellipsis">
+    RDEToolKit
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    Installation
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            Installation
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../install/">
+<span class="md-ellipsis">
+    インストール方法
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    User Guide
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+<span class="md-ellipsis">
+    Quick Start
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_1">
+<span class="md-nav__icon md-icon"></span>
+            Quick Start
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/quickstart/">
+<span class="md-ellipsis">
+    クイックスタート
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+<span class="md-ellipsis">
+    構造化処理
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_2_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_2">
+<span class="md-nav__icon md-icon"></span>
+            構造化処理
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/structured_process/structured/">
+<span class="md-ellipsis">
+    構造化処理を構築する
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/structured_process/directory/">
+<span class="md-ellipsis">
+    サポートするディレクトリ
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/structured_process/rdepath/">
+<span class="md-ellipsis">
+    構造化ディレクトリパスの取得
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/structured_process/errorhandling/">
+<span class="md-ellipsis">
+    構造化処理のエラーハンドリング
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/structured_process/feature_description/">
+<span class="md-ellipsis">
+    データタイル説明欄への自動記述について
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+<span class="md-ellipsis">
+    設定ファイル
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_3_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_3">
+<span class="md-nav__icon md-icon"></span>
+            設定ファイル
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/config/config/">
+<span class="md-ellipsis">
+    RDEToolKit設定ファイル
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/config/mode/">
+<span class="md-ellipsis">
+    RDEToolKitのデータ登録モード
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/config/file_folder_mode/">
+<span class="md-ellipsis">
+    圧縮ファイルの形式について
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/config/magic_variable/">
+<span class="md-ellipsis">
+    Magic Variableによるデータ登録について
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+<span class="md-ellipsis">
+    テンプレートファイル
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_4_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_4">
+<span class="md-nav__icon md-icon"></span>
+            テンプレートファイル
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/metadata_definition_file/">
+<span class="md-ellipsis">
+    テンプレートファイル
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+<span class="md-ellipsis">
+    バリデーション
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_5_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_5">
+<span class="md-nav__icon md-icon"></span>
+            バリデーション
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/validation/">
+<span class="md-ellipsis">
+    バリデーション機能
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+<span class="md-ellipsis">
+    Docker
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_6">
+<span class="md-nav__icon md-icon"></span>
+            Docker
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../usage/docker/">
+<span class="md-ellipsis">
+    Using RDEToolKit with Docker
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+<span class="md-ellipsis">
+    API Documentation
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            API Documentation
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_4_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+<span class="md-ellipsis">
+    impl
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_4_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_1">
+<span class="md-nav__icon md-icon"></span>
+            impl
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    compressed_controller
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    compressed_controller
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#compressedflatfileparser">
+<span class="md-ellipsis">
+      CompressedFlatFileParser
+    </span>
+</a>
+<nav aria-label="CompressedFlatFileParser" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser.read">
+<span class="md-ellipsis">
+      read
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser._extract_zip_with_encoding">
+<span class="md-ellipsis">
+      _extract_zip_with_encoding
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser._unpacked">
+<span class="md-ellipsis">
+      _unpacked
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser._is_excluded">
+<span class="md-ellipsis">
+      _is_excluded
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#compressedfolderparser">
+<span class="md-ellipsis">
+      CompressedFolderParser
+    </span>
+</a>
+<nav aria-label="CompressedFolderParser" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFolderParser.read">
+<span class="md-ellipsis">
+      read
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFolderParser._unpacked">
+<span class="md-ellipsis">
+      _unpacked
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFolderParser._extract_zip_with_encoding">
+<span class="md-ellipsis">
+      _extract_zip_with_encoding
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFolderParser.validation_uniq_fspath">
+<span class="md-ellipsis">
+      validation_uniq_fspath
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#src.rdetoolkit.impl.compressed_controller.CompressedFolderParser._is_excluded">
+<span class="md-ellipsis">
+      _is_excluded
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#parse_compressedfile_mode">
+<span class="md-ellipsis">
+      parse_compressedfile_mode
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../input_controller/">
+<span class="md-ellipsis">
+    input_controller
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+<span class="md-ellipsis">
+    interface
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_2_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_2">
+<span class="md-nav__icon md-icon"></span>
+            interface
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../interface/filechecker/">
+<span class="md-ellipsis">
+    filechecker
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+<span class="md-ellipsis">
+    models
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_3_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_3">
+<span class="md-nav__icon md-icon"></span>
+            models
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../models/invoice_schema/">
+<span class="md-ellipsis">
+    invoice_schema
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../models/metadata/">
+<span class="md-ellipsis">
+    metadata
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../models/rde2types/">
+<span class="md-ellipsis">
+    rde2types
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../config/">
+<span class="md-ellipsis">
+    config
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../workflows/">
+<span class="md-ellipsis">
+    workflows
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../rde2util/">
+<span class="md-ellipsis">
+    rde2util
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../invoicefile/">
+<span class="md-ellipsis">
+    invoicefile
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../modeproc/">
+<span class="md-ellipsis">
+    modeproc
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../validation/">
+<span class="md-ellipsis">
+    validation
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../img2thumb/">
+<span class="md-ellipsis">
+    img2thumb
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../rdelogger/">
+<span class="md-ellipsis">
+    rdelogger
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../csv2graph.md">
+<span class="md-ellipsis">
+    None
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../exceptions/">
+<span class="md-ellipsis">
+    exceptions
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    Development
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../contribute/home/">
+<span class="md-ellipsis">
+    Top
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../contribute/documents_contributing/">
+<span class="md-ellipsis">
+    Documents
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../contribute/sourcecode_contributing/">
+<span class="md-ellipsis">
+    Source Code
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="compressed_controller">compressed_controller</h1>
+<p>In <code>compressed_controller</code>, processes are defined for handling compressed files input from RDE.</p>
+<h2 id="compressedflatfileparser">CompressedFlatFileParser</h2>
+<div class="doc doc-object doc-class">
+<div class="doc doc-contents first">
+<p class="doc doc-class-bases">
+              Bases: <code><span title="rdetoolkit.interfaces.filechecker.ICompressedFileStructParser">ICompressedFileStructParser</span></code></p>
+<p>Parser for compressed flat files, providing functionality to read and extract the contents.</p>
+<p>This parser specifically deals with flat files that are compressed. It extracts the files
+and ensures they match the expected structure described in an excelinvoice.</p>
+<p><span class="doc-section-title">Attributes:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code><span title="src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser.xlsx_invoice">xlsx_invoice</span></code></td>
+<td>
+<code><span title="pandas.DataFrame">DataFrame</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>DataFrame representing the expected structure or content description
+of the compressed files.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 20</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 21</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 22</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 23</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 24</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 25</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 26</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 27</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 28</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 29</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 30</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 31</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 32</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 33</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 34</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 35</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 36</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 37</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 38</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 39</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 40</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 41</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 42</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 43</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 44</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 45</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 46</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 47</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 48</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 49</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 50</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 51</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 52</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 53</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 54</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 55</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 56</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 57</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 58</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 59</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 60</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 61</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 62</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 63</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 64</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 65</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 66</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 67</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 68</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 69</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 70</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 71</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 72</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 73</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 74</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 75</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 76</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 77</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 78</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 79</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 80</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 81</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 82</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 83</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 84</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 85</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 86</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 87</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 88</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 89</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 90</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 91</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 92</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 93</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 94</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 95</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 96</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 97</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 98</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 99</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">100</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">101</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">102</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">103</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">104</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">105</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">106</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">107</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">108</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">109</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">CompressedFlatFileParser</span>(ICompressedFileStructParser):
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Parser for compressed flat files, providing functionality to read and extract the contents.</span>
+
+<span style="color: #DD4422">    This parser specifically deals with flat files that are compressed. It extracts the files</span>
+<span style="color: #DD4422">    and ensures they match the expected structure described in an excelinvoice.</span>
+
+<span style="color: #DD4422">    Attributes:</span>
+<span style="color: #DD4422">        xlsx_invoice (pd.DataFrame): DataFrame representing the expected structure or content description</span>
+<span style="color: #DD4422">            of the compressed files.</span>
+<span style="color: #DD4422">    """</span>
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, xlsx_invoice: pd<span style="color: #333333">.</span>DataFrame):
+        <span style="color: #007020">self</span><span style="color: #333333">.</span>xlsx_invoice <span style="color: #333333">=</span> xlsx_invoice
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">read</span>(<span style="color: #007020">self</span>, zipfile: Path, target_path: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[<span style="color: #007020">tuple</span>[Path, <span style="color: #333333">...</span>]]:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Extracts the contents of the zipfile to the target path and checks their existence against the Excelinvoice.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            zipfile (Path): Path to the compressed flat file to be read.</span>
+<span style="color: #DD4422">            target_path (Path): Destination directory where the zipfile will be extracted to.</span>
+
+<span style="color: #DD4422">        Returns:</span>
+<span style="color: #DD4422">            List[Tuple[Path, ...]]: A list of tuples containing file paths. Each tuple</span>
+<span style="color: #DD4422">            represents files from the compressed archive that matched the xlsx_invoice structure.</span>
+<span style="color: #DD4422">        """</span>
+        _extracted_files <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_unpacked(zipfile, target_path)
+        <span style="color: #008800; font-weight: bold">return</span> [(f,) <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> check_exist_rawfiles(<span style="color: #007020">self</span><span style="color: #333333">.</span>xlsx_invoice, _extracted_files)]
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_unpacked</span>(<span style="color: #007020">self</span>, zipfile: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, target_dir: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[Path]:
+        <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">isinstance</span>(target_dir, <span style="color: #007020">str</span>):
+            target_dir <span style="color: #333333">=</span> Path(target_dir)
+        <span style="color: #007020">self</span><span style="color: #333333">.</span>_extract_zip_with_encoding(zipfile, target_dir)
+        <span style="color: #008800; font-weight: bold">return</span> [f <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> target_dir<span style="color: #333333">.</span>glob(<span style="background-color: #fff0f0">"**/*"</span>) <span style="color: #008800; font-weight: bold">if</span> f<span style="color: #333333">.</span>is_file() <span style="color: #000000; font-weight: bold">and</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_is_excluded(f)]
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_extract_zip_with_encoding</span>(<span style="color: #007020">self</span>, zip_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, extract_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.</span>
+
+<span style="color: #DD4422">        This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            zip_path (Path | str): The path to the ZIP file to be extracted.</span>
+<span style="color: #DD4422">            extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.</span>
+
+<span style="color: #DD4422">        Raises:</span>
+<span style="color: #DD4422">            ValueError: If encoding detection fails for any filename within the ZIP archive.</span>
+<span style="color: #DD4422">            UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.</span>
+
+<span style="color: #DD4422">        Example:</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; zip_path = 'path/to/your/archive.zip'</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; extract_path = 'path/to/extract/directory'</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; encoding = 'utf-8'  # or 'cp932' for Japanese text, for example</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; self._extract_zip_with_encoding(zip_path, extract_path)</span>
+<span style="color: #DD4422">        """</span>
+        lang_enc_flag: Final <span style="color: #333333">=</span> <span style="color: #005588; font-weight: bold">0x800</span>
+        <span style="color: #008800; font-weight: bold">with</span> zipfile<span style="color: #333333">.</span>ZipFile(zip_path, <span style="background-color: #fff0f0">"r"</span>) <span style="color: #008800; font-weight: bold">as</span> zip_ref:
+            <span style="color: #008800; font-weight: bold">for</span> zip_info <span style="color: #000000; font-weight: bold">in</span> zip_ref<span style="color: #333333">.</span>infolist():
+                old_filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename
+                encoding <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"utf-8"</span> <span style="color: #008800; font-weight: bold">if</span> zip_info<span style="color: #333333">.</span>flag_bits <span style="color: #333333">&amp;</span> lang_enc_flag <span style="color: #008800; font-weight: bold">else</span> <span style="background-color: #fff0f0">"cp437"</span>
+                enc <span style="color: #333333">=</span> charset_normalizer<span style="color: #333333">.</span>detect(zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding))
+                <span style="color: #008800; font-weight: bold">if</span> <span style="color: #000000; font-weight: bold">not</span> enc<span style="color: #333333">.</span>get(<span style="background-color: #fff0f0">"encoding"</span>):
+                    enc[<span style="background-color: #fff0f0">"encoding"</span>] <span style="color: #333333">=</span> encoding
+
+                zip_info<span style="color: #333333">.</span>filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding)<span style="color: #333333">.</span>decode(<span style="color: #007020">str</span>(enc[<span style="background-color: #fff0f0">"encoding"</span>]))
+                zip_ref<span style="color: #333333">.</span>NameToInfo[zip_info<span style="color: #333333">.</span>filename] <span style="color: #333333">=</span> zip_info
+                <span style="color: #008800; font-weight: bold">del</span> zip_ref<span style="color: #333333">.</span>NameToInfo[old_filename]
+
+                zip_ref<span style="color: #333333">.</span>extract(zip_info, extract_path)
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_is_excluded</span>(<span style="color: #007020">self</span>, file: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">bool</span>:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Checks a specific file pattern to determine whether it should be excluded.</span>
+
+<span style="color: #DD4422">        This method checks if the file matches any of the predefined excluded patterns or regex.</span>
+<span style="color: #DD4422">        The excluded patterns are `__MACOSX` and `.DS_Store`.</span>
+<span style="color: #DD4422">        The excluded regex matches any file that starts with `~$` and ends with `.docx`, `.xlsx`, or `.pptx`.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            file (Path): The file to check.</span>
+
+<span style="color: #DD4422">        Returns:</span>
+<span style="color: #DD4422">            bool: True if the file should be excluded, False otherwise.</span>
+
+<span style="color: #DD4422">        Rules:</span>
+<span style="color: #DD4422">            Specifically, the files to be excluded are:</span>
+
+<span style="color: #DD4422">            - Files containing "__MACOSX" or ".DS_Store" in their paths.</span>
+<span style="color: #DD4422">            - Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".</span>
+<span style="color: #DD4422">        """</span>
+        excluded_patterns <span style="color: #333333">=</span> [<span style="background-color: #fff0f0">"__MACOSX"</span>, <span style="background-color: #fff0f0">".DS_Store"</span>]
+        excluded_regex <span style="color: #333333">=</span> re<span style="color: #333333">.</span>compile(<span style="background-color: #fff0f0">r"~\$.*\.(docx|xlsx|pptx)"</span>)
+        <span style="color: #008800; font-weight: bold">return</span> <span style="color: #007020">any</span>(pattern <span style="color: #000000; font-weight: bold">in</span> file<span style="color: #333333">.</span>parts <span style="color: #008800; font-weight: bold">for</span> pattern <span style="color: #000000; font-weight: bold">in</span> excluded_patterns) <span style="color: #000000; font-weight: bold">or</span> <span style="color: #007020">bool</span>(excluded_regex<span style="color: #333333">.</span>search(<span style="color: #007020">str</span>(file)))
+</code></pre></div></td></tr></table></div>
+</details>
+<div class="doc doc-children">
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser.read">
+<code class="highlight language-python">read(zipfile, target_path)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Extracts the contents of the zipfile to the target path and checks their existence against the Excelinvoice.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>zipfile</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Path to the compressed flat file to be read.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>target_path</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Destination directory where the zipfile will be extracted to.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Returns:</span></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td>
+<code>list[tuple[<span title="pathlib.Path">Path</span>, ...]]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>List[Tuple[Path, ...]]: A list of tuples containing file paths. Each tuple</p>
+</div>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>list[tuple[<span title="pathlib.Path">Path</span>, ...]]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>represents files from the compressed archive that matched the xlsx_invoice structure.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">34</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">35</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">36</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">37</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">38</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">39</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">40</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">41</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">42</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">43</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">44</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">45</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">46</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">read</span>(<span style="color: #007020">self</span>, zipfile: Path, target_path: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[<span style="color: #007020">tuple</span>[Path, <span style="color: #333333">...</span>]]:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Extracts the contents of the zipfile to the target path and checks their existence against the Excelinvoice.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        zipfile (Path): Path to the compressed flat file to be read.</span>
+<span style="color: #DD4422">        target_path (Path): Destination directory where the zipfile will be extracted to.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        List[Tuple[Path, ...]]: A list of tuples containing file paths. Each tuple</span>
+<span style="color: #DD4422">        represents files from the compressed archive that matched the xlsx_invoice structure.</span>
+<span style="color: #DD4422">    """</span>
+    _extracted_files <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_unpacked(zipfile, target_path)
+    <span style="color: #008800; font-weight: bold">return</span> [(f,) <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> check_exist_rawfiles(<span style="color: #007020">self</span><span style="color: #333333">.</span>xlsx_invoice, _extracted_files)]
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser._extract_zip_with_encoding">
+<code class="highlight language-python">_extract_zip_with_encoding(zip_path, extract_path)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.</p>
+<p>This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>zip_path</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span> | str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The path to the ZIP file to be extracted.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>extract_path</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span> | str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The directory where the contents of the ZIP file will be extracted.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Raises:</span></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td>
+<code>ValueError</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If encoding detection fails for any filename within the ZIP archive.</p>
+</div>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>UnicodeDecodeError</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If a filename cannot be decoded with the detected or specified encoding.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="example" open="">
+<summary>Example</summary>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>zip_path = 'path/to/your/archive.zip'
+extract_path = 'path/to/extract/directory'
+encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
+self._extract_zip_with_encoding(zip_path, extract_path)</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</details>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">54</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">55</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">56</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">57</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">58</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">59</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">60</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">61</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">62</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">63</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">64</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">65</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">66</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">67</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">68</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">69</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">70</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">71</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">72</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">73</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">74</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">75</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">76</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">77</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">78</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">79</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">80</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">81</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">82</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">83</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">84</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">85</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">86</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_extract_zip_with_encoding</span>(<span style="color: #007020">self</span>, zip_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, extract_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.</span>
+
+<span style="color: #DD4422">    This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        zip_path (Path | str): The path to the ZIP file to be extracted.</span>
+<span style="color: #DD4422">        extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.</span>
+
+<span style="color: #DD4422">    Raises:</span>
+<span style="color: #DD4422">        ValueError: If encoding detection fails for any filename within the ZIP archive.</span>
+<span style="color: #DD4422">        UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.</span>
+
+<span style="color: #DD4422">    Example:</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; zip_path = 'path/to/your/archive.zip'</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; extract_path = 'path/to/extract/directory'</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; encoding = 'utf-8'  # or 'cp932' for Japanese text, for example</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; self._extract_zip_with_encoding(zip_path, extract_path)</span>
+<span style="color: #DD4422">    """</span>
+    lang_enc_flag: Final <span style="color: #333333">=</span> <span style="color: #005588; font-weight: bold">0x800</span>
+    <span style="color: #008800; font-weight: bold">with</span> zipfile<span style="color: #333333">.</span>ZipFile(zip_path, <span style="background-color: #fff0f0">"r"</span>) <span style="color: #008800; font-weight: bold">as</span> zip_ref:
+        <span style="color: #008800; font-weight: bold">for</span> zip_info <span style="color: #000000; font-weight: bold">in</span> zip_ref<span style="color: #333333">.</span>infolist():
+            old_filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename
+            encoding <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"utf-8"</span> <span style="color: #008800; font-weight: bold">if</span> zip_info<span style="color: #333333">.</span>flag_bits <span style="color: #333333">&amp;</span> lang_enc_flag <span style="color: #008800; font-weight: bold">else</span> <span style="background-color: #fff0f0">"cp437"</span>
+            enc <span style="color: #333333">=</span> charset_normalizer<span style="color: #333333">.</span>detect(zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding))
+            <span style="color: #008800; font-weight: bold">if</span> <span style="color: #000000; font-weight: bold">not</span> enc<span style="color: #333333">.</span>get(<span style="background-color: #fff0f0">"encoding"</span>):
+                enc[<span style="background-color: #fff0f0">"encoding"</span>] <span style="color: #333333">=</span> encoding
+
+            zip_info<span style="color: #333333">.</span>filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding)<span style="color: #333333">.</span>decode(<span style="color: #007020">str</span>(enc[<span style="background-color: #fff0f0">"encoding"</span>]))
+            zip_ref<span style="color: #333333">.</span>NameToInfo[zip_info<span style="color: #333333">.</span>filename] <span style="color: #333333">=</span> zip_info
+            <span style="color: #008800; font-weight: bold">del</span> zip_ref<span style="color: #333333">.</span>NameToInfo[old_filename]
+
+            zip_ref<span style="color: #333333">.</span>extract(zip_info, extract_path)
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser._unpacked">
+<code class="highlight language-python">_unpacked(zipfile, target_dir)</code>
+</h3>
+<div class="doc doc-contents">
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">48</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">49</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">50</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">51</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">52</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_unpacked</span>(<span style="color: #007020">self</span>, zipfile: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, target_dir: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[Path]:
+    <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">isinstance</span>(target_dir, <span style="color: #007020">str</span>):
+        target_dir <span style="color: #333333">=</span> Path(target_dir)
+    <span style="color: #007020">self</span><span style="color: #333333">.</span>_extract_zip_with_encoding(zipfile, target_dir)
+    <span style="color: #008800; font-weight: bold">return</span> [f <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> target_dir<span style="color: #333333">.</span>glob(<span style="background-color: #fff0f0">"**/*"</span>) <span style="color: #008800; font-weight: bold">if</span> f<span style="color: #333333">.</span>is_file() <span style="color: #000000; font-weight: bold">and</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_is_excluded(f)]
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFlatFileParser._is_excluded">
+<code class="highlight language-python">_is_excluded(file)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Checks a specific file pattern to determine whether it should be excluded.</p>
+<p>This method checks if the file matches any of the predefined excluded patterns or regex.
+The excluded patterns are <code>__MACOSX</code> and <code>.DS_Store</code>.
+The excluded regex matches any file that starts with <code>~$</code> and ends with <code>.docx</code>, <code>.xlsx</code>, or <code>.pptx</code>.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>file</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The file to check.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Returns:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th> <th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>bool</code></td> <td>
+<code>bool</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>True if the file should be excluded, False otherwise.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="rules" open="">
+<summary>Rules</summary>
+<p>Specifically, the files to be excluded are:</p>
+<ul>
+<li>Files containing "__MACOSX" or ".DS_Store" in their paths.</li>
+<li>Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".</li>
+</ul>
+</details>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 88</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 89</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 90</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 91</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 92</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 93</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 94</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 95</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 96</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 97</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 98</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 99</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">100</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">101</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">102</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">103</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">104</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">105</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">106</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">107</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">108</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">109</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_is_excluded</span>(<span style="color: #007020">self</span>, file: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">bool</span>:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Checks a specific file pattern to determine whether it should be excluded.</span>
+
+<span style="color: #DD4422">    This method checks if the file matches any of the predefined excluded patterns or regex.</span>
+<span style="color: #DD4422">    The excluded patterns are `__MACOSX` and `.DS_Store`.</span>
+<span style="color: #DD4422">    The excluded regex matches any file that starts with `~$` and ends with `.docx`, `.xlsx`, or `.pptx`.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        file (Path): The file to check.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        bool: True if the file should be excluded, False otherwise.</span>
+
+<span style="color: #DD4422">    Rules:</span>
+<span style="color: #DD4422">        Specifically, the files to be excluded are:</span>
+
+<span style="color: #DD4422">        - Files containing "__MACOSX" or ".DS_Store" in their paths.</span>
+<span style="color: #DD4422">        - Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".</span>
+<span style="color: #DD4422">    """</span>
+    excluded_patterns <span style="color: #333333">=</span> [<span style="background-color: #fff0f0">"__MACOSX"</span>, <span style="background-color: #fff0f0">".DS_Store"</span>]
+    excluded_regex <span style="color: #333333">=</span> re<span style="color: #333333">.</span>compile(<span style="background-color: #fff0f0">r"~\$.*\.(docx|xlsx|pptx)"</span>)
+    <span style="color: #008800; font-weight: bold">return</span> <span style="color: #007020">any</span>(pattern <span style="color: #000000; font-weight: bold">in</span> file<span style="color: #333333">.</span>parts <span style="color: #008800; font-weight: bold">for</span> pattern <span style="color: #000000; font-weight: bold">in</span> excluded_patterns) <span style="color: #000000; font-weight: bold">or</span> <span style="color: #007020">bool</span>(excluded_regex<span style="color: #333333">.</span>search(<span style="color: #007020">str</span>(file)))
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div><h2 id="compressedfolderparser">CompressedFolderParser</h2>
+<div class="doc doc-object doc-class">
+<div class="doc doc-contents first">
+<p class="doc doc-class-bases">
+              Bases: <code><span title="rdetoolkit.interfaces.filechecker.ICompressedFileStructParser">ICompressedFileStructParser</span></code></p>
+<p>Parser for compressed folders, extracting contents and ensuring they match an expected structure.</p>
+<p>This parser is specifically designed for compressed folders. It extracts the content
+and verifies against a provided xlsx invoice structure.</p>
+<p><span class="doc-section-title">Attributes:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code><span title="src.rdetoolkit.impl.compressed_controller.CompressedFolderParser.xlsx_invoice">xlsx_invoice</span></code></td>
+<td>
+<code><span title="pandas.DataFrame">DataFrame</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>DataFrame representing the expected structure or content description
+of the compressed folder contents.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">112</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">113</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">114</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">115</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">116</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">117</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">118</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">119</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">120</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">121</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">122</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">123</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">124</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">125</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">126</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">127</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">128</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">129</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">130</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">131</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">132</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">133</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">134</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">135</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">136</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">137</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">138</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">139</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">140</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">141</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">142</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">143</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">144</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">145</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">146</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">147</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">148</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">149</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">150</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">151</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">152</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">153</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">154</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">155</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">156</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">157</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">158</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">159</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">160</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">161</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">162</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">163</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">164</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">165</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">166</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">167</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">168</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">169</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">170</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">171</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">172</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">173</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">174</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">175</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">176</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">177</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">178</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">179</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">180</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">181</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">182</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">183</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">184</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">185</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">186</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">187</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">188</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">189</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">190</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">191</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">192</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">193</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">194</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">195</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">196</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">197</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">198</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">199</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">200</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">201</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">202</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">203</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">204</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">205</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">206</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">207</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">208</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">209</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">210</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">211</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">212</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">213</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">214</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">215</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">216</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">217</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">218</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">219</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">220</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">221</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">222</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">223</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">224</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">225</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">226</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">227</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">228</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">229</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">230</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">231</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">232</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">233</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">234</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">235</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">236</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">237</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">238</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">239</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">240</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">241</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">242</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">243</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">244</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">245</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">246</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">CompressedFolderParser</span>(ICompressedFileStructParser):
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Parser for compressed folders, extracting contents and ensuring they match an expected structure.</span>
+
+<span style="color: #DD4422">    This parser is specifically designed for compressed folders. It extracts the content</span>
+<span style="color: #DD4422">    and verifies against a provided xlsx invoice structure.</span>
+
+<span style="color: #DD4422">    Attributes:</span>
+<span style="color: #DD4422">        xlsx_invoice (pd.DataFrame): DataFrame representing the expected structure or content description</span>
+<span style="color: #DD4422">            of the compressed folder contents.</span>
+<span style="color: #DD4422">    """</span>
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">__init__</span>(<span style="color: #007020">self</span>, xlsx_invoice: pd<span style="color: #333333">.</span>DataFrame):
+        <span style="color: #007020">self</span><span style="color: #333333">.</span>xlsx_invoice <span style="color: #333333">=</span> xlsx_invoice
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">read</span>(<span style="color: #007020">self</span>, zipfile: Path, target_path: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[<span style="color: #007020">tuple</span>[Path, <span style="color: #333333">...</span>]]:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Extracts the contents of the zipfile and returns validated file paths.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            zipfile (Path): Path to the compressed folder to be read.</span>
+<span style="color: #DD4422">            target_path (Path): Destination directory where the zipfile will be extracted.</span>
+
+<span style="color: #DD4422">        Returns:</span>
+<span style="color: #DD4422">            List[Tuple[Path, ...]]: A list of tuples containing file paths that have been</span>
+<span style="color: #DD4422">            validated based on unique directory names.</span>
+<span style="color: #DD4422">        """</span>
+        _ <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_unpacked(zipfile, target_path)
+        safe_verification_files <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>validation_uniq_fspath(target_path, exclude_names<span style="color: #333333">=</span>[<span style="background-color: #fff0f0">"invoice_org.json"</span>])
+        <span style="color: #008800; font-weight: bold">return</span> [<span style="color: #007020">tuple</span>(f) <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> safe_verification_files<span style="color: #333333">.</span>values()]
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_unpacked</span>(<span style="color: #007020">self</span>, zipfile: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, target_dir: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[Path]:
+        <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">isinstance</span>(target_dir, <span style="color: #007020">str</span>):
+            target_dir <span style="color: #333333">=</span> Path(target_dir)
+        <span style="color: #007020">self</span><span style="color: #333333">.</span>_extract_zip_with_encoding(zipfile, target_dir)
+        <span style="color: #008800; font-weight: bold">return</span> [f <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> target_dir<span style="color: #333333">.</span>glob(<span style="background-color: #fff0f0">"**/*"</span>) <span style="color: #008800; font-weight: bold">if</span> f<span style="color: #333333">.</span>is_file() <span style="color: #000000; font-weight: bold">and</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_is_excluded(f)]
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_extract_zip_with_encoding</span>(<span style="color: #007020">self</span>, zip_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, extract_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.</span>
+
+<span style="color: #DD4422">        This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            zip_path (Path | str): The path to the ZIP file to be extracted.</span>
+<span style="color: #DD4422">            extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.</span>
+
+<span style="color: #DD4422">        Raises:</span>
+<span style="color: #DD4422">            ValueError: If encoding detection fails for any filename within the ZIP archive.</span>
+<span style="color: #DD4422">            UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.</span>
+
+<span style="color: #DD4422">        Example:</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; zip_path = 'path/to/your/archive.zip'</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; extract_path = 'path/to/extract/directory'</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; encoding = 'utf-8'  # or 'cp932' for Japanese text, for example</span>
+<span style="color: #DD4422">            &gt;&gt;&gt; self._extract_zip_with_encoding(zip_path, extract_path)</span>
+<span style="color: #DD4422">        """</span>
+        lang_enc_flag: Final <span style="color: #333333">=</span> <span style="color: #005588; font-weight: bold">0x800</span>
+        <span style="color: #008800; font-weight: bold">with</span> zipfile<span style="color: #333333">.</span>ZipFile(zip_path, <span style="background-color: #fff0f0">"r"</span>) <span style="color: #008800; font-weight: bold">as</span> zip_ref:
+            <span style="color: #008800; font-weight: bold">for</span> zip_info <span style="color: #000000; font-weight: bold">in</span> zip_ref<span style="color: #333333">.</span>infolist():
+                old_filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename
+                encoding <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"utf-8"</span> <span style="color: #008800; font-weight: bold">if</span> zip_info<span style="color: #333333">.</span>flag_bits <span style="color: #333333">&amp;</span> lang_enc_flag <span style="color: #008800; font-weight: bold">else</span> <span style="background-color: #fff0f0">"cp437"</span>
+                enc <span style="color: #333333">=</span> charset_normalizer<span style="color: #333333">.</span>detect(zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding))
+                <span style="color: #008800; font-weight: bold">if</span> <span style="color: #000000; font-weight: bold">not</span> enc<span style="color: #333333">.</span>get(<span style="background-color: #fff0f0">"encoding"</span>):
+                    enc[<span style="background-color: #fff0f0">"encoding"</span>] <span style="color: #333333">=</span> encoding
+
+                zip_info<span style="color: #333333">.</span>filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding)<span style="color: #333333">.</span>decode(<span style="color: #007020">str</span>(enc[<span style="background-color: #fff0f0">"encoding"</span>]))
+                zip_ref<span style="color: #333333">.</span>NameToInfo[zip_info<span style="color: #333333">.</span>filename] <span style="color: #333333">=</span> zip_info
+                <span style="color: #008800; font-weight: bold">del</span> zip_ref<span style="color: #333333">.</span>NameToInfo[old_filename]
+
+                zip_ref<span style="color: #333333">.</span>extract(zip_info, extract_path)
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_is_excluded</span>(<span style="color: #007020">self</span>, file: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">bool</span>:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Checks a specific file pattern to determine whether it should be excluded.</span>
+
+<span style="color: #DD4422">        This method checks if the file matches any of the predefined excluded patterns or regex.</span>
+<span style="color: #DD4422">        The excluded patterns are `__MACOSX` and `.DS_Store`.</span>
+<span style="color: #DD4422">        The excluded regex matches any file that starts with `~$` and ends with `.docx`, `.xlsx`, or `.pptx`.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            file (Path): The file to check.</span>
+
+<span style="color: #DD4422">        Returns:</span>
+<span style="color: #DD4422">            bool: True if the file should be excluded, False otherwise.</span>
+
+<span style="color: #DD4422">        Rules:</span>
+<span style="color: #DD4422">            Specifically, the files to be excluded are:</span>
+
+<span style="color: #DD4422">            - Files containing "__MACOSX" or ".DS_Store" in their paths.</span>
+<span style="color: #DD4422">            - Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".</span>
+<span style="color: #DD4422">        """</span>
+        excluded_patterns <span style="color: #333333">=</span> [<span style="background-color: #fff0f0">"__MACOSX"</span>, <span style="background-color: #fff0f0">".DS_Store"</span>]
+        excluded_regex <span style="color: #333333">=</span> re<span style="color: #333333">.</span>compile(<span style="background-color: #fff0f0">r"~\$.*\.(docx|xlsx|pptx)"</span>)
+        <span style="color: #008800; font-weight: bold">return</span> <span style="color: #007020">any</span>(pattern <span style="color: #000000; font-weight: bold">in</span> file<span style="color: #333333">.</span>parts <span style="color: #008800; font-weight: bold">for</span> pattern <span style="color: #000000; font-weight: bold">in</span> excluded_patterns) <span style="color: #000000; font-weight: bold">or</span> <span style="color: #007020">bool</span>(excluded_regex<span style="color: #333333">.</span>search(<span style="color: #007020">str</span>(file)))
+
+    <span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">validation_uniq_fspath</span>(<span style="color: #007020">self</span>, target_path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path, exclude_names: <span style="color: #007020">list</span>[<span style="color: #007020">str</span>]) <span style="color: #333333">-&gt;</span> <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, <span style="color: #007020">list</span>[Path]]:
+<span style="color: #bbbbbb">        </span><span style="color: #DD4422">"""Check if there are any non-unique directory names under the target directory.</span>
+
+<span style="color: #DD4422">        Args:</span>
+<span style="color: #DD4422">            target_path (Union[str, Path]): The directory path to scan</span>
+<span style="color: #DD4422">            exclude_names (list[str]): Excluded files</span>
+
+<span style="color: #DD4422">        Raises:</span>
+<span style="color: #DD4422">            StructuredError: An exception is raised when duplicate directory names are detected</span>
+
+<span style="color: #DD4422">        Returns:</span>
+<span style="color: #DD4422">            dict[str, Path]: Returns the unique directory names and a list of files under each directory</span>
+
+<span style="color: #DD4422">        Note:</span>
+<span style="color: #DD4422">            This function checks for the existence of folders with the same name,</span>
+<span style="color: #DD4422">            differing only in case (e.g., 'folder1' and 'Folder1'). In a Unix-based filesystem,</span>
+<span style="color: #DD4422">            such folders can coexist when creating a zip file. However, Windows does not allow</span>
+<span style="color: #DD4422">            for this coexistence when downloading and unzipping the file, leading to an unzip</span>
+<span style="color: #DD4422">            failure in my environment. Therefore, it's necessary to check for folders whose names</span>
+<span style="color: #DD4422">            differ only in case.</span>
+<span style="color: #DD4422">        """</span>
+        verification_files: <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, <span style="color: #007020">list</span>[Path]] <span style="color: #333333">=</span> {}
+        unique_dirname_set <span style="color: #333333">=</span> <span style="color: #007020">set</span>()
+        <span style="color: #008800; font-weight: bold">for</span> d, _, fnames <span style="color: #000000; font-weight: bold">in</span> os<span style="color: #333333">.</span>walk(target_path):
+            <span style="color: #008800; font-weight: bold">if</span> <span style="color: #000000; font-weight: bold">not</span> fnames:
+                <span style="color: #008800; font-weight: bold">continue</span>
+            <span style="color: #888888"># check file</span>
+            _filered_paths <span style="color: #333333">=</span> [Path(d) <span style="color: #333333">/</span> Path(f) <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> fnames <span style="color: #008800; font-weight: bold">if</span> f <span style="color: #000000; font-weight: bold">not</span> <span style="color: #000000; font-weight: bold">in</span> exclude_names]
+            <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> _filered_paths:
+                <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">str</span>(f)<span style="color: #333333">.</span>lower() <span style="color: #000000; font-weight: bold">in</span> unique_dirname_set:
+                    emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"ERROR: folder paths and file paths stored in a zip file must always have unique names."</span>
+                    <span style="color: #008800; font-weight: bold">raise</span> StructuredError(emsg)
+                unique_dirname_set<span style="color: #333333">.</span>add(<span style="color: #007020">str</span>(f)<span style="color: #333333">.</span>lower())
+
+            <span style="color: #888888"># check folder</span>
+            lower_dir <span style="color: #333333">=</span> <span style="color: #007020">str</span>(d)<span style="color: #333333">.</span>lower()
+            <span style="color: #008800; font-weight: bold">if</span> lower_dir <span style="color: #000000; font-weight: bold">in</span> unique_dirname_set:
+                emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"ERROR: folder paths and file paths stored in a zip file must always have unique names."</span>
+                <span style="color: #008800; font-weight: bold">raise</span> StructuredError(emsg)
+            unique_dirname_set<span style="color: #333333">.</span>add(lower_dir)
+            verification_files[lower_dir] <span style="color: #333333">=</span> _filered_paths
+
+        <span style="color: #008800; font-weight: bold">return</span> verification_files
+</code></pre></div></td></tr></table></div>
+</details>
+<div class="doc doc-children">
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFolderParser.read">
+<code class="highlight language-python">read(zipfile, target_path)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Extracts the contents of the zipfile and returns validated file paths.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>zipfile</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Path to the compressed folder to be read.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>target_path</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Destination directory where the zipfile will be extracted.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Returns:</span></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td>
+<code>list[tuple[<span title="pathlib.Path">Path</span>, ...]]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>List[Tuple[Path, ...]]: A list of tuples containing file paths that have been</p>
+</div>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>list[tuple[<span title="pathlib.Path">Path</span>, ...]]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>validated based on unique directory names.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">126</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">127</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">128</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">129</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">130</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">131</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">132</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">133</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">134</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">135</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">136</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">137</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">138</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">139</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">read</span>(<span style="color: #007020">self</span>, zipfile: Path, target_path: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[<span style="color: #007020">tuple</span>[Path, <span style="color: #333333">...</span>]]:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Extracts the contents of the zipfile and returns validated file paths.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        zipfile (Path): Path to the compressed folder to be read.</span>
+<span style="color: #DD4422">        target_path (Path): Destination directory where the zipfile will be extracted.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        List[Tuple[Path, ...]]: A list of tuples containing file paths that have been</span>
+<span style="color: #DD4422">        validated based on unique directory names.</span>
+<span style="color: #DD4422">    """</span>
+    _ <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_unpacked(zipfile, target_path)
+    safe_verification_files <span style="color: #333333">=</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>validation_uniq_fspath(target_path, exclude_names<span style="color: #333333">=</span>[<span style="background-color: #fff0f0">"invoice_org.json"</span>])
+    <span style="color: #008800; font-weight: bold">return</span> [<span style="color: #007020">tuple</span>(f) <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> safe_verification_files<span style="color: #333333">.</span>values()]
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFolderParser._unpacked">
+<code class="highlight language-python">_unpacked(zipfile, target_dir)</code>
+</h3>
+<div class="doc doc-contents">
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">141</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">142</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">143</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">144</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">145</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_unpacked</span>(<span style="color: #007020">self</span>, zipfile: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, target_dir: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #007020">list</span>[Path]:
+    <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">isinstance</span>(target_dir, <span style="color: #007020">str</span>):
+        target_dir <span style="color: #333333">=</span> Path(target_dir)
+    <span style="color: #007020">self</span><span style="color: #333333">.</span>_extract_zip_with_encoding(zipfile, target_dir)
+    <span style="color: #008800; font-weight: bold">return</span> [f <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> target_dir<span style="color: #333333">.</span>glob(<span style="background-color: #fff0f0">"**/*"</span>) <span style="color: #008800; font-weight: bold">if</span> f<span style="color: #333333">.</span>is_file() <span style="color: #000000; font-weight: bold">and</span> <span style="color: #000000; font-weight: bold">not</span> <span style="color: #007020">self</span><span style="color: #333333">.</span>_is_excluded(f)]
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFolderParser._extract_zip_with_encoding">
+<code class="highlight language-python">_extract_zip_with_encoding(zip_path, extract_path)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.</p>
+<p>This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>zip_path</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span> | str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The path to the ZIP file to be extracted.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>extract_path</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span> | str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The directory where the contents of the ZIP file will be extracted.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Raises:</span></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td>
+<code>ValueError</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If encoding detection fails for any filename within the ZIP archive.</p>
+</div>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>UnicodeDecodeError</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If a filename cannot be decoded with the detected or specified encoding.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="example" open="">
+<summary>Example</summary>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>zip_path = 'path/to/your/archive.zip'
+extract_path = 'path/to/extract/directory'
+encoding = 'utf-8'  # or 'cp932' for Japanese text, for example
+self._extract_zip_with_encoding(zip_path, extract_path)</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</details>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">147</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">148</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">149</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">150</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">151</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">152</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">153</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">154</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">155</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">156</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">157</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">158</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">159</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">160</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">161</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">162</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">163</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">164</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">165</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">166</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">167</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">168</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">169</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">170</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">171</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">172</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">173</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">174</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">175</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">176</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">177</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">178</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">179</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_extract_zip_with_encoding</span>(<span style="color: #007020">self</span>, zip_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>, extract_path: Path <span style="color: #333333">|</span> <span style="color: #007020">str</span>) <span style="color: #333333">-&gt;</span> <span style="color: #008800; font-weight: bold">None</span>:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Extracts a ZIP file, handling filenames with a specified encoding to prevent garbled text.</span>
+
+<span style="color: #DD4422">    This function attempts to detect and correct the encoding of filenames within the ZIP file to ensure they are extracted with the correct filenames, avoiding issues with garbled text due to encoding mismatches.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        zip_path (Path | str): The path to the ZIP file to be extracted.</span>
+<span style="color: #DD4422">        extract_path (Path | str): The directory where the contents of the ZIP file will be extracted.</span>
+
+<span style="color: #DD4422">    Raises:</span>
+<span style="color: #DD4422">        ValueError: If encoding detection fails for any filename within the ZIP archive.</span>
+<span style="color: #DD4422">        UnicodeDecodeError: If a filename cannot be decoded with the detected or specified encoding.</span>
+
+<span style="color: #DD4422">    Example:</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; zip_path = 'path/to/your/archive.zip'</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; extract_path = 'path/to/extract/directory'</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; encoding = 'utf-8'  # or 'cp932' for Japanese text, for example</span>
+<span style="color: #DD4422">        &gt;&gt;&gt; self._extract_zip_with_encoding(zip_path, extract_path)</span>
+<span style="color: #DD4422">    """</span>
+    lang_enc_flag: Final <span style="color: #333333">=</span> <span style="color: #005588; font-weight: bold">0x800</span>
+    <span style="color: #008800; font-weight: bold">with</span> zipfile<span style="color: #333333">.</span>ZipFile(zip_path, <span style="background-color: #fff0f0">"r"</span>) <span style="color: #008800; font-weight: bold">as</span> zip_ref:
+        <span style="color: #008800; font-weight: bold">for</span> zip_info <span style="color: #000000; font-weight: bold">in</span> zip_ref<span style="color: #333333">.</span>infolist():
+            old_filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename
+            encoding <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"utf-8"</span> <span style="color: #008800; font-weight: bold">if</span> zip_info<span style="color: #333333">.</span>flag_bits <span style="color: #333333">&amp;</span> lang_enc_flag <span style="color: #008800; font-weight: bold">else</span> <span style="background-color: #fff0f0">"cp437"</span>
+            enc <span style="color: #333333">=</span> charset_normalizer<span style="color: #333333">.</span>detect(zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding))
+            <span style="color: #008800; font-weight: bold">if</span> <span style="color: #000000; font-weight: bold">not</span> enc<span style="color: #333333">.</span>get(<span style="background-color: #fff0f0">"encoding"</span>):
+                enc[<span style="background-color: #fff0f0">"encoding"</span>] <span style="color: #333333">=</span> encoding
+
+            zip_info<span style="color: #333333">.</span>filename <span style="color: #333333">=</span> zip_info<span style="color: #333333">.</span>filename<span style="color: #333333">.</span>encode(encoding)<span style="color: #333333">.</span>decode(<span style="color: #007020">str</span>(enc[<span style="background-color: #fff0f0">"encoding"</span>]))
+            zip_ref<span style="color: #333333">.</span>NameToInfo[zip_info<span style="color: #333333">.</span>filename] <span style="color: #333333">=</span> zip_info
+            <span style="color: #008800; font-weight: bold">del</span> zip_ref<span style="color: #333333">.</span>NameToInfo[old_filename]
+
+            zip_ref<span style="color: #333333">.</span>extract(zip_info, extract_path)
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFolderParser.validation_uniq_fspath">
+<code class="highlight language-python">validation_uniq_fspath(target_path, exclude_names)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Check if there are any non-unique directory names under the target directory.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>target_path</code></td>
+<td>
+<code>Union[str, <span title="pathlib.Path">Path</span>]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The directory path to scan</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>exclude_names</code></td>
+<td>
+<code>list[str]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Excluded files</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Raises:</span></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td>
+<code><span title="rdetoolkit.exceptions.StructuredError">StructuredError</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>An exception is raised when duplicate directory names are detected</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Returns:</span></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td>
+<code>dict[str, list[<span title="pathlib.Path">Path</span>]]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>dict[str, Path]: Returns the unique directory names and a list of files under each directory</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="note" open="">
+<summary>Note</summary>
+<p>This function checks for the existence of folders with the same name,
+differing only in case (e.g., 'folder1' and 'Folder1'). In a Unix-based filesystem,
+such folders can coexist when creating a zip file. However, Windows does not allow
+for this coexistence when downloading and unzipping the file, leading to an unzip
+failure in my environment. Therefore, it's necessary to check for folders whose names
+differ only in case.</p>
+</details>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">204</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">205</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">206</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">207</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">208</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">209</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">210</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">211</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">212</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">213</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">214</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">215</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">216</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">217</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">218</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">219</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">220</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">221</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">222</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">223</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">224</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">225</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">226</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">227</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">228</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">229</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">230</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">231</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">232</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">233</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">234</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">235</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">236</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">237</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">238</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">239</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">240</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">241</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">242</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">243</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">244</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">245</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">246</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">validation_uniq_fspath</span>(<span style="color: #007020">self</span>, target_path: <span style="color: #007020">str</span> <span style="color: #333333">|</span> Path, exclude_names: <span style="color: #007020">list</span>[<span style="color: #007020">str</span>]) <span style="color: #333333">-&gt;</span> <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, <span style="color: #007020">list</span>[Path]]:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Check if there are any non-unique directory names under the target directory.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        target_path (Union[str, Path]): The directory path to scan</span>
+<span style="color: #DD4422">        exclude_names (list[str]): Excluded files</span>
+
+<span style="color: #DD4422">    Raises:</span>
+<span style="color: #DD4422">        StructuredError: An exception is raised when duplicate directory names are detected</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        dict[str, Path]: Returns the unique directory names and a list of files under each directory</span>
+
+<span style="color: #DD4422">    Note:</span>
+<span style="color: #DD4422">        This function checks for the existence of folders with the same name,</span>
+<span style="color: #DD4422">        differing only in case (e.g., 'folder1' and 'Folder1'). In a Unix-based filesystem,</span>
+<span style="color: #DD4422">        such folders can coexist when creating a zip file. However, Windows does not allow</span>
+<span style="color: #DD4422">        for this coexistence when downloading and unzipping the file, leading to an unzip</span>
+<span style="color: #DD4422">        failure in my environment. Therefore, it's necessary to check for folders whose names</span>
+<span style="color: #DD4422">        differ only in case.</span>
+<span style="color: #DD4422">    """</span>
+    verification_files: <span style="color: #007020">dict</span>[<span style="color: #007020">str</span>, <span style="color: #007020">list</span>[Path]] <span style="color: #333333">=</span> {}
+    unique_dirname_set <span style="color: #333333">=</span> <span style="color: #007020">set</span>()
+    <span style="color: #008800; font-weight: bold">for</span> d, _, fnames <span style="color: #000000; font-weight: bold">in</span> os<span style="color: #333333">.</span>walk(target_path):
+        <span style="color: #008800; font-weight: bold">if</span> <span style="color: #000000; font-weight: bold">not</span> fnames:
+            <span style="color: #008800; font-weight: bold">continue</span>
+        <span style="color: #888888"># check file</span>
+        _filered_paths <span style="color: #333333">=</span> [Path(d) <span style="color: #333333">/</span> Path(f) <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> fnames <span style="color: #008800; font-weight: bold">if</span> f <span style="color: #000000; font-weight: bold">not</span> <span style="color: #000000; font-weight: bold">in</span> exclude_names]
+        <span style="color: #008800; font-weight: bold">for</span> f <span style="color: #000000; font-weight: bold">in</span> _filered_paths:
+            <span style="color: #008800; font-weight: bold">if</span> <span style="color: #007020">str</span>(f)<span style="color: #333333">.</span>lower() <span style="color: #000000; font-weight: bold">in</span> unique_dirname_set:
+                emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"ERROR: folder paths and file paths stored in a zip file must always have unique names."</span>
+                <span style="color: #008800; font-weight: bold">raise</span> StructuredError(emsg)
+            unique_dirname_set<span style="color: #333333">.</span>add(<span style="color: #007020">str</span>(f)<span style="color: #333333">.</span>lower())
+
+        <span style="color: #888888"># check folder</span>
+        lower_dir <span style="color: #333333">=</span> <span style="color: #007020">str</span>(d)<span style="color: #333333">.</span>lower()
+        <span style="color: #008800; font-weight: bold">if</span> lower_dir <span style="color: #000000; font-weight: bold">in</span> unique_dirname_set:
+            emsg <span style="color: #333333">=</span> <span style="background-color: #fff0f0">"ERROR: folder paths and file paths stored in a zip file must always have unique names."</span>
+            <span style="color: #008800; font-weight: bold">raise</span> StructuredError(emsg)
+        unique_dirname_set<span style="color: #333333">.</span>add(lower_dir)
+        verification_files[lower_dir] <span style="color: #333333">=</span> _filered_paths
+
+    <span style="color: #008800; font-weight: bold">return</span> verification_files
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-function">
+<h3 class="doc doc-heading" id="src.rdetoolkit.impl.compressed_controller.CompressedFolderParser._is_excluded">
+<code class="highlight language-python">_is_excluded(file)</code>
+</h3>
+<div class="doc doc-contents">
+<p>Checks a specific file pattern to determine whether it should be excluded.</p>
+<p>This method checks if the file matches any of the predefined excluded patterns or regex.
+The excluded patterns are <code>__MACOSX</code> and <code>.DS_Store</code>.
+The excluded regex matches any file that starts with <code>~$</code> and ends with <code>.docx</code>, <code>.xlsx</code>, or <code>.pptx</code>.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>file</code></td>
+<td>
+<code><span title="pathlib.Path">Path</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The file to check.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Returns:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th> <th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>bool</code></td> <td>
+<code>bool</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>True if the file should be excluded, False otherwise.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="rules" open="">
+<summary>Rules</summary>
+<p>Specifically, the files to be excluded are:</p>
+<ul>
+<li>Files containing "__MACOSX" or ".DS_Store" in their paths.</li>
+<li>Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".</li>
+</ul>
+</details>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">181</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">182</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">183</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">184</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">185</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">186</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">187</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">188</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">189</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">190</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">191</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">192</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">193</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">194</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">195</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">196</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">197</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">198</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">199</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">200</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">201</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">202</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">_is_excluded</span>(<span style="color: #007020">self</span>, file: Path) <span style="color: #333333">-&gt;</span> <span style="color: #007020">bool</span>:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Checks a specific file pattern to determine whether it should be excluded.</span>
+
+<span style="color: #DD4422">    This method checks if the file matches any of the predefined excluded patterns or regex.</span>
+<span style="color: #DD4422">    The excluded patterns are `__MACOSX` and `.DS_Store`.</span>
+<span style="color: #DD4422">    The excluded regex matches any file that starts with `~$` and ends with `.docx`, `.xlsx`, or `.pptx`.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        file (Path): The file to check.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        bool: True if the file should be excluded, False otherwise.</span>
+
+<span style="color: #DD4422">    Rules:</span>
+<span style="color: #DD4422">        Specifically, the files to be excluded are:</span>
+
+<span style="color: #DD4422">        - Files containing "__MACOSX" or ".DS_Store" in their paths.</span>
+<span style="color: #DD4422">        - Files starting with "~$" and ending with ".docx", ".xlsx", or ".pptx".</span>
+<span style="color: #DD4422">    """</span>
+    excluded_patterns <span style="color: #333333">=</span> [<span style="background-color: #fff0f0">"__MACOSX"</span>, <span style="background-color: #fff0f0">".DS_Store"</span>]
+    excluded_regex <span style="color: #333333">=</span> re<span style="color: #333333">.</span>compile(<span style="background-color: #fff0f0">r"~\$.*\.(docx|xlsx|pptx)"</span>)
+    <span style="color: #008800; font-weight: bold">return</span> <span style="color: #007020">any</span>(pattern <span style="color: #000000; font-weight: bold">in</span> file<span style="color: #333333">.</span>parts <span style="color: #008800; font-weight: bold">for</span> pattern <span style="color: #000000; font-weight: bold">in</span> excluded_patterns) <span style="color: #000000; font-weight: bold">or</span> <span style="color: #007020">bool</span>(excluded_regex<span style="color: #333333">.</span>search(<span style="color: #007020">str</span>(file)))
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div><h2 id="parse_compressedfile_mode">parse_compressedfile_mode</h2>
+<div class="doc doc-object doc-function">
+<div class="doc doc-contents first">
+<p>Parses the mode of a compressed file and returns the corresponding parser object.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>xlsx_invoice</code></td>
+<td>
+<code><span title="pandas.DataFrame">DataFrame</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The invoice data in Excel format.</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="doc-section-title">Returns:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th> <th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>ICompressedFileStructParser</code></td> <td>
+<code><span title="rdetoolkit.interfaces.filechecker.ICompressedFileStructParser">ICompressedFileStructParser</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>An instance of the compressed file structure parser.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>src/rdetoolkit/impl/compressed_controller.py</code></summary>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">249</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">250</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">251</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">252</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">253</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">254</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">255</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">256</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">257</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">258</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">259</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">260</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">261</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">262</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">263</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">def</span> <span style="color: #0066BB; font-weight: bold">parse_compressedfile_mode</span>(
+    xlsx_invoice: pd<span style="color: #333333">.</span>DataFrame,
+) <span style="color: #333333">-&gt;</span> ICompressedFileStructParser:
+<span style="color: #bbbbbb">    </span><span style="color: #DD4422">"""Parses the mode of a compressed file and returns the corresponding parser object.</span>
+
+<span style="color: #DD4422">    Args:</span>
+<span style="color: #DD4422">        xlsx_invoice (pandas.DataFrame): The invoice data in Excel format.</span>
+
+<span style="color: #DD4422">    Returns:</span>
+<span style="color: #DD4422">        ICompressedFileStructParser: An instance of the compressed file structure parser.</span>
+<span style="color: #DD4422">    """</span>
+    <span style="color: #008800; font-weight: bold">if</span> <span style="background-color: #fff0f0">"data_file_names/name"</span> <span style="color: #000000; font-weight: bold">in</span> xlsx_invoice<span style="color: #333333">.</span>columns:
+        <span style="color: #888888"># File Mode</span>
+        <span style="color: #008800; font-weight: bold">return</span> CompressedFlatFileParser(xlsx_invoice)
+    <span style="color: #008800; font-weight: bold">return</span> CompressedFolderParser(xlsx_invoice)
+</code></pre></div></td></tr></table></div>
+</details>
+</div>
+</div>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/nims-dpfc/rdetoolkit" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<div class="md-consent" data-md-component="consent" hidden="" id="__consent">
+<div class="md-consent__overlay"></div>
+<aside class="md-consent__inner">
+<form class="md-consent__form md-grid md-typeset" name="consent">
+<h4>Cookie consent</h4>
+<p>We use cookies to recognize your repeated visits and preferences, as well as to measure the effectiveness of our documentation and whether users find what they're searching for. With your consent, you're helping us to make our documentation better.</p>
+<input class="md-toggle" id="__settings" type="checkbox"/>
+<div class="md-consent__settings">
+<ul class="task-list">
+<li class="task-list-item">
+<label class="task-list-control">
+<input checked="" name="github" type="checkbox"/>
+<span class="task-list-indicator"></span>
+          GitHub
+        </label>
+</li>
+</ul>
+</div>
+<div class="md-consent__controls">
+<button class="md-button md-button--primary">Accept</button>
+<label class="md-button" for="__settings">Manage settings</label>
+</div>
+</form>
+</aside>
+</div>
+<script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout((function(){document.querySelector("[data-md-component=consent]").hidden=!1}),250);var form=document.forms.consent;for(var action of["submit","reset"])form.addEventListener(action,(function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map((function(e){return[e,!0]})))),location.hash="",location.reload()}))</script>
+<script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.top", "toc.integrate", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+<script src="../../../assets/javascripts/bundle.d6f25eb3.min.js"></script>
+<script src="https://unpkg.com/mermaid@10.9.0/dist/mermaid.min.js"></script>
+</body>
+</html>
