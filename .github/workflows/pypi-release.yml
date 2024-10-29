@@ -111,6 +111,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+      - name: Set up Python 32-bit
+        if: matrix.platform.target == 'x86'
+        run: |
+          choco install python --version=3.12.7 --x86
+          echo "##[set-env name=PATH]::C:\hostedtoolcache\windows\Python\3.12.7\x86\Scripts;C:\hostedtoolcache\windows\Python\3.12.7\x86;$(PATH)"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
