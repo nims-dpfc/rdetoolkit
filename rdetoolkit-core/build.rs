@@ -1,6 +1,11 @@
 use std::process::Command;
 
 fn main() {
+    // SKIP_BUILD_RS環境変数が"1"の場合、build.rsをスキップ
+    if std::env::var("SKIP_BUILD_RS").unwrap_or_default() == "1" {
+        return;
+    }
+
     if cfg!(target_os = "windows") {
         // Pythonのバージョン情報を取得
         let version = Command::new("python")
