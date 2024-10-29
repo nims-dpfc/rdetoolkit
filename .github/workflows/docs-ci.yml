@@ -53,9 +53,11 @@ jobs:
           if [[ ${{ github.ref }} =~ ^refs/tags/ ]]; then
               # push tag
               VERSION=${GITHUB_REF#refs/tags/}
+              mike delete latest || true
               mike deploy --push --update-aliases $VERSION latest
               mike set-default --push latest
           else
               # push to main/master branch
+              mike delete dev || true
               mike deploy --push --update-aliases dev
           fi
