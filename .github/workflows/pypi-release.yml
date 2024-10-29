@@ -29,6 +29,7 @@ jobs:
           rust-toolchain: stable
           target: ${{ matrix.target }}
           manylinux: auto
+          docker: true
           args: --release --out dist -i 3.7 3.8 3.9 3.10 3.11 3.12
       - name: Upload wheels
         uses: actions/upload-artifact@v3
