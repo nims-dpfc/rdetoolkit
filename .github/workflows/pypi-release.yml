@@ -246,10 +246,6 @@ jobs:
     needs:
       [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
     steps:
-      - name: Backup Cargo.toml
-        run: |
-          cp Cargo.toml Cargo.toml.bak
-          cp Cargo.toml.publish Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -260,9 +256,6 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing --repository-url https://test.pypi.org/legacy/ wheels-*/*
-      - name: Restore original config
-        run: |
-          mv Cargo.toml.bak Cargo.toml
 
   release-to-pypi:
     name: Release to PyPI
@@ -273,10 +266,6 @@ jobs:
     needs:
       [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
     steps:
-      - name: Backup Cargo.toml
-        run: |
-          cp Cargo.toml Cargo.toml.bak
-          cp Cargo.toml.publish Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -287,9 +276,6 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing dist/**/*
-      - name: Restore original config
-        run: |
-          mv Cargo.toml.bak Cargo.toml
 
   github-release:
     name: Create GitHub Release
@@ -302,10 +288,6 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Backup Cargo.toml
-        run: |
-          cp Cargo.toml Cargo.toml.bak
-          cp Cargo.toml.publish Cargo.toml
       - uses: actions/checkout@v4
       - name: Download all the dists
         uses: actions/download-artifact@v4.1.7
@@ -332,6 +314,3 @@ jobs:
           gh release upload ${{ github.ref_name }} ./dist/**/* \
             --repo '${{ github.repository }}' \
             --clobber
-      - name: Restore original config
-        run: |
-          mv Cargo.toml.bak Cargo.toml
