@@ -37,8 +37,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Python development headers
         run: |
-          sudo apt-get update
-          sudo apt-get install -y python${{ matrix.python-version }}-dev
+          if [ "${{ matrix.python-version }}" = "3.9" ]; then
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-get update
+            sudo apt-get install -y python3.9-dev
+          else
+            sudo apt-get update
+            sudo apt-get install -y python${{ matrix.python-version }}-dev
+          fi
       - name: Install cross-compilation tools
         if: matrix.platform.target != 'x86_64'
         run: |
