@@ -178,6 +178,9 @@ jobs:
           path: dist
       - name: Restore original config
         run: |
+          if [ -f Cargo.toml ]; then
+            rm Cargo.toml
+          fi
           mv Cargo.toml.bak Cargo.toml
 
   macos:
