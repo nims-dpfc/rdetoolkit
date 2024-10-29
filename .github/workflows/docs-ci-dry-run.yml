@@ -46,9 +46,11 @@ jobs:
       - name: Test full deployment process
         run: |
           # Simulate tag deployment
+          mike delete latest || true
           mike deploy test-version latest --allow-empty
 
           # Simulate dev deployment
+          mike delete dev || true
           mike deploy dev --allow-empty
 
           # Check the current state
