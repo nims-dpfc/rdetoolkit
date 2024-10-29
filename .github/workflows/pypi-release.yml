@@ -28,29 +28,19 @@ jobs:
             target: s390x
           - runner: ubuntu-latest
             target: ppc64le
-      fail-fast: false # If you want to build all wheels even if one fails, set this to false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install cross-compilation tools
-        if: matrix.platform.target != 'x86_64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc-arm-linux-gnueabihf \
-            gcc-aarch64-linux-gnu \
-            gcc-s390x-linux-gnu \
-            gcc-powerpc64le-linux-gnu
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter --no-default-features
+          args: --release --out dist --find-interpreter
           sccache: "true"
           manylinux: auto
-      - name: Upload wheel
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-linux-${{ matrix.platform.target }}
@@ -79,13 +69,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install musl tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools
-      - name: Install Rust target
-        run: |
-          rustup target add ${{ matrix.platform.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -105,7 +88,7 @@ jobs:
       matrix:
         platform:
           - runner: windows-latest
-            target: x86_64
+            target: x64
           - runner: windows-latest
             target: x86
       fail-fast: false
@@ -114,11 +97,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Set up Python 32-bit
-        if: matrix.platform.target == 'x86'
-        run: |
-          choco install python --version=3.12.7 --x86
-          echo "##[set-env name=PATH]::C:\hostedtoolcache\windows\Python\3.12.7\x86\Scripts;C:\hostedtoolcache\windows\Python\3.12.7\x86;$env:PATH"
+          architecture: ${{ matrix.platform.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
