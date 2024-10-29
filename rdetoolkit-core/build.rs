@@ -2,31 +2,10 @@ use std::process::Command;
 
 fn main() {
     if cfg!(target_os = "windows") {
-        let python_include = Command::new("python")
-            .arg("-c")
-            .arg("import sysconfig;print(sysconfig.get_path('include'))")
-            .output()
-            .expect("Failed to get Python include directory");
-
-        let python_include = String::from_utf8(python_include.stdout)
-            .expect("Invalid UTF-8")
-            .trim()
-            .to_string();
-
-        let python_libs = Command::new("python")
-            .arg("-c")
-            .arg("import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
-            .output()
-            .expect("Failed to get Python lib path");
-
-        let python_libs = String::from_utf8(python_libs.stdout)
-            .expect("Invalid UTF-8")
-            .trim()
-            .to_string();
-
+        // Pythonのバージョン情報を取得
         let version = Command::new("python")
             .arg("-c")
-            .arg("import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+            .arg("import sys; print(f'{sys.version_info.major}{sys.version_info.minor}')")
             .output()
             .expect("Failed to get Python version");
 
@@ -35,9 +14,41 @@ fn main() {
             .trim()
             .to_string();
 
+        // Pythonのライブラリパスを取得
+        let python_libs = Command::new("python")
+            .arg("-c")
+            .arg(
+                "import sys; from pathlib import Path; print(Path(sys.executable).parent / 'libs')",
+            )
+            .output()
+            .expect("Failed to get Python lib path");
+
+        let python_libs = String::from_utf8(python_libs.stdout)
+            .expect("Invalid UTF-8")
+            .trim()
+            .to_string();
+
+        // インクルードパスを取得
+        let python_include = Command::new("python")
+            .arg("-c")
+            .arg("import sysconfig; print(sysconfig.get_path('include'))")
+            .output()
+            .expect("Failed to get Python include path");
+
+        let python_include = String::from_utf8(python_include.stdout)
+            .expect("Invalid UTF-8")
+            .trim()
+            .to_string();
+
+        // Windows用の設定
         println!("cargo:rustc-link-search=native={}", python_libs);
         println!("cargo:rustc-link-lib=python{}", version);
         println!("cargo:include={}", python_include);
+
+        // デバッグ情報を出力
+        println!("cargo:warning=Python version: {}", version);
+        println!("cargo:warning=Python libs path: {}", python_libs);
+        println!("cargo:warning=Python include path: {}", python_include);
     } else {
         // Unix系OSの場合
         let python_version_output = Command::new("python3")
