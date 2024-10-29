@@ -1,6 +1,16 @@
 [build]
 rustflags = []
 
+[target.'cfg(all())']
+rustflags = [
+    "-C",
+    "link-arg=-Wl,-rpath,/path/to/python/lib",
+    "-C",
+    "link-arg=-L/path/to/python/lib",
+    "-C",
+    "link-arg=-lpython3.x",
+]
+
 [target.aarch64-apple-darwin]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
 
