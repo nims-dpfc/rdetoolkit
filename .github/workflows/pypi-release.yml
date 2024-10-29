@@ -10,12 +10,11 @@ on:
     branches:
       - main
 
-env:
-  SKIP_BUILD_RS: "1"
-
 jobs:
   linux:
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         target: [x86_64, i686]
@@ -39,6 +38,8 @@ jobs:
 
   linux-cross:
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         target: [aarch64, armv7, s390x, ppc64le]
@@ -62,6 +63,8 @@ jobs:
 
   musllinux:
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         target:
@@ -87,6 +90,8 @@ jobs:
 
   musllinux-cross:
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         platform:
@@ -114,6 +119,8 @@ jobs:
 
   windows:
     runs-on: ${{ matrix.platform.runner }}
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         platform:
@@ -142,6 +149,8 @@ jobs:
 
   macos:
     runs-on: ${{ matrix.platform.runner }}
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         platform:
@@ -168,6 +177,8 @@ jobs:
 
   sdist:
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Build sdist
@@ -184,6 +195,8 @@ jobs:
   release-to-testpypi:
     name: Release to TestPyPI
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
@@ -202,6 +215,8 @@ jobs:
   release-to-pypi:
     name: Release to PyPI
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
@@ -221,6 +236,8 @@ jobs:
     name: Create GitHub Release
     needs: [release-to-pypi]
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
