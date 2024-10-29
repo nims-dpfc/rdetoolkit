@@ -237,6 +237,28 @@ jobs:
           name: wheels-sdist
           path: dist
 
+  test-dist:
+    name: Test dist directory
+    runs-on: ubuntu-latest
+    needs:
+      [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Check dist directory contents
+        run: |
+          echo "Contents of dist directory:"
+          ls -l dist
+          if [ -z "$(ls -A dist/*.whl 2>/dev/null)" ]; then
+            echo "Error: No .whl files found in dist directory."
+            exit 1
+          fi
+          if [ -z "$(ls -A dist/*.tar.gz 2>/dev/null)" ]; then
+            echo "Error: No .tar.gz files found in dist directory."
+            exit 1
+          fi
+
   release-to-testpypi:
     name: Release to TestPyPI
     runs-on: ubuntu-latest
