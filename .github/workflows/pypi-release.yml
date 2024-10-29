@@ -83,6 +83,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
+      - name: Install Rust target
+        run: |
+          rustup target add ${{ matrix.platform.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -105,6 +108,7 @@ jobs:
             target: x86_64
           - runner: windows-latest
             target: x86
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -114,7 +118,7 @@ jobs:
         if: matrix.platform.target == 'x86'
         run: |
           choco install python --version=3.12.7 --x86
-          echo "##[set-env name=PATH]::C:\hostedtoolcache\windows\Python\3.12.7\x86\Scripts;C:\hostedtoolcache\windows\Python\3.12.7\x86;$(PATH)"
+          echo "##[set-env name=PATH]::C:\hostedtoolcache\windows\Python\3.12.7\x86\Scripts;C:\hostedtoolcache\windows\Python\3.12.7\x86;$env:PATH"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
