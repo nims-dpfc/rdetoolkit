@@ -19,20 +19,32 @@ jobs:
           - runner: ubuntu-latest
             target: x86_64
           - runner: ubuntu-latest
-            target: x86
+            target: i686
           - runner: ubuntu-latest
             target: aarch64
           - runner: ubuntu-latest
-            target: armv7
+            target: armv7l
           - runner: ubuntu-latest
             target: s390x
           - runner: ubuntu-latest
             target: ppc64le
+      fail-fast: false # If you want to build all wheels even if one fails, set this to false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+      - name: Install cross-compilation tools
+        if: matrix.platform.target != 'x86_64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-arm-linux-gnueabihf \
+            gcc-aarch64-linux-gnu \
+            gcc-s390x-linux-gnu \
+            gcc-powerpc64le-linux-gnu \
+            python3-dev \
+            python3.10-dev:${{ matrix.platform.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -40,6 +52,7 @@ jobs:
           args: --release --out dist --find-interpreter --no-default-features
           sccache: "true"
           manylinux: auto
+          container: quay.io/pypa/${{ matrix.platform.image }}
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
