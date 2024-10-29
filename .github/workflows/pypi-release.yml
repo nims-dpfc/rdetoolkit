@@ -162,6 +162,7 @@ jobs:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
       - name: Backup Cargo.toml
+        shell: bash
         run: |
           cp Cargo.toml Cargo.toml.bak
           cp Cargo.toml.publish Cargo.toml
@@ -177,6 +178,7 @@ jobs:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
       - name: Restore original config
+        shell: bash
         run: |
           if [ -f Cargo.toml ]; then
             rm Cargo.toml
