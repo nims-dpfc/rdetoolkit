@@ -12,52 +12,27 @@ on:
 
 jobs:
   linux:
-    runs-on: ${{ matrix.platform.runner }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform:
-          - runner: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - runner: ubuntu-latest
-            target: i686-unknown-linux-gnu
-          - runner: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-          - runner: ubuntu-latest
-            target: armv7-unknown-linux-gnueabihf
-          - runner: ubuntu-latest
-            target: s390x-unknown-linux-gnu
-          - runner: ubuntu-latest
-            target: powerpc64le-unknown-linux-gnu
+        target: [x86_64, i686, aarch64, armv7l, s390x, ppc64le]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          rustflags: "" # -D warningsを無効化
-      - name: Install cross-compilation tools
-        if: matrix.platform.target != 'x86_64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc-arm-linux-gnueabihf \
-            gcc-aarch64-linux-gnu \
-            gcc-s390x-linux-gnu \
-            gcc-powerpc64le-linux-gnu
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.platform.target }}
+          python-version: "3.11"
+          architecture: ${{ matrix.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
-          sccache: "true"
+          rust-toolchain: stable
+          target: ${{ matrix.target }}
           manylinux: auto
+          args: --release --out dist -i 3.7 3.8 3.9 3.10 3.11 3.12
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: wheels-linux-${{ matrix.platform.target }}
+          name: wheels-linux-${{ matrix.target }}
           path: dist
 
   musllinux:
