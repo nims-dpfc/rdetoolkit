@@ -13,8 +13,6 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    env:
-      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         target: [x86_64, i686]
@@ -23,6 +21,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -35,6 +37,9 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   linux-cross:
     runs-on: ubuntu-latest
@@ -48,6 +53,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -60,6 +69,9 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   musllinux:
     runs-on: ubuntu-latest
@@ -75,6 +87,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -87,6 +103,9 @@ jobs:
         with:
           name: wheels-musllinux-${{ matrix.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   musllinux-cross:
     runs-on: ubuntu-latest
@@ -104,6 +123,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -116,6 +139,9 @@ jobs:
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   windows:
     runs-on: ${{ matrix.platform.runner }}
@@ -135,6 +161,10 @@ jobs:
         with:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -146,6 +176,9 @@ jobs:
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   macos:
     runs-on: ${{ matrix.platform.runner }}
@@ -163,6 +196,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -174,6 +211,9 @@ jobs:
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   sdist:
     runs-on: ubuntu-latest
@@ -201,6 +241,10 @@ jobs:
     needs:
       [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
     steps:
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -211,6 +255,9 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing --repository-url https://test.pypi.org/legacy/ wheels-*/*
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   release-to-pypi:
     name: Release to PyPI
@@ -221,6 +268,10 @@ jobs:
     needs:
       [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
     steps:
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -231,6 +282,9 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing dist/**/*
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   github-release:
     name: Create GitHub Release
@@ -243,6 +297,10 @@ jobs:
       contents: write
       id-token: write
     steps:
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - uses: actions/checkout@v4
       - name: Download all the dists
         uses: actions/download-artifact@v4.1.7
@@ -269,3 +327,6 @@ jobs:
           gh release upload ${{ github.ref_name }} ./dist/**/* \
             --repo '${{ github.repository }}' \
             --clobber
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
