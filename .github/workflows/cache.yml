@@ -1,8 +1,8 @@
 name: cleanup caches by a branch
 on:
   pull_request:
-    types:
-      - closed
+    branches:
+      - main
 
 jobs:
   cleanup:
