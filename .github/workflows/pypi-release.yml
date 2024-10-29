@@ -6,102 +6,189 @@ on:
       - main
     tags:
       - "v*.*.*"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   linux:
-    runs-on: ${{ matrix.platform.runner }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform:
-          - runner: ubuntu-latest
-            target: x86_64
-          - runner: ubuntu-latest
-            target: x86
-          - runner: ubuntu-latest
-            target: aarch64
-          - runner: ubuntu-latest
-            target: armv7
-          - runner: ubuntu-latest
-            target: s390x
-          - runner: ubuntu-latest
-            target: ppc64le
+        target: [x86_64, i686]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter --no-default-features
-          sccache: "true"
+          rust-toolchain: stable
+          target: ${{ matrix.target }}
           manylinux: auto
-      - name: Upload wheel
+          args: --release --out dist -i 3.7 3.8 3.9 3.10 3.11 3.12
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-${{ matrix.platform.target }}
+          name: wheels-linux-${{ matrix.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
-  musllinux:
-    runs-on: ${{ matrix.platform.runner }}
+  linux-cross:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
-        platform:
-          - runner: ubuntu-latest
-            target: x86_64
-          - runner: ubuntu-latest
-            target: x86
-          - runner: ubuntu-latest
-            target: aarch64
-          - runner: ubuntu-latest
-            target: armv7
+        target: [aarch64, armv7, s390x, ppc64le]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.platform.target }}
-          args: --release -out dist --find-interpreter
-          sccache: "true"
+          rust-toolchain: stable
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release --out dist -i 3.7 3.8 3.9 3.10 3.11 3.12
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
+
+  musllinux:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - i686-unknown-linux-musl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: stable
+          target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-      - name: Upload wheel
+          args: --release --out dist -i 3.7 3.8 3.9 3.10 3.11 3.12
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-${{ matrix.target }}
+          path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
+
+  musllinux-cross:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
+    strategy:
+      matrix:
+        platform:
+          - target: aarch64-unknown-linux-musl
+            arch: aarch64
+          - target: armv7-unknown-linux-musleabihf
+            arch: armv7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: stable
+          target: ${{ matrix.platform.target }}
+          manylinux: musllinux_1_2
+          args: --release --out dist -i 3.7 3.8 3.9 3.10 3.11 3.12
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   windows:
     runs-on: ${{ matrix.platform.runner }}
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         platform:
           - runner: windows-latest
-            target: x86_64
+            target: x64
           - runner: windows-latest
             target: x86
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+          architecture: ${{ matrix.platform.target }}
+      - name: Backup Cargo.toml
+        shell: bash
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
           sccache: "true"
-      - name: Upload wheel
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
+      - name: Restore original config
+        shell: bash
+        run: |
+          if [ -f Cargo.toml ]; then
+            rm Cargo.toml
+          fi
+          mv Cargo.toml.bak Cargo.toml
 
   macos:
     runs-on: ${{ matrix.platform.runner }}
+    env:
+      SKIP_BUILD_RS: "1"
     strategy:
       matrix:
         platform:
@@ -114,6 +201,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -125,9 +216,14 @@ jobs:
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: dist
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   sdist:
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Build sdist
@@ -144,9 +240,16 @@ jobs:
   release-to-testpypi:
     name: Release to TestPyPI
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [linux, musllinux, windows, macos, sdist]
+    env:
+      SKIP_BUILD_RS: "1"
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
     steps:
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -157,13 +260,23 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing --repository-url https://test.pypi.org/legacy/ wheels-*/*
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   release-to-pypi:
-    name: Relase to PyPI
+    name: Release to PyPI
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [linux, musllinux, windows, macos, sdist]
+    env:
+      SKIP_BUILD_RS: "1"
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      [linux, linux-cross, musllinux, musllinux-cross, windows, macos, sdist]
     steps:
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -174,16 +287,25 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing dist/**/*
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
 
   github-release:
     name: Create GitHub Release
     needs: [release-to-pypi]
     runs-on: ubuntu-latest
+    env:
+      SKIP_BUILD_RS: "1"
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
       id-token: write
     steps:
+      - name: Backup Cargo.toml
+        run: |
+          cp Cargo.toml Cargo.toml.bak
+          cp Cargo.toml.publish Cargo.toml
       - uses: actions/checkout@v4
       - name: Download all the dists
         uses: actions/download-artifact@v4.1.7
@@ -210,3 +332,6 @@ jobs:
           gh release upload ${{ github.ref_name }} ./dist/**/* \
             --repo '${{ github.repository }}' \
             --clobber
+      - name: Restore original config
+        run: |
+          mv Cargo.toml.bak Cargo.toml
