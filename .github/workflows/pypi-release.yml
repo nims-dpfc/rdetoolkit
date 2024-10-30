@@ -315,8 +315,8 @@ jobs:
         uses: sigstore/gh-action-sigstore-python@v2.1.1
         with:
           inputs: >-
-            ./dist/*.whl
-            ./dist/*.tar.gz
+            dist/**/*.whl
+            dist/**/*.tar.gz
       - name: Create a GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -329,6 +329,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
-          gh release upload ${{ github.ref_name }} ./dist/**/*.whl dist/**/*.tar.gz \
+          gh release upload ${{ github.ref_name }} dist/**/*.whl dist/**/*.tar.gz \
             --repo '${{ github.repository }}' \
             --clobber
