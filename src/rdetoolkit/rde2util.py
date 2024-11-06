@@ -739,4 +739,4 @@ def dict2meta(metadef_filepath: pathlib.Path, metaout_filepath: pathlib.Path, co
     meta_obj.assign_vals(const_info)
     meta_obj.assign_vals(val_info)
 
-    return meta_obj.writefile(metaout_filepath)
+    return meta_obj.writefile(str(metaout_filepath))
