@@ -25,7 +25,7 @@ def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logg
         ```python
         from rdetoolkit import rdelogger
 
-        logger = rdelogger.get_logger(__name__, "data/log/rdesys.log")
+        logger = rdelogger.get_logger(__name__, "data/logs/rdesys.log")
 
         # If you want to output a debug message, add the following code
         logger.debug('This is a debug message.')
