@@ -24,7 +24,7 @@ from rdetoolkit.validation import invoice_validate, metadata_validate
 _CallbackType = Callable[[RdeInputDirPaths, RdeOutputResourcePath], None]
 
 
-logger = get_logger(__name__, file_path="data/log/rdesys.log")
+logger = get_logger(__name__, file_path="data/logs/rdesys.log")
 
 
 def rdeformat_mode_process(
