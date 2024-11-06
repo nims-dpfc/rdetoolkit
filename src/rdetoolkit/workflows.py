@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Generator
 from pathlib import Path
 
@@ -220,13 +221,19 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
                 status = invoice_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
 
             if error_info and any(value is not None for value in error_info.values()):
-                code = error_info.get("code")
+                _code = error_info.get("code")
+                code = 999
+                if isinstance(_code, int):
+                    code = _code
+                elif isinstance(_code, str):
+                    with contextlib.suppress(ValueError):
+                        code = int(_code)
                 status = WorkflowExecutionStatus(
                     run_id=str(idx),
                     title=f"Structured Process Faild: {mode}",
                     status="failed",
                     mode=mode,
-                    error_code=int(code) if isinstance(code, int) or (isinstance(code, str) and code.isdigit()) else 999,
+                    error_code=code,
                     error_message=error_info.get("message"),
                     stacktrace=error_info.get("stacktrace"),
                     target=",".join(str(file) for file in rdeoutput_resource.rawfiles),
