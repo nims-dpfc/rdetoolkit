@@ -6,14 +6,19 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
+      - name: Install GitHub CLI
+        uses: actions/setup-node@v3
+        with:
+          node-version: "14"
+      - name: Install GitHub CLI Cache Extension
+        run: gh extension install actions/gh-actions-cache
       - name: Cleanup
         run: |
-          gh extension install actions/gh-actions-cache
           set +e
-          echo "Deleting caches..."
+          echo "Deleting all caches..."
           gh actions-cache list -R $REPO -L 100 | while IFS=$'\t' read -r cacheKey _ branch _
           do
-            gh actions-cache delete "$cacheKey" -R $REPO -B "$branch" --confirm
+            gh actions-cache delete "$cacheKey" -R $REPO --confirm
           done
           echo "Done"
         env:
