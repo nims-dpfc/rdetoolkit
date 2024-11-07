@@ -1,4 +1,4 @@
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 from rdetoolkit.core import resize_image_aspect_ratio
 
