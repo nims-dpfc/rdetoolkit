@@ -173,11 +173,14 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
 
         ```python
         ### main.py
-        from rdetoolkit.config import Config
+        from rdetoolkit.config import Config, MultiDataTileSettings, SystemSettings
         from rdetoolkit import workflow
         from custom import custom_dataset # User-defined structuring processing function
 
-        cfg = Config(extended_mode="rdeformat", save_raw=True, save_main_image=False, save_thumbnail_image=False, magic_variable=False)
+        cfg = Config(
+            system=SystemSettings(extended_mode="MultiDataTile", save_raw=False, save_nonshared_raw=True, save_thumbnail_image=True),
+            multidata_tile=MultiDataTileSettings(ignore_errors="False")
+        )
         workflow.run(custom_dataset_function=custom_dataset, config=cfg) # Execute structuring process
         ```
     """
