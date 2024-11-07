@@ -89,9 +89,6 @@ def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logg
     if file_path is None:
         return logger
 
-    # add a file handler
-    if not os.path.exists(os.path.dirname(file_path)):
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
     file_handler = LazyFileHandler(str(file_path))
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)

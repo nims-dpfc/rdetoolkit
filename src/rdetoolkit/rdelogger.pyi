@@ -5,6 +5,13 @@ from rdetoolkit.models.rde2types import RdeFsPath as RdeFsPath
 from rdetoolkit.rde2util import StorageDir as StorageDir
 from typing import Callable
 
+class LazyFileHandler(logging.Handler):
+    filename: Incomplete
+    mode: Incomplete
+    encoding: Incomplete
+    def __init__(self, filename: str, mode: str = 'a', encoding: str = 'utf-8') -> None: ...
+    def emit(self, record: logging.LogRecord) -> None: ...
+
 def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logger: ...
 
 class CustomLog:
