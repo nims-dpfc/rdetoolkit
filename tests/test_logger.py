@@ -3,9 +3,12 @@ import logging.handlers
 import os
 import pathlib
 import shutil
+from typing import Generator
 from unittest import mock
 
-from rdetoolkit.rdelogger import get_logger, CustomLog, log_decorator
+import pytest
+
+from rdetoolkit.rdelogger import get_logger, CustomLog, log_decorator, LazyFileHandler
 
 
 def test_custom_log():
@@ -51,8 +54,186 @@ def test_get_logger_with_filepath():
     logger = get_logger(name, file_path=filepath)
     assert logger.name == name
     assert len(logger.handlers) == 1
-    assert isinstance(logger.handlers[0], logging.FileHandler)
-    assert pathlib.Path(logger.handlers[0].baseFilename) == pathlib.Path(filepath)
+    assert isinstance(logger.handlers[0], LazyFileHandler)
 
     if os.path.exists(test_dir):
         shutil.rmtree(test_dir)
+
+
+@pytest.fixture
+def tmp_path():
+    yield pathlib.Path("tmp_tests")
+
+    if os.path.exists("tmp_tests"):
+        shutil.rmtree("tmp_tests")
+
+
+def test_get_logger_without_file():
+    """Test logger creation without file path"""
+    logger = get_logger("test_logger")
+
+    assert isinstance(logger, logging.Logger)
+    assert logger.name == "test_logger"
+    assert logger.level == logging.DEBUG
+    assert len(logger.handlers) == 0
+
+
+def test_get_logger_with_file(tmp_path):
+    """Test logger creation with file path"""
+    log_file = tmp_path / "test.log"
+    logger = get_logger("test_logger", file_path=log_file)
+
+    assert isinstance(logger, logging.Logger)
+    assert logger.name == "test_logger"
+    assert logger.level == logging.DEBUG
+    assert len(logger.handlers) == 1
+    assert isinstance(logger.handlers[0], LazyFileHandler)
+
+    # Test log writing
+    test_message = "Test debug message"
+    logger.debug(test_message)
+
+    assert log_file.exists()
+    content = log_file.read_text()
+    assert test_message in content
+    assert "[test_logger](DEBUG)" in content
+
+
+def test_get_logger_creates_directory(tmp_path):
+    """Test logger creates directory structure if not exists"""
+    log_dir = tmp_path / "logs" / "subdir"
+    log_file = log_dir / "test.log"
+
+    assert not log_dir.exists()
+
+    logger = get_logger("test_logger", file_path=log_file)
+    logger.debug("Test message")
+
+    assert log_dir.exists()
+    assert log_file.exists()
+
+
+def test_get_logger_formatter():
+    """Test logger formatter"""
+    logger = get_logger("test_logger")
+
+    assert logger.handlers == []
+    for handler in logger.handlers:
+        formatter = handler.formatter
+        assert formatter._fmt == "%(asctime)s - [%(name)s](%(levelname)s) - %(message)s"
+
+
+@pytest.fixture(autouse=True)
+def cleanup_logger():
+    """各テストの前後でロガーのハンドラーをクリアする"""
+    logger = logging.getLogger("test_logger")
+    logger.handlers.clear()
+
+    yield
+
+    # テスト後のクリーンアップ
+    logger.handlers.clear()
+
+
+@pytest.fixture
+def temp_log_file() -> Generator[str, None, None]:
+    """一時的なログファイルのパスを提供するフィクスチャ。
+
+    Args:
+        tmp_path: Pytestが提供する一時ディレクトリのPath
+
+    Yields:
+        str: 一時的なログファイルのパス
+    """
+    tmp_path = pathlib.Path(__file__).parent / "logs"
+    log_path = tmp_path / "test_logs" / "test.log"
+    yield str(log_path)
+
+    if log_path.exists():
+        log_path.unlink()
+    if log_path.parent.exists():
+        log_path.parent.rmdir()
+
+
+class TestLazyFileHandler:
+    def test_init(self, temp_log_file: str) -> None:
+        handler = LazyFileHandler(temp_log_file)
+
+        assert handler.filename == temp_log_file
+        assert handler.mode == "a"
+        assert handler.encoding == "utf-8"
+        assert handler._handler is None
+        assert not os.path.exists(temp_log_file)
+
+    def test_emit_creates_file(self, temp_log_file: str) -> None:
+        handler = LazyFileHandler(temp_log_file)
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=42,
+            msg="Test message",
+            args=(),
+            exc_info=None,
+        )
+        handler.emit(record)
+        assert handler._handler is not None
+
+    def test_multiple_emit_calls(self, temp_log_file: str) -> None:
+        """複数回のemitが呼び出しで同じハンドラーが再利用されることを確認するテスト"""
+        handler = LazyFileHandler(temp_log_file)
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=42,
+            msg="Test message",
+            args=(),
+            exc_info=None,
+        )
+        handler.emit(record)
+        first_handler = handler._handler
+        handler.emit(record)
+        assert handler._handler is first_handler
+
+    def test_costom_mode_and_encoding(self, temp_log_file) -> None:
+        """存在しないディレクトリが自動的に作成されることを確認するテスト"""
+        deep_path = pathlib.Path("tests", "deep", "nested", "dir", "test.log")
+        handler = LazyFileHandler(str(deep_path))
+        record = logging.LogRecord(
+            name="test_logger",
+            level=logging.DEBUG,
+            pathname="test.py",
+            lineno=1,
+            msg="Test message",
+            args=(),
+            exc_info=None
+        )
+
+        handler.emit(record)
+
+        assert deep_path.exists()
+        assert deep_path.parent.exists()
+
+    def test_formatter_and_level_propagation(self, temp_log_file: str) -> None:
+        """フォーマッターとログレベルが正しく伝播することを確認するテスト"""
+        handler = LazyFileHandler(temp_log_file)
+        formatter = logging.Formatter("%(message)s")
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.WARNING)
+
+        record = logging.LogRecord(
+            name="test_logger",
+            level=logging.WARNING,
+            pathname="test.py",
+            lineno=1,
+            msg="Test message",
+            args=(),
+            exc_info=None
+        )
+
+        handler.emit(record)
+
+        assert handler._handler is not None
+        assert handler._handler.formatter == formatter
+        assert handler._handler.level == logging.WARNING
