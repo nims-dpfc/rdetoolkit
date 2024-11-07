@@ -71,7 +71,7 @@ rdetoolkitのドキュメントは、本リポジトリの`docs`フォルダに�
 ドキュメント更新に関して知っておくべき重要事項について:
 
 - rdetoolkitのドキュメントは、コード自体のdocstringと、その他のドキュメントの2つに大別されます。
-- docstringは、各種モジュールの利用法が記載され、GitLab CI/CDで、自動ビルドされドキュメントが更新されます。
+- docstringは、各種モジュールの利用法が記載され、GitHub Actionsで、自動ビルドされドキュメントが更新されます。
 - docstringは、**Google Style**で記述してください。
   - 参考: [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
 
@@ -124,7 +124,7 @@ Github Pagesに掲載しています。
 
 ### Issueを作成する
 
-問題や不具合が発生した場合、以下のisuueへ起票お願いします。この時、ラベルは`Type:improvement`, `Type: new feature`のどちらかの付与をお願いします。
+問題や不具合が発生した場合、以下のisuueへの書き込みをお願いします。
 
 > <https://github.com/nims-dpfc/rdetoolkit/issues>
 
@@ -132,11 +132,31 @@ Github Pagesに掲載しています。
 
 新しい機能や修正を行う際は、新しいブランチを作成してください。
 
-- ブランチ名の接頭辞は、`develop-v<x.y.z>`というブランチから、末尾に任意の文字列を追加して作成してください。
+- ブランチ名の接頭辞は、`develop/v<x.y.z>`というブランチから、末尾に任意の文字列を追加して作成してください。
 
 ```shell
-git checkout -b develop-v<x.y.z>-<任意の機能名など> origin/develop-v<x.y.z>
+git checkout -b develop/v<x.y.z>/<任意の機能名など> origin/develop/v<x.y.z>
 ```
+
+**接頭辞の例**
+
+| **接頭辞**    | **意味**                                   | **例**                           |
+| ------------- | ------------------------------------------ | -------------------------------- |
+| `feature/`    | 新機能の開発                               | `feature/user-authentication`    |
+| `bugfix/`     | バグ修正                                   | `bugfix/login-error`             |
+| `fix/`        | バグ修正（`bugfix/`と同様）                | `fix/login-error`                |
+| `hotfix/`     | 緊急の修正が必要な場合                     | `hotfix/critical-security-issue` |
+| `release/`    | リリース準備やバージョン管理               | `release/v1.2.0`                 |
+| `chore/`      | コードのリファクタリングやメンテナンス作業 | `chore/update-dependencies`      |
+| `experiment/` | 試験的な機能やアイデアの検証               | `experiment/new-ui-concept`      |
+| `docs/`       | ドキュメントの更新                         | `docs/update-readme`             |
+| `test/`       | テスト関連の変更                           | `test/add-unit-tests`            |
+| `refactor/`   | コードのリファクタリング                   | `refactor/cleanup-auth-module`   |
+| `ci/`         | 継続的インテグレーション設定の変更         | `ci/update-github-actions`       |
+| `style/`      | コードのスタイルやフォーマットの変更       | `style/format-codebase`          |
+| `perf/`       | パフォーマンス改善                         | `perf/optimize-db-queries`       |
+| `design/`     | デザイン関連の変更                         | `design/update-mockups`          |
+| `security/`   | セキュリティ関連の修正や強化               | `security/enhance-encryption`    |
 
 ### 新機能・修正を加える
 
@@ -168,7 +188,7 @@ tox
 ```shell
 git add .
 git commit -m "#[issue番号] [変更内容の簡単な説明]"
-git push origin develop-v<x.y.z>-<先ほどつけた名称>
+git push origin develop-v<x.y.z>/<任意の名称>
 ```
 
 もし、pre-commitのチェックでコミットできない場合、全てのエラーを解消した上でコミットをお願いします。
