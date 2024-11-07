@@ -2,6 +2,14 @@
 
 `rdelogger `is used to collect execution logs of the structuring process.
 
+## LazyFileHandler
+
+::: src.rdetoolkit.rdelogger.LazyFileHandler
+    options:
+        members:
+            - _ensure_handler
+            - emit
+
 ## get_logger
 
 ::: src.rdetoolkit.rdelogger.get_logger

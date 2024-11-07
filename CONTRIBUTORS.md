@@ -11,3 +11,4 @@ These are the contributors to this project!
 - Hiroaki Tosaka
 - Hitoshi Enami
 - Kumiko Sasajima
+- SASAJIMA Kumiko
