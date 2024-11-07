@@ -9,6 +9,56 @@ from rdetoolkit.models.rde2types import RdeFsPath
 from rdetoolkit.rde2util import StorageDir
 
 
+class LazyFileHandler(logging.Handler):
+    """A logging handler that lazily creates the actual FileHandler when needed.
+
+    This handler delays the creation of the log file until the first log message is emitted.
+    This helps prevent unnecessary file creation when logging is configured but not used.
+
+    Args:
+        filename: The path to the log file.
+        mode: The file opening mode. Defaults to 'a' (append).
+        encoding: The encoding to use for the file. Defaults to None.
+
+    Attributes:
+        filename: The path where the log file will be created.
+        mode: The file opening mode.
+        encoding: The file encoding.
+        _handler: The underlying FileHandler instance, created on first use.
+    """
+
+    def __init__(self, filename: str, mode: str = "a", encoding: str = 'utf-8') -> None:
+        super().__init__()
+        self.filename = filename
+        self.mode = mode
+        self.encoding = encoding
+        self._handler: logging.FileHandler | None = None
+
+    def _ensure_handler(self) -> None:
+        """Creates the actual FileHandler if it hasn't been created yet.
+
+        This method handles the lazy initialization of the FileHandler,
+        creating necessary directories and configuring the handler with
+        the formatter and level settings from the parent handler.
+        """
+        if self._handler is None:
+            if not os.path.exists(os.path.dirname(self.filename)):
+                os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+            self._handler = logging.FileHandler(self.filename, mode=self.mode, encoding=self.encoding)
+            self._handler.setFormatter(self.formatter)
+            self._handler.setLevel(self.level)
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Lazily creates the actual FileHandler and delegates the emission of the log record.
+
+        Args:
+            record: The LogRecord instance containing all the information of the logging event.
+        """
+        self._ensure_handler()
+        if self._handler is not None:
+            self._handler.emit(record)
+
+
 def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logger:
     """Creates a logger using Python's logging module.
 
@@ -42,7 +92,7 @@ def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logg
     # add a file handler
     if not os.path.exists(os.path.dirname(file_path)):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    file_handler = logging.FileHandler(file_path)
+    file_handler = LazyFileHandler(str(file_path))
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
