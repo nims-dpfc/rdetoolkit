@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 import shutil
@@ -127,6 +128,10 @@ def test_make_metadata_def_json():
     gen = MetadataDefJsonGenerator(test_path)
     gen.generate()
 
+    with open(test_path, encoding="utf-8") as f:
+        contents = json.load(f)
+
+    assert contents == {}
     assert test_path.exists()
     test_path.unlink()
 
