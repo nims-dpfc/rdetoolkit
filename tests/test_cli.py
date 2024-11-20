@@ -87,7 +87,7 @@ def test_make_requirements_txt():
 # ex.
 # pandas==2.0.3
 # numpy
-rdetoolkit==1.0.4
+rdetoolkit==1.1.0
 """
     assert content == expected_content
     test_path.unlink()
