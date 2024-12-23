@@ -41,6 +41,7 @@ dependencies = [
     "polars>=1.9.0",
     "pyarrow>=17.0.0",
     "tqdm>=4.67.0",
+    "pip>=24.3.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
