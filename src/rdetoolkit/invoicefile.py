@@ -12,8 +12,9 @@ import pandas as pd
 
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.fileops import readf_json, writef_json
 from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
-from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
+from rdetoolkit.rde2util import StorageDir
 
 
 def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -183,9 +184,6 @@ class InvoiceFile:
         invoice_path (Path): Path to the invoice file.
         invoice_obj (dict): Dictionary representation of the invoice JSON file.
 
-    Note:
-        - The class uses an external utility `rde2util.CharDecEncoding.detect_text_file_encoding` to detect the encoding of the file.
-
     Args:
         invoice_path (Path): The path to the invoice file.
 
@@ -238,9 +236,7 @@ class InvoiceFile:
         if target_path is None:
             target_path = self.invoice_path
 
-        enc = CharDecEncoding.detect_text_file_encoding(target_path)
-        with open(target_path, encoding=enc) as f:
-            self.invoice_obj = json.load(f)
+        self.invoice_obj = readf_json(target_path)
         return self.invoice_obj
 
     def overwrite(self, dst_file_path: Path, *, src_obj: Path | None = None) -> None:
@@ -264,9 +260,7 @@ class InvoiceFile:
             src_obj = self.invoice_path
         parent_dir = os.path.dirname(dst_file_path)
         os.makedirs(parent_dir, exist_ok=True)
-        enc = CharDecEncoding.detect_text_file_encoding(self.invoice_path)
-        with open(dst_file_path, "w", encoding=enc) as f:
-            json.dump(self.invoice_obj, f, indent=4, ensure_ascii=False)
+        writef_json(dst_file_path, self.invoice_obj)
 
     @classmethod
     def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path) -> None:
@@ -378,8 +372,8 @@ class ExcelInvoiceFile:
             invoice_schema_path (Path): Path to the invoice schema.
             idx (int): Index of the target row in the invoice dataframe.
         """
-        invoice_schema_obj = self._load_json(invoice_schema_path)
-        invoice_obj = self._load_json(invoice_org)
+        invoice_schema_obj = readf_json(invoice_schema_path)
+        invoice_obj = readf_json(invoice_org)
 
         # excelインボイスの値が空欄の場合に、オリジナルの値が入らないように初期化。
         # このバージョンのエクセルインボイスではタグ、関連試料は対応しない。
@@ -394,9 +388,7 @@ class ExcelInvoiceFile:
 
         self._ensure_sample_id_order(invoice_obj)
 
-        enc = self._detect_encoding(invoice_org)
-        enc = "utf_8" if enc.lower() == "ascii" else enc
-        self._write_json(dist_path, invoice_obj, enc)
+        writef_json(dist_path, invoice_obj, enc="utf_8")
 
     @staticmethod
     def check_intermittent_empty_rows(df: pd.DataFrame) -> None:
@@ -475,18 +467,6 @@ class ExcelInvoiceFile:
 
         sampleid_value = invoice_obj["sample"].pop("sampleId")
         invoice_obj["sample"] = {"sampleId": sampleid_value, **invoice_obj["sample"]}
-
-    def _detect_encoding(self, file_path: Path) -> str:
-        return CharDecEncoding.detect_text_file_encoding(file_path)
-
-    def _load_json(self, file_path: Path) -> dict[str, Any]:
-        enc = self._detect_encoding(file_path)
-        with open(file_path, encoding=enc) as f:
-            return json.load(f)
-
-    def _write_json(self, file_path: Path, obj: Any, enc: str) -> None:
-        with open(file_path, "w", encoding=enc) as f:
-            json.dump(obj, f, indent=4, ensure_ascii=False)
 
     def _initialize_sample(self, sample_obj: Any) -> None:
         for item, val in sample_obj.items():
@@ -643,10 +623,8 @@ class RuleBasedReplacer:
             emsg = f"Error. File format/extension is not correct: {filepath}"
             raise StructuredError(emsg)
 
-        enc = CharDecEncoding.detect_text_file_encoding(filepath)
-        with open(filepath, encoding=enc) as f:
-            data = json.load(f)
-            self.rules = data.get("filename_mapping", {})
+        data = readf_json(filepath)
+        self.rules = data.get("filename_mapping", {})
 
     def get_apply_rules_obj(
         self,
@@ -745,9 +723,7 @@ class RuleBasedReplacer:
             raise StructuredError(emsg)
 
         if save_file_path.exists():
-            enc = CharDecEncoding.detect_text_file_encoding(save_file_path)
-            with open(save_file_path, encoding=enc) as f:
-                exists_contents: dict = json.load(f)
+            exists_contents = readf_json(save_file_path)
             _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
             data_to_write = copy.deepcopy(exists_contents)
         else:
@@ -818,7 +794,7 @@ def apply_magic_variable(invoice_path: str | Path, rawfile_path: str | Path, *, 
     if save_filepath is None:
         save_filepath = invoice_path
 
-    invoice_contents = read_from_json_file(invoice_path)
+    invoice_contents = readf_json(invoice_path)
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
         replacement_rule = {"${filename}": str(rawfile_path.name)}
         contents = apply_default_filename_mapping_rule(replacement_rule, save_filepath)
