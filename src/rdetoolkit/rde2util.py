@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 import re
+import warnings
 import zipfile
 from copy import deepcopy
 from typing import Any, Callable, Final, TypedDict, cast
@@ -15,6 +16,7 @@ from chardet.universaldetector import UniversalDetector
 from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.fileops import readf_json, writef_json
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
 
 LANG_ENC_FLAG: Final[int] = 0x800
@@ -175,27 +177,45 @@ def unzip_japanese_zip(src_zipfilepath: str, dst_dirpath: str) -> None:
 def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # pragma: no cover
     """A function that reads json file and returns the json object.
 
+    .. deprecated:: 1.1.0
+        Use :func:`rdetoolkit.fileops.readf_json` instead.
+
     Args:
         invoice_file_path (RdeFsPath): The path to the JSON file.
 
     Returns:
         dict[str, Any]: The parsed json object.
     """
-    enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
-    with open(invoice_file_path, encoding=enc) as f:
-        return json.load(f)
+    warnings.warn(
+        "read_from_json_file is deprecated. Use 'from rdetoolkit.fileops import readf_json' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    _path = str(invoice_file_path) if isinstance(invoice_file_path, pathlib.Path) else invoice_file_path
+    return readf_json(_path)
 
 
 def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8") -> None:  # pragma: no cover
     """Writes an content to a JSON file.
 
+    .. deprecated:: 1.0.0
+        Use :func:`rdetoolkit.fileops.writef_json` instead.
+
     Args:
         invoicefile_path (RdeFsPath): Path to the destination JSON file.
-        invoiceobj (dict[str, Any]): Invoice object to be serialized and written.
-        enc (str): Encoding to use when writing the file. Defaults to "utf_8".
+        invoiceobj (dict[str, Any]): Object to be serialized and written.
+        enc (str, optional): Encoding to use when writing the file. Defaults to "utf_8".
+
+    Returns:
+        dict[str, Any]: The written json object.
     """
-    with open(invoicefile_path, "w", encoding=enc) as f:
-        json.dump(invoiceobj, f, indent=4, ensure_ascii=False)
+    warnings.warn(
+        "write_to_json_file is deprecated. Use 'from rdetoolkit.fileops import writef_json' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    _path = str(invoicefile_path) if isinstance(invoicefile_path, pathlib.Path) else invoicefile_path
+    _ = writef_json(_path, invoiceobj, enc=enc)
 
 
 class StorageDir:
