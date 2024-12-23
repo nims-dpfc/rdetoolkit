@@ -90,6 +90,7 @@ rdetoolkit.workflows.run(custom_dataset_function=dataset)
 
 - [workflows](rdetoolkit/workflows): ワークフローの定義と管理を行うモジュール。
 - [config](rdetoolkit/config): 設定ファイルの読み込みと管理を行うモジュール。
+- [fileops](rdetoolkit/fileops): RDE関連のファイル操作を提供するモジュール。
 - [rde2util](rdetoolkit/rde2util): RDE関連のユーティリティ関数を提供するモジュール。
 - [invoicefile](rdetoolkit/invoicefile): 請求書ファイルの処理を行うモジュール。
 - [validation](rdetoolkit/validation): データの検証を行うモジュール。
