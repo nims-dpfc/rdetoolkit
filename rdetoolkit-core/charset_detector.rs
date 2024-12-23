@@ -1,5 +1,5 @@
 use chardetng::EncodingDetector;
-use pyo3::exceptions::{PyIOError, PyUnicodeDecodeError};
+use pyo3::exceptions::{PyIOError, PyUnicodeDecodeError, PyValueError};
 use pyo3::prelude::*;
 use std::fs::File;
 use std::io::Read;
@@ -30,7 +30,9 @@ pub fn detect_encoding(path: &str) -> PyResult<String> {
         .map_err(|e| PyIOError::new_err(format!("Failed to read file: {}", e)))?;
 
     if bytes.is_empty() {
-        return Err(PyUnicodeDecodeError::new_err("No valid encoding detected"));
+        return Err(PyValueError::new_err(
+            "No valid encoding detected: file is empty",
+        ));
     }
 
     let mut detector = EncodingDetector::new();
