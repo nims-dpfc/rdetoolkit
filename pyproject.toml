@@ -62,7 +62,7 @@ build-backend = "maturin"
 [tool.maturin]
 python-source = "src"
 module-name = "rdetoolkit.core"
-features = ["pyo3/extension-module"]
+features = ["pyo3/extension-module", "pyo3/auto-initialize"]
 
 [tool.ruff]
 select = [
