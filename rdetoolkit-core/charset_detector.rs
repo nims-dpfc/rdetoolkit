@@ -49,7 +49,6 @@ pub fn detect_encoding(path: &str) -> PyResult<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pyo3::Python;
     use std::fs::File;
     use std::io::Write;
     use tempfile::tempdir;
