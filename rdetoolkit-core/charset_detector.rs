@@ -13,13 +13,7 @@ pub fn read_file_with_encoding(file_path: &str) -> PyResult<String> {
     let mut detector = EncodingDetector::new();
     detector.feed(&bytes, true);
     let encoding = detector.guess(None, true);
-    let (content, _, had_errors) = encoding.decode(&bytes);
-
-    if had_errors {
-        return Err(PyIOError::new_err(
-            "Warning: Some characters could not be decoded correctly",
-        ));
-    }
+    let (content, _, _) = encoding.decode(&bytes);
 
     Ok(content.into_owned())
 }
@@ -34,6 +28,10 @@ pub fn detect_encoding(path: &str) -> PyResult<String> {
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes)
         .map_err(|e| PyIOError::new_err(format!("Failed to read file: {}", e)))?;
+
+    if bytes.is_empty() {
+        return Err(PyUnicodeDecodeError::new_err("No valid encoding detected"));
+    }
 
     let mut detector = EncodingDetector::new();
     detector.feed(&bytes, true);
