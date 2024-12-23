@@ -123,7 +123,7 @@ mod tests {
 
     #[test]
     fn test_detect_encoding_utf8() {
-        Python::with_gil(|py| {
+        Python::with_gil(|_py| {
             let content = "これはUTF-8エンコーディングのテキストです。";
             let temp_file = create_temp_file_with_bytes(content.as_bytes());
             let path = temp_file.path().to_str().unwrap();
@@ -150,7 +150,7 @@ mod tests {
     /// test: 空ファイルのテスト(エンコーディングが検出できない)
     #[test]
     fn test_detect_encoding_empty_file() {
-        Python::with_gil(|py| {
+        Python::with_gil(|_py| {
             let temp_file = create_temp_file_with_bytes(b"");
             let path = temp_file.path().to_str().unwrap();
 
@@ -171,12 +171,12 @@ mod tests {
     /// test: Shift_JISエンコーディングのファイル
     #[test]
     fn test_detect_encoding_shift_jis() {
-        Python::with_gil(|py| {
+        Python::with_gil(|_py| {
             // "これはShift_JISエンコーディングのテキストです。" をShift_JISでエンコード
             let content = "これはShift_JISエンコーディングのテキストです。";
             let encoding = encoding_rs::SHIFT_JIS;
             let (encoded, _, _) = encoding.encode(content);
-            let encoded_bytes = encoded.as_bytes();
+            let encoded_bytes = encoded.as_ref();
 
             let temp_file = create_temp_file_with_bytes(encoded_bytes);
             let path = temp_file.path().to_str().unwrap();
