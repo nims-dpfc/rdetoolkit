@@ -49,6 +49,8 @@ pub fn detect_encoding(path: &str) -> PyResult<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pyo3::types::PyString;
+    use pyo3::Python;
     use std::fs::File;
     use std::io::Write;
     use tempfile::tempdir;
@@ -121,14 +123,16 @@ mod tests {
 
     #[test]
     fn test_detect_encoding_utf8() {
-        let content = "これはutf-8エンコーディングテキストです";
-        let temp_file = create_temp_file_with_bytes(content.as_bytes());
-        let path = temp_file.path().to_str().unwrap();
+        Python::with_gil(|py| {
+            let content = "これはUTF-8エンコーディングのテキストです。";
+            let temp_file = create_temp_file_with_bytes(content.as_bytes());
+            let path = temp_file.path().to_str().unwrap();
 
-        let result = detect_encoding(path);
-        assert!(result.is_ok());
-        let encoding = result.unwrap();
-        assert_eq!(encoding.to_lowercase(), "utf-8");
+            let result = detect_encoding(path);
+            assert!(result.is_ok(), "Expected Ok, got Err: {:?}", result);
+            let encoding = result.unwrap();
+            assert_eq!(encoding.to_lowercase(), "utf-8");
+        });
     }
 
     #[test]
@@ -146,36 +150,45 @@ mod tests {
     /// test: 空ファイルのテスト(エンコーディングが検出できない)
     #[test]
     fn test_detect_encoding_empty_file() {
-        let temp_file = create_temp_file_with_bytes(b"");
-        let path = temp_file.path().to_str().unwrap();
+        Python::with_gil(|py| {
+            let temp_file = create_temp_file_with_bytes(b"");
+            let path = temp_file.path().to_str().unwrap();
 
-        let result = detect_encoding(path);
-        assert!(result.is_err());
+            let result = detect_encoding(path);
+            assert!(result.is_err(), "Expected Err, got Ok: {:?}", result);
 
-        if let Err(e) = result {
-            let err_msg = e.to_string();
-            assert!(err_msg.contains("No valid encoding detected"));
-        }
+            if let Err(e) = result {
+                let err_msg = e.to_string();
+                assert!(
+                    err_msg.contains("No valid encoding detected"),
+                    "Unexpected error message: {}",
+                    err_msg
+                );
+            }
+        });
     }
 
     /// test: Shift_JISエンコーディングのファイル
     #[test]
     fn test_detect_encoding_shift_jis() {
-        let content = "これは、Shift_JISエンコードテキストです";
-        let encoding = encoding_rs::SHIFT_JIS;
-        let (encoded, _, _) = encoding.encode(content);
-        let encoded_bytes = &encoded[..];
+        Python::with_gil(|py| {
+            // "これはShift_JISエンコーディングのテキストです。" をShift_JISでエンコード
+            let content = "これはShift_JISエンコーディングのテキストです。";
+            let encoding = encoding_rs::SHIFT_JIS;
+            let (encoded, _, _) = encoding.encode(content);
+            let encoded_bytes = encoded.as_bytes();
 
-        let temp_file = create_temp_file_with_bytes(encoded_bytes);
-        let path = temp_file.path().to_str().unwrap();
+            let temp_file = create_temp_file_with_bytes(encoded_bytes);
+            let path = temp_file.path().to_str().unwrap();
 
-        let result = detect_encoding(path);
-        assert!(result.is_ok());
-        let detected_encoding = result.unwrap().to_lowercase();
-        assert!(
-            detected_encoding.contains("shift_jis"),
-            "Detected encoding: {}",
-            detected_encoding
-        )
+            let result = detect_encoding(path);
+            assert!(result.is_ok(), "Expected Ok, got Err: {:?}", result);
+            let detected_encoding = result.unwrap().to_lowercase();
+            assert!(
+                detected_encoding.contains("shift_jis"),
+                "Detected encoding: {}",
+                detected_encoding
+            );
+        });
     }
 }
