@@ -314,7 +314,9 @@ class ExcelInvoiceFile:
         if target_path is None:
             target_path = self.invoice_path
 
-        self.__check_exist_rawfiles(target_path)
+        if not os.path.exists(target_path):
+            emsg = f"ERROR: excelinvoice not found {target_path}"
+            raise StructuredError(emsg)
 
         dct_sheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
 
@@ -357,11 +359,6 @@ class ExcelInvoiceFile:
         _df_specific = df[1:].copy()
         _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
         return _df_specific
-
-    def __check_exist_rawfiles(self, excel_rawfiles: Path) -> None:
-        if not os.path.exists(excel_rawfiles):
-            emsg = f"ERROR: excelinvoice not found {excel_rawfiles}"
-            raise StructuredError(emsg)
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.
@@ -580,7 +577,7 @@ def update_description_with_features(
             description = description[1:]
 
     _assign_invoice_val(invoice_obj, "basic", "description", description, invoice_schema_obj)
-    rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
+    writef_json(dst_invoice_json, invoice_obj)
 
 
 class RuleBasedReplacer:
