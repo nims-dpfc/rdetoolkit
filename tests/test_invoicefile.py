@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import pathlib
 
 import pandas as pd
 import pytest
@@ -558,3 +559,54 @@ class TestExcelinvoice:
             excelinvoice = ExcelInvoiceFile(inputfile_invalid_samesheet_excelinvoice)
             _, _, _ = excelinvoice.read()
         assert str(e.value) == "ERROR: multiple sheet in invoiceList files"
+
+
+from rdetoolkit.invoicefile import ExcelInvoiceTemplateGenerator
+from rdetoolkit.models.invoice import FixedHeaders, TemplateConfig
+
+
+@pytest.fixture
+def template_config_mode_file():
+    invoice_dir = pathlib.Path("data", "tasksupport")
+    invoice_schema_json_path = pathlib.Path(str(invoice_dir), "invoice.schema.json")
+
+    static_dir = Path(__file__).parent.parent / "src" / "rdetoolkit" / "static"
+    specific_term_path = static_dir / "ex_specificTerm.csv"
+    general_term_path = static_dir / "ex_generalTerm.csv"
+    yield TemplateConfig(
+        schema_path=str(invoice_schema_json_path),
+        general_term_path=general_term_path,
+        specific_term_path=specific_term_path,
+        inputfile_mode="file",
+    )
+
+
+@pytest.fixture
+def expected_df():
+    parent_dir = Path(__file__).parent
+    csv_path = parent_dir / Path("samplefile", "test_excelinvoice_term_sample.csv")
+    df = pd.read_csv(csv_path, header=None)
+    df.columns = df.columns.astype(str)
+    yield df
+
+
+def assert_frame_equal_ignore_column_names(df1, df2):
+    if df1.shape != df2.shape:
+        raise AssertionError(f"DataFrames have different shapes: {df1.shape} vs {df2.shape}")
+
+    df1_temp = df1.copy()
+    df2_temp = df2.copy()
+    df1_temp.columns = range(df1_temp.shape[1])
+    df2_temp.columns = range(df2_temp.shape[1])
+
+    df1_temp.index.name = None
+    df2_temp.index.name = None
+
+    assert_frame_equal(df1_temp, df2_temp, check_names=False)
+
+
+def test_generate_basic(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
+    generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
+    result_df = generator.generate(template_config_mode_file)
+    import pdb; pdb.set_trace()
+    assert_frame_equal_ignore_column_names(result_df, expected_df)
