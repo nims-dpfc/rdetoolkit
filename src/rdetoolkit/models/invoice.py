@@ -187,9 +187,9 @@ class SpecificTermRegistry:
             sample_class_id (str): The sample class ID to search for.
 
         Returns:
-            list[dict[str, Any]]: A list of dictionaries, each containing the fields "sample_class_id", "terma_id", "key_name", "ja", and "en" for entries that match the term and sample class IDs.
+            list[dict[str, Any]]: A list of dictionaries, each containing the fields "sample_class_id", "term_id", "key_name", "ja", and "en" for entries that match the term and sample class IDs.
         """
-        return self.search(["sample_class_id", "terma_id"], [term_id, sample_class_id], ["sample_class_id", "terma_id", "key_name", "ja", "en"])
+        return self.search(["sample_class_id", "term_id"], [sample_class_id, term_id], ["sample_class_id", "term_id", "key_name", "ja", "en"])
 
     def by_key_name(self, key_name: list[str]) -> list[dict[str, Any]]:
         """Retrieve a list of dictionaries containing specific fields for entries matching the given key name.
@@ -198,9 +198,9 @@ class SpecificTermRegistry:
             key_name (list[str]): The key name to search for.
 
         Returns:
-            list[dict[str, Any]]: A list of dictionaries, each containing the fields "sample_class_id", "terma_id", "key_name", "ja", and "en" for entries that match the key name.
+            list[dict[str, Any]]: A list of dictionaries, each containing the fields "sample_class_id", "term_id", "key_name", "ja", and "en" for entries that match the key name.
         """
-        return self.search(["key_name"], key_name, ["sample_class_id", "terma_id", "key_name", "ja", "en"])
+        return self.search(["key_name"], key_name, ["sample_class_id", "term_id", "key_name", "ja", "en"])
 
     def by_ja(self, ja_text: list[str]) -> list[dict[str, Any]]:
         """Search for records by Japanese text.
