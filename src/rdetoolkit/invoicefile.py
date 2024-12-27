@@ -17,7 +17,7 @@ from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.fileops import readf_json, writef_json
 from rdetoolkit.models.invoice import FixedHeaders, GeneralTermRegistry, SpecificTermRegistry, TemplateConfig
-from rdetoolkit.models.invoice_schema import GeneralAttribute, InvoiceSchemaJson, SpecificAttribute, SpecificProperty
+from rdetoolkit.models.invoice_schema import GeneralAttribute, InvoiceSchemaJson, SampleField, SpecificAttribute, SpecificProperty
 from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
 from rdetoolkit.rde2util import StorageDir
 
@@ -341,7 +341,7 @@ class ExcelInvoiceTemplateGenerator:
             config (TemplateConfig): The configuration object.
 
         Returns:
-            pl.DataFrame: A DataFrame representing the generated template.
+            pd.DataFrame: A DataFrame representing the generated template.
         """
         base_df = self.fixed_header.to_template_dataframe().to_pandas()
         invoice_schema_obj = readf_json(config.schema_path)
@@ -354,48 +354,7 @@ class ExcelInvoiceTemplateGenerator:
 
         sample_field = invoice_schema.properties.sample
         if sample_field is not None:
-            attribute_configs: list[AttributeConfig] = [
-                GeneralAttributeConfig(
-                    type="general",
-                    registry=GeneralTermRegistry(str(config.general_term_path)),
-                    prefix=prefixes["general"],
-                    attributes=sample_field.properties.generalAttributes,
-                    requires_class_id=False,
-                ),
-                SpecificAttributeConfig(
-                    type="specific",
-                    registry=SpecificTermRegistry(str(config.specific_term_path)),
-                    prefix=prefixes["specific"],
-                    attributes=sample_field.properties.specificAttributes,
-                    requires_class_id=True,
-                ),
-            ]
-            for attr_config in attribute_configs:
-                attrs = attr_config.attributes
-                if not attrs or not attrs.items.root:
-                    continue
-
-                for prop in attrs.items.root:
-                    term_id = prop.properties.term_id.const
-                    class_id = ""
-                    if isinstance(prop, SpecificProperty):
-                        class_id = prop.properties.class_id.const
-
-                try:
-                    if isinstance(attr_config, SpecificAttributeConfig):
-                        term = attr_config.registry.by_term_and_class_id(term_id, class_id)[0]
-                        emsg = f"Could not find a result corresponding to term_id {term_id} and class_id {class_id}."
-                    else:
-                        term = attr_config.registry.by_term_id(term_id)[0]
-                        emsg = f"Could not find a result corresponding to term_id {term_id}."
-                except (IndexError, KeyError) as e:
-                    raise StructuredError(emsg) from e
-
-                ja_name = term["ja"]
-                key_name = term["key_name"]
-                name = key_name.replace(f"{attr_config.prefix}.", "")
-
-                base_df[key_name] = [None, attr_config.prefix, name, ja_name]
+            self._add_sample_field(base_df, config, sample_field, prefixes)
 
         custom_field = invoice_schema.properties.custom
         if custom_field is not None:
@@ -407,6 +366,52 @@ class ExcelInvoiceTemplateGenerator:
             first_col = base_df.columns[0]
             base_df.loc[1, first_col] = ""
             base_df.loc[2, first_col] = "data_folder"
+        return base_df
+
+    def _add_sample_field(self, base_df: pd.DataFrame, config: TemplateConfig, sample_field: SampleField, prefixes: dict[str, str]) -> pd.DataFrame:
+        attribute_configs: list[AttributeConfig] = [
+            GeneralAttributeConfig(
+                type="general",
+                registry=GeneralTermRegistry(str(config.general_term_path)),
+                prefix=prefixes["general"],
+                attributes=sample_field.properties.generalAttributes,
+                requires_class_id=False,
+            ),
+            SpecificAttributeConfig(
+                type="specific",
+                registry=SpecificTermRegistry(str(config.specific_term_path)),
+                prefix=prefixes["specific"],
+                attributes=sample_field.properties.specificAttributes,
+                requires_class_id=True,
+            ),
+        ]
+        for attr_config in attribute_configs:
+            attrs = attr_config.attributes
+            if not attrs or not attrs.items.root:
+                continue
+
+            for prop in attrs.items.root:
+                term_id = prop.properties.term_id.const
+                class_id = ""
+                if isinstance(prop, SpecificProperty):
+                    class_id = prop.properties.class_id.const
+
+                try:
+                    emsg = "Could not find a result corresponding to the specified term_id or class_id."
+                    if isinstance(attr_config, SpecificAttributeConfig):
+                        emsg = f"Could not find a result corresponding to term_id {term_id} and class_id {class_id}."
+                        term = attr_config.registry.by_term_and_class_id(term_id, class_id)[0]
+                    else:
+                        emsg = f"Could not find a result corresponding to term_id {term_id}."
+                        term = attr_config.registry.by_term_id(term_id)[0]
+                except (IndexError, KeyError) as e:
+                    raise StructuredError(emsg) from e
+
+                ja_name = term["ja"]
+                key_name = term["key_name"]
+                name = key_name.replace(f"{attr_config.prefix}.", "")
+                base_df[key_name] = [None, attr_config.prefix, name, ja_name]
+
         return base_df
 
     def save(self, df: pd.DataFrame, save_path: str) -> None:
@@ -464,7 +469,7 @@ class ExcelInvoiceFile:
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
         self.dfexcelinvoice, self.df_general, self.df_specific = self.read()
-        self.template_generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
+        self.template_generator = ExcelInvoiceTemplateGenerator(FixedHeaders())  # type: ignore
 
     def read(self, *, target_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
@@ -547,7 +552,7 @@ class ExcelInvoiceFile:
         )
 
         template_df = self.template_generator.generate(config)
-        self.template_generator.save(template_df, save_path)
+        self.template_generator.save(template_df, str(save_path))
         return template_df
 
     def save(self, invoice: pd.DataFrame, save_path: str | Path, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
