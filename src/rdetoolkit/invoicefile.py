@@ -464,6 +464,7 @@ class ExcelInvoiceFile:
         dfexcelinvoice (pd.DataFrame): Dataframe of the invoice.
         df_general (pd.DataFrame): Dataframe of general data.
         df_specific (pd.DataFrame): Dataframe of specific data.
+        self.template_generator (ExcelInvoiceTemplateGenerator): Template generator for the Excelinvoice.
     """
 
     def __init__(self, invoice_path: Path):
@@ -555,22 +556,36 @@ class ExcelInvoiceFile:
         self.template_generator.save(template_df, str(save_path))
         return template_df
 
-    def save(self, invoice: pd.DataFrame, save_path: str | Path, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
+    def save(self, save_path: str | Path, *, invoice: pd.DataFrame | None = None, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
         """Save the invoice DataFrame to an Excel file.
 
         Args:
-            invoice (pd.DataFrame): The invoice data to be saved.
             save_path (str | Path): The path where the Excel file will be saved.
+            invoice (pd.DataFrame | None, optional): The DataFrame containing the invoice data. Defaults to None.
             sheet_name (str, optional): The name of the sheet in the Excel file. Defaults to "invoice_form".
-            index (list[str] | None, optional): The list of index labels to use. Defaults to None.
-            header (list[str] | None, optional): The list of column headers to use. Defaults to None.
+            index (list[str] | None, optional): The list of index labels to use. If None, index will not be written. Defaults to None.
+            header (list[str] | None, optional): The list of column headers to use. If None, header will not be written. Defaults to None.
 
         Returns:
             None
         """
-        _index = index if index is not None else False
-        _header = header if header is not None else False
-        invoice.to_excel(save_path, index=_index, header=_header, sheet_name=sheet_name)
+        _invoice_df = invoice if invoice is not None else self.dfexcelinvoice
+        try:
+            if index:
+                _invoice_df.index = pd.Index(index)
+                _index_enabled = True
+            else:
+                _index_enabled = False
+            if header:
+
+                _invoice_df.columns = header
+                _header_enabled = True
+            else:
+                _header_enabled = False
+            _invoice_df.to_excel(save_path, index=_index_enabled, header=_header_enabled, sheet_name=sheet_name)
+        except Exception as e:
+            emsg = "Failed to save the invoice file."
+            raise StructuredError(emsg) from e
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.
@@ -939,12 +954,10 @@ class RuleBasedReplacer:
             new_contents: dict[str, Any] = {}
             _ = self.get_apply_rules_obj(replacements_rule, new_contents)
             data_to_write = copy.deepcopy(new_contents)
-            enc = "utf-8"
 
         try:
-            with open(save_file_path, mode="w", encoding=enc) as f:
-                json.dump(data_to_write, f, indent=4, ensure_ascii=False)
-                contents = json.dumps({"filename_mapping": self.rules})
+            writef_json(save_file_path, data_to_write)
+            contents = json.dumps({"filename_mapping": self.rules})
         except json.JSONDecodeError as json_err:
             emsg = "Error. No write was performed on the target json"
             raise StructuredError(emsg) from json_err
