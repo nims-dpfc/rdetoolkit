@@ -4,17 +4,26 @@ import copy
 import json
 import os
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal, Protocol
 
 import chardet
 import pandas as pd
+from openpyxl.styles import Border, Side
+from openpyxl.utils import get_column_letter
 
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.fileops import readf_json, writef_json
+from rdetoolkit.models.invoice import FixedHeaders, GeneralTermRegistry, SpecificTermRegistry, TemplateConfig
+from rdetoolkit.models.invoice_schema import GeneralAttribute, InvoiceSchemaJson, SpecificAttribute, SpecificProperty
 from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
 from rdetoolkit.rde2util import StorageDir
+
+STATIC_DIR = Path(__file__).parent / "static"
+EX_GENERALTERM = STATIC_DIR / "ex_generalterm.csv"
+EX_SPECIFICTERM = STATIC_DIR / "ex_specificterm.csv"
 
 
 def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -283,11 +292,170 @@ class InvoiceFile:
             shutil.copy(str(src_file_path), str(dst_file_path))
 
 
+class TemplateGenerator(Protocol):
+    def generate(self, config: TemplateConfig) -> pd.DataFrame:
+        """Generates a template based on the provided configuration.
+
+        Args:
+            config (TemplateConfig): The configuration object.
+
+        Returns:
+            pd.DataFrame: A DataFrame representing the generated template.
+        """
+        ...
+
+
+@dataclass
+class GeneralAttributeConfig:
+    type: str
+    registry: GeneralTermRegistry
+    prefix: str
+    attributes: GeneralAttribute | None
+    requires_class_id: Literal[False]
+
+
+@dataclass
+class SpecificAttributeConfig:
+    type: str
+    registry: SpecificTermRegistry
+    prefix: str
+    attributes: SpecificAttribute | None
+    requires_class_id: Literal[True]
+
+
+AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
+
+
+class ExcelInvoiceTemplateGenerator:
+    GENERAL_PREFIX = "sample.general"
+    SPECIFIC_PREFIX = "sample.specific"
+    CUSTOM_PREFIX = "custom"
+
+    def __init__(self, fixed_header: FixedHeaders):
+        self.fixed_header = fixed_header
+
+    def generate(self, config: TemplateConfig) -> pd.DataFrame:
+        """Generates a template based on the provided configuration.
+
+        Args:
+            config (TemplateConfig): The configuration object.
+
+        Returns:
+            pl.DataFrame: A DataFrame representing the generated template.
+        """
+        base_df = self.fixed_header.to_template_dataframe().to_pandas()
+        invoice_schema_obj = readf_json(config.schema_path)
+        invoice_schema = InvoiceSchemaJson(**invoice_schema_obj)
+        prefixes = {
+            "general": self.GENERAL_PREFIX,
+            "specific": self.SPECIFIC_PREFIX,
+            "custom": self.CUSTOM_PREFIX,
+        }
+
+        sample_field = invoice_schema.properties.sample
+        if sample_field is not None:
+            attribute_configs: list[AttributeConfig] = [
+                GeneralAttributeConfig(
+                    type="general",
+                    registry=GeneralTermRegistry(str(config.general_term_path)),
+                    prefix=prefixes["general"],
+                    attributes=sample_field.properties.generalAttributes,
+                    requires_class_id=False,
+                ),
+                SpecificAttributeConfig(
+                    type="specific",
+                    registry=SpecificTermRegistry(str(config.specific_term_path)),
+                    prefix=prefixes["specific"],
+                    attributes=sample_field.properties.specificAttributes,
+                    requires_class_id=True,
+                ),
+            ]
+            for attr_config in attribute_configs:
+                attrs = attr_config.attributes
+                if not attrs or not attrs.items.root:
+                    continue
+
+                for prop in attrs.items.root:
+                    term_id = prop.properties.term_id.const
+                    class_id = ""
+                    if isinstance(prop, SpecificProperty):
+                        class_id = prop.properties.class_id.const
+
+                try:
+                    if isinstance(attr_config, SpecificAttributeConfig):
+                        term = attr_config.registry.by_term_and_class_id(term_id, class_id)[0]
+                        emsg = f"Could not find a result corresponding to term_id {term_id} and class_id {class_id}."
+                    else:
+                        term = attr_config.registry.by_term_id(term_id)[0]
+                        emsg = f"Could not find a result corresponding to term_id {term_id}."
+                except (IndexError, KeyError) as e:
+                    raise StructuredError(emsg) from e
+
+                ja_name = term["ja"]
+                key_name = term["key_name"]
+                name = key_name.replace(f"{attr_config.prefix}.", "")
+
+                base_df[key_name] = [None, attr_config.prefix, name, ja_name]
+
+        custom_field = invoice_schema.properties.custom
+        if custom_field is not None:
+            custom_dict = custom_field.properties.root
+            for key, meta_prop in custom_dict.items():
+                base_df[key] = pd.Series([None, prefixes["custom"], key, meta_prop.label.ja], index=base_df.index)
+
+        if config.inputfile_mode == "folder":
+            first_col = base_df.columns[0]
+            base_df.loc[1, first_col] = ""
+            base_df.loc[2, first_col] = "data_folder"
+        return base_df
+
+    def save(self, df: pd.DataFrame, save_path: str) -> None:
+        """Save the given DataFrame to an Excel file with specific formatting.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to be saved.
+            save_path (str): The path where the Excel file will be saved.
+
+        Note:
+            The method performs the following operations:
+            - Writes the DataFrame to an Excel file starting from the 5th row without headers.
+            - Sets the height of the 5th row to 40.
+            - Adjusts the width of all columns to 20.
+            - Applies a thin border to all cells in the range from row 5 to row 40.
+            - Applies a thick top border and a double bottom border to the cells in the 5th row.
+        """
+        with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name='invoice_form', index=False, header=False)
+            _ = writer.book
+            worksheet = writer.sheets["invoice_form"]
+            worksheet.row_dimensions[4].height = 40
+            max_col = df.shape[1]
+
+            for col in range(1, max_col + 1):
+                col_letter = get_column_letter(col)
+                worksheet.column_dimensions[col_letter].width = 20
+
+            # settings cell border
+            thin = Side(border_style="thin", color="000000")
+            thick = Side(border_style="thick", color="000000")
+            double = Side(border_style="double", color="000000")
+            grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+            for row in range(4, 41):
+                for col in range(1, max_col + 1):
+                    cell = worksheet.cell(row=row, column=col)
+                    cell.border = grid_border
+
+            for col in range(1, max_col + 1):
+                cell = worksheet.cell(row=4, column=col)
+                cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
+
+
 class ExcelInvoiceFile:
     """Class representing an invoice file in Excel format. Provides utilities for reading and overwriting the invoice file.
 
     Attributes:
-        invoice_path (Path): Path to the invoice file.
+        invoice_path (Path): Path to the excel invoice file (.xlsx).
         dfexcelinvoice (pd.DataFrame): Dataframe of the invoice.
         df_general (pd.DataFrame): Dataframe of general data.
         df_specific (pd.DataFrame): Dataframe of specific data.
@@ -296,13 +464,13 @@ class ExcelInvoiceFile:
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
         self.dfexcelinvoice, self.df_general, self.df_specific = self.read()
+        self.template_generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
 
     def read(self, *, target_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
 
         Args:
-            target_path (Optional[Path], optional): Path to the invoice file to be read. If not provided,
-                uses the path from `self.invoice_path`. Defaults to None.
+            target_path (Optional[Path], optional): Path to the excelinvoice file(.xlsx) to be read. If not provided, uses the path from `self.invoice_path`. Defaults to None.
 
         Returns:
             tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Three dataframes (dfexcelinvoice, df_general, df_specific).
@@ -359,6 +527,45 @@ class ExcelInvoiceFile:
         _df_specific = df[1:].copy()
         _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
         return _df_specific
+
+    def generate_template(self, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal["file", "folder"] = "file") -> pd.DataFrame:
+        """Generates a template DataFrame based on the provided invoice schema and saves it to the specified path.
+
+        Args:
+            invoice_schema_path (str | Path): The path to the invoice schema file.
+            save_path (str | Path): The path where the generated template will be saved.
+            file_mode (Literal["file", "folder"], optional): The mode indicating whether the input is a file or a folder. Defaults to "file".
+
+        Returns:
+            pd.DataFrame: The generated template as a pandas DataFrame.
+        """
+        config = TemplateConfig(
+            schema_path=invoice_schema_path,
+            general_term_path=EX_GENERALTERM,
+            specific_term_path=EX_SPECIFICTERM,
+            inputfile_mode=file_mode,
+        )
+
+        template_df = self.template_generator.generate(config)
+        self.template_generator.save(template_df, save_path)
+        return template_df
+
+    def save(self, invoice: pd.DataFrame, save_path: str | Path, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
+        """Save the invoice DataFrame to an Excel file.
+
+        Args:
+            invoice (pd.DataFrame): The invoice data to be saved.
+            save_path (str | Path): The path where the Excel file will be saved.
+            sheet_name (str, optional): The name of the sheet in the Excel file. Defaults to "invoice_form".
+            index (list[str] | None, optional): The list of index labels to use. Defaults to None.
+            header (list[str] | None, optional): The list of column headers to use. Defaults to None.
+
+        Returns:
+            None
+        """
+        _index = index if index is not None else False
+        _header = header if header is not None else False
+        invoice.to_excel(save_path, index=_index, header=_header, sheet_name=sheet_name)
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.

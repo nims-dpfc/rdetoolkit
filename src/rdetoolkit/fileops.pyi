@@ -1,8 +1,5 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from pathlib import Path
-from rdetoolkit.core import detect_encoding as detect_encoding
-from rdetoolkit.exceptions import StructuredError as StructuredError
-from rdetoolkit.rdelogger import get_logger as get_logger
 from typing import Any
 
 logger: Incomplete

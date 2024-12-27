@@ -1,8 +1,19 @@
 import pandas as pd
-from _typeshed import Incomplete as Incomplete
+from _typeshed import Incomplete
+from dataclasses import dataclass
 from pathlib import Path
+from rdetoolkit import rde2util as rde2util
+from rdetoolkit.exceptions import StructuredError as StructuredError
+from rdetoolkit.fileops import readf_json as readf_json, writef_json as writef_json
+from rdetoolkit.models.invoice import FixedHeaders as FixedHeaders, GeneralTermRegistry as GeneralTermRegistry, SpecificTermRegistry as SpecificTermRegistry, TemplateConfig as TemplateConfig
+from rdetoolkit.models.invoice_schema import GeneralAttribute as GeneralAttribute, InvoiceSchemaJson as InvoiceSchemaJson, SpecificAttribute as SpecificAttribute, SpecificProperty as SpecificProperty
 from rdetoolkit.models.rde2types import RdeFsPath as RdeFsPath, RdeOutputResourcePath as RdeOutputResourcePath
-from typing import Any
+from rdetoolkit.rde2util import StorageDir as StorageDir
+from typing import Any, Literal, Protocol
+
+STATIC_DIR: Incomplete
+EX_GENERALTERM: Incomplete
+EX_SPECIFICTERM: Incomplete
 
 def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: ...
 def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path]) -> list[Path]: ...
@@ -24,10 +35,44 @@ class InvoiceFile:
     @classmethod
     def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path) -> None: ...
 
+class TemplateGenerator(Protocol):
+    def generate(self, config: TemplateConfig) -> pd.DataFrame: ...
+
+@dataclass
+class GeneralAttributeConfig:
+    type: str
+    registry: GeneralTermRegistry
+    prefix: str
+    attributes: GeneralAttribute | None
+    requires_class_id: Literal[False]
+    def __init__(self, type, registry, prefix, attributes, requires_class_id) -> None: ...
+
+@dataclass
+class SpecificAttributeConfig:
+    type: str
+    registry: SpecificTermRegistry
+    prefix: str
+    attributes: SpecificAttribute | None
+    requires_class_id: Literal[True]
+    def __init__(self, type, registry, prefix, attributes, requires_class_id) -> None: ...
+AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
+
+class ExcelInvoiceTemplateGenerator:
+    GENERAL_PREFIX: str
+    SPECIFIC_PREFIX: str
+    CUSTOM_PREFIX: str
+    fixed_header: Incomplete
+    def __init__(self, fixed_header: FixedHeaders) -> None: ...
+    def generate(self, config: TemplateConfig) -> pd.DataFrame: ...
+    def save(self, df: pd.DataFrame, save_path: str) -> None: ...
+
 class ExcelInvoiceFile:
     invoice_path: Incomplete
+    template_generator: Incomplete
     def __init__(self, invoice_path: Path) -> None: ...
     def read(self, *, target_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: ...
+    def generate_template(self, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal['file', 'folder'] = 'file') -> pd.DataFrame: ...
+    def save(self, invoice: pd.DataFrame, save_path: str | Path, sheet_name: str = 'invoice_form', index: list[str] | None = None, header: list[str] | None = None) -> None: ...
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None: ...
     @staticmethod
     def check_intermittent_empty_rows(df: pd.DataFrame) -> None: ...
