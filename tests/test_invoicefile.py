@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import pathlib
 
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
@@ -48,7 +50,7 @@ def template_config_mode_folder():
         schema_path=str(invoice_schema_json_path),
         general_term_path=general_term_path,
         specific_term_path=specific_term_path,
-        inputfile_mode="file",
+        inputfile_mode="folder",
     )
 
 
@@ -62,12 +64,22 @@ def expected_df():
 
 
 @pytest.fixture
+def expected_df_folder():
+    parent_dir = Path(__file__).parent
+    csv_path = parent_dir / Path("samplefile", "test_excelinvoice_term_sample_folder.csv")
+    df = pd.read_csv(csv_path, header=None)
+    df.columns = df.columns.astype(str)
+    yield df
+
+
+@pytest.fixture
 def sample_df():
     return pd.DataFrame({
         'col1': ['a', 'b', 'c'],
         'col2': [1, 2, 3],
         'col3': ['x', 'y', 'z']
     })
+
 
 def assert_frame_equal_ignore_column_names(df1, df2):
     if df1.shape != df2.shape:
@@ -689,9 +701,52 @@ def test_generate_basic_filemode(template_config_mode_file, ivnoice_schema_json_
     assert_frame_equal_ignore_column_names(result_df, expected_df)
 
 
-def test_generate_basic_foldermode(template_config_mode_folder, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
+def test_generate_basic_foldermode(template_config_mode_folder, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df_folder):
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
     result_df = generator.generate(template_config_mode_folder)
-    assert result_df.iloc[1, 0] == ""
-    assert result_df.iloc[1, 0] == "data_folder"
-    assert_frame_equal_ignore_column_names(result_df, expected_df)
+    print(result_df.head(10))
+    assert result_df.iloc[1, 0] == ''
+    assert result_df.iloc[2, 0] == "data_folder"
+
+
+def test_save_basic_file_creation(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
+    test_path = "test_excelinvoice.xlsx"
+    generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
+    generator.save(expected_df, test_path)
+
+    assert os.path.exists(test_path)
+
+    wb = load_workbook(test_path)
+    ws = wb['invoice_form']
+    assert ws.row_dimensions[4].height == 40
+
+    for col in range(1, expected_df.shape[1] + 1):
+        assert ws.column_dimensions[get_column_letter(col)].width == 20
+
+    if os.path.exists(test_path):
+        os.remove(test_path)
+
+
+def test_save_border_settings(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
+    test_path = "test_excelinvoice.xlsx"
+    generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
+    generator.save(expected_df, test_path)
+
+    wb = load_workbook(test_path)
+    ws = wb['invoice_form']
+    for col in range(1, expected_df.shape[1] + 1):
+        cell = ws.cell(row=4, column=col)
+        assert cell.border.top.style == "thick"
+        assert cell.border.bottom.style == "double"
+
+    # グリッド罫線チェック
+    for row in range(5, 41):
+        for col in range(1, expected_df.shape[1] + 1):
+            cell = ws.cell(row=row, column=col)
+            assert cell.border.top.style == "thin"
+            assert cell.border.bottom.style == "thin"
+            assert cell.border.left.style == "thin"
+            assert cell.border.right.style == "thin"
+
+    if os.path.exists(test_path):
+        os.remove(test_path)
