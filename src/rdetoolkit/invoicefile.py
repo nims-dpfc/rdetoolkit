@@ -13,9 +13,10 @@ import chardet
 import pandas as pd
 from openpyxl.styles import Border, Side
 from openpyxl.utils import get_column_letter
+from pydantic import ValidationError
 
 from rdetoolkit import rde2util
-from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.exceptions import InvoiceSchemaValidationError, StructuredError
 from rdetoolkit.fileops import readf_json, writef_json
 from rdetoolkit.models.invoice import FixedHeaders, GeneralTermRegistry, SpecificTermRegistry, TemplateConfig
 from rdetoolkit.models.invoice_schema import GeneralAttribute, InvoiceSchemaJson, SampleField, SpecificAttribute, SpecificProperty
@@ -348,7 +349,10 @@ class ExcelInvoiceTemplateGenerator:
         """
         base_df = self.fixed_header.to_template_dataframe().to_pandas()
         invoice_schema_obj = readf_json(config.schema_path)
-        invoice_schema = InvoiceSchemaJson(**invoice_schema_obj)
+        try:
+            invoice_schema = InvoiceSchemaJson(**invoice_schema_obj)
+        except ValidationError as e:
+            raise InvoiceSchemaValidationError(str(e)) from e
         prefixes = {
             "general": self.GENERAL_PREFIX,
             "specific": self.SPECIFIC_PREFIX,
@@ -469,11 +473,11 @@ class ExcelInvoiceFile:
         df_specific (pd.DataFrame): Dataframe of specific data.
         self.template_generator (ExcelInvoiceTemplateGenerator): Template generator for the Excelinvoice.
     """
+    template_generator = ExcelInvoiceTemplateGenerator(FixedHeaders())  # type: ignore
 
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
         self.dfexcelinvoice, self.df_general, self.df_specific = self.read()
-        self.template_generator = ExcelInvoiceTemplateGenerator(FixedHeaders())  # type: ignore
 
     def read(self, *, target_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
@@ -537,7 +541,8 @@ class ExcelInvoiceFile:
         _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
         return _df_specific
 
-    def generate_template(self, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal["file", "folder"] = "file") -> pd.DataFrame:
+    @classmethod
+    def generate_template(cls, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal["file", "folder"] = "file") -> pd.DataFrame:
         """Generates a template DataFrame based on the provided invoice schema and saves it to the specified path.
 
         Args:
@@ -555,8 +560,8 @@ class ExcelInvoiceFile:
             inputfile_mode=file_mode,
         )
 
-        template_df = self.template_generator.generate(config)
-        self.template_generator.save(template_df, str(save_path))
+        template_df = cls.template_generator.generate(config)
+        cls.template_generator.save(template_df, str(save_path))
         return template_df
 
     def save(self, save_path: str | Path, *, invoice: pd.DataFrame | None = None, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
