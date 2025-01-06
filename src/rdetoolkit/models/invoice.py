@@ -88,10 +88,19 @@ class TemplateConfig:
     inputfile_mode: Literal["file", "folder"] = "file"
 
 
-class GeneralTermRegistry:
+class BaseTermRegistry:
+    base_schema = {
+        "term_id": pl.Utf8,
+        "key_name": pl.Utf8,
+        "ja": pl.Utf8,
+        "en": pl.Utf8,
+    }
+
+
+class GeneralTermRegistry(BaseTermRegistry):
 
     def __init__(self, csv_path: str):
-        self.df = pl.read_csv(csv_path)
+        self.df = pl.read_csv(csv_path, schema_overrides=self.base_schema)
 
     def search(self, column: str, value: str, out_cols: list[str]) -> list[dict[str, Any]]:
         """Search for rows in the DataFrame where the specified column matches the given value and return selected columns.
@@ -142,10 +151,14 @@ class GeneralTermRegistry:
         return self.search("en", en_text, ["term_id", "key_name", "ja"])
 
 
-class SpecificTermRegistry:
+class SpecificTermRegistry(BaseTermRegistry):
 
     def __init__(self, csv_path: str):
-        self.df = pl.read_csv(csv_path)
+        schema = {
+            "sample_class_id": pl.Utf8,
+            **self.base_schema,
+        }
+        self.df = pl.read_csv(csv_path, schema_overrides=schema)
 
     def search(self, columns: list[str], values: list[str], out_cols: list[str]) -> list[dict[str, Any]]:
         """Search for rows in the DataFrame where the specified column matches the given value and return the selected columns.
@@ -170,10 +183,12 @@ class SpecificTermRegistry:
             filtered_df = self.df.filter(filter_expr)
 
             if filtered_df.is_empty():
-                terms = ",".join(f"{col}={val}" for col, val in zip(columns, values))
-                emsg = f"No results found for the specified terms: {terms}."
-                raise InvalidSearchParametersError(emsg)
+                return []
             return filtered_df.select(out_cols).to_dicts()
+        except DataRetrievalError:
+            raise
+        except InvalidSearchParametersError:
+            raise
         except Exception as e:
             terms = ",".join(f"{col}={val}" for col, val in zip(columns, values))
             emsg = f"An error occurred while searching for terms: {terms}. Error: {e}"
