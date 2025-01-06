@@ -466,12 +466,12 @@ class Meta:
 
     def _process_unit(self, vobj: dict[str, Any], idx: int | None) -> None:  # pragma: no cover
         _unit = vobj.get("unit", "")
-        # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
+        # Replace key references starting with "$" in "unit" with actual values
         if _unit.startswith("$"):
             srckey = _unit[1:]
             srcval = self.referedmap[srckey]
             if srcval is None:
-                # 参照先が存在しなかった場合は単位未設定の状態とする
+                # If the reference target does not exist, set the unit as undefined
                 del vobj["unit"]
             elif isinstance(srcval, str):
                 vobj["unit"] = srcval
@@ -479,7 +479,6 @@ class Meta:
                 vobj["unit"] = srcval[idx]
 
     def _process_action(self, vobj: dict[str, Any], k: str, idx: int | None) -> None:  # pragma: no cover
-        # actionの処理
         stract = self.metaDef[k].get("action")
         if not stract:
             return
@@ -528,15 +527,14 @@ class Meta:
                 self._process_unit(vobj, idx)
                 self._process_action(vobj, k, idx)
 
-        # 項目をmetaDefに従ってソート
         outdict["constant"] = self.__sort_by_metadef(outdict["constant"])
         outdict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outdict["variable"]]
 
-        # ファイル出力
         with open(meta_filepath, "w", encoding=enc) as fout:
             json.dump(outdict, fout, indent=4, ensure_ascii=False)
 
-        # metaDefのうち値の入らなかったキーのリストを返す
+        # Get a list of keys from metadata-def that were not assigned values and return a list of metadata that were excluded from writing.
+        # This return format is maintained for debugging purposes.
         assigned_keys = set(outdict["constant"].keys()).union(*(dv.keys() for dv in outdict["variable"]))
         unkown_keys = {k for k in self.metaDef if k not in assigned_keys}
 
@@ -633,16 +631,17 @@ class Meta:
         if orgtype is None:
             _casted_value = castval(vsrc, outtype, outfmt)
         elif orgtype in ["integer", "number"]:
-            # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
+            # For numeric types (integer/number), unit assignment is not handled within this function.
+            # Units should be assigned separately if needed.
             valpair = _split_value_unit(vsrc)
             vstr = valpair.value
-            # 解釈可能かチェック。不可能だった場合は例外スローされるため、
-            # 例外なく処理終了できるかのみに興味がある
+            # Check if the value can be interpreted.
+            # We only care if the process completes without exceptions.
             _casted_value = castval(vstr, orgtype, outfmt)
         else:
             vstr = vsrc
-            # 解釈可能かチェック。不可能だった場合は例外スローされるため、
-            # 例外なく処理終了できるかのみに興味がある
+            # Check if the value can be interpreted.
+            # We only care if the process completes without exceptions.
             _casted_value = castval(vstr, orgtype, outfmt)
 
         if outunit:
