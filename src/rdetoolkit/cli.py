@@ -1,7 +1,9 @@
 import pathlib
+from datetime import datetime
 from typing import Literal
 
 import click
+import pytz
 
 from rdetoolkit.cmd.command import InitCommand, VersionCommand
 from rdetoolkit.cmd.gen_excelinvoice import GenerateExcelInvoiceCommand
@@ -28,8 +30,8 @@ def version() -> None:
 
 @click.command()
 @click.argument("invoice_schema_json_path", type=click.Path(exists=True, dir_okay=False, resolve_path=True, path_type=pathlib.Path), metavar="<invoice.shcema.json file path>")
-@click.option("-o", "--output", "output_path", type=click.Path(exists=False, dir_okay=False, resolve_path=True, path_type=pathlib.Path), required=True, metavar="<path to ExcelInvoice file output>")
-@click.option("-m", "--mode", type=click.Choice(["file", "folder"], case_sensitive=False), default="file", metavar="<filemode or foldermode>")
+@click.option("-o", "--output", "output_path", type=click.Path(exists=False, dir_okay=False, resolve_path=True, path_type=pathlib.Path), default=pathlib.Path.cwd() / "template_excel_invoice.xlsx", metavar="<path to ExcelInvoice file output>")
+@click.option("-m", "--mode", type=click.Choice(["file", "folder"], case_sensitive=False), default="file", help="Path to ExcelInvoice file output (default: ./excel_invoice.xlsx)", metavar="<filemode or foldermode>")
 def make_excelinvoice(invoice_schema_json_path: pathlib.Path, output_path: pathlib.Path, mode: Literal["file", "folder"]) -> None:
     """Generate an Excel invoice based on the provided schema and save it to the specified output path.
 
