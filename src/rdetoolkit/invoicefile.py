@@ -5,7 +5,6 @@ import json
 import os
 import shutil
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Literal, Protocol, Union
 
@@ -18,8 +17,8 @@ from pydantic import ValidationError
 from rdetoolkit import rde2util
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, StructuredError
 from rdetoolkit.fileops import readf_json, writef_json
-from rdetoolkit.models.invoice import FixedHeaders, GeneralTermRegistry, SpecificTermRegistry, TemplateConfig
-from rdetoolkit.models.invoice_schema import GeneralAttribute, InvoiceSchemaJson, SampleField, SpecificAttribute, SpecificProperty
+from rdetoolkit.models.invoice import FixedHeaders, GeneralAttributeConfig, GeneralTermRegistry, SpecificAttributeConfig, SpecificTermRegistry, TemplateConfig
+from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, SampleField, SpecificProperty
 from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
 from rdetoolkit.rde2util import StorageDir
 
@@ -306,23 +305,6 @@ class TemplateGenerator(Protocol):
         """
         ...
 
-
-@dataclass
-class GeneralAttributeConfig:
-    type: str
-    registry: GeneralTermRegistry
-    prefix: str
-    attributes: GeneralAttribute | None
-    requires_class_id: Literal[False]
-
-
-@dataclass
-class SpecificAttributeConfig:
-    type: str
-    registry: SpecificTermRegistry
-    prefix: str
-    attributes: SpecificAttribute | None
-    requires_class_id: Literal[True]
 
 if sys.version_info >= (3, 10):
     AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
