@@ -4,9 +4,10 @@ import copy
 import json
 import os
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Literal, Protocol
+from typing import Any, Callable, Literal, Protocol, Union
 
 import chardet
 import pandas as pd
@@ -322,8 +323,10 @@ class SpecificAttributeConfig:
     attributes: SpecificAttribute | None
     requires_class_id: Literal[True]
 
-
-AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
+if sys.version_info >= (3, 10):
+    AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
+else:
+    AttributeConfig = Union[GeneralAttributeConfig, SpecificAttributeConfig]
 
 
 class ExcelInvoiceTemplateGenerator:
