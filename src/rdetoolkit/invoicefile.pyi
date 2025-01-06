@@ -1,12 +1,11 @@
 import pandas as pd
 from _typeshed import Incomplete
-from dataclasses import dataclass
 from pathlib import Path
 from rdetoolkit import rde2util as rde2util
-from rdetoolkit.exceptions import StructuredError as StructuredError
+from rdetoolkit.exceptions import InvoiceSchemaValidationError as InvoiceSchemaValidationError, StructuredError as StructuredError
 from rdetoolkit.fileops import readf_json as readf_json, writef_json as writef_json
-from rdetoolkit.models.invoice import FixedHeaders as FixedHeaders, GeneralTermRegistry as GeneralTermRegistry, SpecificTermRegistry as SpecificTermRegistry, TemplateConfig as TemplateConfig
-from rdetoolkit.models.invoice_schema import GeneralAttribute as GeneralAttribute, InvoiceSchemaJson as InvoiceSchemaJson, SampleField as SampleField, SpecificAttribute as SpecificAttribute, SpecificProperty as SpecificProperty
+from rdetoolkit.models.invoice import FixedHeaders as FixedHeaders, GeneralAttributeConfig as GeneralAttributeConfig, GeneralTermRegistry as GeneralTermRegistry, SpecificAttributeConfig as SpecificAttributeConfig, SpecificTermRegistry as SpecificTermRegistry, TemplateConfig as TemplateConfig
+from rdetoolkit.models.invoice_schema import InvoiceSchemaJson as InvoiceSchemaJson, SampleField as SampleField, SpecificProperty as SpecificProperty
 from rdetoolkit.models.rde2types import RdeFsPath as RdeFsPath, RdeOutputResourcePath as RdeOutputResourcePath
 from rdetoolkit.rde2util import StorageDir as StorageDir
 from typing import Any, Literal, Protocol
@@ -37,24 +36,6 @@ class InvoiceFile:
 
 class TemplateGenerator(Protocol):
     def generate(self, config: TemplateConfig) -> pd.DataFrame: ...
-
-@dataclass
-class GeneralAttributeConfig:
-    type: str
-    registry: GeneralTermRegistry
-    prefix: str
-    attributes: GeneralAttribute | None
-    requires_class_id: Literal[False]
-    def __init__(self, type, registry, prefix, attributes, requires_class_id) -> None: ...
-
-@dataclass
-class SpecificAttributeConfig:
-    type: str
-    registry: SpecificTermRegistry
-    prefix: str
-    attributes: SpecificAttribute | None
-    requires_class_id: Literal[True]
-    def __init__(self, type, registry, prefix, attributes, requires_class_id) -> None: ...
 AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
 
 class ExcelInvoiceTemplateGenerator:
