@@ -20,6 +20,7 @@ from rdetoolkit.invoicefile import (
 from rdetoolkit.models.rde2types import RdeOutputResourcePath
 from rdetoolkit.invoicefile import ExcelInvoiceTemplateGenerator
 from rdetoolkit.models.invoice import FixedHeaders, TemplateConfig
+from tests.fixtures.static import static_ex_generalterm_csv, static_ex_specificterm_csv
 
 
 @pytest.fixture
@@ -27,9 +28,9 @@ def template_config_mode_file():
     invoice_dir = pathlib.Path("data", "tasksupport")
     invoice_schema_json_path = pathlib.Path(str(invoice_dir), "invoice.schema.json")
 
-    static_dir = Path(__file__).parent.parent / "src" / "rdetoolkit" / "static"
-    specific_term_path = static_dir / "ex_specificTerm.csv"
-    general_term_path = static_dir / "ex_generalTerm.csv"
+    # static_dir = Path(__file__).parent.parent / "src" / "rdetoolkit" / "static"
+    specific_term_path = static_ex_specificterm_csv()
+    general_term_path = static_ex_generalterm_csv()
     yield TemplateConfig(
         schema_path=str(invoice_schema_json_path),
         general_term_path=general_term_path,
@@ -37,21 +38,31 @@ def template_config_mode_file():
         inputfile_mode="file",
     )
 
+    if os.path.exists(specific_term_path):
+        os.remove(specific_term_path)
+    if os.path.exists(general_term_path):
+        os.remove(general_term_path)
+
 
 @pytest.fixture
 def template_config_mode_folder():
     invoice_dir = pathlib.Path("data", "tasksupport")
     invoice_schema_json_path = pathlib.Path(str(invoice_dir), "invoice.schema.json")
 
-    static_dir = Path(__file__).parent.parent / "src" / "rdetoolkit" / "static"
-    specific_term_path = static_dir / "ex_specificTerm.csv"
-    general_term_path = static_dir / "ex_generalTerm.csv"
+    # static_dir = Path(__file__).parent.parent / "src" / "rdetoolkit" / "static"
+    specific_term_path = static_ex_specificterm_csv()
+    general_term_path = static_ex_generalterm_csv()
     yield TemplateConfig(
         schema_path=str(invoice_schema_json_path),
         general_term_path=general_term_path,
         specific_term_path=specific_term_path,
         inputfile_mode="folder",
     )
+
+    if os.path.exists(specific_term_path):
+        os.remove(specific_term_path)
+    if os.path.exists(general_term_path):
+        os.remove(general_term_path)
 
 
 @pytest.fixture
