@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from pydantic import BaseModel
 from rdetoolkit.exceptions import DataRetrievalError as DataRetrievalError, InvalidSearchParametersError as InvalidSearchParametersError
+from rdetoolkit.models.invoice_schema import GeneralAttribute as GeneralAttribute, SpecificAttribute as SpecificAttribute
 from typing import Any, Literal
 
 class HeaderRow1(BaseModel):
@@ -78,3 +79,21 @@ class SpecificTermRegistry(BaseTermRegistry):
     def by_key_name(self, key_name: list[str]) -> list[dict[str, Any]]: ...
     def by_ja(self, ja_text: list[str]) -> list[dict[str, Any]]: ...
     def by_en(self, en_text: list[str]) -> list[dict[str, Any]]: ...
+
+@dataclass
+class GeneralAttributeConfig:
+    type: str
+    registry: GeneralTermRegistry
+    prefix: str
+    attributes: GeneralAttribute | None
+    requires_class_id: Literal[False]
+    def __init__(self, type, registry, prefix, attributes, requires_class_id) -> None: ...
+
+@dataclass
+class SpecificAttributeConfig:
+    type: str
+    registry: SpecificTermRegistry
+    prefix: str
+    attributes: SpecificAttribute | None
+    requires_class_id: Literal[True]
+    def __init__(self, type, registry, prefix, attributes, requires_class_id) -> None: ...

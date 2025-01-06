@@ -9,19 +9,23 @@ from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field
 
 from rdetoolkit.exceptions import DataRetrievalError, InvalidSearchParametersError
+from rdetoolkit.models.invoice_schema import GeneralAttribute, SpecificAttribute
 
 
 class HeaderRow1(BaseModel):
+    """Data class to hold the first header row data of ExcelInvoice."""
     A1: str = "invoiceList_format_id"
 
 
 class HeaderRow2(BaseModel):
+    """Data class to hold the second header row data of ExcelInvoice."""
     A2: str = "data_file_names"
     D2_G2: list[str] = Field(default_factory=lambda: ["basic"] * 4)
     H2_M2: list[str] = Field(default_factory=lambda: ["sample"] * 6)
 
 
 class HeaderRow3(BaseModel):
+    """Data class to hold the third header row data of ExcelInvoice."""
     A3: str = "name"
     B3: str = "dataset_title"
     C3: str = "dataOwner"
@@ -38,6 +42,7 @@ class HeaderRow3(BaseModel):
 
 
 class HeaderRow4(BaseModel):
+    """Data class to hold the fourth header row data of ExcelInvoice."""
     A4: str = "ファイル名\n(拡張子も含め入力)\n(入力例:○○.txt)"
     B4: str = "データセット名\n(必須)"
     C4: str = "データ所有者\n(NIMS User ID)"
@@ -54,6 +59,7 @@ class HeaderRow4(BaseModel):
 
 
 class FixedHeaders(BaseModel):
+    """Data class to hold the fixed header rows data of ExcelInvoice."""
     row1: HeaderRow1 = HeaderRow1()
     row2: HeaderRow2 = HeaderRow2()
     row3: HeaderRow3 = HeaderRow3()
@@ -82,6 +88,7 @@ class FixedHeaders(BaseModel):
 
 @dataclass
 class TemplateConfig:
+    """Data class to hold configuration settings for generating ExcelInvoice template files."""
     schema_path: str | Path
     general_term_path: str | Path
     specific_term_path: str | Path
@@ -89,6 +96,7 @@ class TemplateConfig:
 
 
 class BaseTermRegistry:
+    """Base class for term registries."""
     base_schema = {
         "term_id": pl.Utf8,
         "key_name": pl.Utf8,
@@ -98,6 +106,7 @@ class BaseTermRegistry:
 
 
 class GeneralTermRegistry(BaseTermRegistry):
+    """Class for managing general terms."""
 
     def __init__(self, csv_path: str):
         self.df = pl.read_csv(csv_path, schema_overrides=self.base_schema)
@@ -152,6 +161,7 @@ class GeneralTermRegistry(BaseTermRegistry):
 
 
 class SpecificTermRegistry(BaseTermRegistry):
+    """Class for managing specific terms."""
 
     def __init__(self, csv_path: str):
         schema = {
@@ -238,3 +248,21 @@ class SpecificTermRegistry(BaseTermRegistry):
             list[dict[str, Any]]: A list of dictionaries containing the search results.
         """
         return self.search(["en"], en_text, ["sample_class_id", "term_id", "key_name", "ja"])
+
+
+@dataclass
+class GeneralAttributeConfig:
+    type: str
+    registry: GeneralTermRegistry
+    prefix: str
+    attributes: GeneralAttribute | None
+    requires_class_id: Literal[False]
+
+
+@dataclass
+class SpecificAttributeConfig:
+    type: str
+    registry: SpecificTermRegistry
+    prefix: str
+    attributes: SpecificAttribute | None
+    requires_class_id: Literal[True]
