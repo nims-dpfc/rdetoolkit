@@ -607,8 +607,8 @@ class ExcelInvoiceFile:
         invoice_schema_obj = readf_json(invoice_schema_path)
         invoice_obj = readf_json(invoice_org)
 
-        # excelインボイスの値が空欄の場合に、オリジナルの値が入らないように初期化。
-        # このバージョンのエクセルインボイスではタグ、関連試料は対応しない。
+        # Initialize to prevent original values from being retained when Excel invoice cells are empty.
+        # Tags and related samples are not supported in this version of the Excel invoice.
         for key, value in invoice_obj.items():
             if key == "sample":
                 self._initialize_sample(value)
