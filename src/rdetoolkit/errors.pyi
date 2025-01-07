@@ -2,6 +2,7 @@ import logging
 import traceback
 from collections.abc import Generator
 from rdetoolkit.exceptions import StructuredError as StructuredError
+from rdetoolkit.rde2util import StorageDir as StorageDir
 from typing import Any, Callable
 
 def catch_exception_with_message(*, error_message: str | None = None, error_code: int | None = None, eobj: Any | None = None, verbose: bool = False) -> Callable: ...

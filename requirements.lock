@@ -45,8 +45,5 @@ six==1.16.0
 toml==0.10.2
 tomli==2.0.1
 tomlkit==0.13.2
-tqdm==4.67.0
 typing-extensions==4.12.2
 tzdata==2024.2
-# The following packages are considered to be unsafe in a requirements file:
-pip==24.3.1

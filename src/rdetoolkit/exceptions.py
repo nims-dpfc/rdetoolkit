@@ -136,27 +136,3 @@ class MetadataValidationError(Exception):
     def __init__(self, message: str = "Validation error") -> None:
         self.message = message
         super().__init__(self.message)
-
-
-class DataRetrievalError(Exception):
-    """Raised when an error occurs during data retrieval."""
-
-    def __init__(self, message: str = "Data retrieval error") -> None:
-        self.message = message
-        super().__init__(self.message)
-
-
-class NoResultsFoundError(Exception):
-    """Raised when no results are found."""
-
-    def __init__(self, message: str = "No results found") -> None:
-        self.message = message
-        super().__init__(self.message)
-
-
-class InvalidSearchParametersError(Exception):
-    """Raised when an invalid search term is used."""
-
-    def __init__(self, message: str = "Invalid search term") -> None:
-        self.message = message
-        super().__init__(self.message)
