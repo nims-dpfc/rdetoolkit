@@ -43,15 +43,3 @@ class InvoiceSchemaValidationError(Exception):
 class MetadataValidationError(Exception):
     message: Incomplete
     def __init__(self, message: str = 'Validation error') -> None: ...
-
-class DataRetrievalError(Exception):
-    message: Incomplete
-    def __init__(self, message: str = 'Data retrieval error') -> None: ...
-
-class NoResultsFoundError(Exception):
-    message: Incomplete
-    def __init__(self, message: str = 'No results found') -> None: ...
-
-class InvalidSearchParametersError(Exception):
-    message: Incomplete
-    def __init__(self, message: str = 'Invalid search term') -> None: ...

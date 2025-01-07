@@ -1,4 +1,4 @@
-from _typeshed import Incomplete as Incomplete
+from _typeshed import Incomplete
 from collections.abc import Iterator
 from pydantic import BaseModel
 
