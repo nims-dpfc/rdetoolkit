@@ -33,21 +33,17 @@ In `invoicefile.py`, processes for handling invoices are defined.
         members:
             - read
             - overwrite
-            - _process_invoice_sheet
-            - _process_general_term_sheet
-            - _process_specific_term_sheet
-            - _check_intermittent_empty_rows
-            - _assign_basic
-            - _assign_sample
-            - _assign_sample_general
-            - _assign_sample_specific
-            - _assign_custom
-            - _ensure_sample_id_order
-            - _detect_encoding
-            - _load_json
-            - _write_json
-            - _initialize_sample
-            - _initialize_non_sample
+            - generate_template
+            - save
+            - check_intermittent_empty_rows
+
+## ExcelInvoiceTemplateGenerator
+
+::: src.rdetoolkit.invoicefile.ExcelInvoiceTemplateGenerator
+    options:
+        members:
+            - generate
+            - save
 
 ## backup_invoice_json_files
 
