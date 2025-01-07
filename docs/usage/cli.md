@@ -35,17 +35,17 @@ container
 各ファイルの説明は以下の通りです。
 
 - requirements.txt
-  - 構造化プログラム構築で使用したいPythonパッケージを追加してください。必要に応じて`pip install`を実行してください。
+    - 構造化プログラム構築で使用したいPythonパッケージを追加してください。必要に応じて`pip install`を実行してください。
 - modules
-  - 構造化処理で使用したいプログラムを格納してください。別セクションで説明します。
+    - 構造化処理で使用したいプログラムを格納してください。別セクションで説明します。
 - main.py
-  - 構造化プログラムの起動処理を定義
+    - 構造化プログラムの起動処理を定義
 - data/inputdata
-  - 構造化処理対象データファイルを配置してください。
+    - 構造化処理対象データファイルを配置してください。
 - data/invoice
-  - ローカル実行させるためには空ファイルでも必要になります。
+    - ローカル実行させるためには空ファイルでも必要になります。
 - data/tasksupport
-  - 構造化処理の補助するファイル群を配置してください。
+    - 構造化処理の補助するファイル群を配置してください。
 
 !!! Tip
     すでに存在するファイルは上書きや生成がスキップされます。
@@ -70,6 +70,9 @@ container
     ```powershell
     py -m rdetoolkit make_excelinvoice <invoice.schema.json path> -o <save file path> -m <file or folder>
     ```
+
+!!! Tip
+    `-o`を指定しない場合は、`template_excel_invoice.xlsx`というファイル名で、実行ディレクトリ配下に作成されます。
 
 ## version: バージョン確認
 
