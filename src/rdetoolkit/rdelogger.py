@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import os
 from logging import DEBUG, INFO, FileHandler, Formatter, Handler, Logger, NullHandler, StreamHandler, getLogger
+from pathlib import Path
 from typing import Callable
 
 from rdetoolkit.models.rde2types import RdeFsPath
-from rdetoolkit.rde2util import StorageDir
 
 
 class LazyFileHandler(logging.Handler):
@@ -133,7 +133,8 @@ class CustomLog:
         """
         logger = self.logger
         if not logger.hasHandlers():
-            logdir = StorageDir.get_specific_outputdir(True, "logs")
+            logdir = Path("data/logs")
+            logdir.mkdir(parents=True, exist_ok=True)
             logfile = logdir / "rdeuser.log"
             if needlogs:
                 self._set_handler(StreamHandler(), True)

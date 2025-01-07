@@ -1,8 +1,7 @@
 import logging
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from logging import Logger
 from rdetoolkit.models.rde2types import RdeFsPath as RdeFsPath
-from rdetoolkit.rde2util import StorageDir as StorageDir
 from typing import Callable
 
 class LazyFileHandler(logging.Handler):

@@ -40,6 +40,11 @@ jobs:
           override: true
           components: llvm-tools-preview
 
+      - name: Install Python development files
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev
+
       - name: Install grcov
         run: cargo install grcov
 
@@ -47,10 +52,11 @@ jobs:
         run: |
           echo "PYTHON_INCLUDE_DIR=$(python3 -c 'from sysconfig import get_paths as gp; print(gp()[\"include\"])')" >> $GITHUB_ENV
           echo "PYTHON_LIB_DIR=$(python3 -c 'from sysconfig import get_paths as gp; print(gp()[\"stdlib\"])')" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=${{ env.PYTHON_LIB_DIR }}:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Build with coverage
         env:
-          RUSTFLAGS: "-C instrument-coverage -L${{ env.PYTHON_LIB_DIR }} -I${{ env.PYTHON_INCLUDE_DIR }}"
+          RUSTFLAGS: "-C instrument-coverage -L${{ env.PYTHON_LIB_DIR }} -I${{ env.PYTHON_INCLUDE_DIR }} -C link-arg=-Wl,-rpath,${{ env.PYTHON_LIB_DIR }}"
         run: cargo build
 
       - name: Run tests with coverage

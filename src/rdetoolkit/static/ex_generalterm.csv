@@ -1,0 +1,25 @@
+﻿term_id,key_name,ja,en
+33c6e9dc-5787-0f96-7683-f39281c60419,sample.general.composiiton,化学式、組成式、分子式など,"Chemical formula, composition formula, molecular formula, etc."
+f2d5e89e-01f0-66a2-5d8e-623a4fc31698,sample.general.material-name,物質名,Material name
+a7a6fc7b-ed46-88b0-bba8-a1e34857a049,sample.general.sample-alias,試料別名,Another sample name
+e2d20d02-2e38-2cd3-b1b3-66fdb8a11057,sample.general.cas-number,CAS番号,CAS Number
+1e70d11d-cbdd-bfd1-9301-9612c29b4060,sample.general.purchase-date,試料購入日,Purchase date
+1d3cab05-3eaa-cb9b-9a3f-20eb0ca26963,sample.general.crystalline-state,結晶状態,Crystalline state
+efcf34e7-4308-c195-6691-6f4d28ffc9bb,sample.general.crystal-structure,結晶構造,Crystal structure
+e9617207-7f74-ef45-9b05-74eef6e4ecbb,sample.general.pearson-symbol,ピアソン記号,Pearson symbol
+f63149a4-e57c-4273-4c1e-dffa41356d28,sample.general.space-group,空間群,Space group
+7cc57dfb-8b70-4b3a-5315-fbce4cbf73d0,sample.general.sample-shape,試料形状,Sample shape
+efc6a0d5-313e-1871-190c-baaff7d1bf6c,sample.general.smiles-string,SMILES String,SMILES String
+9270879d-d94e-4d3f-2d5c-19568e040004,sample.general.inchi,InChI,InChI
+3edadcff-8a85-51d9-708f-8f76bf055377,sample.general.inchi-key,InChI key,InChI key
+dc27a956-263e-f920-e574-5beec912a247,sample.general.molecular-weight,分子量,molecular weight
+0444cf53-db47-b208-7b5f-54429291a140,sample.general.sample-type,試料分類,Sample type
+fc30c31d-12a3-591a-c837-4f06ab458de0,sample.general.taxonomy,生物種,Taxonomy
+9a23002a-c398-e521-081a-24b6cd32dbbd,sample.general.cell-line,細胞株,Cell line
+b4ce4016-e2bf-e5a1-7cae-ed496c7a776f,sample.general.protein-name,タンパク名,Protein name
+8c9b1a88-1530-24d3-4b2e-5441eee5c24f,sample.general.gene-name,遺伝子名,Gene name
+047e30f3-f294-e58d-cbe4-6bb588bf4cf8,sample.general.ncbi-accession-number,NCBIアクセッション番号,NCBI accession number
+3adf9874-7bcb-e5f8-99cb-3d6fd9d7b55e,sample.general.general-name,一般名称,General name
+0aadfff2-37de-411f-883a-38b62b2abbce,sample.general.chemical-composition,化学組成,Chemical composition
+5e166ac4-bfcd-457a-84bc-8626abe9188f,sample.general.supplier,購入元,Supplier
+0d0417a3-3c3b-496a-b0fb-5a26f8a74166,sample.general.lot-number-or-product-number-etc,ロット番号、製造番号など,Lot number or product number etc
