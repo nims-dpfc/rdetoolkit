@@ -4,16 +4,27 @@ import copy
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal, Protocol, Union
 
 import chardet
 import pandas as pd
+from openpyxl.styles import Border, Side
+from openpyxl.utils import get_column_letter
+from pydantic import ValidationError
 
 from rdetoolkit import rde2util
-from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.exceptions import InvoiceSchemaValidationError, StructuredError
+from rdetoolkit.fileops import readf_json, writef_json
+from rdetoolkit.models.invoice import FixedHeaders, GeneralAttributeConfig, GeneralTermRegistry, SpecificAttributeConfig, SpecificTermRegistry, TemplateConfig
+from rdetoolkit.models.invoice_schema import InvoiceSchemaJson, SampleField, SpecificProperty
 from rdetoolkit.models.rde2types import RdeFsPath, RdeOutputResourcePath
-from rdetoolkit.rde2util import CharDecEncoding, StorageDir, read_from_json_file
+from rdetoolkit.rde2util import StorageDir
+
+STATIC_DIR = Path(__file__).parent / "static"
+EX_GENERALTERM = STATIC_DIR / "ex_generalterm.csv"
+EX_SPECIFICTERM = STATIC_DIR / "ex_specificterm.csv"
 
 
 def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -183,9 +194,6 @@ class InvoiceFile:
         invoice_path (Path): Path to the invoice file.
         invoice_obj (dict): Dictionary representation of the invoice JSON file.
 
-    Note:
-        - The class uses an external utility `rde2util.CharDecEncoding.detect_text_file_encoding` to detect the encoding of the file.
-
     Args:
         invoice_path (Path): The path to the invoice file.
 
@@ -238,9 +246,7 @@ class InvoiceFile:
         if target_path is None:
             target_path = self.invoice_path
 
-        enc = CharDecEncoding.detect_text_file_encoding(target_path)
-        with open(target_path, encoding=enc) as f:
-            self.invoice_obj = json.load(f)
+        self.invoice_obj = readf_json(target_path)
         return self.invoice_obj
 
     def overwrite(self, dst_file_path: Path, *, src_obj: Path | None = None) -> None:
@@ -264,9 +270,7 @@ class InvoiceFile:
             src_obj = self.invoice_path
         parent_dir = os.path.dirname(dst_file_path)
         os.makedirs(parent_dir, exist_ok=True)
-        enc = CharDecEncoding.detect_text_file_encoding(self.invoice_path)
-        with open(dst_file_path, "w", encoding=enc) as f:
-            json.dump(self.invoice_obj, f, indent=4, ensure_ascii=False)
+        writef_json(dst_file_path, self.invoice_obj)
 
     @classmethod
     def copy_original_invoice(cls, src_file_path: Path, dst_file_path: Path) -> None:
@@ -289,15 +293,169 @@ class InvoiceFile:
             shutil.copy(str(src_file_path), str(dst_file_path))
 
 
+class TemplateGenerator(Protocol):
+    def generate(self, config: TemplateConfig) -> pd.DataFrame:
+        """Generates a template based on the provided configuration.
+
+        Args:
+            config (TemplateConfig): The configuration object.
+
+        Returns:
+            pd.DataFrame: A DataFrame representing the generated template.
+        """
+        ...
+
+
+if sys.version_info >= (3, 10):
+    AttributeConfig = GeneralAttributeConfig | SpecificAttributeConfig
+else:
+    AttributeConfig = Union[GeneralAttributeConfig, SpecificAttributeConfig]
+
+
+class ExcelInvoiceTemplateGenerator:
+    GENERAL_PREFIX = "sample.general"
+    SPECIFIC_PREFIX = "sample.specific"
+    CUSTOM_PREFIX = "custom"
+
+    def __init__(self, fixed_header: FixedHeaders):
+        self.fixed_header = fixed_header
+
+    def generate(self, config: TemplateConfig) -> pd.DataFrame:
+        """Generates a template based on the provided configuration.
+
+        Args:
+            config (TemplateConfig): The configuration object.
+
+        Returns:
+            pd.DataFrame: A DataFrame representing the generated template.
+        """
+        base_df = self.fixed_header.to_template_dataframe().to_pandas()
+        invoice_schema_obj = readf_json(config.schema_path)
+        try:
+            invoice_schema = InvoiceSchemaJson(**invoice_schema_obj)
+        except ValidationError as e:
+            raise InvoiceSchemaValidationError(str(e)) from e
+        prefixes = {
+            "general": self.GENERAL_PREFIX,
+            "specific": self.SPECIFIC_PREFIX,
+            "custom": self.CUSTOM_PREFIX,
+        }
+
+        sample_field = invoice_schema.properties.sample
+        if sample_field is not None:
+            self._add_sample_field(base_df, config, sample_field, prefixes)
+
+        custom_field = invoice_schema.properties.custom
+        if custom_field is not None:
+            custom_dict = custom_field.properties.root
+            for key, meta_prop in custom_dict.items():
+                base_df[key] = pd.Series([None, prefixes["custom"], key, meta_prop.label.ja], index=base_df.index)
+
+        if config.inputfile_mode == "folder":
+            first_col = base_df.columns[0]
+            base_df.loc[1, first_col] = ""
+            base_df.loc[2, first_col] = "data_folder"
+        return base_df
+
+    def _add_sample_field(self, base_df: pd.DataFrame, config: TemplateConfig, sample_field: SampleField, prefixes: dict[str, str]) -> pd.DataFrame:
+        attribute_configs: list[AttributeConfig] = [
+            GeneralAttributeConfig(
+                type="general",
+                registry=GeneralTermRegistry(str(config.general_term_path)),
+                prefix=prefixes["general"],
+                attributes=sample_field.properties.generalAttributes,
+                requires_class_id=False,
+            ),
+            SpecificAttributeConfig(
+                type="specific",
+                registry=SpecificTermRegistry(str(config.specific_term_path)),
+                prefix=prefixes["specific"],
+                attributes=sample_field.properties.specificAttributes,
+                requires_class_id=True,
+            ),
+        ]
+        for attr_config in attribute_configs:
+            attrs = attr_config.attributes
+            if not attrs or not attrs.items.root:
+                continue
+
+            for prop in attrs.items.root:
+                term_id = prop.properties.term_id.const
+                class_id = ""
+                if isinstance(prop, SpecificProperty):
+                    class_id = prop.properties.class_id.const
+
+                try:
+                    emsg = "Could not find a result corresponding to the specified term_id or class_id."
+                    if isinstance(attr_config, SpecificAttributeConfig):
+                        emsg = f"Could not find a result corresponding to term_id {term_id} and class_id {class_id}."
+                        term = attr_config.registry.by_term_and_class_id(term_id, class_id)[0]
+                    else:
+                        emsg = f"Could not find a result corresponding to term_id {term_id}."
+                        term = attr_config.registry.by_term_id(term_id)[0]
+                except (IndexError, KeyError) as e:
+                    raise StructuredError(emsg) from e
+
+                ja_name = term["ja"]
+                key_name = term["key_name"]
+                name = key_name.replace(f"{attr_config.prefix}.", "")
+                base_df[key_name] = [None, attr_config.prefix, name, ja_name]
+
+        return base_df
+
+    def save(self, df: pd.DataFrame, save_path: str) -> None:
+        """Save the given DataFrame to an Excel file with specific formatting.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to be saved.
+            save_path (str): The path where the Excel file will be saved.
+
+        Note:
+            The method performs the following operations:
+            - Writes the DataFrame to an Excel file starting from the 5th row without headers.
+            - Sets the height of the 5th row to 40.
+            - Adjusts the width of all columns to 20.
+            - Applies a thin border to all cells in the range from row 5 to row 40.
+            - Applies a thick top border and a double bottom border to the cells in the 5th row.
+        """
+        with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name='invoice_form', index=False, header=False)
+            _ = writer.book
+            worksheet = writer.sheets["invoice_form"]
+            worksheet.row_dimensions[4].height = 40
+            max_col = df.shape[1]
+
+            for col in range(1, max_col + 1):
+                col_letter = get_column_letter(col)
+                worksheet.column_dimensions[col_letter].width = 20
+
+            # settings cell border
+            thin = Side(border_style="thin", color="000000")
+            thick = Side(border_style="thick", color="000000")
+            double = Side(border_style="double", color="000000")
+            grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+            for row in range(4, 41):
+                for col in range(1, max_col + 1):
+                    cell = worksheet.cell(row=row, column=col)
+                    cell.border = grid_border
+
+            for col in range(1, max_col + 1):
+                cell = worksheet.cell(row=4, column=col)
+                cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
+
+
 class ExcelInvoiceFile:
     """Class representing an invoice file in Excel format. Provides utilities for reading and overwriting the invoice file.
 
     Attributes:
-        invoice_path (Path): Path to the invoice file.
+        invoice_path (Path): Path to the excel invoice file (.xlsx).
         dfexcelinvoice (pd.DataFrame): Dataframe of the invoice.
         df_general (pd.DataFrame): Dataframe of general data.
         df_specific (pd.DataFrame): Dataframe of specific data.
+        self.template_generator (ExcelInvoiceTemplateGenerator): Template generator for the Excelinvoice.
     """
+    template_generator = ExcelInvoiceTemplateGenerator(FixedHeaders())  # type: ignore
 
     def __init__(self, invoice_path: Path):
         self.invoice_path = invoice_path
@@ -307,8 +465,7 @@ class ExcelInvoiceFile:
         """Reads the content of the Excel invoice file and returns it as three dataframes.
 
         Args:
-            target_path (Optional[Path], optional): Path to the invoice file to be read. If not provided,
-                uses the path from `self.invoice_path`. Defaults to None.
+            target_path (Optional[Path], optional): Path to the excelinvoice file(.xlsx) to be read. If not provided, uses the path from `self.invoice_path`. Defaults to None.
 
         Returns:
             tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Three dataframes (dfexcelinvoice, df_general, df_specific).
@@ -320,7 +477,9 @@ class ExcelInvoiceFile:
         if target_path is None:
             target_path = self.invoice_path
 
-        self.__check_exist_rawfiles(target_path)
+        if not os.path.exists(target_path):
+            emsg = f"ERROR: excelinvoice not found {target_path}"
+            raise StructuredError(emsg)
 
         dct_sheets = pd.read_excel(target_path, sheet_name=None, dtype=str, header=None, index_col=None)
 
@@ -364,10 +523,59 @@ class ExcelInvoiceFile:
         _df_specific.columns = ["sample_class_id", "term_id", "key_name"]
         return _df_specific
 
-    def __check_exist_rawfiles(self, excel_rawfiles: Path) -> None:
-        if not os.path.exists(excel_rawfiles):
-            emsg = f"ERROR: excelinvoice not found {excel_rawfiles}"
-            raise StructuredError(emsg)
+    @classmethod
+    def generate_template(cls, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal["file", "folder"] = "file") -> pd.DataFrame:
+        """Generates a template DataFrame based on the provided invoice schema and saves it to the specified path.
+
+        Args:
+            invoice_schema_path (str | Path): The path to the invoice schema file.
+            save_path (str | Path): The path where the generated template will be saved.
+            file_mode (Literal["file", "folder"], optional): The mode indicating whether the input is a file or a folder. Defaults to "file".
+
+        Returns:
+            pd.DataFrame: The generated template as a pandas DataFrame.
+        """
+        config = TemplateConfig(
+            schema_path=invoice_schema_path,
+            general_term_path=EX_GENERALTERM,
+            specific_term_path=EX_SPECIFICTERM,
+            inputfile_mode=file_mode,
+        )
+
+        template_df = cls.template_generator.generate(config)
+        cls.template_generator.save(template_df, str(save_path))
+        return template_df
+
+    def save(self, save_path: str | Path, *, invoice: pd.DataFrame | None = None, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
+        """Save the invoice DataFrame to an Excel file.
+
+        Args:
+            save_path (str | Path): The path where the Excel file will be saved.
+            invoice (pd.DataFrame | None, optional): The DataFrame containing the invoice data. Defaults to None.
+            sheet_name (str, optional): The name of the sheet in the Excel file. Defaults to "invoice_form".
+            index (list[str] | None, optional): The list of index labels to use. If None, index will not be written. Defaults to None.
+            header (list[str] | None, optional): The list of column headers to use. If None, header will not be written. Defaults to None.
+
+        Returns:
+            None
+        """
+        _invoice_df = invoice if invoice is not None else self.dfexcelinvoice
+        try:
+            if index:
+                _invoice_df.index = pd.Index(index)
+                _index_enabled = True
+            else:
+                _index_enabled = False
+            if header:
+
+                _invoice_df.columns = header
+                _header_enabled = True
+            else:
+                _header_enabled = False
+            _invoice_df.to_excel(save_path, index=_index_enabled, header=_header_enabled, sheet_name=sheet_name)
+        except Exception as e:
+            emsg = "Failed to save the invoice file."
+            raise StructuredError(emsg) from e
 
     def overwrite(self, invoice_org: Path, dist_path: Path, invoice_schema_path: Path, idx: int) -> None:
         """Overwrites the content of the original invoice file based on the data from the Excel invoice and saves it as a new file.
@@ -378,11 +586,11 @@ class ExcelInvoiceFile:
             invoice_schema_path (Path): Path to the invoice schema.
             idx (int): Index of the target row in the invoice dataframe.
         """
-        invoice_schema_obj = self._load_json(invoice_schema_path)
-        invoice_obj = self._load_json(invoice_org)
+        invoice_schema_obj = readf_json(invoice_schema_path)
+        invoice_obj = readf_json(invoice_org)
 
-        # excelインボイスの値が空欄の場合に、オリジナルの値が入らないように初期化。
-        # このバージョンのエクセルインボイスではタグ、関連試料は対応しない。
+        # Initialize to prevent original values from being retained when Excel invoice cells are empty.
+        # Tags and related samples are not supported in this version of the Excel invoice.
         for key, value in invoice_obj.items():
             if key == "sample":
                 self._initialize_sample(value)
@@ -394,9 +602,7 @@ class ExcelInvoiceFile:
 
         self._ensure_sample_id_order(invoice_obj)
 
-        enc = self._detect_encoding(invoice_org)
-        enc = "utf_8" if enc.lower() == "ascii" else enc
-        self._write_json(dist_path, invoice_obj, enc)
+        writef_json(dist_path, invoice_obj, enc="utf_8")
 
     @staticmethod
     def check_intermittent_empty_rows(df: pd.DataFrame) -> None:
@@ -475,18 +681,6 @@ class ExcelInvoiceFile:
 
         sampleid_value = invoice_obj["sample"].pop("sampleId")
         invoice_obj["sample"] = {"sampleId": sampleid_value, **invoice_obj["sample"]}
-
-    def _detect_encoding(self, file_path: Path) -> str:
-        return CharDecEncoding.detect_text_file_encoding(file_path)
-
-    def _load_json(self, file_path: Path) -> dict[str, Any]:
-        enc = self._detect_encoding(file_path)
-        with open(file_path, encoding=enc) as f:
-            return json.load(f)
-
-    def _write_json(self, file_path: Path, obj: Any, enc: str) -> None:
-        with open(file_path, "w", encoding=enc) as f:
-            json.dump(obj, f, indent=4, ensure_ascii=False)
 
     def _initialize_sample(self, sample_obj: Any) -> None:
         for item, val in sample_obj.items():
@@ -600,7 +794,7 @@ def update_description_with_features(
             description = description[1:]
 
     _assign_invoice_val(invoice_obj, "basic", "description", description, invoice_schema_obj)
-    rde2util.write_to_json_file(dst_invoice_json, invoice_obj)
+    writef_json(dst_invoice_json, invoice_obj)
 
 
 class RuleBasedReplacer:
@@ -643,10 +837,8 @@ class RuleBasedReplacer:
             emsg = f"Error. File format/extension is not correct: {filepath}"
             raise StructuredError(emsg)
 
-        enc = CharDecEncoding.detect_text_file_encoding(filepath)
-        with open(filepath, encoding=enc) as f:
-            data = json.load(f)
-            self.rules = data.get("filename_mapping", {})
+        data = readf_json(filepath)
+        self.rules = data.get("filename_mapping", {})
 
     def get_apply_rules_obj(
         self,
@@ -745,21 +937,17 @@ class RuleBasedReplacer:
             raise StructuredError(emsg)
 
         if save_file_path.exists():
-            enc = CharDecEncoding.detect_text_file_encoding(save_file_path)
-            with open(save_file_path, encoding=enc) as f:
-                exists_contents: dict = json.load(f)
+            exists_contents = readf_json(save_file_path)
             _ = self.get_apply_rules_obj(replacements_rule, exists_contents)
             data_to_write = copy.deepcopy(exists_contents)
         else:
             new_contents: dict[str, Any] = {}
             _ = self.get_apply_rules_obj(replacements_rule, new_contents)
             data_to_write = copy.deepcopy(new_contents)
-            enc = "utf-8"
 
         try:
-            with open(save_file_path, mode="w", encoding=enc) as f:
-                json.dump(data_to_write, f, indent=4, ensure_ascii=False)
-                contents = json.dumps({"filename_mapping": self.rules})
+            writef_json(save_file_path, data_to_write)
+            contents = json.dumps({"filename_mapping": self.rules})
         except json.JSONDecodeError as json_err:
             emsg = "Error. No write was performed on the target json"
             raise StructuredError(emsg) from json_err
@@ -818,7 +1006,7 @@ def apply_magic_variable(invoice_path: str | Path, rawfile_path: str | Path, *, 
     if save_filepath is None:
         save_filepath = invoice_path
 
-    invoice_contents = read_from_json_file(invoice_path)
+    invoice_contents = readf_json(invoice_path)
     if invoice_contents.get("basic", {}).get("dataName") == "${filename}":
         replacement_rule = {"${filename}": str(rawfile_path.name)}
         contents = apply_default_filename_mapping_rule(replacement_rule, save_filepath)

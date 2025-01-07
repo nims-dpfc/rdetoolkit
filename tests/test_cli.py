@@ -4,12 +4,15 @@ import platform
 import shutil
 from distutils.version import StrictVersion
 from pathlib import Path
+from unittest.mock import patch
+
 
 import pytest
 from click.testing import CliRunner
 from rdetoolkit.cli import (
     init,
     version,
+    make_excelinvoice,
 )
 from rdetoolkit.cmd.command import (
     DockerfileGenerator,
@@ -238,3 +241,99 @@ def test_version(get_version_from_pyprojecttoml_py39_py310, get_version_from_pyp
     result = runner.invoke(version)
 
     assert v == result.output
+
+
+@pytest.fixture
+def temp_output_path(tmp_path):
+    yield tmp_path / "output.xlsx"
+
+
+@pytest.fixture
+def temp_output_folder(tmp_path):
+    output_folder = tmp_path / "invoices"
+    yield output_folder
+
+
+def test_make_excelinvoice_file_mode_success(ivnoice_schema_json_with_full_sample_info, temp_output_path):
+    """'file' モードでの正常な実行をテスト"""
+    runner = CliRunner()
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(ivnoice_schema_json_with_full_sample_info),
+            '-o',
+            str(temp_output_path)
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert temp_output_path.exists()
+    assert "📄 Generating ExcelInvoice template..." in result.output
+    assert f"- Schema: {Path(ivnoice_schema_json_with_full_sample_info).resolve()}" in result.output
+    assert f"- Output: {temp_output_path}" in result.output
+    assert "- Mode: file" in result.output
+    assert f"✨ ExcelInvoice template generated successfully! : {temp_output_path}" in result.output
+
+
+def test_make_excelinvoice_folder_mode_success(ivnoice_schema_json_with_full_sample_info, temp_output_path):
+    """'file' モードでの正常な実行をテスト"""
+    runner = CliRunner()
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(ivnoice_schema_json_with_full_sample_info),
+            '-o',
+            str(temp_output_path),
+            "-m",
+            "folder",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert temp_output_path.exists()
+    assert "📄 Generating ExcelInvoice template..." in result.output
+    assert f"- Schema: {Path(ivnoice_schema_json_with_full_sample_info).resolve()}" in result.output
+    assert f"- Output: {temp_output_path}" in result.output
+    assert "- Mode: folder" in result.output
+    assert f"✨ ExcelInvoice template generated successfully! : {temp_output_path}" in result.output
+
+
+def test_generate_excelinvoice_command_schema_error(invalid_ivnoice_schema_json, temp_output_path):
+    """スキーマエラーテスト"""
+    runner = CliRunner()
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(invalid_ivnoice_schema_json),
+            '-o',
+            str(temp_output_path),
+        ],
+    )
+
+    assert "📄 Generating ExcelInvoice template..." in result.output
+    assert f"- Schema: {Path(invalid_ivnoice_schema_json).resolve()}" in result.output
+    assert f"- Output: {temp_output_path}" in result.output
+    assert "- Mode: file" in result.output
+    assert "🔥 Schema Error" in result.output
+
+
+def test_generate_excelinvoice_command_unexpected_error(ivnoice_schema_json_with_full_sample_info, temp_output_path):
+    """エラーテスト"""
+    with patch('rdetoolkit.invoicefile.ExcelInvoiceFile.generate_template') as mock_generate:
+        mock_generate.side_effect = Exception("Unexpected test error")
+        runner = CliRunner()
+        result = runner.invoke(
+            make_excelinvoice,
+            [
+                str(ivnoice_schema_json_with_full_sample_info),
+                '-o',
+                str(temp_output_path),
+            ],
+        )
+
+        assert "📄 Generating ExcelInvoice template..." in result.output
+        assert f"- Schema: {Path(ivnoice_schema_json_with_full_sample_info).resolve()}" in result.output
+        assert f"- Output: {temp_output_path}" in result.output
+        assert "- Mode: file" in result.output
+        assert "🔥 Error: An unexpected error occurred: Unexpected test error" in result.output
+        assert result.exit_code != 0
