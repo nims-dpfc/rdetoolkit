@@ -25,10 +25,6 @@ from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger
 
 
-def h() -> str:
-    """Test program."""
-    return "test program"
-
 def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFiles, Path | None]:
     """Classify input files to determine if the input pattern is appropriate.
 
