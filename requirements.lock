@@ -43,7 +43,6 @@ referencing==0.35.1
 rpds-py==0.20.0
 six==1.16.0
 toml==0.10.2
-tomli==2.0.1
 tomlkit==0.13.2
 tqdm==4.67.0
 typing-extensions==4.12.2
