@@ -236,7 +236,9 @@ mod tests {
             let base_dir = temp.path().to_str().unwrap();
             let dir = ManagedDirectory::new(base_dir, "test_dir", Some(3), Some(1))?;
 
-            assert!(dir.path.to_string_lossy().contains("divided/001/test_dir"));
+            let expected_path = Path::new("divided").join("001").join("test_dir");
+
+            assert!(dir.path.ends_with(&expected_path));
             assert!(dir.path.exists());
 
             Ok(())
@@ -251,10 +253,9 @@ mod tests {
             let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
 
             let new_dir = dir.__call__(1)?;
-            assert!(new_dir
-                .path
-                .to_string_lossy()
-                .contains("/divided/0001/test_dir"));
+            let expected_path = Path::new("divided").join("0001").join("test_dir");
+
+            assert!(new_dir.path.ends_with(&expected_path));
             assert!(new_dir.path.exists());
 
             let err = dir.__call__(-1);
