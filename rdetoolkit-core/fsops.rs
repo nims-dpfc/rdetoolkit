@@ -211,6 +211,139 @@ mod tests {
     use pyo3::Python;
     use std::io::{Error as IoError, ErrorKind};
     use std::path::PathBuf;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_managed_directory_new() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            assert_eq!(dir.n_digit, 4);
+            assert_eq!(dir.idx, 0);
+            assert!(dir.path.ends_with("test_dir"));
+            assert!(dir.path.exists());
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_managed_directory_with_index() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", Some(3), Some(1))?;
+
+            assert!(dir.path.to_string_lossy().contains("divided/001/test_dir"));
+            assert!(dir.path.exists());
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_managed_directory_call() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            let new_dir = dir.__call__(1)?;
+            assert!(new_dir
+                .path
+                .to_string_lossy()
+                .contains("/divided/0001/test_dir"));
+            assert!(new_dir.path.exists());
+
+            let err = dir.__call__(-1);
+            assert!(err.is_err());
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_managed_directory_list() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            let test_file = dir.path.join("test.txt");
+            fs::write(&test_file, "test").unwrap();
+
+            let files = dir.list()?;
+            assert_eq!(files.len(), 1);
+            assert!(files[0].contains("test.txt"));
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_managed_directory_string_representation() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            assert!(dir.__str__().contains("test_dir"));
+            assert!(dir.__repr__().starts_with("ManagedDirectory"));
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_directory_ops_new() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+
+            let ops = DirectoryOps::new(base_dir, None)?;
+            assert_eq!(ops.n_digit, 4);
+            assert!(ops.base_dir.exists());
+
+            // カスタム桁数でインスタンス生成
+            let ops_custom = DirectoryOps::new(base_dir, Some(6))?;
+            assert_eq!(ops_custom.n_digit, 6);
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_directory_ops_gettattr() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let ops = DirectoryOps::new(base_dir, None)?;
+
+            let test_dir = ops.__getattr__("test_directory")?;
+            assert!(test_dir.path.exists());
+            assert_eq!(test_dir.n_digit, 4);
+            assert_eq!(test_dir.idx, 0);
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_directory_ops_repr() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let ops = DirectoryOps::new(base_dir, None)?;
+
+            let repr = ops.__repr__();
+            assert!(repr.contains("DirectoryOps"));
+            assert!(repr.contains("n_digit=4"));
+            assert!(repr.contains(base_dir));
+
+            Ok(())
+        })
+    }
 
     #[test]
     fn test_map_io_err_not_found() {
