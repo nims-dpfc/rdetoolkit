@@ -52,6 +52,9 @@ impl ManagedDirectory {
         let idx = idx.unwrap_or(0);
         let base_dir = PathBuf::from(base_dir);
 
+        if dirname.is_empty() {
+            return Err(PyValueError::new_err("Directory name must not be empty"));
+        }
         let path = if idx == 0 {
             base_dir.join(dirname)
         } else {
@@ -84,6 +87,12 @@ impl ManagedDirectory {
     }
 
     fn list(&self) -> PyResult<Vec<String>> {
+        if !self.path.exists() {
+            return Err(PyFileNotFoundError::new_err(format!(
+                "Directory does not exist: {}",
+                self.path.display(),
+            )));
+        }
         let entries =
             fs::read_dir(&self.path).map_err(|e| map_io_err(&e, "read_dir", &self.path))?;
 
@@ -273,8 +282,8 @@ mod tests {
             let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
 
             let test_file = dir.path.join("test.txt");
-            fs::write(&test_file, "test").unwrap();
-
+            fs::write(&test_file, "test")
+                .map_err(|e| PyIOError::new_err(format!("Failed to write test file: {}", e)))?;
             let files = dir.list()?;
             assert_eq!(files.len(), 1);
             assert!(files[0].contains("test.txt"));
