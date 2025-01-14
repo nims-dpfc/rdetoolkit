@@ -28,6 +28,17 @@ fn map_io_err(e: &IoError, context: &str, path: &Path) -> PyErr {
 }
 
 #[pyclass]
+/// A directory manager that handles index-based subdirectories.
+///
+/// This class manages a directory structure that can include indexed subdirectories
+/// under a 'divided' folder. The directory path is constructed as:
+/// - For idx=0: {base_dir}/{dirname}
+/// - For idx>0: {base_dir}/divided/{idx:0{n_digit}d}/{dirname}
+///
+/// Example:
+///     >>> dir = ManagedDirectory("/path/to/base", "docs")
+///     >>> dir.path  # "/path/to/base/docs"
+///     >>> dir2 = dir(1)  # Creates "/path/to/base/divided/0001/docs"
 #[derive(Clone)]
 pub struct ManagedDirectory {
     base_dir: PathBuf,
@@ -41,6 +52,20 @@ pub struct ManagedDirectory {
 #[pymethods]
 impl ManagedDirectory {
     #[new]
+    /// Create a new ManagedDirectory instance.
+    ///
+    /// Args:
+    ///     base_dir (str): Base directory path
+    ///     dirname (str): Name of the directory to manage
+    ///     n_digit (int, optional): Number of digits for index formatting. Defaults to 4
+    ///     idx (int, optional): Initial index. Defaults to 0
+    ///
+    /// Returns:
+    ///     ManagedDirectory: New instance
+    ///
+    /// Raises:
+    ///     ValueError: If dirname is empty
+    ///     OSError: If directory creation fails
     #[pyo3(signature = (base_dir, dirname, n_digit=None, idx=None))]
     fn new(
         base_dir: &str,
@@ -77,15 +102,31 @@ impl ManagedDirectory {
     }
 
     #[getter]
+    /// Get the full path of the managed directory.
+    ///
+    /// Returns:
+    ///     str: Full path as string
     fn get_path(&self) -> PyResult<String> {
         Ok(self.path.to_string_lossy().to_string())
     }
 
+    /// Create the managed directory if it doesn't exist.
+    ///
+    /// Raises:
+    ///     OSError: If directory creation fails
     fn create(&self) -> PyResult<()> {
         fs::create_dir_all(&self.path).map_err(|e| map_io_err(&e, "create_dir_all", &self.path))?;
         Ok(())
     }
 
+    /// List all files and directories in the managed directory.
+    ///
+    /// Returns:
+    ///     list[str]: List of paths as strings
+    ///
+    /// Raises:
+    ///     FileNotFoundError: If the directory does not exist
+    ///     OSError: If reading the directory fails
     fn list(&self) -> PyResult<Vec<String>> {
         if !self.path.exists() {
             return Err(PyFileNotFoundError::new_err(format!(
@@ -104,6 +145,17 @@ impl ManagedDirectory {
         Ok(result)
     }
 
+    /// Create a new ManagedDirectory instance with the specified index.
+    ///
+    /// Args:
+    ///     idx (int): Index for the new directory
+    ///
+    /// Returns:
+    ///     ManagedDirectory: New instance with the specified index
+    ///
+    /// Raises:
+    ///     ValueError: If idx is negative
+    ///     OSError: If directory creation fails
     #[pyo3(signature = (idx))]
     fn __call__(&self, idx: i32) -> PyResult<Self> {
         if idx < 0 {
@@ -142,6 +194,17 @@ impl ManagedDirectory {
 }
 
 #[pyclass]
+/// A utility class for managing multiple directories with support for indexed subdirectories.
+///
+/// This class provides functionality to:
+/// - Create and manage base directories
+/// - Create indexed subdirectories under a 'divided' folder
+/// - Access directories via attribute-style notation
+///
+/// Example:
+///     >>> ops = DirectoryOps("/path/to/base")
+///     >>> ops.invoice  # Creates "/path/to/base/invoice"
+///     >>> ops.all(2)   # Creates base dirs and divided/0001, divided/0002 subdirs
 #[derive(Clone)]
 pub struct DirectoryOps {
     base_dir: PathBuf,
@@ -151,6 +214,17 @@ pub struct DirectoryOps {
 #[pymethods]
 impl DirectoryOps {
     #[new]
+    /// Create a new DirectoryOps instance.
+    ///
+    /// Args:
+    ///     base_dir (str): Base directory path
+    ///     n_digit (int, optional): Number of digits for index formatting. Defaults to 4
+    ///
+    /// Returns:
+    ///     DirectoryOps: New instance
+    ///
+    /// Raises:
+    ///     OSError: If directory creation fails
     #[pyo3(signature = (base_dir, n_digit=None))]
     fn new(base_dir: &str, n_digit: Option<usize>) -> PyResult<Self> {
         let n_digit = n_digit.unwrap_or(4);
@@ -162,6 +236,16 @@ impl DirectoryOps {
         Ok(DirectoryOps { base_dir, n_digit })
     }
 
+    /// Create a ManagedDirectory instance for the given directory name.
+    ///
+    /// Args:
+    ///     name (str): Name of the directory to manage
+    ///
+    /// Returns:
+    ///     ManagedDirectory: New instance for the requested directory
+    ///
+    /// Raises:
+    ///     OSError: If directory creation fails
     fn __getattr__(&self, name: &str) -> PyResult<ManagedDirectory> {
         let path = self.base_dir.join(name);
 
@@ -176,6 +260,20 @@ impl DirectoryOps {
         })
     }
 
+    /// Create all supported directories and optionally their indexed subdirectories.
+    ///
+    /// When idx is specified, creates indexed subdirectories under 'divided' folder
+    /// for supported directory types.
+    ///
+    /// Args:
+    ///     idx (int, optional): Maximum index for divided subdirectories
+    ///
+    /// Returns:
+    ///     list[str]: List of created directory paths
+    ///
+    /// Raises:
+    ///     ValueError: If idx is negative
+    ///     OSError: If directory creation fails
     #[pyo3(signature = (idx=None))]
     fn all(&self, idx: Option<i32>) -> PyResult<Vec<String>> {
         let base_only_dirs = vec!["invoice", "invoice_patch", "attachment", "tasksupport"];
