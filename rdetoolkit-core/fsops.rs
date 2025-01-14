@@ -176,31 +176,47 @@ impl DirectoryOps {
         })
     }
 
-    fn all(&self) -> PyResult<Vec<String>> {
-        let supported_dirs = vec![
-            "invoice",
-            "invoice_patch",
-            "inputdata",
+    #[pyo3(signature = (idx=None))]
+    fn all(&self, idx: Option<i32>) -> PyResult<Vec<String>> {
+        let base_only_dirs = vec!["invoice", "invoice_patch", "attachment", "tasksupport"];
+        let divided_supported_dirs = vec![
             "structured",
-            "temp",
-            "logs",
             "meta",
             "thumbnail",
             "main_image",
             "other_image",
-            "attachment",
             "nonshared_raw",
             "raw",
-            "tasksupport",
         ];
 
         let mut result = Vec::new();
-        for dirname in supported_dirs {
+
+        for dirname in base_only_dirs.iter().chain(divided_supported_dirs.iter()) {
             let path = self.base_dir.join(dirname);
-            fs::create_dir_all(&path)
-                .map_err(|e| map_io_err(&e, "create_dir_all (supported_dirs)", &path))?;
+            fs::create_dir(&path)
+                .map_err(|e| map_io_err(&e, "create_dir_all (base_dirs)", &path))?;
             result.push(path.to_string_lossy().into_owned());
         }
+
+        if let Some(max_idx) = idx {
+            if max_idx < 0 {
+                return Err(PyValueError::new_err("Index must be non-negative"));
+            }
+            for i in 1..=max_idx {
+                for dirname in &divided_supported_dirs {
+                    let mdir = ManagedDirectory::new(
+                        self.base_dir.to_str().unwrap(),
+                        dirname,
+                        Some(self.n_digit),
+                        Some(i),
+                    )?;
+                    fs::create_dir_all(&mdir.path)
+                        .map_err(|e| map_io_err(&e, "create_dir_all(divided_dirs)", &mdir.path))?;
+                    result.push(mdir.path.to_string_lossy().into_owned());
+                }
+            }
+        }
+
         Ok(result)
     }
 
@@ -351,6 +367,70 @@ mod tests {
             assert!(repr.contains("n_digit=4"));
             assert!(repr.contains(base_dir));
 
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_directory_ops_all() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+
+            let ops = DirectoryOps::new(base_dir, Some(4))?;
+
+            // 1. idx=None (no split)
+            let result_no_idx = ops.all(None)?;
+            for dir_name in &[
+                "invoice",
+                "invoice_patch",
+                "attachment",
+                "tasksupport",
+                "structured",
+                "meta",
+                "thumbnail",
+                "main_image",
+                "other_image",
+                "nonshared_raw",
+                "raw",
+            ] {
+                assert!(
+                    result_no_idx.iter().any(|item| {
+                        item.ends_with(Path::new(dir_name).to_string_lossy().as_ref())
+                    }),
+                    "Directory not found: {}",
+                    dir_name
+                );
+            }
+
+            // 2
+            let result_with_idx = ops.all(Some(2))?;
+            for i in 1..=2 {
+                let folder_name = format!("{:0width$}", i, width = 4);
+                for div_dir in &[
+                    "structured",
+                    "meta",
+                    "thumbnail",
+                    "main_image",
+                    "other_image",
+                    "other_image",
+                    "nonshared_raw",
+                    "raw",
+                ] {
+                    let expected_segment = Path::new("divided")
+                        .join(&folder_name)
+                        .join(div_dir)
+                        .to_string_lossy()
+                        .to_string();
+                    assert!(
+                        result_with_idx
+                            .iter()
+                            .any(|item| item.contains(&expected_segment)),
+                        "Divided directory not found: {}",
+                        expected_segment
+                    );
+                }
+            }
             Ok(())
         })
     }
