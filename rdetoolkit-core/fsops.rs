@@ -112,7 +112,7 @@ impl ManagedDirectory {
             divided_dir.join(&self.dirname)
         };
 
-        fs::create_dir_all(&path).map_err(|e| map_io_err(&e, "cerate_dir_all (call)", &path))?;
+        fs::create_dir_all(&path).map_err(|e| map_io_err(&e, "create_dir_all (call)", &path))?;
 
         Ok(Self {
             base_dir: self.base_dir.clone(),
