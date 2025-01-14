@@ -344,6 +344,7 @@ mod tests {
             let base_dir = temp.path().to_str().unwrap();
             let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
 
+            dir.create()?;
             assert_eq!(dir.n_digit, 4);
             assert_eq!(dir.idx, 0);
             assert!(dir.path.ends_with("test_dir"));
@@ -359,6 +360,7 @@ mod tests {
             let temp = tempdir().unwrap();
             let base_dir = temp.path().to_str().unwrap();
             let dir = ManagedDirectory::new(base_dir, "test_dir", Some(3), Some(1))?;
+            dir.create()?;
 
             let expected_path = Path::new("divided").join("001").join("test_dir");
 
@@ -377,6 +379,7 @@ mod tests {
             let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
 
             let new_dir = dir.__call__(1)?;
+            new_dir.create()?;
             let expected_path = Path::new("divided").join("0001").join("test_dir");
 
             assert!(new_dir.path.ends_with(&expected_path));
@@ -395,6 +398,8 @@ mod tests {
             let temp = tempdir().unwrap();
             let base_dir = temp.path().to_str().unwrap();
             let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            dir.create()?;
 
             let test_file = dir.path.join("test.txt");
             fs::write(&test_file, "test")
@@ -446,6 +451,7 @@ mod tests {
             let ops = DirectoryOps::new(base_dir, None)?;
 
             let test_dir = ops.__getattr__("test_directory")?;
+            test_dir.create()?;
             assert!(test_dir.path.exists());
             assert_eq!(test_dir.n_digit, 4);
             assert_eq!(test_dir.idx, 0);
