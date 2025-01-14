@@ -193,7 +193,7 @@ impl DirectoryOps {
 
         for dirname in base_only_dirs.iter().chain(divided_supported_dirs.iter()) {
             let path = self.base_dir.join(dirname);
-            fs::create_dir(&path)
+            fs::create_dir_all(&path)
                 .map_err(|e| map_io_err(&e, "create_dir_all (base_dirs)", &path))?;
             result.push(path.to_string_lossy().into_owned());
         }
