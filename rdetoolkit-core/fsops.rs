@@ -27,19 +27,22 @@ fn map_io_err(e: &IoError, context: &str, path: &Path) -> PyErr {
     }
 }
 
+/// A directory manager that handles index-based subdirectories.
+///
+/// This class manages a directory structure that can include indexed subdirectories
+/// under a "divided" folder. The directory path is constructed as:
+///
+/// - For `idx=0`: `{base_dir}/{dirname}`
+/// - For `idx>0`: `{base_dir}/divided/{idx:0{n_digit}d}/{dirname}`
+///
+/// # Examples
+/// ```
+/// let dir = ManagedDirectory::new("/path/to/base", "docs", None, None).unwrap();
+/// println!("{}", dir.get_path().unwrap()); // "/path/to/base/docs"
+/// let dir2 = dir.__call__(1).unwrap();
+/// println!("{}", dir2.get_path().unwrap()); // "/path/to/base/divided/0001/docs"
+/// ```
 #[pyclass(module = "rdetoolkit.core")]
-#[doc = "A directory manager that handles index-based subdirectories.
-
-This class manages a directory structure that can include indexed subdirectories
-under a 'divided' folder. The directory path is constructed as:
-- For idx=0: {base_dir}/{dirname}
-- For idx>0: {base_dir}/divided/{idx:0{n_digit}d}/{dirname}
-
-Example:
-    >>> dir = ManagedDirectory(\"/path/to/base\", \"docs\")
-    >>> dir.path  # \"/path/to/base/docs\"
-    >>> dir2 = dir(1)  # Creates \"/path/to/base/divided/0001/docs\"
-"]
 #[derive(Clone)]
 pub struct ManagedDirectory {
     base_dir: PathBuf,
@@ -52,21 +55,20 @@ pub struct ManagedDirectory {
 
 #[pymethods]
 impl ManagedDirectory {
+    /// Create a new `ManagedDirectory`.
+    ///
+    /// # Arguments
+    /// - `base_dir`: The base directory path.
+    /// - `dirname`: The directory name to manage.
+    /// - `n_digit`: The number of digits for formatting the index (default is 4).
+    /// - `idx`: The initial index (default is 0).
+    ///
+    /// # Returns
+    /// A new `ManagedDirectory` instance.
+    ///
+    /// # Errors
+    /// Returns an error if any I/O error occurs while resolving paths.
     #[new]
-    #[doc = "Create a new ManagedDirectory instance.
-
-    Args:
-        base_dir (str): Base directory path
-        dirname (str): Name of the directory to manage
-        n_digit (int, optional): Number of digits for index formatting. Defaults to 4
-        idx (int, optional): Initial index. Defaults to 0
-
-    Returns:
-        ManagedDirectory: New instance
-
-    Raises:
-        ValueError: If dirname is empty
-        OSError: If directory creation fails"]
     #[pyo3(signature = (base_dir, dirname, n_digit=None, idx=None))]
     fn new(
         base_dir: &str,
@@ -102,33 +104,35 @@ impl ManagedDirectory {
         })
     }
 
+    /// Get the full path of the managed directory without creating it.
+    ///
+    /// # Returns
+    /// A string representing the full path to this directory.
+    ///
+    /// # Errors
+    /// No errors will be raised here; this is purely a getter.
     #[getter]
-    #[doc = "Get the full path of the managed directory.
-
-    Returns:
-        str: Full path as string"]
     fn get_path(&self) -> PyResult<String> {
         // fs::create_dir_all(&self.path).map_err(|e| map_io_err(&e, "create_dir_all", &self.path))?;
         Ok(self.path.to_string_lossy().to_string())
     }
 
-    #[doc = "Create the managed directory if it doesn't exist.
-
-    Raises:
-        OSError: If directory creation fails"]
+    /// Create the managed directory if it doesn't exist.
+    ///
+    /// # Errors
+    /// Returns an error if directory creation fails.
     fn create(&self) -> PyResult<()> {
         fs::create_dir_all(&self.path).map_err(|e| map_io_err(&e, "create_dir_all", &self.path))?;
         Ok(())
     }
 
-    #[doc = "List all files and directories in the managed directory.
-
-    Returns:
-        list[str]: List of paths as strings
-
-    Raises:
-        FileNotFoundError: If the directory does not exist
-        OSError: If reading the directory fails"]
+    /// List all files and directories in the managed directory.
+    ///
+    /// # Returns
+    /// A list of strings representing file and directory paths inside this directory.
+    ///
+    /// # Errors
+    /// Returns an error if the directory does not exist or if reading the directory fails.
     fn list(&self) -> PyResult<Vec<String>> {
         if !self.path.exists() {
             return Err(PyFileNotFoundError::new_err(format!(
@@ -147,17 +151,17 @@ impl ManagedDirectory {
         Ok(result)
     }
 
-    #[doc = "Create a new ManagedDirectory instance with the specified index.
-
-    Args:
-        idx (int): Index for the new directory
-
-    Returns:
-        ManagedDirectory: New instance with the specified index
-
-    Raises:
-        ValueError: If idx is negative
-        OSError: If directory creation fails"]
+    /// Create a new `ManagedDirectory` instance with the specified index value.
+    ///
+    /// # Arguments
+    /// - `idx`: The index for the new directory (`0` means create under `base_dir`, `>0` under `divided`).
+    ///
+    /// # Returns
+    /// A new `ManagedDirectory` pointing to the indexed path.
+    ///
+    /// # Errors
+    /// - `ValueError`: If `idx` is negative.
+    /// - `OSError`: If directory creation fails.
     #[pyo3(signature = (idx))]
     fn __call__(&self, idx: i32) -> PyResult<Self> {
         if idx < 0 {
@@ -193,19 +197,13 @@ impl ManagedDirectory {
     }
 }
 
+// Utility class for managing multiple directories with support for indexed subdirectories.
+///
+/// This class provides functionality to:
+/// - Create and manage base directories
+/// - Create indexed subdirectories under a "divided" folder
+/// - Access directories via attribute-style notation
 #[pyclass(module = "rdetoolkit.core")]
-#[doc = "A utility class for managing multiple directories with support for indexed subdirectories.
-
-This class provides functionality to:
-- Create and manage base directories
-- Create indexed subdirectories under a 'divided' folder
-- Access directories via attribute-style notation
-
-Example:
-    >>> ops = DirectoryOps(\"/path/to/base\")
-    >>> ops.invoice  # Creates \"/path/to/base/invoice\"
-    >>> ops.all(2)   # Creates base dirs and divided/0001, divided/0002 subdirs
-"]
 #[derive(Clone)]
 pub struct DirectoryOps {
     base_dir: PathBuf,
@@ -214,18 +212,18 @@ pub struct DirectoryOps {
 
 #[pymethods]
 impl DirectoryOps {
+    /// Create a new `DirectoryOps` instance.
+    ///
+    /// # Arguments
+    /// - `base_dir`: Base directory path.
+    /// - `n_digit`: Number of digits for formatting indices (default is 4).
+    ///
+    /// # Returns
+    /// A `DirectoryOps` instance for managing the specified base directory.
+    ///
+    /// # Errors
+    /// Returns an error if the base directory is invalid or any I/O operation fails.
     #[new]
-    #[doc = "Create a new DirectoryOps instance.
-
-    Args:
-        base_dir (str): Base directory path
-        n_digit (int, optional): Number of digits for index formatting. Defaults to 4
-
-    Returns:
-        DirectoryOps: New instance
-
-    Raises:
-        OSError: If directory creation fails"]
     #[pyo3(signature = (base_dir, n_digit=None))]
     fn new(base_dir: &str, n_digit: Option<usize>) -> PyResult<Self> {
         let n_digit = n_digit.unwrap_or(4);
@@ -237,17 +235,16 @@ impl DirectoryOps {
         Ok(DirectoryOps { base_dir, n_digit })
     }
 
-    #[doc = "Create a ManagedDirectory instance for the given directory name.
-
-    Args:
-        name (str): Name of the directory to manage
-
-    Returns:
-        ManagedDirectory: New instance for the requested directory
-
-    Raises:
-        OSError: If directory creation fails
-    "]
+    /// Create a `ManagedDirectory` instance for the given directory name without creating it immediately.
+    ///
+    /// # Arguments
+    /// - `name`: The directory name to manage.
+    ///
+    /// # Returns
+    /// A `ManagedDirectory` instance.
+    ///
+    /// # Errors
+    /// No directory is created here, so no I/O error is raised unless path conversion fails.
     fn __getattr__(&self, name: &str) -> PyResult<ManagedDirectory> {
         let path = self.base_dir.join(name);
 
@@ -262,21 +259,19 @@ impl DirectoryOps {
         })
     }
 
-    #[doc = "Create all supported directories and optionally their indexed subdirectories.
-
-        When idx is specified, creates indexed subdirectories under 'divided' folder
-        for supported directory types.
-
-        Args:
-            idx (int, optional): Maximum index for divided subdirectories
-
-        Returns:
-            list[str]: List of created directory paths
-
-        Raises:
-            ValueError: If idx is negative
-            OSError: If directory creation fails
-    "]
+    /// Create all supported directories and optionally their indexed subdirectories.
+    ///
+    /// When `idx` is specified, creates indexed subdirectories under the "divided" folder
+    /// for each supported directory.
+    ///
+    /// # Arguments
+    /// - `idx`: Optional index specifying how many subdirectories to create.
+    ///
+    /// # Returns
+    /// A list of created directory paths as strings.
+    ///
+    /// # Errors
+    /// Returns an error if any directory creation fails.
     #[pyo3(signature = (idx=None))]
     fn all(&self, idx: Option<i32>) -> PyResult<Vec<String>> {
         let base_only_dirs = vec!["invoice", "invoice_patch", "attachment", "tasksupport"];
