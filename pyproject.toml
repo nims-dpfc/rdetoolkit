@@ -1,6 +1,6 @@
 [project]
 name = "rdetoolkit"
-version = "1.0.4"
+version = "1.1.0"
 description = "A module that supports the workflow of the RDE dataset construction program"
 authors = [{ name = "Sonokawa Hayato", email = "SONOKAWA.Hayato@nims.go.jp" }]
 keywords = ["rdetoolkit", "RDE", "toolkit", "structure", "dataset"]
@@ -40,6 +40,8 @@ dependencies = [
     "numpy==1.26.4",
     "polars>=1.9.0",
     "pyarrow>=17.0.0",
+    "tqdm>=4.67.0",
+    "pip>=24.3.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.9"
@@ -60,7 +62,7 @@ build-backend = "maturin"
 [tool.maturin]
 python-source = "src"
 module-name = "rdetoolkit.core"
-features = ["pyo3/extension-module"]
+features = ["pyo3/extension-module", "pyo3/auto-initialize"]
 
 [tool.ruff]
 select = [

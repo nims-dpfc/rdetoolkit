@@ -48,6 +48,7 @@ nav:
       - Docker:
           - usage/docker.md
   - API Documentation:
+      - rdetoolkit/index.md
       - impl:
           - rdetoolkit/impl/compressed_controller.md
           - rdetoolkit/impl/input_controller.md
@@ -104,6 +105,7 @@ watch:
 
 markdown_extensions:
   - admonition
+  - md_in_html
   - pymdownx.superfences:
         # make exceptions to highlighting of code:
       custom_fences:

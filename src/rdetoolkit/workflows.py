@@ -4,6 +4,8 @@ import contextlib
 from collections.abc import Generator
 from pathlib import Path
 
+from tqdm import tqdm
+
 from rdetoolkit.config import load_config
 from rdetoolkit.errors import handle_and_exit_on_structured_error, handle_generic_error, skip_exception_context
 from rdetoolkit.exceptions import StructuredError
@@ -209,7 +211,8 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
 
         # Execution of data set structuring process based on various modes
-        for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
+        rde_data_tiles = list(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath))
+        for idx, rdeoutput_resource in enumerate(tqdm(rde_data_tiles)):
             if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
                 mode = "rdeformat"
                 status = rdeformat_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
