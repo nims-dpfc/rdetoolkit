@@ -18,7 +18,7 @@ theme:
         name: Switch to light mode
   features:
     - navigation.top
-    - toc.integrate
+    # - toc.integrate
     - navigation.tabs
     - navigation.tabs.sticky
 
@@ -58,6 +58,8 @@ nav:
           - rdetoolkit/models/invoice_schema.md
           - rdetoolkit/models/metadata.md
           - rdetoolkit/models/rde2types.md
+      - core module:
+          - rdetoolkit/core.md
       - rdetoolkit/config.md
       - rdetoolkit/workflows.md
       - rdetoolkit/rde2util.md
@@ -66,7 +68,6 @@ nav:
       - rdetoolkit/validation.md
       - rdetoolkit/img2thumb.md
       - rdetoolkit/rdelogger.md
-      - rdetoolkit/csv2graph.md
       - rdetoolkit/exceptions.md
   - Development:
       - Top: contribute/home.md
@@ -81,16 +82,20 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
+          paths: [src]
           options:
-            show_inheritance_diagram: true
-            heading_level: 3
-            show_root_toc_entry: false
+            show_source: false
+            merge_init_into_class: true
+            show_root_heading: true
+            docstring_style: google
+            show_if_no_docstring: true
+            signature_crossrefs: true
   - mike:
       # These fields are all optional; the defaults are as below...
       alias_type: symlink
       redirect_template: null
       deploy_prefix: ''
-      canonical_version: null
+      canonical_version: latest
       version_selector: true
       css_dir: css
       javascript_dir: js
