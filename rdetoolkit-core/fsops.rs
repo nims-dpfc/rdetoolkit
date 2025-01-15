@@ -268,7 +268,7 @@ impl DirectoryOps {
     /// Returns an error if any directory creation fails.
     #[pyo3(signature = (idx=None))]
     fn all(&self, idx: Option<i32>) -> PyResult<Vec<String>> {
-        let base_only_dirs = vec!["invoice", "invoice_patch", "attachment", "tasksupport"];
+        let base_only_dirs = ["invoice", "invoice_patch", "attachment", "tasksupport"];
         let divided_supported_dirs = vec![
             "structured",
             "meta",
