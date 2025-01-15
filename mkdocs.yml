@@ -82,7 +82,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [src]
+          paths: [.]
           options:
             show_source: false
             merge_init_into_class: true
