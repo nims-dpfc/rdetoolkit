@@ -474,10 +474,8 @@ mod tests {
             // __call__でインデックス付きディレクトリが作成されることを確認
             let divided_dir = dir.__call__(1)?;
             assert!(divided_dir.path.exists());
-            assert!(divided_dir
-                .path
-                .to_string_lossy()
-                .contains("divided/0001/test_dir"));
+            let expected_path = Path::new("divided").join("0001").join("test_dir");
+            assert!(divided_dir.path.ends_with(&expected_path));
 
             // 元のディレクトリは作成されていないことを確認
             assert!(!dir.path.exists());
