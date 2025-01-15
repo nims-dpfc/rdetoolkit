@@ -36,6 +36,8 @@ nav:
           - usage/structured_process/rdepath.md
           - usage/structured_process/errorhandling.md
           - usage/structured_process/feature_description.md
+      - コマンドライン機能:
+          - usage/cli.md
       - 設定ファイル:
           - usage/config/config.md
           - usage/config/mode.md
