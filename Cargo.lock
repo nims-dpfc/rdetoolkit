@@ -455,13 +455,12 @@ dependencies = [
 
 [[package]]
 name = "rdetoolkit-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chardetng",
  "encoding_rs",
  "image",
  "pyo3",
- "pyo3-build-config",
  "tempfile",
 ]
 
