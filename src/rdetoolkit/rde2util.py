@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 import re
+import warnings
 import zipfile
 from copy import deepcopy
 from typing import Any, Callable, Final, TypedDict, cast
@@ -15,6 +16,7 @@ from chardet.universaldetector import UniversalDetector
 from charset_normalizer import detect
 
 from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.fileops import readf_json, writef_json
 from rdetoolkit.models.rde2types import MetadataDefJson, MetaItem, MetaType, RdeFsPath, RepeatedMetaType, ValueUnitPair
 
 LANG_ENC_FLAG: Final[int] = 0x800
@@ -175,27 +177,45 @@ def unzip_japanese_zip(src_zipfilepath: str, dst_dirpath: str) -> None:
 def read_from_json_file(invoice_file_path: RdeFsPath) -> dict[str, Any]:  # pragma: no cover
     """A function that reads json file and returns the json object.
 
+    .. deprecated:: 1.1.0
+        Use :func:`rdetoolkit.fileops.readf_json` instead.
+
     Args:
         invoice_file_path (RdeFsPath): The path to the JSON file.
 
     Returns:
         dict[str, Any]: The parsed json object.
     """
-    enc = CharDecEncoding.detect_text_file_encoding(invoice_file_path)
-    with open(invoice_file_path, encoding=enc) as f:
-        return json.load(f)
+    warnings.warn(
+        "read_from_json_file is deprecated. Use 'from rdetoolkit.fileops import readf_json' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    _path = str(invoice_file_path) if isinstance(invoice_file_path, pathlib.Path) else invoice_file_path
+    return readf_json(_path)
 
 
 def write_to_json_file(invoicefile_path: RdeFsPath, invoiceobj: dict[str, Any], enc: str = "utf_8") -> None:  # pragma: no cover
     """Writes an content to a JSON file.
 
+    .. deprecated:: 1.0.0
+        Use :func:`rdetoolkit.fileops.writef_json` instead.
+
     Args:
         invoicefile_path (RdeFsPath): Path to the destination JSON file.
-        invoiceobj (dict[str, Any]): Invoice object to be serialized and written.
-        enc (str): Encoding to use when writing the file. Defaults to "utf_8".
+        invoiceobj (dict[str, Any]): Object to be serialized and written.
+        enc (str, optional): Encoding to use when writing the file. Defaults to "utf_8".
+
+    Returns:
+        dict[str, Any]: The written json object.
     """
-    with open(invoicefile_path, "w", encoding=enc) as f:
-        json.dump(invoiceobj, f, indent=4, ensure_ascii=False)
+    warnings.warn(
+        "write_to_json_file is deprecated. Use 'from rdetoolkit.fileops import writef_json' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    _path = str(invoicefile_path) if isinstance(invoicefile_path, pathlib.Path) else invoicefile_path
+    _ = writef_json(_path, invoiceobj, enc=enc)
 
 
 class StorageDir:
@@ -243,7 +263,15 @@ class StorageDir:
 
         Returns:
             str: The path of the generated data directory.
+
+        Warning:
+            This method is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.
         """
+        warnings.warn(
+            "get_datadir is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         dir_basename = "data" if idx == 0 else os.path.join("data", "divided", f"{idx:0{cls.__nDigit}d}")
         if is_mkdir:
             os.makedirs(dir_basename, exist_ok=True)
@@ -263,6 +291,9 @@ class StorageDir:
 
         Returns:
             pathlib.Path: The path of the created base directory.
+
+        Warning:
+            This method is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.
         """
         target_dir = os.path.join(cls.get_datadir(is_mkdir, idx), dir_basename)
         if is_mkdir:
@@ -283,7 +314,15 @@ class StorageDir:
 
         Returns:
             pathlib.Path: The path of the specific output directory.
+
+        Warning:
+            This method is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.
         """
+        warnings.warn(
+            "get_datadir is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return cls._make_data_basedir(is_mkdir, idx, dir_basename)
 
 
@@ -446,12 +485,12 @@ class Meta:
 
     def _process_unit(self, vobj: dict[str, Any], idx: int | None) -> None:  # pragma: no cover
         _unit = vobj.get("unit", "")
-        # "unit"のうち、"$"から始まる他キー参照を実際に置き換える
+        # Replace key references starting with "$" in "unit" with actual values
         if _unit.startswith("$"):
             srckey = _unit[1:]
             srcval = self.referedmap[srckey]
             if srcval is None:
-                # 参照先が存在しなかった場合は単位未設定の状態とする
+                # If the reference target does not exist, set the unit as undefined
                 del vobj["unit"]
             elif isinstance(srcval, str):
                 vobj["unit"] = srcval
@@ -459,7 +498,6 @@ class Meta:
                 vobj["unit"] = srcval[idx]
 
     def _process_action(self, vobj: dict[str, Any], k: str, idx: int | None) -> None:  # pragma: no cover
-        # actionの処理
         stract = self.metaDef[k].get("action")
         if not stract:
             return
@@ -508,15 +546,14 @@ class Meta:
                 self._process_unit(vobj, idx)
                 self._process_action(vobj, k, idx)
 
-        # 項目をmetaDefに従ってソート
         outdict["constant"] = self.__sort_by_metadef(outdict["constant"])
         outdict["variable"] = [self.__sort_by_metadef(dvOrg) for dvOrg in outdict["variable"]]
 
-        # ファイル出力
         with open(meta_filepath, "w", encoding=enc) as fout:
             json.dump(outdict, fout, indent=4, ensure_ascii=False)
 
-        # metaDefのうち値の入らなかったキーのリストを返す
+        # Get a list of keys from metadata-def that were not assigned values and return a list of metadata that were excluded from writing.
+        # This return format is maintained for debugging purposes.
         assigned_keys = set(outdict["constant"].keys()).union(*(dv.keys() for dv in outdict["variable"]))
         unkown_keys = {k for k in self.metaDef if k not in assigned_keys}
 
@@ -613,16 +650,17 @@ class Meta:
         if orgtype is None:
             _casted_value = castval(vsrc, outtype, outfmt)
         elif orgtype in ["integer", "number"]:
-            # 単位付き文字列が渡されても単位の代入は本関数内では扱わない。必要に応じて別途代入する事。
+            # For numeric types (integer/number), unit assignment is not handled within this function.
+            # Units should be assigned separately if needed.
             valpair = _split_value_unit(vsrc)
             vstr = valpair.value
-            # 解釈可能かチェック。不可能だった場合は例外スローされるため、
-            # 例外なく処理終了できるかのみに興味がある
+            # Check if the value can be interpreted.
+            # We only care if the process completes without exceptions.
             _casted_value = castval(vstr, orgtype, outfmt)
         else:
             vstr = vsrc
-            # 解釈可能かチェック。不可能だった場合は例外スローされるため、
-            # 例外なく処理終了できるかのみに興味がある
+            # Check if the value can be interpreted.
+            # We only care if the process completes without exceptions.
             _casted_value = castval(vstr, orgtype, outfmt)
 
         if outunit:

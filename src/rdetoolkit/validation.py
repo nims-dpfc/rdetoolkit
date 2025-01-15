@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import json
 import os
 from pathlib import Path
 from typing import Any, cast
@@ -11,9 +10,9 @@ from jsonschema import ValidationError as SchemaValidationError
 from pydantic import ValidationError
 
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
+from rdetoolkit.fileops import readf_json
 from rdetoolkit.models.invoice_schema import InvoiceSchemaJson
 from rdetoolkit.models.metadata import MetadataItem
-from rdetoolkit.rde2util import read_from_json_file
 
 
 class MetadataValidator:
@@ -44,8 +43,7 @@ class MetadataValidator:
             raise ValueError(emsg)
 
         if path is not None:
-            with open(path, encoding="utf-8") as f:
-                __data = json.load(f)
+            __data = readf_json(path)
         elif json_obj is not None:
             __data = json_obj
         else:
@@ -122,8 +120,9 @@ class InvoiceValidator:
             emsg = "Expected a dictionary, but got a different type."
             raise ValueError(emsg)
 
-        with open(self.pre_basic_info_schema, encoding="utf-8") as f:
-            basic_info = json.load(f)
+        basic_info = readf_json(self.pre_basic_info_schema)
+        # with open(self.pre_basic_info_schema, encoding="utf-8") as f:
+        #     basic_info = json.load(f)
         try:
             validate(instance=data, schema=basic_info)
         except SchemaValidationError as schema_error:
@@ -154,7 +153,7 @@ class InvoiceValidator:
             raise ValueError(emsg)
 
         if path is not None:
-            return read_from_json_file(path)
+            return readf_json(path)
         if obj is not None:
             return obj
         emsg = "Unexpected error"
@@ -167,7 +166,7 @@ class InvoiceValidator:
             emsg = "The schema file must be a json file"
             raise ValueError(emsg)
 
-        data = read_from_json_file(__path)
+        data = readf_json(__path)
 
         if __path.name == "invoice.schema.json":
             try:

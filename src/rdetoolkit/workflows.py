@@ -4,6 +4,8 @@ import contextlib
 from collections.abc import Generator
 from pathlib import Path
 
+from tqdm import tqdm
+
 from rdetoolkit.config import load_config
 from rdetoolkit.errors import handle_and_exit_on_structured_error, handle_generic_error, skip_exception_context
 from rdetoolkit.exceptions import StructuredError
@@ -21,6 +23,7 @@ from rdetoolkit.modeproc import (
 )
 from rdetoolkit.rde2util import StorageDir
 from rdetoolkit.rdelogger import get_logger
+from rdetoolkit.core import DirectoryOps
 
 
 def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None) -> tuple[RawFiles, Path | None]:
@@ -112,23 +115,24 @@ def generate_folder_paths_iterator(
         create_folders(raw_files_group, excel_invoice_files)
         ```
     """
+    dir_ops = DirectoryOps("data")
     for idx, raw_files in enumerate(raw_files_group):
         rdeoutput_resource_path = RdeOutputResourcePath(
-            raw=StorageDir.get_specific_outputdir(True, "raw", idx),
+            raw=Path(dir_ops.raw(idx).path),
             rawfiles=raw_files,
-            struct=StorageDir.get_specific_outputdir(True, "structured", idx),
-            main_image=StorageDir.get_specific_outputdir(True, "main_image", idx),
-            other_image=StorageDir.get_specific_outputdir(True, "other_image", idx),
-            thumbnail=StorageDir.get_specific_outputdir(True, "thumbnail", idx),
-            meta=StorageDir.get_specific_outputdir(True, "meta", idx),
-            logs=StorageDir.get_specific_outputdir(True, "logs", idx),
-            invoice=StorageDir.get_specific_outputdir(True, "invoice", idx),
+            struct=Path(dir_ops.structured(idx).path),
+            main_image=Path(dir_ops.main_image(idx).path),
+            other_image=Path(dir_ops.other_image(idx).path),
+            thumbnail=Path(dir_ops.thumbnail(idx).path),
+            meta=Path(dir_ops.meta(idx).path),
+            logs=Path(dir_ops.logs(idx).path),
+            invoice=Path(dir_ops.invoice(idx).path),
             invoice_schema_json=invoice_schema_filepath,
             invoice_org=invoice_org_filepath,
-            temp=StorageDir.get_specific_outputdir(True, "temp", idx),
-            nonshared_raw=StorageDir.get_specific_outputdir(True, "nonshared_raw", idx),
-            invoice_patch=StorageDir.get_specific_outputdir(True, "invoice_patch", idx),
-            attachment=StorageDir.get_specific_outputdir(True, "attachment", idx),
+            temp=Path(dir_ops.temp(idx).path),
+            nonshared_raw=Path(dir_ops.nonshared_raw(idx).path),
+            invoice_patch=Path(dir_ops.invoice_patch(idx).path),
+            attachment=Path(dir_ops.attachment(idx).path),
         )
         yield rdeoutput_resource_path
 
@@ -207,7 +211,8 @@ def run(*, custom_dataset_function: _CallbackType | None = None, config: Config 
         invoice_schema_filepath = srcpaths.tasksupport.joinpath("invoice.schema.json")
 
         # Execution of data set structuring process based on various modes
-        for idx, rdeoutput_resource in enumerate(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath)):
+        rde_data_tiles = list(generate_folder_paths_iterator(raw_files_group, invoice_org_filepath, invoice_schema_filepath))
+        for idx, rdeoutput_resource in enumerate(tqdm(rde_data_tiles)):
             if __config.system.extended_mode is not None and __config.system.extended_mode.lower() == "rdeformat":
                 mode = "rdeformat"
                 status = rdeformat_mode_process(str(idx), srcpaths, rdeoutput_resource, custom_dataset_function)
