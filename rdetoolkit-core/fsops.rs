@@ -35,13 +35,6 @@ fn map_io_err(e: &IoError, context: &str, path: &Path) -> PyErr {
 /// - For `idx=0`: `{base_dir}/{dirname}`
 /// - For `idx>0`: `{base_dir}/divided/{idx:0{n_digit}d}/{dirname}`
 ///
-/// # Examples
-/// ```
-/// use rdetoolkit_core::fsops::ManagedDirectory;
-/// let dir = ManagedDirectory::new("/path/to/base", "docs", None, None).unwrap();
-/// println!("{}", dir.get_path().unwrap()); // "/path/to/base/docs"
-/// let dir2 = dir.__call__(1).unwrap();
-/// println!("{}", dir2.get_path().unwrap()); // "/path/to/base/divided/0001/docs"
 /// ```
 #[pyclass(module = "rdetoolkit.core")]
 #[derive(Clone)]
