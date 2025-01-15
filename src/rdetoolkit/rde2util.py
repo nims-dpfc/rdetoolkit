@@ -263,7 +263,15 @@ class StorageDir:
 
         Returns:
             str: The path of the generated data directory.
+
+        Warning:
+            This method is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.
         """
+        warnings.warn(
+            "get_datadir is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         dir_basename = "data" if idx == 0 else os.path.join("data", "divided", f"{idx:0{cls.__nDigit}d}")
         if is_mkdir:
             os.makedirs(dir_basename, exist_ok=True)
@@ -283,6 +291,9 @@ class StorageDir:
 
         Returns:
             pathlib.Path: The path of the created base directory.
+
+        Warning:
+            This method is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.
         """
         target_dir = os.path.join(cls.get_datadir(is_mkdir, idx), dir_basename)
         if is_mkdir:
@@ -303,7 +314,15 @@ class StorageDir:
 
         Returns:
             pathlib.Path: The path of the specific output directory.
+
+        Warning:
+            This method is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.
         """
+        warnings.warn(
+            "get_datadir is deprecated. Use 'from rdetoolkit.core import DirectoryOps' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return cls._make_data_basedir(is_mkdir, idx, dir_basename)
 
 
