@@ -37,6 +37,7 @@ fn map_io_err(e: &IoError, context: &str, path: &Path) -> PyErr {
 ///
 /// # Examples
 /// ```
+/// use rdetoolkit_core::fsops::ManagedDirectory;
 /// let dir = ManagedDirectory::new("/path/to/base", "docs", None, None).unwrap();
 /// println!("{}", dir.get_path().unwrap()); // "/path/to/base/docs"
 /// let dir2 = dir.__call__(1).unwrap();
@@ -328,7 +329,6 @@ impl DirectoryOps {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use pyo3::types::PyType;
     use pyo3::Python;
     use std::io::{Error as IoError, ErrorKind};
     use std::path::PathBuf;
