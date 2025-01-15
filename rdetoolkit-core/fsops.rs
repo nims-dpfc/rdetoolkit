@@ -467,8 +467,9 @@ mod tests {
             let base_dir = temp.path().to_str().unwrap();
             let ops = DirectoryOps::new(base_dir, None)?;
 
-            // __getattr__でディレクトリが作成されることを確認
             let dir = ops.__getattr__("test_dir")?;
+            assert!(!dir.path.exists());
+            dir.create()?;
             assert!(dir.path.exists());
 
             Ok(())
