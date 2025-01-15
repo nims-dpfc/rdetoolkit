@@ -164,11 +164,14 @@ impl ManagedDirectory {
             return Err(PyValueError::new_err("Index must be non-negative"));
         }
 
-        let path = self
-            .base_dir
-            .join("divided")
-            .join(format!("{:0width$}", idx, width = self.n_digit))
-            .join(&self.dirname);
+        let path = if idx == 0 {
+            self.base_dir.join(&self.dirname)
+        } else {
+            self.base_dir
+                .join("divided")
+                .join(format!("{:0width$}", idx, width = self.n_digit))
+                .join(&self.dirname)
+        };
 
         fs::create_dir_all(&path).map_err(|e| map_io_err(&e, "create_dir_all (call)", &path))?;
 
