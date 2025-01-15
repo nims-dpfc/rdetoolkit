@@ -227,7 +227,6 @@ def test_detect_text_file_encoding_utf_8_sig(utf_8_sig_file):
 
 # read_invoice_json_fileのテスト
 def test_read_from_json_file_valid_json_file(ivnoice_json_none_sample_info):
-    """version1.2.0で削除予定 """
     expect_json = {
         "datasetId": "1s1199df4-0d1v-41b0-1dea-23bf4dh09g12",
         "basic": {
@@ -243,11 +242,6 @@ def test_read_from_json_file_valid_json_file(ivnoice_json_none_sample_info):
     result = read_from_json_file(ivnoice_json_none_sample_info)
 
     assert result == expect_json
-
-
-def test_read_from_json_file_deprecation_warning(ivnoice_json_none_sample_info):
-    with pytest.warns(DeprecationWarning, match=r"read_from_json_file is deprecated\. Use 'from rdetoolkit\.fileops import readf_json' instead\."):
-        _ = read_from_json_file(ivnoice_json_none_sample_info)
 
 
 @pytest.fixture
@@ -274,12 +268,6 @@ def test_write_to_json_file(tmp_path, sample_invoice):
         data = json.load(f)
 
     assert data == sample_invoice
-
-
-def test_write_to_json_file_deprecation_warning(tmp_path, sample_invoice):
-    file_path = tmp_path / "invoice.json"
-    with pytest.warns(DeprecationWarning, match=r"write_to_json_file is deprecated\. Use 'from rdetoolkit\.fileops import writef_json' instead\."):
-        write_to_json_file(file_path, sample_invoice)
 
 
 @pytest.mark.parametrize(

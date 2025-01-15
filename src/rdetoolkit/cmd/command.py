@@ -252,7 +252,7 @@ class MetadataDefJsonGenerator:
         """
         matadata_def_path = Path(self.path) if isinstance(self.path, str) else self.path
 
-        obj: dict[str, Any] = {}
+        obj: dict[str, Any] = {"constant": {}, "variable": []}
 
         with open(matadata_def_path, mode="w", encoding="utf-8") as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
