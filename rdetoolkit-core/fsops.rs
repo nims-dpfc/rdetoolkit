@@ -108,7 +108,7 @@ impl ManagedDirectory {
     Returns:
         str: Full path as string"]
     fn get_path(&self) -> PyResult<String> {
-        fs::create_dir_all(&self.path).map_err(|e| map_io_err(&e, "create_dir_all", &self.path))?;
+        // fs::create_dir_all(&self.path).map_err(|e| map_io_err(&e, "create_dir_all", &self.path))?;
         Ok(self.path.to_string_lossy().to_string())
     }
 
@@ -164,18 +164,13 @@ impl ManagedDirectory {
             return Err(PyValueError::new_err("Index must be non-negative"));
         }
 
-        let path = if idx == 0 {
-            self.base_dir.join(&self.dirname)
-        } else {
-            let divided_dir = self.base_dir.join("divided").join(format!(
-                "{:0width$}",
-                idx,
-                width = self.n_digit
-            ));
-            divided_dir.join(&self.dirname)
-        };
+        let path = self
+            .base_dir
+            .join("divided")
+            .join(format!("{:0width$}", idx, width = self.n_digit))
+            .join(&self.dirname);
 
-        // fs::create_dir_all(&path).map_err(|e| map_io_err(&e, "create_dir_all (call)", &path))?;
+        fs::create_dir_all(&path).map_err(|e| map_io_err(&e, "create_dir_all (call)", &path))?;
 
         Ok(Self {
             base_dir: self.base_dir.clone(),
@@ -430,6 +425,21 @@ mod tests {
     }
 
     #[test]
+    fn test_managed_directory_path_without_create() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            // パスを取得しても作成されないことを確認
+            let path_str = dir.get_path()?;
+            assert!(!Path::new(&path_str).exists());
+
+            Ok(())
+        })
+    }
+
+    #[test]
     fn test_directory_ops_new() -> PyResult<()> {
         Python::with_gil(|_py| {
             let temp = tempdir().unwrap();
@@ -442,6 +452,43 @@ mod tests {
             // カスタム桁数でインスタンス生成
             let ops_custom = DirectoryOps::new(base_dir, Some(6))?;
             assert_eq!(ops_custom.n_digit, 6);
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_directory_ops_getattr_creates_dir() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let ops = DirectoryOps::new(base_dir, None)?;
+
+            // __getattr__でディレクトリが作成されることを確認
+            let dir = ops.__getattr__("test_dir")?;
+            assert!(dir.path.exists());
+
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_managed_directory_call_creates_divided() -> PyResult<()> {
+        Python::with_gil(|_py| {
+            let temp = tempdir().unwrap();
+            let base_dir = temp.path().to_str().unwrap();
+            let dir = ManagedDirectory::new(base_dir, "test_dir", None, None)?;
+
+            // __call__でインデックス付きディレクトリが作成されることを確認
+            let divided_dir = dir.__call__(1)?;
+            assert!(divided_dir.path.exists());
+            assert!(divided_dir
+                .path
+                .to_string_lossy()
+                .contains("divided/0001/test_dir"));
+
+            // 元のディレクトリは作成されていないことを確認
+            assert!(!dir.path.exists());
 
             Ok(())
         })
