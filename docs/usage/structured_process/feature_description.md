@@ -1,7 +1,7 @@
 # データタイル説明欄への自動記述について
 
 !!! Reference
-    - API Documentation: [update_description_with_features()](/rdetoolkit/invoicefile/#update_description_with_features)
+    - API Documentation: [update_description_with_features()](../../../rdetoolkit/invoicefile/#update_description_with_features)
 
 `data/tasksupport/metadata-def.json`に、`_feature`フィールドを定義することで、自動的に説明欄へ記述します。例えば、以下の例では、`length`と、`weight`に`_feature=true`が定義されているため、データタイルの説明欄へ自動的に記述されます。
 
