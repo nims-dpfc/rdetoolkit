@@ -3,7 +3,7 @@
 rdetoolkitでは、起動時の挙動を設定ファイルで制御することは可能です。
 
 !!! Reference
-    API Documents: [rdetoolkit.config.parse_config_file](/rdetoolkit/config/#parse_config_file)
+    API Documents: [rdetoolkit.config.parse_config_file](../../../rdetoolkit/config/#parse_config_file)
 
 ## 設定ファイル
 
@@ -60,10 +60,10 @@ rdetoolkitでは、4つの起動モードをサポートしています。
 
 入力ファイルの自動保存を有効化すると、自動的に`raw`ディレクトリもしくは、`nonshared_raw`ディレクトリに入力ファイルを保存します。保存先は、RDEデータセット公開と共にデータが共有される`raw`, RDEデータセットが公開されても入力ファイルが共有されない`nonshared_raw`があり、利用状況に応じて設定ファイルより設定してください。
 
-| 設定値             | 値               | 説明                                                           |
-| ------------------ | ---------------- | -------------------------------------------------------------- |
-| save_raw           | `true` / `false` | `raw`ディレクトリに保存する。デフォルトは`false`               |
-| save_nonshared_raw | `true` / `false` | `save_nonshared_raw`ディレクトリに保存する。デフォルトは`true` |
+| 設定値             | 値               | 説明                                                      |
+| ------------------ | ---------------- | --------------------------------------------------------- |
+| save_raw           | `true` / `false` | `raw`ディレクトリに保存する。デフォルトは`false`          |
+| save_nonshared_raw | `true` / `false` | `nonshared_raw`ディレクトリに保存する。デフォルトは`true` |
 
 === "入力データの自動保存の有効化(raw)"
 
@@ -218,5 +218,5 @@ rdetoolkitでは、4つの起動モードをサポートしています。
         print(srcpaths.config.system.magic_variable)
 
         # 独自の設定値を参照する
-        print(srcpaths.config.custom.thumbnail_image_name)
+        print(srcpaths.config["custom"]["thumbnail_image_name"])
     ```
