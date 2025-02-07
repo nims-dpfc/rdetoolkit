@@ -3,7 +3,7 @@
 rdetoolkitでは、起動時の挙動を設定ファイルで制御することは可能です。
 
 !!! Reference
-    API Documents: [rdetoolkit.config.parse_config_file](../../../rdetoolkit/config/#parse_config_file)
+    API Documents: [rdetoolkit.config.parse_config_file](../../rdetoolkit/config/#parse_config_file)
 
 ## 設定ファイル
 

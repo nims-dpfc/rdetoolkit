@@ -22,7 +22,7 @@ ErrorMessage=ERROR: failed in data processing
 
 ## RDEToolKitを使ってエラーハンドリングを実装する
 
-RDEToolKitでは、[`rdetoolkit.workflows.run()`](../../../rdetoolkit/workflows/#run)を利用することで、内部で発生した例外[`rdetoolkit.exceptions.StructuredError`](../../../rdetoolkit/exceptions/#StructuredError)をキャッチすることが可能です。例えば、下記の例では、存在しないファイル読み込んだときのエラーを、job.failedに記述する例です。
+RDEToolKitでは、[`rdetoolkit.workflows.run()`](../../rdetoolkit/workflows/#run)を利用することで、内部で発生した例外[`rdetoolkit.exceptions.StructuredError`](../../rdetoolkit/exceptions/#StructuredError)をキャッチすることが可能です。例えば、下記の例では、存在しないファイル読み込んだときのエラーを、job.failedに記述する例です。
 
 ```python
 # main.py
