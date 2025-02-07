@@ -114,7 +114,7 @@ def dataset(srcpaths, resource_paths):
 - 各種入力ファイルのバリデーション
 
 !!! Reference
-    - API Documentation: [run - workflows](../../../rdetoolkit/workflows/#run)
+    - API Documentation: [run - workflows](../../rdetoolkit/workflows/#run)
 
 今回の例では、`main.py`を作成し、`modules/modules.py`で定義した`dataset()`を実行します。
 
