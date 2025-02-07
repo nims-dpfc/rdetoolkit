@@ -212,7 +212,7 @@ graph TD
 - `data/invoice/invoice.json`
 
 !!! Tips "Documents"
-　　　　[テンプレートファイルについて](../metadata_definition_file.md)
+    [テンプレートファイルについて](../metadata_definition_file.md)
 
 ### 説明欄への自動転記
 
