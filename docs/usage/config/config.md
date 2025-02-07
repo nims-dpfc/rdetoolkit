@@ -218,5 +218,5 @@ rdetoolkitでは、4つの起動モードをサポートしています。
         print(srcpaths.config.system.magic_variable)
 
         # 独自の設定値を参照する
-        print(srcpaths.config.custom.thumbnail_image_name)
+        print(srcpaths.config["custom"]["thumbnail_image_name"])
     ```
