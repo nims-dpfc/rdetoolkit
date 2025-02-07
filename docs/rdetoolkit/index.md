@@ -6,7 +6,7 @@
 - [config](config): 設定ファイルの読み込みと管理を行うモジュール。
 - [fileops](fileops): RDE関連のファイル操作を提供するモジュール。
 - [rde2util](rde2util): RDE関連のユーティリティ関数を提供するモジュール。
-- [invoicefile](invoicefile): 請求書ファイルの処理を行うモジュール。
+- [invoicefile](invoicefile): 送り状ファイルの処理を行うモジュール。
 - [validation](validation): データの検証を行うモジュール。
 - [modeproc](modeproc): モード処理を行うモジュール。
 - [img2thumb](img2thumb): 画像をサムネイルに変換するモジュール。
