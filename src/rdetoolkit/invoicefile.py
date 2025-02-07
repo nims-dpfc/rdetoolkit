@@ -109,7 +109,7 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
     if file_set_invoice - file_set_group:
         emsg = f"ERROR: raw file not found: {(file_set_invoice-file_set_group).pop()}"
         raise StructuredError(emsg)
-    # excel_rawfilesを、インボイス出現順に並び替える
+    # Sort excel_rawfiles in the order they appear in the invoice
     _tmp = {f.name: f for f in excel_rawfiles}
     return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
 
