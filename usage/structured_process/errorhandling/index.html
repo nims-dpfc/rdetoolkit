@@ -801,7 +801,7 @@ ErrorMessage=ERROR: failed in data processing
 </code></pre></div></td></tr></table></div>
 <p><img alt="error" src="../../../img/error.svg"/></p>
 <h2 id="rdetoolkit">RDEToolKitを使ってエラーハンドリングを実装する</h2>
-<p>RDEToolKitでは、<a href="../../rdetoolkit/workflows/#run"><code>rdetoolkit.workflows.run()</code></a>を利用することで、内部で発生した例外<a href="../../rdetoolkit/exceptions/#StructuredError"><code>rdetoolkit.exceptions.StructuredError</code></a>をキャッチすることが可能です。例えば、下記の例では、存在しないファイル読み込んだときのエラーを、job.failedに記述する例です。</p>
+<p>RDEToolKitでは、<a href="../../../rdetoolkit/workflows/#run"><code>rdetoolkit.workflows.run()</code></a>を利用することで、内部で発生した例外<a href="../../../rdetoolkit/exceptions/#StructuredError"><code>rdetoolkit.exceptions.StructuredError</code></a>をキャッチすることが可能です。例えば、下記の例では、存在しないファイル読み込んだときのエラーを、job.failedに記述する例です。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 1</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 2</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 3</span>
