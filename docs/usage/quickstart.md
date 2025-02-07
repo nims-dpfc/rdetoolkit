@@ -79,8 +79,8 @@ def dataset(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath):
 ```
 
 !!! Reference
-    - API Documentation: [RdeInputDirPaths - rde2types](/rdetoolkit/models/rde2types/#rdeinputdirpaths)
-    - API Documentation: [RdeOutputResourcePath - rde2types](/rdetoolkit/models/rde2types/#rdeoutputresourcepath)
+    - API Documentation: [RdeInputDirPaths - rde2types](../../rdetoolkit/models/rde2types/#rdeinputdirpaths)
+    - API Documentation: [RdeOutputResourcePath - rde2types](../../rdetoolkit/models/rde2types/#rdeoutputresourcepath)
 
 今回の例では、`modules`以下に、`display_messsage()`, `custom_graph()`, `custom_extract_metadata()`というダミー処理を定義し、独自の構造化処理を定義します。これらの関数は、`modules/modules.py`というファイルを作成し定義します。以下の2つの引数を渡す関数でなければ、rdetoolkitは正しく処理が実行できません。
 
@@ -114,7 +114,7 @@ def dataset(srcpaths, resource_paths):
 - 各種入力ファイルのバリデーション
 
 !!! Reference
-    - API Documentation: [run - workflows](/rdetoolkit/workflows/#run)
+    - API Documentation: [run - workflows](../../../rdetoolkit/workflows/#run)
 
 今回の例では、`main.py`を作成し、`modules/modules.py`で定義した`dataset()`を実行します。
 
