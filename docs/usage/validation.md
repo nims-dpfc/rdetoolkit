@@ -18,7 +18,7 @@ RDEToolKitでバリデーションの対象となるファイルは、以下の4
 
 `invoice.schema.json`をバリデーションする方法です。invoie.schema.jsonは、RDEの画面を構成するスキーマファイルですが、構造化処理中で変更、ローカルで定義ファイルを作成する点から、必要なフィールドが定義されているか確認するためのチェック機能を実行します。以下のバリデーション機能は、`rdetoolkit.workflows.run()`に組み込まれています。
 
-`invoice.schema.json`の各フィールドのチェックは、[`rdetoolkit.validation.InvoiceValidator`](../../../rdetoolkit/validation/#invoicevalidator)で実行します。
+`invoice.schema.json`の各フィールドのチェックは、[`rdetoolkit.validation.InvoiceValidator`](../../rdetoolkit/validation/#invoicevalidator)で実行します。
 
 ```python
 import json
