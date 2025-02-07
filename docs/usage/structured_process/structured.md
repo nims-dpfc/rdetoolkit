@@ -24,7 +24,7 @@ graph LR
 起動処理では、カスタム構造化処理を実行する前の処理を実行します。
 
 !!! Reference
-    API Documents: [rdetoolkit.workflows.run](/rdetoolkit/workflows/#run)
+    API Documents: [rdetoolkit.workflows.run](../../../rdetoolkit/workflows/#run)
 
 ### 実装例
 
