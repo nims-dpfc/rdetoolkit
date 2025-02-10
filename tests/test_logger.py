@@ -28,7 +28,6 @@ def test_log_decorator(caplog):
     logger_mock = mock.Mock(spec=CustomLog)
     logger_mock.get_logger.return_value = mock.Mock()
 
-    # ロガーのモックをパッチ
     with mock.patch('rdetoolkit.rdelogger.CustomLog', return_value=logger_mock):
         @log_decorator()
         def test_func():
@@ -38,7 +37,6 @@ def test_log_decorator(caplog):
 
         assert result == "Hello, World!"
 
-        # ロガーが正しく呼び出されたことを確認
         calls = [
             mock.call.info('test_func       --> Start'),
             mock.call.info('test_func       <-- End')
@@ -47,7 +45,7 @@ def test_log_decorator(caplog):
 
 
 def test_get_logger_with_filepath():
-    """FileStreamHandlerとStreamHandlerのロギングが正しく動作するかテスト"""
+    """Test that FileStreamHandler and StreamHandler logging work correctly."""
     name = "test_logger_with_file"
     test_dir = os.path.join(os.getcwd(), "tests", "logs")
     filepath = os.path.join(test_dir, "test.log")
@@ -121,6 +119,16 @@ def test_get_logger_formatter():
     for handler in logger.handlers:
         formatter = handler.formatter
         assert formatter._fmt == "%(asctime)s - [%(name)s](%(levelname)s) - %(message)s"
+
+
+def test_get_logger_level(tmp_path):
+    """Test logger level"""
+    log_file = tmp_path / "test.log"
+    logger = get_logger("test_logger", level=logging.INFO, file_path=log_file)
+
+    assert logger.level == logging.INFO
+    assert len(logger.handlers) > 0
+    assert logger.handlers[0].level == logging.INFO
 
 
 @pytest.fixture(autouse=True)
