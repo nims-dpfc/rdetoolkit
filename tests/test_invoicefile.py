@@ -636,14 +636,14 @@ class TestExcelinvoice:
         assert df_specific.columns.to_list() == ["sample_class_id", "term_id", "key_name"]
 
     def test_read_emptyfile(self, empty_inputfile_excelinvoice):
-        """空のエクセルインボイスを入れた時に例外をキャッチできるかテスト"""
+        """Test to see if you can catch an exception when you put in an empty excelinvoice."""
         with pytest.raises(StructuredError) as e:
             excelinvoice = ExcelInvoiceFile(empty_inputfile_excelinvoice)
             _, _, _ = excelinvoice.read()
         assert str(e.value) == "ERROR: no sheet in invoiceList files"
 
     def test_invalidfile_read(self, inputfile_invalid_samesheet_excelinvoice):
-        """sheet1の内容が複数あるエクセルインボイスを入れた時に例外をキャッチできるかテスト"""
+        """Test to see if you can catch an exception when you put in an excelinvoice with multiple sheet1 contents."""
         with pytest.raises(StructuredError) as e:
             excelinvoice = ExcelInvoiceFile(inputfile_invalid_samesheet_excelinvoice)
             _, _, _ = excelinvoice.read()
@@ -651,10 +651,19 @@ class TestExcelinvoice:
 
     def test_generate_template(self, inputfile_single_excelinvoice, ivnoice_schema_json_with_full_sample_info, expected_df):
         excelinvoice = ExcelInvoiceFile(inputfile_single_excelinvoice)
-        template_df = excelinvoice.generate_template(ivnoice_schema_json_with_full_sample_info, save_path="test_excelinvoice.xlsx")
+        template_df, df_general, df_specific = excelinvoice.generate_template(ivnoice_schema_json_with_full_sample_info, save_path="test_excelinvoice.xlsx")
 
         assert template_df.iloc[0, 0] == "invoiceList_format_id"
         assert os.path.exists("test_excelinvoice.xlsx")
+
+        assert df_general.columns.tolist() == ["term_id", "key_name"]
+        assert df_specific.columns.tolist() == ["sample_class_id", "term_id", "key_name"]
+
+        # check if the sheet name exists
+        wb = load_workbook("test_excelinvoice.xlsx")
+        assert "invoice_form" in wb.sheetnames
+        assert "generalTerm" in wb.sheetnames
+        assert "specificTerm" in wb.sheetnames
 
         if os.path.exists("test_excelinvoice.xlsx"):
             os.remove("test_excelinvoice.xlsx")
@@ -708,22 +717,22 @@ class TestExcelinvoice:
 
 def test_generate_basic_filemode(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
-    result_df = generator.generate(template_config_mode_file)
-    assert_frame_equal_ignore_column_names(result_df, expected_df)
+    main_df , general_df, specific_df = generator.generate(template_config_mode_file)
+    assert_frame_equal_ignore_column_names(main_df, expected_df)
 
 
 def test_generate_basic_foldermode(template_config_mode_folder, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df_folder):
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
-    result_df = generator.generate(template_config_mode_folder)
-    print(result_df.head(10))
-    assert result_df.iloc[1, 0] == ''
-    assert result_df.iloc[2, 0] == "data_folder"
+    main_df , general_df, specific_df = generator.generate(template_config_mode_folder)
+    assert main_df.iloc[1, 0] == ''
+    assert main_df.iloc[2, 0] == "data_folder"
 
 
 def test_save_basic_file_creation(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
+    expected_dfs = {"invoice_form": expected_df}
     test_path = "test_excelinvoice.xlsx"
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
-    generator.save(expected_df, test_path)
+    generator.save(expected_dfs, test_path)
 
     assert os.path.exists(test_path)
 
@@ -739,9 +748,10 @@ def test_save_basic_file_creation(template_config_mode_file, ivnoice_schema_json
 
 
 def test_save_border_settings(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
+    expected_dfs = {"invoice_form": expected_df}
     test_path = "test_excelinvoice.xlsx"
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
-    generator.save(expected_df, test_path)
+    generator.save(expected_dfs, test_path)
 
     wb = load_workbook(test_path)
     ws = wb['invoice_form']
