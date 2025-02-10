@@ -337,3 +337,16 @@ def test_generate_excelinvoice_command_unexpected_error(ivnoice_schema_json_with
         assert "- Mode: file" in result.output
         assert "🔥 Error: An unexpected error occurred: Unexpected test error" in result.output
         assert result.exit_code != 0
+
+
+def test_make_excelinvoice_help():
+    """make-excelinvoiceコマンドのヘルプメッセージをテストする"""
+    runner = CliRunner()
+    result = runner.invoke(make_excelinvoice, ['--help'])
+
+    assert result.exit_code == 0
+    assert "Usage: make-excelinvoice [OPTIONS] <invoice.shcema.json file path>" in result.output
+    assert "Generate an Excel invoice based on the provided schema and save it to the\n  specified output path." in result.output
+    assert "-o, --output" in result.output
+    assert "-m, --mode" in result.output
+    assert "select the registration mode" in result.output
