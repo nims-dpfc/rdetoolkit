@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import sys
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable, Literal, Protocol, Union
 
@@ -320,14 +321,17 @@ class ExcelInvoiceTemplateGenerator:
     def __init__(self, fixed_header: FixedHeaders):
         self.fixed_header = fixed_header
 
-    def generate(self, config: TemplateConfig) -> pd.DataFrame:
+    def generate(self, config: TemplateConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates a template based on the provided configuration.
 
         Args:
             config (TemplateConfig): The configuration object.
 
         Returns:
-            pd.DataFrame: A DataFrame representing the generated template.
+            tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                - A DataFrame representing the generated template.
+                - A DataFrame containing references for general terms.
+                - A DataFrame containing references for specific terms.
         """
         base_df = self.fixed_header.to_template_dataframe().to_pandas()
         invoice_schema_obj = readf_json(config.schema_path)
@@ -343,7 +347,7 @@ class ExcelInvoiceTemplateGenerator:
 
         sample_field = invoice_schema.properties.sample
         if sample_field is not None:
-            self._add_sample_field(base_df, config, sample_field, prefixes)
+            _, general_term_df, specific_term_df = self._add_sample_field(base_df, config, sample_field, prefixes)
 
         custom_field = invoice_schema.properties.custom
         if custom_field is not None:
@@ -355,9 +359,9 @@ class ExcelInvoiceTemplateGenerator:
             first_col = base_df.columns[0]
             base_df.loc[1, first_col] = ""
             base_df.loc[2, first_col] = "data_folder"
-        return base_df
+        return base_df, general_term_df, specific_term_df
 
-    def _add_sample_field(self, base_df: pd.DataFrame, config: TemplateConfig, sample_field: SampleField, prefixes: dict[str, str]) -> pd.DataFrame:
+    def _add_sample_field(self, base_df: pd.DataFrame, config: TemplateConfig, sample_field: SampleField, prefixes: dict[str, str]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         attribute_configs: list[AttributeConfig] = [
             GeneralAttributeConfig(
                 type="general",
@@ -374,6 +378,8 @@ class ExcelInvoiceTemplateGenerator:
                 requires_class_id=True,
             ),
         ]
+        registerd_general_terms = []
+        registerd_specific_terms = []
         for attr_config in attribute_configs:
             attrs = attr_config.attributes
             if not attrs or not attrs.items.root:
@@ -390,9 +396,18 @@ class ExcelInvoiceTemplateGenerator:
                     if isinstance(attr_config, SpecificAttributeConfig):
                         emsg = f"Could not find a result corresponding to term_id {term_id} and class_id {class_id}."
                         term = attr_config.registry.by_term_and_class_id(term_id, class_id)[0]
+                        registerd_specific_terms.append({
+                            "sample_class_id": class_id,
+                            "term_id": term_id,
+                            "key_name": term["key_name"],
+                        })
                     else:
                         emsg = f"Could not find a result corresponding to term_id {term_id}."
                         term = attr_config.registry.by_term_id(term_id)[0]
+                        registerd_general_terms.append({
+                            "term_id": term_id,
+                            "key_name": term["key_name"],
+                        })
                 except (IndexError, KeyError) as e:
                     raise StructuredError(emsg) from e
 
@@ -401,13 +416,16 @@ class ExcelInvoiceTemplateGenerator:
                 name = key_name.replace(f"{attr_config.prefix}.", "")
                 base_df[key_name] = [None, attr_config.prefix, name, ja_name]
 
-        return base_df
+        df_registerd_general = pd.DataFrame(registerd_general_terms)
+        df_registerd_specific = pd.DataFrame(registerd_specific_terms)
 
-    def save(self, df: pd.DataFrame, save_path: str) -> None:
+        return base_df, df_registerd_general, df_registerd_specific
+
+    def save(self, dataframes: dict[str, pd.DataFrame], save_path: str) -> None:
         """Save the given DataFrame to an Excel file with specific formatting.
 
         Args:
-            df (pd.DataFrame): The DataFrame to be saved.
+            dataframes (dict[str, pd.DataFrame]): The DataFrame to be saved.
             save_path (str): The path where the Excel file will be saved.
 
         Note:
@@ -418,31 +436,45 @@ class ExcelInvoiceTemplateGenerator:
             - Applies a thin border to all cells in the range from row 5 to row 40.
             - Applies a thick top border and a double bottom border to the cells in the 5th row.
         """
+        default_row_height: int = 40
+        default_column_width: int = 20
+        default_start_row: int = 4
+        default_end_row: int = 41
+        default_start_col: int = 1
+
         with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
-            df.to_excel(writer, sheet_name='invoice_form', index=False, header=False)
-            _ = writer.book
-            worksheet = writer.sheets["invoice_form"]
-            worksheet.row_dimensions[4].height = 40
-            max_col = df.shape[1]
+            for sheet_name, df in dataframes.items():
+                if sheet_name != "invoice_form":
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+                else:
+                    df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
 
-            for col in range(1, max_col + 1):
-                col_letter = get_column_letter(col)
-                worksheet.column_dimensions[col_letter].width = 20
+                if sheet_name != "invoice_form":
+                    continue
 
-            # settings cell border
-            thin = Side(border_style="thin", color="000000")
-            thick = Side(border_style="thick", color="000000")
-            double = Side(border_style="double", color="000000")
-            grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
+                _ = writer.book
+                worksheet = writer.sheets[sheet_name]
+                worksheet.row_dimensions[4].height = default_row_height
+                max_col = df.shape[1]
 
-            for row in range(4, 41):
                 for col in range(1, max_col + 1):
-                    cell = worksheet.cell(row=row, column=col)
-                    cell.border = grid_border
+                    col_letter = get_column_letter(col)
+                    worksheet.column_dimensions[col_letter].width = default_column_width
 
-            for col in range(1, max_col + 1):
-                cell = worksheet.cell(row=4, column=col)
-                cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
+                # settings cell border
+                thin = Side(border_style="thin", color="000000")
+                thick = Side(border_style="thick", color="000000")
+                double = Side(border_style="double", color="000000")
+                grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+                for row in range(default_start_row, default_end_row):
+                    for col in range(default_start_col, max_col + 1):
+                        cell = worksheet.cell(row=row, column=col)
+                        cell.border = grid_border
+
+                for col in range(1, max_col + 1):
+                    cell = worksheet.cell(row=4, column=col)
+                    cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
 
 
 class ExcelInvoiceFile:
@@ -524,7 +556,7 @@ class ExcelInvoiceFile:
         return _df_specific
 
     @classmethod
-    def generate_template(cls, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal["file", "folder"] = "file") -> pd.DataFrame:
+    def generate_template(cls, invoice_schema_path: str | Path, save_path: str | Path, file_mode: Literal["file", "folder"] = "file") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates a template DataFrame based on the provided invoice schema and saves it to the specified path.
 
         Args:
@@ -533,7 +565,10 @@ class ExcelInvoiceFile:
             file_mode (Literal["file", "folder"], optional): The mode indicating whether the input is a file or a folder. Defaults to "file".
 
         Returns:
-            pd.DataFrame: The generated template as a pandas DataFrame.
+            tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                - A DataFrame representing the generated template.
+                - A DataFrame containing references for general terms.
+                - A DataFrame containing references for specific terms.
         """
         config = TemplateConfig(
             schema_path=invoice_schema_path,
@@ -542,9 +577,14 @@ class ExcelInvoiceFile:
             inputfile_mode=file_mode,
         )
 
-        template_df = cls.template_generator.generate(config)
-        cls.template_generator.save(template_df, str(save_path))
-        return template_df
+        template_df, df_general, df_specific = cls.template_generator.generate(config)
+        _dataframes = {
+            "invoice_form": template_df,
+            "generalTerm": df_general,
+            "specificTerm": df_specific,
+        }
+        cls.template_generator.save(_dataframes, str(save_path))
+        return template_df, df_general, df_specific
 
     def save(self, save_path: str | Path, *, invoice: pd.DataFrame | None = None, sheet_name: str = "invoice_form", index: list[str] | None = None, header: list[str] | None = None) -> None:
         """Save the invoice DataFrame to an Excel file.
