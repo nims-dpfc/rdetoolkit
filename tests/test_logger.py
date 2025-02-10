@@ -28,7 +28,6 @@ def test_log_decorator(caplog):
     logger_mock = mock.Mock(spec=CustomLog)
     logger_mock.get_logger.return_value = mock.Mock()
 
-    # ロガーのモックをパッチ
     with mock.patch('rdetoolkit.rdelogger.CustomLog', return_value=logger_mock):
         @log_decorator()
         def test_func():
@@ -38,7 +37,6 @@ def test_log_decorator(caplog):
 
         assert result == "Hello, World!"
 
-        # ロガーが正しく呼び出されたことを確認
         calls = [
             mock.call.info('test_func       --> Start'),
             mock.call.info('test_func       <-- End')
@@ -47,7 +45,7 @@ def test_log_decorator(caplog):
 
 
 def test_get_logger_with_filepath():
-    """FileStreamHandlerとStreamHandlerのロギングが正しく動作するかテスト"""
+    """Test that FileStreamHandler and StreamHandler logging work correctly."""
     name = "test_logger_with_file"
     test_dir = os.path.join(os.getcwd(), "tests", "logs")
     filepath = os.path.join(test_dir, "test.log")
@@ -123,9 +121,19 @@ def test_get_logger_formatter():
         assert formatter._fmt == "%(asctime)s - [%(name)s](%(levelname)s) - %(message)s"
 
 
+def test_get_logger_level(tmp_path):
+    """Test logger level"""
+    log_file = tmp_path / "test.log"
+    logger = get_logger("test_logger", level=logging.INFO, file_path=log_file)
+
+    assert logger.level == logging.INFO
+    assert len(logger.handlers) > 0
+    assert logger.handlers[0].level == logging.INFO
+
+
 @pytest.fixture(autouse=True)
 def cleanup_logger():
-    """各テストの前後でロガーのハンドラーをクリアする"""
+    """Clear logger handlers before and after each test"""
     logger = logging.getLogger("test_logger")
     logger.handlers.clear()
 
@@ -137,13 +145,13 @@ def cleanup_logger():
 
 @pytest.fixture
 def temp_log_file() -> Generator[str, None, None]:
-    """一時的なログファイルのパスを提供するフィクスチャ。
+    """Fixture that provides a temporary log file path.
 
     Args:
-        tmp_path: Pytestが提供する一時ディレクトリのPath
+        tmp_path: Pytest temporary directory
 
     Yields:
-        str: 一時的なログファイルのパス
+        str: The path to a temporary log file.
     """
     tmp_path = pathlib.Path(__file__).parent / "logs"
     log_path = tmp_path / "test_logs" / "test.log"
@@ -180,7 +188,7 @@ class TestLazyFileHandler:
         assert handler._handler is not None
 
     def test_multiple_emit_calls(self, temp_log_file: str) -> None:
-        """複数回のemitが呼び出しで同じハンドラーが再利用されることを確認するテスト"""
+        """Test that multiple calls to emit reuse the same handler"""
         handler = LazyFileHandler(temp_log_file)
         record = logging.LogRecord(
             name="test",
@@ -197,7 +205,7 @@ class TestLazyFileHandler:
         assert handler._handler is first_handler
 
     def test_costom_mode_and_encoding(self, temp_log_file) -> None:
-        """存在しないディレクトリが自動的に作成されることを確認するテスト"""
+        """Test that a non-existent directory is automatically created"""
         deep_path = pathlib.Path("tests", "deep", "nested", "dir", "test.log")
         handler = LazyFileHandler(str(deep_path))
         record = logging.LogRecord(
@@ -216,7 +224,7 @@ class TestLazyFileHandler:
         assert deep_path.parent.exists()
 
     def test_formatter_and_level_propagation(self, temp_log_file: str) -> None:
-        """フォーマッターとログレベルが正しく伝播することを確認するテスト"""
+        """Test that the formatter and log level propagate correctly"""
         handler = LazyFileHandler(temp_log_file)
         formatter = logging.Formatter("%(message)s")
         handler.setFormatter(formatter)
