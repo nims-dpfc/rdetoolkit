@@ -245,7 +245,12 @@ def test_version(get_version_from_pyprojecttoml_py39_py310, get_version_from_pyp
 
 @pytest.fixture
 def temp_output_path(tmp_path):
-    yield tmp_path / "output.xlsx"
+    yield tmp_path / "output_excel_invoice.xlsx"
+
+
+@pytest.fixture
+def temp_invalid_output_path(tmp_path):
+    yield tmp_path / "output_invalid_invoice.xlsx"
 
 
 @pytest.fixture
@@ -337,6 +342,26 @@ def test_generate_excelinvoice_command_unexpected_error(ivnoice_schema_json_with
         assert "- Mode: file" in result.output
         assert "🔥 Error: An unexpected error occurred: Unexpected test error" in result.output
         assert result.exit_code != 0
+
+
+def test_generate_excelinvoice_command_unexpected_output_format(ivnoice_schema_json_with_full_sample_info, temp_invalid_output_path):
+    """ファイルの拡張子テスト"""
+    runner = CliRunner()
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(ivnoice_schema_json_with_full_sample_info),
+            '-o',
+            str(temp_invalid_output_path),
+        ],
+    )
+
+    assert "📄 Generating ExcelInvoice template..." in result.output
+    assert f"- Schema: {Path(ivnoice_schema_json_with_full_sample_info).resolve()}" in result.output
+    assert "- Mode: file" in result.output
+    assert f"- Output: {temp_invalid_output_path}" in result.output
+    assert f"🔥 Warning: The output file name '{Path(temp_invalid_output_path).name}' should not end with '_excel_invoice.xlsx'." in result.output
+    assert result.exit_code != 0
 
 
 def test_make_excelinvoice_help():
