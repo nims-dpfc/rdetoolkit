@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import pathlib
+import re
 
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -664,6 +665,13 @@ class TestExcelinvoice:
         assert "invoice_form" in wb.sheetnames
         assert "generalTerm" in wb.sheetnames
         assert "specificTerm" in wb.sheetnames
+        assert "_version" in wb.sheetnames
+
+        # check info if contain rdetoolkit version
+        ws = wb['_version']
+        version_cell = ws['B2'].value
+        assert isinstance(version_cell, str)
+        assert re.match(r'^\d+\.\d+\.\d+$', version_cell) is not None
 
         if os.path.exists("test_excelinvoice.xlsx"):
             os.remove("test_excelinvoice.xlsx")
@@ -717,13 +725,13 @@ class TestExcelinvoice:
 
 def test_generate_basic_filemode(template_config_mode_file, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df):
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
-    main_df , general_df, specific_df = generator.generate(template_config_mode_file)
+    main_df , general_df, specific_df, _version_df = generator.generate(template_config_mode_file)
     assert_frame_equal_ignore_column_names(main_df, expected_df)
 
 
 def test_generate_basic_foldermode(template_config_mode_folder, ivnoice_schema_json_with_full_sample_info, inputfile_single_excelinvoice, expected_df_folder):
     generator = ExcelInvoiceTemplateGenerator(FixedHeaders())
-    main_df , general_df, specific_df = generator.generate(template_config_mode_folder)
+    main_df , general_df, specific_df, _version_df = generator.generate(template_config_mode_folder)
     assert main_df.iloc[1, 0] == ''
     assert main_df.iloc[2, 0] == "data_folder"
 

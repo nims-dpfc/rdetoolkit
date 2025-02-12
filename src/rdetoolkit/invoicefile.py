@@ -5,17 +5,16 @@ import json
 import os
 import shutil
 import sys
-from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable, Literal, Protocol, Union
 
 import chardet
 import pandas as pd
-from openpyxl.styles import Border, Side
+from openpyxl.styles import Border, Font, Side
 from openpyxl.utils import get_column_letter
 from pydantic import ValidationError
 
-from rdetoolkit import rde2util
+from rdetoolkit import __version__, rde2util
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, StructuredError
 from rdetoolkit.fileops import readf_json, writef_json
 from rdetoolkit.models.invoice import FixedHeaders, GeneralAttributeConfig, GeneralTermRegistry, SpecificAttributeConfig, SpecificTermRegistry, TemplateConfig
@@ -321,7 +320,13 @@ class ExcelInvoiceTemplateGenerator:
     def __init__(self, fixed_header: FixedHeaders):
         self.fixed_header = fixed_header
 
-    def generate(self, config: TemplateConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _version_info(self) -> pd.DataFrame:
+        return pd.DataFrame({
+            "items": ["version"],
+            "values": [__version__],
+        })
+
+    def generate(self, config: TemplateConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Generates a template based on the provided configuration.
 
         Args:
@@ -332,6 +337,7 @@ class ExcelInvoiceTemplateGenerator:
                 - A DataFrame representing the generated template.
                 - A DataFrame containing references for general terms.
                 - A DataFrame containing references for specific terms.
+                - A DataFrame containing rdetoolkit version.
         """
         base_df = self.fixed_header.to_template_dataframe().to_pandas()
         invoice_schema_obj = readf_json(config.schema_path)
@@ -345,21 +351,28 @@ class ExcelInvoiceTemplateGenerator:
             "custom": self.CUSTOM_PREFIX,
         }
 
+        # Sample field
         sample_field = invoice_schema.properties.sample
         if sample_field is not None:
             _, general_term_df, specific_term_df = self._add_sample_field(base_df, config, sample_field, prefixes)
 
+        # Custom field
         custom_field = invoice_schema.properties.custom
         if custom_field is not None:
             custom_dict = custom_field.properties.root
             for key, meta_prop in custom_dict.items():
                 base_df[key] = pd.Series([None, prefixes["custom"], key, meta_prop.label.ja], index=base_df.index)
 
+        # Select Mode: folder/file
         if config.inputfile_mode == "folder":
             first_col = base_df.columns[0]
             base_df.loc[1, first_col] = ""
             base_df.loc[2, first_col] = "data_folder"
-        return base_df, general_term_df, specific_term_df
+
+        # Version
+        version_df = self._version_info()
+
+        return base_df, general_term_df, specific_term_df, version_df
 
     def _add_sample_field(self, base_df: pd.DataFrame, config: TemplateConfig, sample_field: SampleField, prefixes: dict[str, str]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         attribute_configs: list[AttributeConfig] = [
@@ -446,35 +459,76 @@ class ExcelInvoiceTemplateGenerator:
             for sheet_name, df in dataframes.items():
                 if sheet_name != "invoice_form":
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    self._style_sub_sheet(writer, df, sheet_name)
                 else:
                     df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                    self._style_main_sheet(writer, df, sheet_name)
 
-                if sheet_name != "invoice_form":
-                    continue
+                # if sheet_name != "invoice_form":
+                #     continue
 
-                _ = writer.book
-                worksheet = writer.sheets[sheet_name]
-                worksheet.row_dimensions[4].height = default_row_height
-                max_col = df.shape[1]
+                # _ = writer.book
+                # worksheet = writer.sheets[sheet_name]
+                # worksheet.row_dimensions[4].height = default_row_height
+                # max_col = df.shape[1]
 
-                for col in range(1, max_col + 1):
-                    col_letter = get_column_letter(col)
-                    worksheet.column_dimensions[col_letter].width = default_column_width
+                # for col in range(1, max_col + 1):
+                #     col_letter = get_column_letter(col)
+                #     worksheet.column_dimensions[col_letter].width = default_column_width
 
-                # settings cell border
-                thin = Side(border_style="thin", color="000000")
-                thick = Side(border_style="thick", color="000000")
-                double = Side(border_style="double", color="000000")
-                grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
+                # # settings cell border
+                # thin = Side(border_style="thin", color="000000")
+                # thick = Side(border_style="thick", color="000000")
+                # double = Side(border_style="double", color="000000")
+                # grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-                for row in range(default_start_row, default_end_row):
-                    for col in range(default_start_col, max_col + 1):
-                        cell = worksheet.cell(row=row, column=col)
-                        cell.border = grid_border
+                # for row in range(default_start_row, default_end_row):
+                #     for col in range(default_start_col, max_col + 1):
+                #         cell = worksheet.cell(row=row, column=col)
+                #         cell.border = grid_border
 
-                for col in range(1, max_col + 1):
-                    cell = worksheet.cell(row=4, column=col)
-                    cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
+                # for col in range(1, max_col + 1):
+                #     cell = worksheet.cell(row=4, column=col)
+                #     cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
+
+    def _style_main_sheet(self, writer: pd.ExcelWriter, df: pd.DataFrame, sheet_name: str) -> None:
+        default_row_height: int = 40
+        default_column_width: int = 20
+        default_start_row: int = 4
+        default_end_row: int = 41
+        default_start_col: int = 1
+
+        _ = writer.book
+        worksheet = writer.sheets[sheet_name]
+        worksheet.row_dimensions[4].height = default_row_height
+        max_col = df.shape[1]
+
+        for col in range(1, max_col + 1):
+            col_letter = get_column_letter(col)
+            worksheet.column_dimensions[col_letter].width = default_column_width
+
+        # settings cell border
+        thin = Side(border_style="thin", color="000000")
+        thick = Side(border_style="thick", color="000000")
+        double = Side(border_style="double", color="000000")
+        grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+        for row in range(default_start_row, default_end_row):
+            for col in range(default_start_col, max_col + 1):
+                cell = worksheet.cell(row=row, column=col)
+                cell.border = grid_border
+
+        for col in range(1, max_col + 1):
+            cell = worksheet.cell(row=4, column=col)
+            cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
+
+    def _style_sub_sheet(self, writer: pd.ExcelWriter, df: pd.DataFrame, sheet_name: str) -> None:
+        _ = writer.book
+        worksheet = writer.sheets[sheet_name]
+        for row in worksheet.iter_rows():
+            for cell in row:
+                cell.style = 'Normal'
+                cell.font = Font(bold=False)
 
 
 class ExcelInvoiceFile:
@@ -577,11 +631,12 @@ class ExcelInvoiceFile:
             inputfile_mode=file_mode,
         )
 
-        template_df, df_general, df_specific = cls.template_generator.generate(config)
+        template_df, df_general, df_specific, _df_version = cls.template_generator.generate(config)
         _dataframes = {
             "invoice_form": template_df,
             "generalTerm": df_general,
             "specificTerm": df_specific,
+            "_version": _df_version,
         }
         cls.template_generator.save(_dataframes, str(save_path))
         return template_df, df_general, df_specific
