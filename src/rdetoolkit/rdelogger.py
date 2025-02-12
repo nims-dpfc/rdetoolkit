@@ -100,7 +100,14 @@ def get_logger(name: str, *, file_path: RdeFsPath | None = None, level: int = lo
     file_handler = LazyFileHandler(str(file_path))
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+
+    # Prevent duplicate handler registration by checking if a LazyFileHandler
+    # with the same file path already exists. This is important because:
+    # 1. Multiple calls to get_logger() could add duplicate handlers.
+    # 2. Duplicate handlers would cause log messages to be written multiple times
+    # 3. Each duplicate handler would consume additional system resources
+    if not any(isinstance(handler, LazyFileHandler) and handler.filename == str(file_path) for handler in logger.handlers):
+        logger.addHandler(file_handler)
 
     return logger
 
