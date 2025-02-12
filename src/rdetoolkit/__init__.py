@@ -1,6 +1,6 @@
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
-from rdetoolkit.core import resize_image_aspect_ratio, ManagedDirectory, DirectoryOps, detect_encoding
+from rdetoolkit.core import DirectoryOps, ManagedDirectory, detect_encoding, resize_image_aspect_ratio
 
 from . import errors, exceptions, img2thumb, invoicefile, modeproc, rde2util, rdelogger, workflows
 from .impl import *
