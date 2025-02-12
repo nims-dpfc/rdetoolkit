@@ -30,7 +30,7 @@ EX_SPECIFICTERM = STATIC_DIR / "ex_specificterm.csv"
 def read_excelinvoice(excelinvoice_filepath: RdeFsPath) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Reads an ExcelInvoice and processes each sheet into a dataframe.
 
-    his function reads an Excel file and processes three specific sheets:
+    This function reads an Excel file and processes three specific sheets:
     1. A sheet containing 'invoiceList_format_id' in cell A1 (duplicate sheets with this value are not allowed)
     2. A sheet named 'generalTerm'
     3. A sheet named 'specificTerm'
