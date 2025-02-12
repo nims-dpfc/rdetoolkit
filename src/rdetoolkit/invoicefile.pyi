@@ -1,8 +1,7 @@
 import pandas as pd
 from _typeshed import Incomplete
-from collections import defaultdict as defaultdict
 from pathlib import Path
-from rdetoolkit import rde2util as rde2util
+from rdetoolkit import __version__ as __version__, rde2util as rde2util
 from rdetoolkit.exceptions import InvoiceSchemaValidationError as InvoiceSchemaValidationError, StructuredError as StructuredError
 from rdetoolkit.fileops import readf_json as readf_json, writef_json as writef_json
 from rdetoolkit.models.invoice import FixedHeaders as FixedHeaders, GeneralAttributeConfig as GeneralAttributeConfig, GeneralTermRegistry as GeneralTermRegistry, SpecificAttributeConfig as SpecificAttributeConfig, SpecificTermRegistry as SpecificTermRegistry, TemplateConfig as TemplateConfig
@@ -45,7 +44,7 @@ class ExcelInvoiceTemplateGenerator:
     CUSTOM_PREFIX: str
     fixed_header: Incomplete
     def __init__(self, fixed_header: FixedHeaders) -> None: ...
-    def generate(self, config: TemplateConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: ...
+    def generate(self, config: TemplateConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]: ...
     def save(self, dataframes: dict[str, pd.DataFrame], save_path: str) -> None: ...
 
 class ExcelInvoiceFile:
