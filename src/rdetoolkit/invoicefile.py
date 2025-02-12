@@ -112,7 +112,11 @@ def check_exist_rawfiles(dfexcelinvoice: pd.DataFrame, excel_rawfiles: list[Path
         raise StructuredError(emsg)
     # Sort excel_rawfiles in the order they appear in the invoice
     _tmp = {f.name: f for f in excel_rawfiles}
-    return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
+    try:
+        return [_tmp[f] for f in dfexcelinvoice["data_file_names/name"]]
+    except KeyError as e:
+        emsg = f"Invalid or missing key in data_file_names/name: {e}"
+        raise StructuredError(emsg) from e
 
 
 def _assign_invoice_val(invoiceobj: dict[str, Any], key1: str, key2: str, valobj: Any, invoiceschema_obj: dict[str, Any]) -> None:
