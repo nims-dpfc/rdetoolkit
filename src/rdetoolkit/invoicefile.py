@@ -449,12 +449,6 @@ class ExcelInvoiceTemplateGenerator:
             - Applies a thin border to all cells in the range from row 5 to row 40.
             - Applies a thick top border and a double bottom border to the cells in the 5th row.
         """
-        default_row_height: int = 40
-        default_column_width: int = 20
-        default_start_row: int = 4
-        default_end_row: int = 41
-        default_start_col: int = 1
-
         with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
             for sheet_name, df in dataframes.items():
                 if sheet_name != "invoice_form":
@@ -463,33 +457,6 @@ class ExcelInvoiceTemplateGenerator:
                 else:
                     df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
                     self._style_main_sheet(writer, df, sheet_name)
-
-                # if sheet_name != "invoice_form":
-                #     continue
-
-                # _ = writer.book
-                # worksheet = writer.sheets[sheet_name]
-                # worksheet.row_dimensions[4].height = default_row_height
-                # max_col = df.shape[1]
-
-                # for col in range(1, max_col + 1):
-                #     col_letter = get_column_letter(col)
-                #     worksheet.column_dimensions[col_letter].width = default_column_width
-
-                # # settings cell border
-                # thin = Side(border_style="thin", color="000000")
-                # thick = Side(border_style="thick", color="000000")
-                # double = Side(border_style="double", color="000000")
-                # grid_border = Border(top=thin, left=thin, right=thin, bottom=thin)
-
-                # for row in range(default_start_row, default_end_row):
-                #     for col in range(default_start_col, max_col + 1):
-                #         cell = worksheet.cell(row=row, column=col)
-                #         cell.border = grid_border
-
-                # for col in range(1, max_col + 1):
-                #     cell = worksheet.cell(row=4, column=col)
-                #     cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
 
     def _style_main_sheet(self, writer: pd.ExcelWriter, df: pd.DataFrame, sheet_name: str) -> None:
         default_row_height: int = 40
@@ -523,11 +490,12 @@ class ExcelInvoiceTemplateGenerator:
             cell.border = Border(left=cell.border.left, right=cell.border.right, top=thick, bottom=double)
 
     def _style_sub_sheet(self, writer: pd.ExcelWriter, df: pd.DataFrame, sheet_name: str) -> None:
+        default_cell_style = 'Normal'
         _ = writer.book
         worksheet = writer.sheets[sheet_name]
         for row in worksheet.iter_rows():
             for cell in row:
-                cell.style = 'Normal'
+                cell.style = default_cell_style
                 cell.font = Font(bold=False)
 
 
