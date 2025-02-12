@@ -360,7 +360,7 @@ def test_generate_excelinvoice_command_unexpected_output_format(ivnoice_schema_j
     assert f"- Schema: {Path(ivnoice_schema_json_with_full_sample_info).resolve()}" in result.output
     assert "- Mode: file" in result.output
     assert f"- Output: {temp_invalid_output_path}" in result.output
-    assert f"🔥 Warning: The output file name '{Path(temp_invalid_output_path).name}' should not end with '_excel_invoice.xlsx'." in result.output
+    assert f"🔥 Warning: The output file name '{Path(temp_invalid_output_path).name}' must end with '_excel_invoice.xlsx'." in result.output
     assert result.exit_code != 0
 
 

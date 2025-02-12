@@ -35,7 +35,7 @@ class GenerateExcelInvoiceCommand:
         click.echo(f"- Mode: {self.mode}")
 
         if not self.output_path.name.endswith(rule_excelinvoice_suffix):
-            click.echo(click.style(f"🔥 Warning: The output file name '{self.output_path.name}' should not end with '{rule_excelinvoice_suffix}'.", fg="yellow"))
+            click.echo(click.style(f"🔥 Warning: The output file name '{self.output_path.name}' must end with '{rule_excelinvoice_suffix}'.", fg="yellow"))
             raise click.Abort
 
         try:
