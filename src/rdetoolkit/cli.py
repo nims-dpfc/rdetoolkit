@@ -65,7 +65,7 @@ def _validation_json_file(ctx: click.Context, param: click.Parameter, value: pat
 @click.argument(
     "invoice_schema_json_path",
     type=click.Path(exists=True, dir_okay=False, resolve_path=True, path_type=pathlib.Path),
-    callable=_validation_json_file,
+    callback=_validation_json_file,
     metavar="<invoice.shcema.json file path>",
 )
 @click.option(

@@ -375,3 +375,44 @@ def test_make_excelinvoice_help():
     assert "-o, --output" in result.output
     assert "-m, --mode" in result.output
     assert "select the registration mode" in result.output
+
+
+def test_json_file_validation(tmp_path, ivnoice_schema_json_with_full_sample_info):
+    runner = CliRunner()
+
+    invalid_ext_file = tmp_path / "invalid_file.txt"
+    invalid_ext_file.write_text("{}")
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(invalid_ext_file),
+            '-o',
+            str(tmp_path / "output_excel_invoice.xlsx"),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "The schema file must be a JSON file." in result.output
+
+    invalid_json_file = tmp_path / "invalid_json.json"
+    invalid_json_file.write_text("Invalid JSON content")
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(invalid_json_file),
+            '-o',
+            str(tmp_path / "output_excel_invoice.xlsx"),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "The schema file must be a valid JSON file." in result.output
+
+    valid_json_file = ivnoice_schema_json_with_full_sample_info
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(valid_json_file),
+            '-o',
+            str(tmp_path / "output_excel_invoice.xlsx"),
+        ],
+    )
+    assert result.exit_code == 0
