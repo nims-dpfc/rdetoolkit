@@ -59,40 +59,55 @@ class LazyFileHandler(logging.Handler):
             self._handler.emit(record)
 
 
-def get_logger(name: str, *, file_path: RdeFsPath | None = None) -> logging.Logger:
-    """Creates a logger using Python's logging module.
+def get_logger(name: str, *, file_path: RdeFsPath | None = None, level: int = logging.DEBUG) -> logging.Logger:
+    """Creates and configures a logger using Python's built-in logging module.
 
-    The logger is a tool for generating log messages, tracking processes, and facilitating debugging.
+    This function creates a logger identified by `name`, sets its logging level, and, if a file
+    path is provided, adds a lazy file handler to output log messages to that file. The default
+    logging level is DEBUG, but it can be modified via the `level` parameter.
 
     Args:
-        name (str): The identifier's name, usually the module name is specified (__name__).
-        file_path (Optional[RdeFsPath], optional): The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.
+        name (str): The name of the logger (typically the module name, e.g. __name__).
+        file_path (Optional[RdeFsPath], optional): The file path where log messages will be written.
+            If not provided, log output will be directed to the standard output. Defaults to None.
+        level (int, optional): The logging level to set for the logger and its handlers, such as
+            logging.DEBUG or logging.INFO. Defaults to logging.DEBUG.
 
     Returns:
-        logging.Logger: A configured logger object.
+        logging.Logger: A configured logger instance.
 
     Example:
         ```python
         from rdetoolkit import rdelogger
+        import logging
 
+        # Create a logger with the default DEBUG level.
         logger = rdelogger.get_logger(__name__, "data/logs/rdesys.log")
-
-        # If you want to output a debug message, add the following code
         logger.debug('This is a debug message.')
-        > 2023-01-01 00:00:00,111 - [rdetoolkit.rde2util](DEBUG) - This is a debug message.
+
+        # Create a logger with a custom logging level (INFO).
+        logger_info = rdelogger.get_logger(__name__, "data/logs/rdesys.log", level=logging.INFO)
+        logger_info.info('This is an info message.')
         ```
     """
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     formatter = logging.Formatter("%(asctime)s - [%(name)s](%(levelname)s) - %(message)s")
 
     if file_path is None:
         return logger
 
     file_handler = LazyFileHandler(str(file_path))
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+
+    # Prevent duplicate handler registration by checking if a LazyFileHandler
+    # with the same file path already exists. This is important because:
+    # 1. Multiple calls to get_logger() could add duplicate handlers.
+    # 2. Duplicate handlers would cause log messages to be written multiple times
+    # 3. Each duplicate handler would consume additional system resources
+    if not any(isinstance(handler, LazyFileHandler) and handler.filename == str(file_path) for handler in logger.handlers):
+        logger.addHandler(file_handler)
 
     return logger
 

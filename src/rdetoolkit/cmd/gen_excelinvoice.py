@@ -28,10 +28,15 @@ class GenerateExcelInvoiceCommand:
         Returns:
             None
         """
+        rule_excelinvoice_suffix = '_excel_invoice.xlsx'
         click.echo("📄 Generating ExcelInvoice template...")
         click.echo(f"- Schema: {self.invoice_schema_file}")
         click.echo(f"- Output: {self.output_path}")
         click.echo(f"- Mode: {self.mode}")
+
+        if not self.output_path.name.endswith(rule_excelinvoice_suffix):
+            click.echo(click.style(f"🔥 Warning: The output file name '{self.output_path.name}' must end with '{rule_excelinvoice_suffix}'.", fg="yellow"))
+            raise click.Abort
 
         try:
             if not self.invoice_schema_file.exists():

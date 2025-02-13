@@ -90,7 +90,7 @@ def test_make_requirements_txt():
 # ex.
 # pandas==2.0.3
 # numpy
-rdetoolkit==1.1.0
+rdetoolkit==1.1.1
 """
     assert content == expected_content
     test_path.unlink()
@@ -245,7 +245,12 @@ def test_version(get_version_from_pyprojecttoml_py39_py310, get_version_from_pyp
 
 @pytest.fixture
 def temp_output_path(tmp_path):
-    yield tmp_path / "output.xlsx"
+    yield tmp_path / "output_excel_invoice.xlsx"
+
+
+@pytest.fixture
+def temp_invalid_output_path(tmp_path):
+    yield tmp_path / "output_invalid_invoice.xlsx"
 
 
 @pytest.fixture
@@ -337,3 +342,77 @@ def test_generate_excelinvoice_command_unexpected_error(ivnoice_schema_json_with
         assert "- Mode: file" in result.output
         assert "🔥 Error: An unexpected error occurred: Unexpected test error" in result.output
         assert result.exit_code != 0
+
+
+def test_generate_excelinvoice_command_unexpected_output_format(ivnoice_schema_json_with_full_sample_info, temp_invalid_output_path):
+    """ファイルの拡張子テスト"""
+    runner = CliRunner()
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(ivnoice_schema_json_with_full_sample_info),
+            '-o',
+            str(temp_invalid_output_path),
+        ],
+    )
+
+    assert "📄 Generating ExcelInvoice template..." in result.output
+    assert f"- Schema: {Path(ivnoice_schema_json_with_full_sample_info).resolve()}" in result.output
+    assert "- Mode: file" in result.output
+    assert f"- Output: {temp_invalid_output_path}" in result.output
+    assert f"🔥 Warning: The output file name '{Path(temp_invalid_output_path).name}' must end with '_excel_invoice.xlsx'." in result.output
+    assert result.exit_code != 0
+
+
+def test_make_excelinvoice_help():
+    """make-excelinvoiceコマンドのヘルプメッセージをテストする"""
+    runner = CliRunner()
+    result = runner.invoke(make_excelinvoice, ['--help'])
+
+    assert result.exit_code == 0
+    assert "Usage: make-excelinvoice [OPTIONS] <invoice.shcema.json file path>" in result.output
+    assert "Generate an Excel invoice based on the provided schema and save it to the\n  specified output path." in result.output
+    assert "-o, --output" in result.output
+    assert "-m, --mode" in result.output
+    assert "select the registration mode" in result.output
+
+
+def test_json_file_validation(tmp_path, ivnoice_schema_json_with_full_sample_info):
+    runner = CliRunner()
+
+    invalid_ext_file = tmp_path / "invalid_file.txt"
+    invalid_ext_file.write_text("{}")
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(invalid_ext_file),
+            '-o',
+            str(tmp_path / "output_excel_invoice.xlsx"),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "The schema file must be a JSON file." in result.output
+
+    invalid_json_file = tmp_path / "invalid_json.json"
+    invalid_json_file.write_text("Invalid JSON content")
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(invalid_json_file),
+            '-o',
+            str(tmp_path / "output_excel_invoice.xlsx"),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "The schema file must be a valid JSON file." in result.output
+
+    valid_json_file = ivnoice_schema_json_with_full_sample_info
+    result = runner.invoke(
+        make_excelinvoice,
+        [
+            str(valid_json_file),
+            '-o',
+            str(tmp_path / "output_excel_invoice.xlsx"),
+        ],
+    )
+    assert result.exit_code == 0
