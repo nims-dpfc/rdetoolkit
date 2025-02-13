@@ -1096,11 +1096,13 @@ the formatter and level settings from the parent handler.</p>
 </div><h2 id="get_logger">get_logger</h2>
 <div class="doc doc-object doc-function">
 <h2 class="doc doc-heading" id="src.rdetoolkit.rdelogger.get_logger">
-<code class="highlight language-python">src<span style="color: #333333">.</span>rdetoolkit<span style="color: #333333">.</span>rdelogger<span style="color: #333333">.</span>get_logger(name, <span style="color: #333333">*</span>, file_path<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">None</span>)</code>
+<code class="highlight language-python">src<span style="color: #333333">.</span>rdetoolkit<span style="color: #333333">.</span>rdelogger<span style="color: #333333">.</span>get_logger(name, <span style="color: #333333">*</span>, file_path<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">None</span>, level<span style="color: #333333">=</span>logging<span style="color: #333333">.</span>DEBUG)</code>
 </h2>
 <div class="doc doc-contents first">
-<p>Creates a logger using Python's logging module.</p>
-<p>The logger is a tool for generating log messages, tracking processes, and facilitating debugging.</p>
+<p>Creates and configures a logger using Python's built-in logging module.</p>
+<p>This function creates a logger identified by <code>name</code>, sets its logging level, and, if a file
+path is provided, adds a lazy file handler to output log messages to that file. The default
+logging level is DEBUG, but it can be modified via the <code>level</code> parameter.</p>
 <p><span class="doc-section-title">Parameters:</span></p>
 <table>
 <thead>
@@ -1119,7 +1121,7 @@ the formatter and level settings from the parent handler.</p>
 </td>
 <td>
 <div class="doc-md-description">
-<p>The identifier's name, usually the module name is specified (<strong>name</strong>).</p>
+<p>The name of the logger (typically the module name, e.g. <strong>name</strong>).</p>
 </div>
 </td>
 <td>
@@ -1133,11 +1135,27 @@ the formatter and level settings from the parent handler.</p>
 </td>
 <td>
 <div class="doc-md-description">
-<p>The path of the log file. If this parameter is specified, the log messages will be written to this file. If not specified, the log messages will be sent to the standard output. Defaults to None.</p>
+<p>The file path where log messages will be written.
+If not provided, log output will be directed to the standard output. Defaults to None.</p>
 </div>
 </td>
 <td>
 <code>None</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>level</code></td>
+<td>
+<code>int</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The logging level to set for the logger and its handlers, such as
+logging.DEBUG or logging.INFO. Defaults to logging.DEBUG.</p>
+</div>
+</td>
+<td>
+<code><span title="logging.DEBUG">DEBUG</span></code>
 </td>
 </tr>
 </tbody>
@@ -1157,7 +1175,7 @@ the formatter and level settings from the parent handler.</p>
 </td>
 <td>
 <div class="doc-md-description">
-<p>logging.Logger: A configured logger object.</p>
+<p>logging.Logger: A configured logger instance.</p>
 </div>
 </td>
 </tr>
@@ -1165,19 +1183,25 @@ the formatter and level settings from the parent handler.</p>
 </table>
 <details class="example" open="">
 <summary>Example</summary>
-<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">3</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">4</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">5</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">6</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">7</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">rdetoolkit</span> <span style="color: #008800; font-weight: bold">import</span> rdelogger
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 1</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 2</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 3</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 4</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 5</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 6</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 7</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 8</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 9</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">10</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #008800; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">rdetoolkit</span> <span style="color: #008800; font-weight: bold">import</span> rdelogger
+<span style="color: #008800; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">logging</span>
 
+<span style="color: #888888"># Create a logger with the default DEBUG level.</span>
 logger <span style="color: #333333">=</span> rdelogger<span style="color: #333333">.</span>get_logger(<span style="color: #996633">__name__</span>, <span style="background-color: #fff0f0">"data/logs/rdesys.log"</span>)
-
-<span style="color: #888888"># If you want to output a debug message, add the following code</span>
 logger<span style="color: #333333">.</span>debug(<span style="background-color: #fff0f0">'This is a debug message.'</span>)
-<span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">2023</span><span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">01</span><span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">01</span> <span style="color: #0000DD; font-weight: bold">00</span>:<span style="color: #0000DD; font-weight: bold">00</span>:<span style="color: #0000DD; font-weight: bold">00</span>,<span style="color: #0000DD; font-weight: bold">111</span> <span style="color: #333333">-</span> [rdetoolkit<span style="color: #333333">.</span>rde2util](DEBUG) <span style="color: #333333">-</span> This <span style="color: #000000; font-weight: bold">is</span> a debug message<span style="color: #333333">.</span>
+
+<span style="color: #888888"># Create a logger with a custom logging level (INFO).</span>
+logger_info <span style="color: #333333">=</span> rdelogger<span style="color: #333333">.</span>get_logger(<span style="color: #996633">__name__</span>, <span style="background-color: #fff0f0">"data/logs/rdesys.log"</span>, level<span style="color: #333333">=</span>logging<span style="color: #333333">.</span>INFO)
+logger_info<span style="color: #333333">.</span>info(<span style="background-color: #fff0f0">'This is an info message.'</span>)
 </code></pre></div></td></tr></table></div>
 </details>
 </div>

@@ -1353,8 +1353,10 @@
 </h2>
 <div class="doc doc-contents first">
 <p>Reads an ExcelInvoice and processes each sheet into a dataframe.</p>
-<p>This function reads an ExcelInvoice file and processes various sheets within the file, specifically looking for sheets named <code>invoiceList_format_id</code>,<code>generalTerm</code>, and <code>specificTerm</code>.</p>
-<p>These sheets are converted into pandas dataframes and returned as output.</p>
+<p>This function reads an Excel file and processes three specific sheets:
+1. A sheet containing 'invoiceList_format_id' in cell A1 (duplicate sheets with this value are not allowed)
+2. A sheet named 'generalTerm'
+3. A sheet named 'specificTerm'</p>
 <p><span class="doc-section-title">Parameters:</span></p>
 <table>
 <thead>
@@ -2141,11 +2143,14 @@ invoice.overwrite("invoice_new.json")</p>
 <tbody>
 <tr class="doc-section-item">
 <td>
-<code><span title="pandas.DataFrame">DataFrame</span></code>
+<code>tuple[<span title="pandas.DataFrame">DataFrame</span>, <span title="pandas.DataFrame">DataFrame</span>, <span title="pandas.DataFrame">DataFrame</span>]</code>
 </td>
 <td>
 <div class="doc-md-description">
-<p>pd.DataFrame: The generated template as a pandas DataFrame.</p>
+<p>tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+- A DataFrame representing the generated template.
+- A DataFrame containing references for general terms.
+- A DataFrame containing references for specific terms.</p>
 </div>
 </td>
 </tr>
@@ -2378,11 +2383,15 @@ invoice.overwrite("invoice_new.json")</p>
 <tbody>
 <tr class="doc-section-item">
 <td>
-<code><span title="pandas.DataFrame">DataFrame</span></code>
+<code>tuple[<span title="pandas.DataFrame">DataFrame</span>, <span title="pandas.DataFrame">DataFrame</span>, <span title="pandas.DataFrame">DataFrame</span>, <span title="pandas.DataFrame">DataFrame</span>]</code>
 </td>
 <td>
 <div class="doc-md-description">
-<p>pd.DataFrame: A DataFrame representing the generated template.</p>
+<p>tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+- A DataFrame representing the generated template.
+- A DataFrame containing references for general terms.
+- A DataFrame containing references for specific terms.
+- A DataFrame containing rdetoolkit version.</p>
 </div>
 </td>
 </tr>
@@ -2392,7 +2401,7 @@ invoice.overwrite("invoice_new.json")</p>
 </div>
 <div class="doc doc-object doc-function">
 <h3 class="doc doc-heading" id="src.rdetoolkit.invoicefile.ExcelInvoiceTemplateGenerator.save">
-<code class="highlight language-python">save(df, save_path)</code>
+<code class="highlight language-python">save(dataframes, save_path)</code>
 </h3>
 <div class="doc doc-contents">
 <p>Save the given DataFrame to an Excel file with specific formatting.</p>
@@ -2408,9 +2417,9 @@ invoice.overwrite("invoice_new.json")</p>
 </thead>
 <tbody>
 <tr class="doc-section-item">
-<td><code>df</code></td>
+<td><code>dataframes</code></td>
 <td>
-<code><span title="pandas.DataFrame">DataFrame</span></code>
+<code>dict[str, <span title="pandas.DataFrame">DataFrame</span>]</code>
 </td>
 <td>
 <div class="doc-md-description">
