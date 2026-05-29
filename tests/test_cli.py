@@ -20,15 +20,17 @@ Boundary Value
 import json
 import os
 import platform
+import re
 import shutil
+import tempfile
 from distutils.version import StrictVersion
 from pathlib import Path
 import textwrap
 from unittest.mock import patch
 
 
-import click
 import pytest
+import typer
 from typer.testing import CliRunner
 from rdetoolkit import __version__
 from rdetoolkit.cli.app import app
@@ -280,18 +282,23 @@ def test_init_creation():
 def test_init_no_overwrite():
     """initを実行して既存のファイルが上書きされないことをテスト"""
     runner = CliRunner()
+    original_cwd = os.getcwd()
 
-    with runner.isolated_filesystem():
-        runner.invoke(app, ["init"])
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            os.chdir(tmp_dir)
+            runner.invoke(app, ["init"])
 
-        with open(Path("container/main.py"), "a", encoding="utf-8") as f:
-            f.write("# Sample test message")
+            with open(Path("container/main.py"), "a", encoding="utf-8") as f:
+                f.write("# Sample test message")
 
-        runner.invoke(app, ["init"])
+            runner.invoke(app, ["init"])
 
-        with open(Path("container/main.py"), encoding="utf-8") as f:
-            content = f.read()
-            assert "# Sample test message" in content
+            with open(Path("container/main.py"), encoding="utf-8") as f:
+                content = f.read()
+                assert "# Sample test message" in content
+        finally:
+            os.chdir(original_cwd)
 
 
 @pytest.fixture
@@ -615,7 +622,7 @@ def test_report_generation_failure(temp_source_dir, temp_output_archive, capsys)
     """
     report_path = temp_output_archive.with_suffix(".md")
     report_path.mkdir(exist_ok=True)
-    with pytest.raises(click.Abort):
+    with pytest.raises(typer.Abort):
         command = CreateArtifactCommand(
             source_dir=temp_source_dir,
             output_archive_path=temp_output_archive,
@@ -960,7 +967,7 @@ def test_csv2graph_help():
     result = runner.invoke(app, ["csv2graph", "--help"])
 
     assert result.exit_code == 0
-    output = click.termui.strip_ansi(result.output)
+    output = re.sub(r'\x1b\[[0-9;]*m', '', result.output)
     assert "csv2graph" in output
     assert "Generate graphs from CSV" in output
     assert "--output-dir" in output or "-o" in output
