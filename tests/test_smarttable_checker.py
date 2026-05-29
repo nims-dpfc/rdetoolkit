@@ -35,9 +35,9 @@ class TestSmartTableChecker:
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
             assert len(rawfiles) == 3
-            # First entry: SmartTable file only
+            # idx=0 -> data/ root: SmartTable file (registered last by RDE)
             assert rawfiles[0] == (smarttable_file,)
-            # Subsequent entries: Each CSV with related files
+            # idx>=1 -> data/divided/000N: data rows in table order
             assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("file1.txt"))
             assert rawfiles[2] == (Path("data/temp/row_1.csv"), Path("file2.txt"))
             assert smarttable_path == smarttable_file
@@ -58,9 +58,9 @@ class TestSmartTableChecker:
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
             assert len(rawfiles) == 2
-            # First entry: SmartTable file only
+            # idx=0 -> data/ root: SmartTable file (registered last by RDE)
             assert rawfiles[0] == (smarttable_file,)
-            # Second entry: CSV file only
+            # idx=1 -> data/divided/0001: data row
             assert rawfiles[1] == (Path("data/temp/row_0.csv"),)
             assert smarttable_path == smarttable_file
 
@@ -80,9 +80,9 @@ class TestSmartTableChecker:
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
             assert len(rawfiles) == 2
-            # First entry: SmartTable file only
+            # idx=0 -> data/ root: SmartTable file (registered last by RDE)
             assert rawfiles[0] == (smarttable_file,)
-            # Second entry: CSV file with related files
+            # idx=1 -> data/divided/0001: data row with related files
             assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("data1.txt"), Path("data2.txt"))
             assert smarttable_path == smarttable_file
 
@@ -111,9 +111,9 @@ class TestSmartTableChecker:
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
             assert len(rawfiles) == 2
-            # First entry: SmartTable file only
+            # idx=0 -> data/ root: SmartTable file (registered last by RDE)
             assert rawfiles[0] == (smarttable_file,)
-            # Second entry: CSV file with extracted file
+            # idx=1 -> data/divided/0001: data row with extracted file
             assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("data/temp/test_content.txt"))
             assert smarttable_path == smarttable_file
 
@@ -200,9 +200,9 @@ class TestSmartTableChecker:
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
             assert len(rawfiles) == 2
-            # First entry: SmartTable file only
+            # idx=0 -> data/ root: SmartTable file (registered last by RDE)
             assert rawfiles[0] == (smarttable_file,)
-            # Second entry: CSV file only
+            # idx=1 -> data/divided/0001: data row
             assert rawfiles[1] == (Path("data/temp/row_0.csv"),)
             assert smarttable_path == smarttable_file
 
@@ -233,11 +233,11 @@ class TestSmartTableChecker:
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
             assert len(rawfiles) == 2
-            # First entry: SmartTable file only
+            # idx=0 -> data/ root: SmartTable file (registered last by RDE)
             assert rawfiles[0] == (smarttable_file,)
-            # Second entry: CSV file + 2 extracted files
+            # idx=1 -> data/divided/0001: data row (CSV file + 2 extracted files)
             assert len(rawfiles[1]) == 3  # CSV file + 2 extracted files
-            assert rawfiles[1][0] == Path("data/temp/row_0.csv")  # First should be CSV file
+            assert rawfiles[1][0] == Path("data/temp/row_0.csv")  # CSV file first within the tuple
             assert smarttable_path == smarttable_file
 
     def test_save_table_file_false(self, tmp_path):
@@ -258,10 +258,11 @@ class TestSmartTableChecker:
             checker = SmartTableChecker(Path("data/temp"))
             rawfiles, smarttable_path = checker.parse(tmp_path)
 
-            # Only CSV files should be in rawfiles, not the SmartTable file
+            # SmartTable file is excluded; the LAST row occupies data/ root (registered
+            # last by RDE) so registration order stays row_0 -> row_1.
             assert len(rawfiles) == 2
-            assert rawfiles[0] == (Path("data/temp/row_0.csv"), Path("file1.txt"))
-            assert rawfiles[1] == (Path("data/temp/row_1.csv"), Path("file2.txt"))
+            assert rawfiles[0] == (Path("data/temp/row_1.csv"), Path("file2.txt"))  # idx=0 -> data/ root (last row)
+            assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("file1.txt"))  # idx=1 -> data/divided/0001 (first row)
             assert smarttable_path == smarttable_file
 
     def test_save_table_file_explicit_false(self, tmp_path):
@@ -282,4 +283,66 @@ class TestSmartTableChecker:
             # Only CSV files should be in rawfiles
             assert len(rawfiles) == 1
             assert rawfiles[0] == (Path("data/temp/row_0.csv"),)
+            assert smarttable_path == smarttable_file
+
+    def test_parse_save_table_file_true_table_at_data_root(self, tmp_path):
+        """Test SmartTable file goes to data/ root when save_table_file=True.
+
+        The RDE system registers data/divided/0001..N first and data/ root LAST,
+        so placing the SmartTable file at idx=0 (data/ root) makes data rows
+        register in table order (row1, row2, ...) followed by the table file:
+        - idx=0 → data/ root (SmartTable file, registered last)
+        - idx=1 → data/divided/0001/ (first data row)
+        - idx=2 → data/divided/0002/ (second data row)
+        """
+        smarttable_file = tmp_path / "smarttable_test.xlsx"
+        smarttable_file.touch()
+
+        with patch('rdetoolkit.impl.input_controller.SmartTableFile') as mock_st:
+            mock_instance = Mock()
+            mock_st.return_value = mock_instance
+            mock_instance.generate_row_csvs_with_file_mapping.return_value = [
+                (Path("data/temp/row_0.csv"), (Path("file1.txt"),)),
+                (Path("data/temp/row_1.csv"), (Path("file2.txt"),)),
+            ]
+
+            checker = SmartTableChecker(Path("data/temp"), save_table_file=True)
+            rawfiles, smarttable_path = checker.parse(tmp_path)
+
+            # SmartTable file occupies data/ root; data rows fill divided in table order
+            assert len(rawfiles) == 3
+            assert rawfiles[0] == (smarttable_file,)  # idx=0 -> data/ root (registered last)
+            assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("file1.txt"))  # idx=1 -> 1st data row
+            assert rawfiles[2] == (Path("data/temp/row_1.csv"), Path("file2.txt"))  # idx=2 -> 2nd data row
+            assert smarttable_path == smarttable_file
+
+    def test_parse_save_table_file_false_last_row_first(self, tmp_path):
+        """Test the LAST data row goes to data/ root when save_table_file=False.
+
+        The RDE system registers data/divided/0001..N first and data/ root LAST, and
+        data/ root must always be registered. With no SmartTable file to occupy it,
+        the final data row is placed at idx=0 so registration order stays row_0..row_2:
+        - idx=0 → data/ root (row_2, the last row, registered last)
+        - idx=1 → data/divided/0001/ (row_0, the first row)
+        - idx=2 → data/divided/0002/ (row_1, the second row)
+        """
+        smarttable_file = tmp_path / "smarttable_test.xlsx"
+        smarttable_file.touch()
+
+        with patch('rdetoolkit.impl.input_controller.SmartTableFile') as mock_st:
+            mock_instance = Mock()
+            mock_st.return_value = mock_instance
+            mock_instance.generate_row_csvs_with_file_mapping.return_value = [
+                (Path("data/temp/row_0.csv"), (Path("file0.txt"),)),
+                (Path("data/temp/row_1.csv"), (Path("file1.txt"),)),
+                (Path("data/temp/row_2.csv"), (Path("file2.txt"),)),
+            ]
+
+            checker = SmartTableChecker(Path("data/temp"), save_table_file=False)
+            rawfiles, smarttable_path = checker.parse(tmp_path)
+
+            assert len(rawfiles) == 3
+            assert rawfiles[0] == (Path("data/temp/row_2.csv"), Path("file2.txt"))  # idx=0 -> data/ root (last row)
+            assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("file0.txt"))  # idx=1 -> data/divided/0001 (first row)
+            assert rawfiles[2] == (Path("data/temp/row_1.csv"), Path("file1.txt"))  # idx=2 -> data/divided/0002 (second row)
             assert smarttable_path == smarttable_file
