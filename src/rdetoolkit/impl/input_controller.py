@@ -391,6 +391,9 @@ class SmartTableChecker(IInputFileChecker):
 
     This class handles SmartTable files (Excel/CSV/TSV) and optionally zip files,
     processing them for metadata extraction and invoice generation.
+    The returned ``raw_files`` order is tied to RDE registration order:
+    index 0 maps to ``data/`` and is registered last, while index 1..N map to
+    ``data/divided/0001``.. and are registered first in ascending index order.
 
     Attributes:
         out_dir_temp (Path): Temporary directory for the unpacked content.

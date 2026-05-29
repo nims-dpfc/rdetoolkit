@@ -1,4 +1,20 @@
-"""Test SmartTableChecker functionality."""
+"""Test SmartTableChecker functionality.
+
+Equivalence Partitioning:
+| API | Input/State Partition | Rationale | Expected Outcome | Test ID |
+| --- | --- | --- | --- | --- |
+| ``SmartTableChecker.parse`` + ``generate_folder_paths_iterator`` | SmartTable mode with saved table file | valid domain | table file is in data/ root and row CSVs populate divided folders | TC-EP-SMARTTABLE-ITER-001 |
+| ``SmartTableChecker.parse`` + ``generate_folder_paths_iterator`` | SmartTable mode without saved table file | valid domain | last row is in data/ root and earlier row CSVs populate divided folders | TC-EP-SMARTTABLE-ITER-002 |
+
+Boundary Value:
+| API | Boundary | Rationale | Expected Outcome | Test ID |
+| --- | --- | --- | --- | --- |
+| ``SmartTableChecker.parse`` + ``generate_folder_paths_iterator`` | two generated data rows | minimum row count that exercises root/divided reordering | rowfile mapping follows RDE registration order | TC-BV-SMARTTABLE-ITER-001 |
+
+Validation commands:
+Direct: ``uv run pytest tests/test_smarttable_checker.py tests/test_generate_folder_paths_iterator.py -q``
+Tox: ``tox -e py312-module -- tests/test_smarttable_checker.py tests/test_generate_folder_paths_iterator.py``
+"""
 
 from pathlib import Path
 import pytest
@@ -7,6 +23,7 @@ from unittest.mock import Mock, patch
 
 from rdetoolkit.impl.input_controller import SmartTableChecker
 from rdetoolkit.exceptions import StructuredError
+from rdetoolkit.workflows import generate_folder_paths_iterator
 
 
 class TestSmartTableChecker:
@@ -346,3 +363,71 @@ class TestSmartTableChecker:
             assert rawfiles[1] == (Path("data/temp/row_0.csv"), Path("file0.txt"))  # idx=1 -> data/divided/0001 (first row)
             assert rawfiles[2] == (Path("data/temp/row_1.csv"), Path("file1.txt"))  # idx=2 -> data/divided/0002 (second row)
             assert smarttable_path == smarttable_file
+
+    @pytest.mark.parametrize(
+        ("save_table_file", "expected_rawfiles", "expected_rowfiles"),
+        [
+            (
+                True,
+                [
+                    ["smarttable_test.xlsx"],
+                    ["fsmarttable_test_0000.csv", "file0.txt"],
+                    ["fsmarttable_test_0001.csv", "file1.txt"],
+                ],
+                [None, "fsmarttable_test_0000.csv", "fsmarttable_test_0001.csv"],
+            ),
+            (
+                False,
+                [
+                    ["fsmarttable_test_0001.csv", "file1.txt"],
+                    ["fsmarttable_test_0000.csv", "file0.txt"],
+                ],
+                ["fsmarttable_test_0001.csv", "fsmarttable_test_0000.csv"],
+            ),
+        ],
+    )
+    def test_parse_to_generate_folder_paths_iterator_keeps_smarttable_order__tc_ep_smarttable_iter_001_002(
+        self,
+        tmp_path,
+        save_table_file,
+        expected_rawfiles,
+        expected_rowfiles,
+    ):
+        """Test SmartTable parse output as generate_folder_paths_iterator input."""
+        # Given: a SmartTable file whose generated row CSVs follow table order.
+        smarttable_file = tmp_path / "smarttable_test.xlsx"
+        smarttable_file.touch()
+        row0 = tmp_path / "fsmarttable_test_0000.csv"
+        row1 = tmp_path / "fsmarttable_test_0001.csv"
+        related0 = tmp_path / "file0.txt"
+        related1 = tmp_path / "file1.txt"
+        invoice_org_json = tmp_path / "invoice_org.json"
+        invoice_schema_json = tmp_path / "invoice.schema.json"
+
+        with patch("rdetoolkit.impl.input_controller.SmartTableFile") as mock_st:
+            mock_instance = Mock()
+            mock_st.return_value = mock_instance
+            mock_instance.generate_row_csvs_with_file_mapping.return_value = [
+                (row0, (related0,)),
+                (row1, (related1,)),
+            ]
+
+            checker = SmartTableChecker(tmp_path / "temp", save_table_file=save_table_file)
+
+            # When: parse output is consumed by the RDE folder path iterator.
+            rawfiles, _ = checker.parse(tmp_path)
+            resources = list(
+                generate_folder_paths_iterator(
+                    rawfiles,
+                    invoice_org_json,
+                    invoice_schema_json,
+                    smarttable_mode=True,
+                ),
+            )
+
+        # Then: raw file ordering and SmartTable rowfile detection preserve registration order.
+        assert [[path.name for path in resource.rawfiles] for resource in resources] == expected_rawfiles
+        assert [
+            resource.smarttable_rowfile.name if resource.smarttable_rowfile is not None else None
+            for resource in resources
+        ] == expected_rowfiles
