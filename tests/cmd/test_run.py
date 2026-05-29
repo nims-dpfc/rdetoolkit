@@ -199,12 +199,13 @@ def test_cli_run_signature_too_few_args__tc_bv_run_001(
     result = runner.invoke(run_cli, [target])
 
     # Then: it rejects the signature below the minimum boundary
-    # Note: typer renders errors via Rich which may insert box-drawing characters
-    # (│, ╭, ╰, etc.) and line-wrap the message.  Strip those characters and
-    # normalise whitespace before asserting the substring.
+    # Note: typer renders errors via Rich which inserts ANSI escape codes and
+    # box-drawing characters (│, ╭, ╰, etc.) and may line-wrap the message.
+    # Strip both before asserting the substring.
     assert isinstance(result.exception, SystemExit)
     assert result.exit_code != 0
-    stripped_output = re.sub(r"[│╭╰╮─╯]", "", result.output)
+    stripped_output = re.sub(r"\x1b\[[0-9;]*[mK]", "", result.output)  # ANSI codes
+    stripped_output = re.sub(r"[│╭╰╮─╯]", "", stripped_output)  # box-drawing chars
     normalised_output = " ".join(stripped_output.split())
     assert "cannot be called with two positional arguments" in normalised_output
 
