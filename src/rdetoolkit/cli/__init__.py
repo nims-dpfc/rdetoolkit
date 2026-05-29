@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import Any, Optional
 
 import typer
-import click
 
 from . import app as app_module
 
@@ -37,11 +36,9 @@ class _LazyModuleProxy:
 
 
 app = app_module.app
-_command = typer.main.get_command(app)
-if not isinstance(_command, click.Group):
-    msg = "Expected a click.Group for the CLI application."
-    raise RuntimeError(msg)
-_command_group = _command
+# typer.main.get_command always returns a click.Group for Typer apps with sub-commands.
+# Cast to Any so that mypy allows .commands attribute access without importing click.
+_command_group: Any = typer.main.get_command(app)
 
 artifact = _command_group.commands["artifact"]
 csv2graph = _command_group.commands["csv2graph"]
