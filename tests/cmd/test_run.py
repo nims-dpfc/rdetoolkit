@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import pytest
 from click.testing import CliRunner
 
@@ -198,9 +199,14 @@ def test_cli_run_signature_too_few_args__tc_bv_run_001(
     result = runner.invoke(run_cli, [target])
 
     # Then: it rejects the signature below the minimum boundary
+    # Note: typer renders errors via Rich which may insert box-drawing characters
+    # (│, ╭, ╰, etc.) and line-wrap the message.  Strip those characters and
+    # normalise whitespace before asserting the substring.
     assert isinstance(result.exception, SystemExit)
     assert result.exit_code != 0
-    assert "cannot be called with two positional arguments" in result.output
+    stripped_output = re.sub(r"[│╭╰╮─╯]", "", result.output)
+    normalised_output = " ".join(stripped_output.split())
+    assert "cannot be called with two positional arguments" in normalised_output
 
 
 def test_cli_run_signature_min_args__tc_bv_run_002(

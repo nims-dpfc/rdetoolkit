@@ -22,6 +22,7 @@ import os
 import platform
 import re
 import shutil
+import tempfile
 from distutils.version import StrictVersion
 from pathlib import Path
 import textwrap
@@ -281,18 +282,23 @@ def test_init_creation():
 def test_init_no_overwrite():
     """initを実行して既存のファイルが上書きされないことをテスト"""
     runner = CliRunner()
+    original_cwd = os.getcwd()
 
-    with runner.isolated_filesystem():
-        runner.invoke(app, ["init"])
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            os.chdir(tmp_dir)
+            runner.invoke(app, ["init"])
 
-        with open(Path("container/main.py"), "a", encoding="utf-8") as f:
-            f.write("# Sample test message")
+            with open(Path("container/main.py"), "a", encoding="utf-8") as f:
+                f.write("# Sample test message")
 
-        runner.invoke(app, ["init"])
+            runner.invoke(app, ["init"])
 
-        with open(Path("container/main.py"), encoding="utf-8") as f:
-            content = f.read()
-            assert "# Sample test message" in content
+            with open(Path("container/main.py"), encoding="utf-8") as f:
+                content = f.read()
+                assert "# Sample test message" in content
+        finally:
+            os.chdir(original_cwd)
 
 
 @pytest.fixture
