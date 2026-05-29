@@ -4,6 +4,7 @@
 
 | Version | Release Date | Key Changes | Details |
 | ------- | ------------ | ----------- | ------- |
+| v1.6.4  | 2026-05-29   | Fix SmartTable data registration order to follow table row order / Remove direct click dependency from CLI | [v1.6.4](#v164-2026-05-29) |
 | v1.6.3  | 2026-04-13   | Fix SmartTable new sample `sampleId` set to None instead of empty string / Support uppercase image extensions in thumbnail copy | [v1.6.3](#v163-2026-04-13) |
 | v1.6.2  | 2026-03-16   | Fix silent inheritance of dummy sampleId when SmartTable specifies `sample/names` / Improve error messages for missing SmartTable file references in zip | [v1.6.2](#v162-2026-03-16) |
 | v1.6.1  | 2026-03-10   | chardet public API migration (Python 3.14 compat) / SmartTable custom field type cast fix | [v1.6.1](#v161-2026-03-10) |
@@ -23,6 +24,54 @@
 | v1.2.0  | 2025-04-14   | MinIO integration / Archive generation / Report tooling | [v1.2.0](#v120-2025-04-14) |
 
 # Release Details
+
+## v1.6.4 (2026-05-29)
+
+!!! info "References"
+    - Key issues: [#479](https://github.com/nims-mdpf/rdetoolkit/issues/479), [#484](https://github.com/nims-mdpf/rdetoolkit/issues/484)
+    - Pull requests: [#485](https://github.com/nims-mdpf/rdetoolkit/pull/485), [#486](https://github.com/nims-mdpf/rdetoolkit/pull/486)
+
+#### Highlights
+- Fixed SmartTable data registration order so that RDE registers tiles in table row order (`data/divided/0001..N` first, `data/` root last)
+- Removed all direct `click` imports from CLI modules and tests, eliminating an implicit dependency that caused `ModuleNotFoundError` in minimal environments
+
+### Bug Fixes
+
+#### SmartTable Data Registration Order Fix (Issue #479)
+
+**Problem**: `SmartTableChecker.parse()` assembled `raw_files` in an incorrect order, causing RDE to register data tiles out of table row sequence.
+
+**Changes**:
+
+- Fixed `raw_files` ordering in `src/rdetoolkit/impl/input_controller.py` to match RDE registration order: `data/divided/0001..N` first, `data/` root (index 0) last
+- `save_table_file=True`: SmartTable file is placed at `data/` root (registered last), row data in `data/divided/0001+` in table order
+- `save_table_file=False` (default): last data row is placed at `data/` root, earlier rows in `data/divided/0001+`, so all rows register in table order
+- Added detailed docstring explaining registration order and index mapping
+
+#### CLI Direct click Dependency Removal (Issue #484)
+
+**Problem**: CLI modules directly imported `click`, creating a hard dependency not declared in `pyproject.toml`. In minimal environments this caused `ModuleNotFoundError: No module named 'click'`. Additionally, internal exception details were inadvertently leaked to users in error output.
+
+**Changes**:
+
+- Removed all `import click` from `src/rdetoolkit/cli/app.py` and `src/rdetoolkit/cli/__init__.py`
+- Replaced `click.ClickException` with `typer.BadParameter` / `typer.Exit(code=1)`
+- Removed `click.Group` isinstance check (replaced with `Any`)
+- Updated tests: replaced `click.Abort` with `typer.Abort`, `click.termui.strip_ansi` with `re.sub`, and `runner.isolated_filesystem()` with `tempfile.TemporaryDirectory()`
+- Fixed CLI run error output to avoid leaking internal exception messages to users
+
+### Testing
+
+- `tests/test_smarttable_checker.py`: Updated all ordering assertions and added new parametrized tests for both `save_table_file` modes and edge cases
+- `tests/cmd/test_run.py`: Removed click dependency; normalised error output assertions with `re.sub`
+- `tests/test_cli.py`: Removed all click imports; use `typer.Abort` and `tempfile.TemporaryDirectory`
+
+### Migration / Compatibility
+
+- No breaking changes. The SmartTable registration order fix restores previously-correct behavior; workflows relying on the incorrect order should be re-verified
+- CLI error messages for internal failures are now sanitized; the full exception detail is no longer shown to end users (it remains in logs)
+
+---
 
 ## v1.6.3 (2026-04-13)
 
