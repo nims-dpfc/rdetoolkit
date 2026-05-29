@@ -254,7 +254,7 @@ def run(target: Annotated[str, typer.Argument(metavar="<module_or_file::attr>")]
         workflow_run = cast(Callable[..., str], cli_module.workflows.run)
         result = workflow_run(custom_dataset_function=func)
     except Exception as exc:
-        typer.echo(f"Error: {exc}", err=True)
+        typer.echo("An error occurred while running the workflow.", err=True)
         raise typer.Exit(code=1) from exc
     if result is not None:
         typer.echo(result)
