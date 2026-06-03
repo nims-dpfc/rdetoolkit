@@ -391,6 +391,9 @@ class SmartTableChecker(IInputFileChecker):
 
     This class handles SmartTable files (Excel/CSV/TSV) and optionally zip files,
     processing them for metadata extraction and invoice generation.
+    The returned ``raw_files`` order is tied to RDE registration order:
+    index 0 maps to ``data/`` and is registered last, while index 1..N map to
+    ``data/divided/0001``.. and are registered first in ascending index order.
 
     Attributes:
         out_dir_temp (Path): Temporary directory for the unpacked content.
@@ -460,15 +463,25 @@ class SmartTableChecker(IInputFileChecker):
         )
 
         # Convert to RawFiles format: each mapping becomes a tuple
+        # (data rows preserve table order: row1, row2, ..., rowN)
+        data_rows: list[tuple[Path, ...]] = [
+            (csv_path,) + related_files for csv_path, related_files in csv_file_mappings
+        ]
+
+        # The RDE system registers data/divided/0001..N first and data/ root (idx=0) LAST.
+        # raw_files index mapping: idx=0 -> data/ root, idx>=1 -> data/divided/000{idx}.
         raw_files: list[tuple[Path, ...]] = []
-
-        # First entry: SmartTable file only (if save_table_file is True)
         if self.save_table_file:
+            # SmartTable file occupies data/ root (registers last);
+            # data rows fill divided/0001+ so registration order stays row1..rowN.
             raw_files.append((smarttable_file,))
-
-        # Subsequent entries: Each CSV file with its related files
-        for csv_path, related_files in csv_file_mappings:
-            raw_files.append((csv_path,) + related_files)
+            raw_files.extend(data_rows)
+        elif data_rows:
+            # No SmartTable file, but data/ root must always be registered (and registers
+            # last). Place the LAST data row at idx=0 so the registration order stays
+            # row1..rowN, with earlier rows filling divided/0001+.
+            raw_files.append(data_rows[-1])
+            raw_files.extend(data_rows[:-1])
 
         return raw_files, smarttable_file
 
