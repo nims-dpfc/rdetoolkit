@@ -4,7 +4,7 @@
 
 | Version | Release Date | Key Changes | Details |
 | ------- | ------------ | ----------- | ------- |
-| v1.6.4  | 2026-05-29   | Fix SmartTable data registration order to follow table row order / Remove direct click dependency from CLI | [v1.6.4](#v164-2026-05-29) |
+| v1.6.4  | 2026-06-03   | Fix SmartTable data registration order to follow table row order / Remove direct click dependency from CLI | [v1.6.4](#v164-2026-06-03) |
 | v1.6.3  | 2026-04-13   | Fix SmartTable new sample `sampleId` set to None instead of empty string / Support uppercase image extensions in thumbnail copy | [v1.6.3](#v163-2026-04-13) |
 | v1.6.2  | 2026-03-16   | Fix silent inheritance of dummy sampleId when SmartTable specifies `sample/names` / Improve error messages for missing SmartTable file references in zip | [v1.6.2](#v162-2026-03-16) |
 | v1.6.1  | 2026-03-10   | chardet public API migration (Python 3.14 compat) / SmartTable custom field type cast fix | [v1.6.1](#v161-2026-03-10) |
@@ -25,7 +25,7 @@
 
 # Release Details
 
-## v1.6.4 (2026-05-29)
+## v1.6.4 (2026-06-03)
 
 !!! info "References"
     - Key issues: [#479](https://github.com/nims-mdpf/rdetoolkit/issues/479), [#484](https://github.com/nims-mdpf/rdetoolkit/issues/484)
