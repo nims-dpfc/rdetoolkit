@@ -3453,7 +3453,10 @@ enhanced type safety. Migration path: RawFiles -&gt; list[FileGroup] in future v
               Bases: <code><span title="rdetoolkit.interfaces.filechecker.IInputFileChecker">IInputFileChecker</span></code></p>
 <p>A checker class to determine and parse the SmartTable invoice mode.</p>
 <p>This class handles SmartTable files (Excel/CSV/TSV) and optionally zip files,
-processing them for metadata extraction and invoice generation.</p>
+processing them for metadata extraction and invoice generation.
+The returned <code>raw_files</code> order is tied to RDE registration order:
+index 0 maps to <code>data/</code> and is registered last, while index 1..N map to
+<code>data/divided/0001</code>.. and are registered first in ascending index order.</p>
 <p><span class="doc-section-title">属性：</span></p>
 <table>
 <thead>
