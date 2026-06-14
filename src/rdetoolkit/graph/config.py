@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any
+from collections.abc import MutableMapping, Sequence
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 
@@ -413,8 +413,7 @@ def apply_matplotlib_config(
 
     """
     params = DEFAULT_PLOT_PARAMS if matplotlib_params is None else matplotlib_params
-    for key, value in params.items():
-        plt.rcParams[key] = value
+    cast(MutableMapping[str, Any], plt.rcParams).update(params)
 
 
 def determine_titles(
