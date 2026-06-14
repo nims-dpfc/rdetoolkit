@@ -413,8 +413,7 @@ def apply_matplotlib_config(
 
     """
     params = DEFAULT_PLOT_PARAMS if matplotlib_params is None else matplotlib_params
-    for key, value in params.items():
-        plt.rcParams[key] = value
+    plt.rcParams.update(params)
 
 
 def determine_titles(
