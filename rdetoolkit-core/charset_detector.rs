@@ -1,4 +1,4 @@
-use chardetng::EncodingDetector;
+use chardetng::{EncodingDetector, Iso2022JpDetection, Utf8Detection};
 use pyo3::exceptions::{PyIOError, PyUnicodeDecodeError, PyValueError};
 use pyo3::prelude::*;
 use std::fs::File;
@@ -10,9 +10,9 @@ pub fn read_file_with_encoding(file_path: &str) -> PyResult<String> {
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes)?;
 
-    let mut detector = EncodingDetector::new();
+    let mut detector = EncodingDetector::new(Iso2022JpDetection::Allow);
     detector.feed(&bytes, true);
-    let encoding = detector.guess(None, true);
+    let encoding = detector.guess(None, Utf8Detection::Allow);
     let (content, _, _) = encoding.decode(&bytes);
 
     Ok(content.into_owned())
@@ -35,9 +35,9 @@ pub fn detect_encoding(path: &str) -> PyResult<String> {
         ));
     }
 
-    let mut detector = EncodingDetector::new();
+    let mut detector = EncodingDetector::new(Iso2022JpDetection::Allow);
     detector.feed(&bytes, true);
-    let encoding = detector.guess(None, true);
+    let encoding = detector.guess(None, Utf8Detection::Allow);
 
     let encoding_name = encoding.name();
     if encoding_name.is_empty() {
