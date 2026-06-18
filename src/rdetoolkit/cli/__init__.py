@@ -2,13 +2,17 @@
 from __future__ import annotations
 
 import importlib
+from collections.abc import Mapping
 from types import ModuleType
-from typing import Any, Optional
+from typing import Any, Optional, Protocol, cast
 
 import typer
-import click
 
 from . import app as app_module
+
+
+class _CommandGroup(Protocol):
+    commands: Mapping[str, Any]
 
 
 class _LazyModuleProxy:
@@ -37,11 +41,10 @@ class _LazyModuleProxy:
 
 
 app = app_module.app
-_command = typer.main.get_command(app)
-if not isinstance(_command, click.Group):
-    msg = "Expected a click.Group for the CLI application."
+_command_group = cast(_CommandGroup, typer.main.get_command(app))
+if not isinstance(getattr(_command_group, "commands", None), Mapping):
+    msg = "Expected a command group for the CLI application."
     raise RuntimeError(msg)
-_command_group = _command
 
 artifact = _command_group.commands["artifact"]
 csv2graph = _command_group.commands["csv2graph"]

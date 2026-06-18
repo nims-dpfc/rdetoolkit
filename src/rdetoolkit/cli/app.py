@@ -11,7 +11,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
-from typing import Annotated, cast
+from typing import Annotated, NoReturn, cast
 
 import click
 import typer
@@ -148,6 +148,11 @@ def _load_target_function(target: str) -> Callable[..., object]:
     return _validate_target_function(func)
 
 
+def _abort_with_click_error(exc: click.ClickException) -> NoReturn:
+    typer.echo(f"Error: {exc.message}", err=True)
+    raise typer.Exit(code=exc.exit_code) from exc
+
+
 @app.command()
 def init(
     template: Annotated[
@@ -248,14 +253,16 @@ def version() -> None:
 @app.command()
 def run(target: Annotated[str, typer.Argument(metavar="<module_or_file::attr>")]) -> None:
     """Run rdetoolkit workflows with a user-defined dataset function."""
-    func = _load_target_function(target)
-    from rdetoolkit import cli as cli_module
-
     try:
-        workflow_run = cast(Callable[..., str], cli_module.workflows.run)
+        func = _load_target_function(target)
+        from rdetoolkit import workflows as workflows_module
+
+        workflow_run = cast(Callable[..., str], workflows_module.run)
         result = workflow_run(custom_dataset_function=func)
+    except click.ClickException as exc:
+        _abort_with_click_error(exc)
     except Exception as exc:
-        raise click.ClickException(str(exc)) from exc
+        _abort_with_click_error(click.ClickException(str(exc)))
     if result is not None:
         typer.echo(result)
 
