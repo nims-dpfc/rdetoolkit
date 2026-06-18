@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.4] - 2026-06-03
+
+### Fixed
+
+#### SmartTable Data Registration Order Fix (#479)
+
+Fixed a bug where `SmartTableChecker.parse()` assembled `raw_files` in the wrong order, causing RDE to register data tiles out of sequence. The correct registration order is `data/divided/0001..N` first, followed by `data/` root (index 0) last. The fix differentiates between `save_table_file=True` (SmartTable file at `data/` root, row data in `data/divided/0001+`) and `save_table_file=False` (last data row at `data/` root, earlier rows in `data/divided/0001+`) to ensure rows always register in table order.
+
+#### CLI Direct click Dependency Removal (#484)
+
+Removed all direct `import click` usages from CLI modules (`cli/app.py`, `cli/__init__.py`) and tests. Replaced `click.ClickException` with `typer.BadParameter` / `typer.Exit`, updated tests to use `typer.Abort`, `re.sub` for ANSI stripping, and `tempfile.TemporaryDirectory` instead of `runner.isolated_filesystem()`. Also fixed CLI run error output to avoid leaking internal exception details to users.
+
 ## [1.6.3] - 2026-04-13
 
 ### Fixed

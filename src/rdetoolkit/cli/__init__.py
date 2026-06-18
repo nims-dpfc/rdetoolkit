@@ -2,17 +2,12 @@
 from __future__ import annotations
 
 import importlib
-from collections.abc import Mapping
 from types import ModuleType
-from typing import Any, Optional, Protocol, cast
+from typing import Any, Optional
 
 import typer
 
 from . import app as app_module
-
-
-class _CommandGroup(Protocol):
-    commands: Mapping[str, Any]
 
 
 class _LazyModuleProxy:
@@ -41,10 +36,9 @@ class _LazyModuleProxy:
 
 
 app = app_module.app
-_command_group = cast(_CommandGroup, typer.main.get_command(app))
-if not isinstance(getattr(_command_group, "commands", None), Mapping):
-    msg = "Expected a command group for the CLI application."
-    raise RuntimeError(msg)
+# typer.main.get_command always returns a click.Group for Typer apps with sub-commands.
+# Cast to Any so that mypy allows .commands attribute access without importing click.
+_command_group: Any = typer.main.get_command(app)
 
 artifact = _command_group.commands["artifact"]
 csv2graph = _command_group.commands["csv2graph"]

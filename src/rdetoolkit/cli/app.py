@@ -11,9 +11,8 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
-from typing import Annotated, NoReturn, cast
+from typing import Annotated, cast
 
-import click
 import typer
 
 app = typer.Typer(
@@ -69,11 +68,11 @@ def _parse_run_target(target: str) -> tuple[str, str]:
     expected_parts = 2
     if "::" not in target:
         emsg = "TARGET must be 'module_or_file::attr' (e.g., process::main)."
-        raise click.ClickException(emsg)
+        raise typer.BadParameter(emsg)
     parts = target.split("::")
     if len(parts) != expected_parts or not parts[0] or not parts[1]:
         emsg = "TARGET must be 'module_or_file::attr' (e.g., process::main)."
-        raise click.ClickException(emsg)
+        raise typer.BadParameter(emsg)
     return parts[0], parts[1]
 
 
@@ -90,14 +89,14 @@ def _looks_like_file(value: str) -> bool:
 def _load_module_from_file(path: Path) -> ModuleType:
     if not path.exists() or not path.is_file():
         emsg = f"File not found: {path}"
-        raise click.ClickException(emsg)
+        raise typer.BadParameter(emsg)
     resolved_path = path.expanduser().resolve()
     module_hash = hashlib.sha256(str(resolved_path).encode()).hexdigest()
     module_name = f"_rdetoolkit_run_{path.stem}_{module_hash}"
     spec = importlib.util.spec_from_file_location(module_name, resolved_path)
     if spec is None or spec.loader is None:
         emsg = f"Unable to load module from file: {path}"
-        raise click.ClickException(emsg)
+        raise typer.BadParameter(emsg)
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
@@ -112,7 +111,7 @@ def _load_target_module(module_or_file: str) -> ModuleType:
         return importlib.import_module(module_or_file)
     except Exception as exc:
         emsg = f"Failed to import module: {module_or_file}"
-        raise click.ClickException(emsg) from exc
+        raise typer.BadParameter(emsg) from exc
 
 
 def _resolve_target_attr(module: ModuleType, attr: str) -> object:
@@ -120,7 +119,7 @@ def _resolve_target_attr(module: ModuleType, attr: str) -> object:
     for part in attr.split("."):
         if not hasattr(target, part):
             emsg = f"Attribute not found: {attr}"
-            raise click.ClickException(emsg)
+            raise typer.BadParameter(emsg)
         target = getattr(target, part)
     return target
 
@@ -128,16 +127,16 @@ def _resolve_target_attr(module: ModuleType, attr: str) -> object:
 def _validate_target_function(func: object) -> Callable[..., object]:
     if inspect.isclass(func):
         emsg = "Classes are not allowed. Please specify a function."
-        raise click.ClickException(emsg)
+        raise typer.BadParameter(emsg)
     if not inspect.isfunction(func):
         emsg = "Only functions are allowed. Please specify a function."
-        raise click.ClickException(emsg)
+        raise typer.BadParameter(emsg)
     signature = inspect.signature(func)
     try:
         signature.bind(1, 2)
     except (TypeError, ValueError) as exc:
         emsg = "Target function cannot be called with two positional arguments."
-        raise click.ClickException(emsg) from exc
+        raise typer.BadParameter(emsg) from exc
     return cast(Callable[..., object], func)
 
 
@@ -146,11 +145,6 @@ def _load_target_function(target: str) -> Callable[..., object]:
     module = _load_target_module(module_or_file)
     func = _resolve_target_attr(module, attr)
     return _validate_target_function(func)
-
-
-def _abort_with_click_error(exc: click.ClickException) -> NoReturn:
-    typer.echo(f"Error: {exc.message}", err=True)
-    raise typer.Exit(code=exc.exit_code) from exc
 
 
 @app.command()
@@ -253,16 +247,15 @@ def version() -> None:
 @app.command()
 def run(target: Annotated[str, typer.Argument(metavar="<module_or_file::attr>")]) -> None:
     """Run rdetoolkit workflows with a user-defined dataset function."""
-    try:
-        func = _load_target_function(target)
-        from rdetoolkit import workflows as workflows_module
+    func = _load_target_function(target)
+    from rdetoolkit import cli as cli_module
 
-        workflow_run = cast(Callable[..., str], workflows_module.run)
+    try:
+        workflow_run = cast(Callable[..., str], cli_module.workflows.run)
         result = workflow_run(custom_dataset_function=func)
-    except click.ClickException as exc:
-        _abort_with_click_error(exc)
     except Exception as exc:
-        _abort_with_click_error(click.ClickException(str(exc)))
+        typer.echo("An error occurred while running the workflow.", err=True)
+        raise typer.Exit(code=1) from exc
     if result is not None:
         typer.echo(result)
 

@@ -4,6 +4,7 @@
 
 | バージョン | リリース日 | 主な変更点 | 詳細セクション |
 | ---------- | ---------- | ---------- | -------------- |
+| v1.6.4     | 2026-06-03 | SmartTableデータ登録順序をテーブル行順に修正 / CLIからclick直接依存を除去 | [v1.6.4](#v164-2026-06-03) |
 | v1.6.3     | 2026-04-13 | SmartTable新規試料登録時の`sampleId`を空文字ではなく`None`に修正 / サムネイルコピーで大文字画像拡張子をサポート | [v1.6.3](#v163-2026-04-13) |
 | v1.6.2     | 2026-03-16 | SmartTableで`sample/names`指定時にダミー試料の`sampleId`が黙って継承される問題を修正 / SmartTableのファイル参照がzip内に存在しない場合のエラーメッセージ改善 | [v1.6.2](#v162-2026-03-16) |
 | v1.6.1     | 2026-03-10 | chardet公開API移行（Python 3.14互換） / SmartTableカスタムフィールドの型キャスト修正 | [v1.6.1](#v161-2026-03-10) |
@@ -23,6 +24,54 @@
 | v1.2.0     | 2025-04-14 | MinIO対応 / アーカイブ生成 / レポート生成 | [v1.2.0](#v120-2025-04-14) |
 
 # リリース詳細
+
+## v1.6.4 (2026-06-03)
+
+!!! info "参照"
+    - 主な課題: [#479](https://github.com/nims-mdpf/rdetoolkit/issues/479), [#484](https://github.com/nims-mdpf/rdetoolkit/issues/484)
+    - プルリクエスト: [#485](https://github.com/nims-mdpf/rdetoolkit/pull/485), [#486](https://github.com/nims-mdpf/rdetoolkit/pull/486)
+
+#### ハイライト
+- SmartTableのデータ登録順序を修正し、RDEがテーブル行順にタイルを登録するよう修正（`data/divided/0001..N`を先に、`data/`ルートを最後に登録）
+- CLIモジュールおよびテストから`click`の直接importをすべて除去し、最小限の環境で発生していた`ModuleNotFoundError`を解消
+
+### バグ修正
+
+#### SmartTableデータ登録順序の修正 (Issue #479)
+
+**問題**: `SmartTableChecker.parse()`が`raw_files`を誤った順序で組み立てていたため、RDEがデータタイルをテーブル行順以外の順序で登録していました。
+
+**修正内容**:
+
+- `src/rdetoolkit/impl/input_controller.py`の`raw_files`順序をRDE登録順序（`data/divided/0001..N`を先に、`data/`ルート（index 0）を最後）に修正
+- `save_table_file=True`時: SmartTableファイルを`data/`ルートに配置（最後に登録）、行データを`data/divided/0001+`にテーブル行順で配置
+- `save_table_file=False`時（デフォルト）: 最終行データを`data/`ルートに配置し、それ以前の行を`data/divided/0001+`に配置することで、すべての行がテーブル行順に登録される
+- 登録順序とインデックスマッピングを説明する詳細なdocstringを追加
+
+#### CLIのclick直接依存除去 (Issue #484)
+
+**問題**: CLIモジュールが`click`を直接importしており、`pyproject.toml`に未宣言の暗黙的な依存が存在していました。最小限の環境では`ModuleNotFoundError: No module named 'click'`が発生していました。また、CLIのエラー出力に内部例外の詳細が露出していました。
+
+**修正内容**:
+
+- `src/rdetoolkit/cli/app.py`および`src/rdetoolkit/cli/__init__.py`から`import click`をすべて除去
+- `click.ClickException`を`typer.BadParameter` / `typer.Exit(code=1)`に置き換え
+- `click.Group`のisinstance検査を`Any`による型チェックに変更
+- テストの更新: `click.Abort`→`typer.Abort`、`click.termui.strip_ansi`→`re.sub`、`runner.isolated_filesystem()`→`tempfile.TemporaryDirectory()`
+- CLIのrunコマンドエラー出力を修正し、内部例外の詳細をユーザーに露出しないよう改善
+
+### テスト
+
+- `tests/test_smarttable_checker.py`: 全順序アサーションを更新し、両`save_table_file`モードとエッジケースのパラメータ化テストを追加
+- `tests/cmd/test_run.py`: click依存を除去し、`re.sub`でエラー出力アサーションを正規化
+- `tests/test_cli.py`: clickのimportをすべて除去し、`typer.Abort`と`tempfile.TemporaryDirectory`を使用
+
+### 移行 / 互換性
+
+- 破壊的変更はありません。SmartTable登録順序の修正は以前の正しい動作を復元するものです。誤った順序に依存していたワークフローは動作確認を推奨します
+- CLI内部エラーメッセージがサニタイズされ、例外の詳細はエンドユーザーに表示されなくなりました（ログには引き続き記録されます）
+
+---
 
 ## v1.6.3 (2026-04-13)
 
