@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -275,8 +275,19 @@ class MatplotlibRenderer:
         labels: list[str],
         config: PlotConfig,
     ) -> None:
-        legend_obj = None
+        filtered_handles, filtered_labels = self._filter_legend_entries(handles, labels)
 
+        legend_obj = self._render_legend(ax, filtered_handles, filtered_labels, config)
+
+        if config.legend.info:
+            self._add_legend_info(ax, legend_obj, config.legend.info)
+
+    def _filter_legend_entries(
+        self,
+        handles: list[Any],
+        labels: list[str],
+    ) -> tuple[list[Any], list[str]]:
+        """De-duplicate legend entries and drop empty/hidden labels."""
         filtered_handles: list[Any] = []
         filtered_labels: list[str] = []
         seen_labels: set[str] = set()
@@ -290,28 +301,86 @@ class MatplotlibRenderer:
             filtered_handles.append(handle)
             filtered_labels.append(label)
 
-        should_render = False
-        if filtered_labels:
-            show_threshold = len(filtered_labels) > 1
-            if config.legend.loc is not None:
-                show_threshold = True
+        return filtered_handles, filtered_labels
 
-            max_items = config.legend.max_items
-            within_limit = (
-                max_items is None
-                or len(filtered_labels) <= max_items
-            )
+    def _render_legend(
+        self,
+        ax: Any,
+        filtered_handles: list[Any],
+        filtered_labels: list[str],
+        config: PlotConfig,
+    ) -> Any:
+        """Render the legend according to config.legend.policy and return the Legend object."""
+        if config.legend.policy == "legacy":
+            return self._render_legend_legacy(ax, filtered_handles, filtered_labels, config)
 
-            should_render = show_threshold and within_limit
+        resolved_policy = _resolve_legend_policy(
+            config.legend.policy,
+            len(filtered_labels),
+            config.legend.outside_threshold,
+            config.legend.max_items,
+        )
 
-        if should_render:
+        if resolved_policy == "hide" or not filtered_labels:
+            return None
+
+        max_items = config.legend.max_items
+        if max_items is not None and len(filtered_labels) > max_items:
+            return None
+
+        if resolved_policy == "inside":
             legend_kwargs: dict[str, Any] = {}
             if config.legend.loc is not None:
                 legend_kwargs["loc"] = config.legend.loc
-            legend_obj = ax.legend(filtered_handles, filtered_labels, **legend_kwargs)
+            return ax.legend(filtered_handles, filtered_labels, **legend_kwargs)
 
-        if config.legend.info:
-            self._add_legend_info(ax, legend_obj, config.legend.info)
+        if resolved_policy == "outside_right":
+            legend_obj = ax.legend(
+                filtered_handles,
+                filtered_labels,
+                loc="center left",
+                bbox_to_anchor=(1.02, 0.5),
+                borderaxespad=0.0,
+            )
+            ax.figure.subplots_adjust(right=0.75)
+            return legend_obj
+
+        # resolved_policy == "outside_bottom"
+        legend_obj = ax.legend(
+            filtered_handles,
+            filtered_labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.12),
+            ncol=config.legend.ncol or 3,
+        )
+        ax.figure.subplots_adjust(bottom=0.25)
+        return legend_obj
+
+    def _render_legend_legacy(
+        self,
+        ax: Any,
+        filtered_handles: list[Any],
+        filtered_labels: list[str],
+        config: PlotConfig,
+    ) -> Any:
+        """Preserve the pre-#497 legend behavior driven by loc/max_items only."""
+        if not filtered_labels:
+            return None
+
+        show_threshold = len(filtered_labels) > 1
+        if config.legend.loc is not None:
+            show_threshold = True
+
+        max_items = config.legend.max_items
+        within_limit = max_items is None or len(filtered_labels) <= max_items
+
+        if not (show_threshold and within_limit):
+            return None
+
+        legend_kwargs: dict[str, Any] = {}
+        if config.legend.loc is not None:
+            legend_kwargs["loc"] = config.legend.loc
+        return ax.legend(filtered_handles, filtered_labels, **legend_kwargs)
 
     def _add_legend_info(
         self,
@@ -629,3 +698,63 @@ def _resolve_column_indices(
         resolved.append(None)
 
     return resolved
+
+
+ResolvedLegendPolicy = Literal["legacy", "inside", "outside_right", "outside_bottom", "hide"]
+
+
+def _resolve_legend_policy(
+    policy: Literal[
+        "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
+    ],
+    filtered_label_count: int,
+    outside_threshold: int,
+    max_items: int | None,
+) -> ResolvedLegendPolicy:
+    """Resolve a legend policy into a concrete, non-"auto" placement.
+
+    Args:
+        policy: Requested legend policy. Values other than "auto" are
+            returned unchanged (pass-through), including "legacy".
+        filtered_label_count: Number of de-duplicated, visible legend
+            labels that would be rendered.
+        outside_threshold: Item-count threshold above which "auto"
+            switches to "outside_right" placement.
+        max_items: Maximum number of legend items to display. When the
+            item count exceeds this value, "auto" resolves to "hide".
+            None means no upper bound.
+
+    Returns:
+        A concrete policy: "legacy", "inside", "outside_right",
+        "outside_bottom", or "hide". Never returns "auto".
+
+    Note:
+        Precedence for "auto" resolution (checked in order):
+        1. filtered_label_count == 0 -> "hide"
+        2. max_items is not None and filtered_label_count > max_items -> "hide"
+        3. filtered_label_count > outside_threshold -> "outside_right"
+        4. otherwise -> "inside"
+
+        Per the feature design, "auto" never resolves to "outside_bottom";
+        that placement is only reachable via explicit request.
+
+    Example:
+        >>> _resolve_legend_policy("auto", 3, outside_threshold=8, max_items=20)
+        'inside'
+        >>> _resolve_legend_policy("auto", 12, outside_threshold=8, max_items=20)
+        'outside_right'
+        >>> _resolve_legend_policy("auto", 25, outside_threshold=8, max_items=20)
+        'hide'
+        >>> _resolve_legend_policy("outside_bottom", 3, outside_threshold=8, max_items=20)
+        'outside_bottom'
+    """
+    if policy != "auto":
+        return policy
+
+    if filtered_label_count == 0:
+        return "hide"
+    if max_items is not None and filtered_label_count > max_items:
+        return "hide"
+    if filtered_label_count > outside_threshold:
+        return "outside_right"
+    return "inside"
