@@ -59,11 +59,30 @@ class LegendConfig:
         max_items: Maximum number of legend items to display
         info: Legend information text (optional)
         loc: Legend location (auto-placement if None)
+        policy: Legend placement policy. "legacy" preserves the existing
+            behavior driven by `loc` and `max_items`. "auto" chooses
+            placement automatically based on the number of legend items.
+            "inside"/"outside_right"/"outside_bottom" force a specific
+            placement. "hide" suppresses the legend entirely.
+        outside_threshold: Number of legend items above which "auto"
+            switches from inside placement to outside-right placement.
+        ncol: Number of legend columns used for "outside_bottom" placement
+            (defaults to 3 when None).
     """
 
     max_items: int | None = 20
     info: str | None = None
     loc: str | int | None = None
+    policy: Literal[
+        "legacy",
+        "auto",
+        "inside",
+        "outside_right",
+        "outside_bottom",
+        "hide",
+    ] = "legacy"
+    outside_threshold: int = 8
+    ncol: int | None = None
 
 
 @dataclass
