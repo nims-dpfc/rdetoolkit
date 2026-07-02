@@ -155,6 +155,11 @@ def _build_plot_config(
     legend_info: str | None,
     legend_loc: str | int | None,
     max_legend_items: int | None,
+    legend_policy: Literal[
+        "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
+    ],
+    legend_outside_threshold: int,
+    legend_ncol: int | None,
     formats: list[str],
     no_individual: bool,
     return_fig: bool,
@@ -194,6 +199,9 @@ def _build_plot_config(
             info=legend_info,
             loc=legend_loc,
             max_items=max_legend_items,
+            policy=legend_policy,
+            outside_threshold=legend_outside_threshold,
+            ncol=legend_ncol,
         ),
     )
     builder.set_output(
@@ -277,6 +285,11 @@ def csv2graph(
     invert_y: bool = False,
     no_individual: bool | None = None,
     max_legend_items: int | None = None,
+    legend_policy: Literal[
+        "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
+    ] = "legacy",
+    legend_outside_threshold: int = 8,
+    legend_ncol: int | None = None,
 ) -> None:
     """Generate graph from CSV file.
 
@@ -308,6 +321,14 @@ def csv2graph(
         invert_y: Invert y-axis
         no_individual: Skip individual plots; None enables auto-detection (overlay)
         max_legend_items: Maximum legend items to display
+        legend_policy: Legend placement policy. "legacy" (default) preserves
+            existing behavior. "auto" chooses placement based on item count.
+            "inside"/"outside_right"/"outside_bottom" force a placement.
+            "hide" suppresses the legend.
+        legend_outside_threshold: Item-count threshold used by "auto" to
+            switch from inside to outside-right placement (default: 8).
+        legend_ncol: Number of legend columns for "outside_bottom"
+            placement (defaults to 3 when None).
 
     Example:
         >>> csv2graph(
@@ -357,6 +378,9 @@ def csv2graph(
         invert_y=invert_y,
         no_individual=no_individual,
         max_legend_items=max_legend_items,
+        legend_policy=legend_policy,
+        legend_outside_threshold=legend_outside_threshold,
+        legend_ncol=legend_ncol,
         return_fig=False,
     )
 
@@ -388,6 +412,11 @@ def plot_from_dataframe(
     invert_y: bool = False,
     no_individual: bool | None = None,
     max_legend_items: int | None = None,
+    legend_policy: Literal[
+        "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
+    ] = "legacy",
+    legend_outside_threshold: int = 8,
+    legend_ncol: int | None = None,
     return_fig: bool = False,
 ) -> list[Any] | None:
     """Generate graph from pandas DataFrame.
@@ -423,6 +452,14 @@ def plot_from_dataframe(
         invert_y: Invert y-axis
         no_individual: Skip individual plots; None enables auto-detection (overlay)
         max_legend_items: Maximum legend items to display
+        legend_policy: Legend placement policy. "legacy" (default) preserves
+            existing behavior. "auto" chooses placement based on item count.
+            "inside"/"outside_right"/"outside_bottom" force a placement.
+            "hide" suppresses the legend.
+        legend_outside_threshold: Item-count threshold used by "auto" to
+            switch from inside to outside-right placement (default: 8).
+        legend_ncol: Number of legend columns for "outside_bottom"
+            placement (defaults to 3 when None).
         return_fig: Return figure objects instead of saving
 
     Returns:
@@ -491,6 +528,9 @@ def plot_from_dataframe(
         legend_info=legend_info,
         legend_loc=legend_loc,
         max_legend_items=max_legend_items,
+        legend_policy=legend_policy,
+        legend_outside_threshold=legend_outside_threshold,
+        legend_ncol=legend_ncol,
         formats=formats,
         no_individual=resolved_no_individual,
         return_fig=return_fig,
