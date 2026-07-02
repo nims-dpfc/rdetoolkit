@@ -51,6 +51,7 @@ Both the Matplotlib and Plotly renderers honour these settings. In Matplotlib, t
 - Axis labels inherit from parsed headers (`parse_header`) and are humanised when headers use snake_case or include units; override with `x_label` / `y_label`.
 - `logx`, `logy`, `invert_x`, `invert_y`, `xlim`, `ylim`, and `grid` map directly onto Matplotlib axis configuration. Limits are applied only when both bounds are provided.
 - Legends honour `legend_loc` and `max_legend_items`. When the visible series count exceeds `max_legend_items`, the legend is suppressed to keep plots readable.
+- `legend_policy` controls where the legend is placed: `"legacy"` (default) preserves the behavior above; `"auto"` picks placement based on item count and `legend_outside_threshold`; `"inside"`, `"outside_right"`, and `"outside_bottom"` force a specific placement; `"hide"` suppresses the legend entirely. Use `legend_ncol` to control the number of columns for `"outside_bottom"`.
 - Provide `legend_info` with newline placeholders (`\n`) to render supplemental text near the legend (Matplotlib) or as a Plotly annotation.
 - `title` sets the overlay title; individual plots append ` - {series}`. If omitted in `csv2graph()`, the CSV stem becomes the title. `plot_from_dataframe()` also accepts `name` to override the base filename independently of the display title.
 

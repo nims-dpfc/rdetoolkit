@@ -246,6 +246,46 @@ csv2graph(
 
 When the number of legend items exceeds `max_legend_items`, the legend is automatically hidden.
 
+#### Legend Placement Policy
+
+When overlaying many series, the legend can overlap the plot area. Use
+`legend_policy` to control where the legend is placed:
+
+| policy           | Behavior                                                                |
+| ---------------- | ------------------------------------------------------------------------ |
+| `legacy` (default) | Preserve the existing behavior driven by `legend_loc` and `max_legend_items` |
+| `auto`           | Automatically choose placement based on the number of legend items       |
+| `inside`         | Show the legend inside the plot area, using `legend_loc`                 |
+| `outside_right`  | Place the legend outside the plot area, on the right                     |
+| `outside_bottom` | Place the legend outside the plot area, below the graph                  |
+| `hide`           | Do not show the legend                                                   |
+
+```python
+# Automatically move the legend outside the plot when there are many series
+csv2graph(
+    "data.csv",
+    legend_policy="auto",
+    legend_outside_threshold=8,  # switch to outside placement above 8 items
+    max_legend_items=30,
+)
+
+# Force the legend outside the plot, on the right
+csv2graph(
+    "data.csv",
+    legend_policy="outside_right",
+)
+
+# Force the legend below the graph, arranged in 3 columns
+csv2graph(
+    "data.csv",
+    legend_policy="outside_bottom",
+    legend_ncol=3,
+)
+```
+
+`legend_policy` defaults to `"legacy"`, so existing code is unaffected unless
+this option is set explicitly.
+
 ## Python Examples
 
 ### Basic CSV Conversion
@@ -519,6 +559,19 @@ python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
     --output_dir plots \
     --max_legend_items 10 \
     --legend_loc "upper right"
+
+# Automatically place the legend outside the plot when there are many series
+python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
+    --output_dir plots \
+    --legend-policy auto \
+    --legend-outside-threshold 8 \
+    --max-legend-items 30
+
+# Force the legend below the graph in 3 columns
+python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
+    --output_dir plots \
+    --legend-policy outside_bottom \
+    --legend-ncol 3
 
 # Skip individual plots
 python -m rdetoolkit.graph.api.csv2graph data.csv \

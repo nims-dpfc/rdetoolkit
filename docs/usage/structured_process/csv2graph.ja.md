@@ -246,6 +246,45 @@ csv2graph(
 
 凡例項目数が`max_legend_items`を超えると、凡例は自動的に非表示になります。
 
+#### 凡例配置ポリシー
+
+複数系列をオーバーレイ表示すると、凡例がプロット領域と重なることがあります。
+`legend_policy` で凡例の配置を制御できます。
+
+| policy           | 動作                                                                     |
+| ---------------- | ------------------------------------------------------------------------ |
+| `legacy`（デフォルト） | `legend_loc` と `max_legend_items` による既存動作を維持する              |
+| `auto`           | 凡例項目数に応じて配置を自動的に選択する                                   |
+| `inside`         | `legend_loc` を用いてプロット領域内に表示する                              |
+| `outside_right`  | プロット領域の外側・右側に配置する                                        |
+| `outside_bottom` | プロット領域の外側・下側に配置する                                        |
+| `hide`           | 凡例を表示しない                                                          |
+
+```python
+# 系列数が多い場合に凡例を自動でプロット外へ配置
+csv2graph(
+    "data.csv",
+    legend_policy="auto",
+    legend_outside_threshold=8,  # 8項目を超えると外側配置に切り替え
+    max_legend_items=30,
+)
+
+# 凡例を強制的にプロット右外側に配置
+csv2graph(
+    "data.csv",
+    legend_policy="outside_right",
+)
+
+# 凡例を強制的にグラフ下側に3列で配置
+csv2graph(
+    "data.csv",
+    legend_policy="outside_bottom",
+    legend_ncol=3,
+)
+```
+
+`legend_policy` のデフォルトは `"legacy"` のため、明示的に指定しない限り既存コードの動作に影響はない。
+
 ## Python実行例
 
 ### 基本的なCSV変換
@@ -519,6 +558,19 @@ python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
     --output_dir plots \
     --max_legend_items 10 \
     --legend_loc "upper right"
+
+# 系列数が多い場合に凡例を自動でプロット外へ配置
+python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
+    --output_dir plots \
+    --legend-policy auto \
+    --legend-outside-threshold 8 \
+    --max-legend-items 30
+
+# 凡例を強制的にグラフ下側に3列で配置
+python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
+    --output_dir plots \
+    --legend-policy outside_bottom \
+    --legend-ncol 3
 
 # 個別プロットをスキップ
 python -m rdetoolkit.graph.api.csv2graph data.csv \
