@@ -172,13 +172,23 @@ def _is_invalid_number_string(value: str) -> bool:
 
 def _is_csv_missing_string(value: str) -> bool:
     """Return True when the SmartTable CSV loader normalizes the text to missing."""
+    if value.strip() == "":
+        # Whitespace/control-only strings (e.g. "\r") survive the StringIO
+        # round-trip below as quoted text, but the real SmartTable file loader
+        # normalizes them to missing, so no cast error is ever raised (#429).
+        return True
+
     csv_buffer = io.StringIO()
     writer = csv.DictWriter(csv_buffer, fieldnames=["value"], escapechar="\\")
     writer.writeheader()
     writer.writerow({"value": value})
     csv_buffer.seek(0)
 
-    parsed = pd.read_csv(csv_buffer, dtype=str).iloc[0, 0]
+    parsed_df = pd.read_csv(csv_buffer, dtype=str)
+    if parsed_df.empty or parsed_df.shape[1] == 0:
+        return True
+
+    parsed = parsed_df.iloc[0, 0]
     return bool(pd.isna(parsed) or parsed == "")
 
 
