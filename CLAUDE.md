@@ -76,7 +76,7 @@ Extension module: `rdetoolkit._core` (stub: `src/rdetoolkit/_core.pyi`).
    `run(custom_dataset_function=...)`, linear Processor pipeline,
    modes: invoice / excelinvoice / extended (MultiDataTile, SmartTable)
 2. **Data Models** (`models/`) — Config (pydantic), invoice schema, paths
-3. **CLI** (`cli/`) — init, gen-invoice, gen-excelinvoice, archive
+3. **CLI** (`cli/`) — init, gen-invoice, make-excelinvoice, archive
 
 ---
 
@@ -154,9 +154,9 @@ runs between rounds.
 ### v1 Maintenance / Bug / Refactoring / PR workflows — unchanged
 
 ```
-v1 issue:  task-decomposer (issue mode) → task-executor × N → quality-checker
+v1 issue:  task-decomposer-v1 (issue mode) → task-executor × N → quality-checker
 bug:       root-cause-analyst → python-expert → tdd-enforcer (regression) → quality-checker
-refactor:  system-architect → task-decomposer → refactoring-expert → quality-checker
+refactor:  system-architect → task-decomposer-v1 → refactoring-expert → quality-checker
 PR:        quality-checker (final) → pr-generator
 ```
 
@@ -361,7 +361,7 @@ decision/input you need.
   formats from provenance), report show, repro export→import→run round-trip,
   migrate check; exit codes 0/1/2/3 uniform
 - VERIFICATION adds: `rdetoolkit --help` still lists init/gen-invoice/
-  gen-excelinvoice/archive; parametrized exit-code test GREEN; v1 CLI tests GREEN
+  make-excelinvoice/archive; parametrized exit-code test GREEN; v1 CLI tests GREEN
 - EXTRA_CONSTRAINTS: typer; do not implement `plan`/`debug-node`; only
   `cli/main.py` registration may touch existing CLI files; graph rendering in
   pure Python (no `_core`)
@@ -515,3 +515,9 @@ system:
 - One Codex agent/thread = one session = one goal contract. Goal contracts must
   include all six elements; contracts without a blocked-stop condition are rejected.
 - The human commits. Agents stop and paste results.
+- Worktrees are created with `git gtr new <branch> --from <base>` (never plain
+  `git worktree add`). gtr symlinks `local -> ~/github/rdetoolkit/local` and
+  copies `.claude/`, so `local/develop/` docs have a single canonical copy in
+  the main repo shared by all worktrees (see AGENTS.md §6.4).
+- `local/develop/` is never committed or pushed (`git add -f local/...` is
+  forbidden). Session artifacts stay there as local-only documents.
