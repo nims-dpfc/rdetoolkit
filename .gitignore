@@ -195,3 +195,7 @@ launch.json
 .mcp.json
 .rdetoolkit-issue-agent
 claudedocs
+
+# Repo tooling scripts — the [Ss]cripts rule above targets Windows venv dirs,
+# not the repository scripts/ directory (gen_error_docs.py must be tracked).
+!/scripts/

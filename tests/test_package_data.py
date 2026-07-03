@@ -4,7 +4,6 @@ This module tests package data configuration to ensure that _agent/*.md files
 are properly included in the wheel distribution and accessible after installation.
 """
 
-import importlib.util
 import subprocess
 import sys
 import zipfile
@@ -21,14 +20,6 @@ except ImportError:
 
 class TestPackageData:
     """Test that guide files are included in package distribution."""
-
-    @staticmethod
-    def _require_build_backend() -> None:
-        """Skip package build tests when the local build backend is unavailable."""
-        if importlib.util.find_spec("build") is None:
-            pytest.skip("build is not installed in the current test environment")
-        if importlib.util.find_spec("maturin") is None:
-            pytest.skip("maturin is not installed in the current test environment")
 
     def test_guide_files_exist_in_source(self) -> None:
         """Test: Guide files exist in source tree."""
@@ -56,12 +47,10 @@ class TestPackageData:
     @pytest.mark.slow
     def test_built_wheel_contains_guide_files(self, tmp_path: Path) -> None:
         """Test: Built wheel contains guide files."""
-        self._require_build_backend()
-
         # Given: Project root
         # When: Building wheel
         result = subprocess.run(
-            [sys.executable, "-m", "build", "--wheel", "--no-isolation", "--outdir", str(tmp_path)],
+            ["python", "-m", "build", "--wheel", "--outdir", str(tmp_path)],
             capture_output=True,
             text=True,
             check=False,
@@ -82,8 +71,6 @@ class TestPackageData:
     @pytest.mark.slow
     def test_installed_package_can_access_guides(self, tmp_path: Path) -> None:
         """Test: Installed package can access guide files."""
-        self._require_build_backend()
-
         # Given: Built and installed package
         venv_dir = tmp_path / "venv"
         subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=True)
@@ -95,7 +82,7 @@ class TestPackageData:
         wheel_dir = tmp_path / "wheels"
         wheel_dir.mkdir()
         subprocess.run(
-            [sys.executable, "-m", "build", "--wheel", "--no-isolation", "--outdir", str(wheel_dir)],
+            [sys.executable, "-m", "build", "--wheel", "--outdir", str(wheel_dir)],
             check=True,
         )
 

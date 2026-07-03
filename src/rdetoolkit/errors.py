@@ -426,3 +426,232 @@ class UnconnectedInputError(RdeExecutionError):
             ),
             detail={"node_id": node_id, "param_name": param_name, "param_type": str(param_type)},
         )
+
+
+# ---------------------------------------------------------------------------
+# v2 Unified Error Catalog (Design §9, append-only A1 additions)
+# ---------------------------------------------------------------------------
+
+from dataclasses import dataclass as _dataclass
+
+def get_traceback_settings_from_env() -> _Any:
+    """Return traceback settings resolved from environment variables.
+
+    Returns:
+        Traceback settings from `rdetoolkit.config.get_traceback_settings_from_env`.
+    """
+    from rdetoolkit.config import get_traceback_settings_from_env as _get_traceback_settings_from_env
+
+    return _get_traceback_settings_from_env()
+
+
+class CompactTraceFormatter:
+    """Lazy compatibility proxy for the compact traceback formatter.
+
+    Importing the real formatter requires optional runtime dependencies. This
+    proxy keeps the restored `rdetoolkit.errors` export importable and forwards
+    construction to the real formatter when used.
+    """
+
+    def __new__(cls, *args: _Any, **kwargs: _Any) -> _Any:
+        """Create the real compact traceback formatter.
+
+        Args:
+            *args: Positional arguments forwarded to the real formatter.
+            **kwargs: Keyword arguments forwarded to the real formatter.
+
+        Returns:
+            A `rdetoolkit.traceback.formatter.CompactTraceFormatter` instance.
+        """
+        from rdetoolkit.traceback.formatter import CompactTraceFormatter as _CompactTraceFormatter
+
+        return _CompactTraceFormatter(*args, **kwargs)
+
+
+class _StorageDirProxyMeta(type):
+    def __getattr__(cls, name: str) -> _Any:
+        from rdetoolkit.rde2util import StorageDir as _StorageDir
+
+        return getattr(_StorageDir, name)
+
+
+class _StorageDirProxy(metaclass=_StorageDirProxyMeta):
+    """Lazy compatibility proxy for `rdetoolkit.rde2util.StorageDir`."""
+
+
+globals()["StorageDir"] = _StorageDirProxy
+
+
+@_dataclass(frozen=True)
+class ErrorDef:
+    """Single catalog entry for a v2 error code.
+
+    Args:
+        name: Human-readable stable error name.
+        message_template: Message template used by callers when formatting errors.
+    """
+
+    name: str
+    message_template: str
+
+
+@_dataclass(frozen=True)
+class WarningDef:
+    """Single catalog entry for a v2 warning code.
+
+    Args:
+        name: Human-readable stable warning name.
+        message_template: Message template used by callers when formatting warnings.
+    """
+
+    name: str
+    message_template: str
+
+
+ERROR_CATALOG: dict[int, ErrorDef] = {
+    1001: ErrorDef(
+        name="RunArgumentUsageError",
+        message_template="Specify exactly one of flow or custom_dataset_function.",
+    ),
+    1002: ErrorDef(
+        name="ConfigLoadFailed",
+        message_template="Failed to load RDE configuration: {reason}",
+    ),
+    2001: ErrorDef(
+        name="DuplicateNodeId",
+        message_template="Duplicate node id registered: {node_id}",
+    ),
+    2002: ErrorDef(
+        name="ReservedParamMismatch",
+        message_template="Reserved flow parameter has an incompatible type: {param_name}",
+    ),
+    2003: ErrorDef(
+        name="UnresolvableFlowParam",
+        message_template="Could not resolve flow parameter: {param_name}",
+    ),
+    3001: ErrorDef(
+        name="NodeExecutionFailed",
+        message_template="Node execution failed for call {call_id}: {reason}",
+    ),
+    3002: ErrorDef(
+        name="NodeTypeMismatch",
+        message_template="Node argument type mismatch for {node_id}.{param_name}",
+    ),
+    3003: ErrorDef(
+        name="UndecoratedNodeCall",
+        message_template="Undecorated callable cannot be recorded as a node: {callable_name}",
+    ),
+    4001: ErrorDef(
+        name="InvoiceSchemaInvalid",
+        message_template="Invoice schema validation failed: {reason}",
+    ),
+    4002: ErrorDef(
+        name="MetadataDefinitionInvalid",
+        message_template="Metadata definition validation failed: {reason}",
+    ),
+    4003: ErrorDef(
+        name="RequiredArtifactMissing",
+        message_template="Required output artifact is missing: {path}",
+    ),
+    5001: ErrorDef(
+        name="InternalInvariantViolation",
+        message_template="Internal rdetoolkit invariant failed: {reason}",
+    ),
+}
+
+WARNING_CATALOG: dict[int, WarningDef] = {
+    1001: WarningDef(
+        name="ModeOverriddenByFileDetection",
+        message_template="Configured mode was overridden by input file detection: {mode}",
+    ),
+}
+
+E_CYCLE = "E_CYCLE"
+E_UNCONNECTED_INPUT = "E_UNCONNECTED_INPUT"
+E_DUPLICATE_ID = "E_DUPLICATE_ID"
+E_AMBIGUOUS_DEPENDENCY = "E_AMBIGUOUS_DEPENDENCY"
+
+ErrorCode.__doc__ = (
+    "Deprecated legacy v2 draft error codes. 廃番、Design §9 参照. "
+    "Use ERROR_CATALOG int codes instead."
+)
+
+
+def _coerce_error_name(code: int | str, name: str | None) -> str:
+    if name is not None:
+        return name
+    if isinstance(code, int):
+        catalog_entry = ERROR_CATALOG.get(code)
+        if catalog_entry is not None:
+            return catalog_entry.name
+        return f"E{code}"
+    return code
+
+
+def _rde_error_init(
+    self: RdeError,
+    *,
+    code: int | str,
+    message: str,
+    name: str | None = None,
+    detail: dict[str, _Any] | None = None,
+) -> None:
+    error_name = _coerce_error_name(code, name)
+    error_self: _Any = self
+    error_self.code = code
+    error_self.name = error_name
+    error_self.message = message
+    error_self.detail = detail
+    Exception.__init__(self, f"[{error_name}] {message}")
+
+
+def _rde_error_to_dict(self: RdeError) -> dict[str, _Any]:
+    error_self: _Any = self
+    error_dict: dict[str, _Any] = {
+        "code": error_self.code,
+        "name": error_self.name,
+        "message": error_self.message,
+    }
+    detail = error_self.detail
+    if detail is not None:
+        error_dict["detail"] = detail
+    return error_dict
+
+
+def _rde_execution_error_init(
+    self: RdeExecutionError,
+    *,
+    code: int | str,
+    message: str,
+    name: str | None = None,
+    detail: dict[str, _Any] | None = None,
+    call_id: str | None = None,
+) -> None:
+    error_self: _Any = self
+    error_self.call_id = call_id
+    _rde_error_init(self, code=code, name=name, message=message, detail=detail)
+
+
+RdeError.__doc__ = (
+    "Base exception for rdetoolkit v2. "
+    "The canonical v2 form carries code: int and name: str; legacy string codes remain accepted."
+)
+RdeError.__init__ = _rde_error_init  # type: ignore[method-assign]
+RdeError.to_dict = _rde_error_to_dict  # type: ignore[method-assign]
+RdeExecutionError.__init__ = _rde_execution_error_init  # type: ignore[assignment, method-assign]
+RdeExecutionError.__doc__ = (
+    "Execution error for v2 3xxx codes. Preserves Python __cause__ when raised with 'from'."
+)
+RdeConfigError.__doc__ = "Configuration or usage error for v2 1xxx codes."
+
+
+class RdeRegistryError(RdeError):
+    """Registration or declaration error for v2 2xxx codes."""
+
+
+class RdeValidationError(RdeError):
+    """Validation error for v2 4xxx codes."""
+
+
+class RdeInternalError(RdeError):
+    """Internal rdetoolkit error for v2 5xxx codes."""

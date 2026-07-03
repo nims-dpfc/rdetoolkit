@@ -62,3 +62,28 @@ class UnconnectedInputError(RdeExecutionError):
     param_name: str
     param_type: type | None
     def __init__(self, node_id: str, param_name: str, param_type: type | None = None) -> None: ...
+
+class ErrorDef:
+    name: str
+    message_template: str
+    def __init__(self, name: str, message_template: str) -> None: ...
+
+class WarningDef:
+    name: str
+    message_template: str
+    def __init__(self, name: str, message_template: str) -> None: ...
+
+ERROR_CATALOG: dict[int, ErrorDef]
+WARNING_CATALOG: dict[int, WarningDef]
+E_CYCLE: str
+E_UNCONNECTED_INPUT: str
+E_DUPLICATE_ID: str
+E_AMBIGUOUS_DEPENDENCY: str
+
+class RdeRegistryError(RdeError): ...
+class RdeValidationError(RdeError): ...
+class RdeInternalError(RdeError): ...
+
+from rdetoolkit.config import get_traceback_settings_from_env as get_traceback_settings_from_env
+from rdetoolkit.rde2util import StorageDir as StorageDir
+from rdetoolkit.traceback.formatter import CompactTraceFormatter as CompactTraceFormatter
