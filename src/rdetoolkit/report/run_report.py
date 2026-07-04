@@ -1,0 +1,97 @@
+"""Versioned v2 run report schema."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass(frozen=True, slots=True)
+class RunReport:
+    """Summary of a v2 run.
+
+    RunReport is constructed from primary run results. It is not derived from an
+    EventSink; aggregation belongs to a later Runner phase.
+
+    Attributes:
+        run_id: Run identifier.
+        status: Final status: ``success``, ``partial``, or ``failed``.
+        flow_id: Flow identifier.
+        mode: Lowercase internal mode name.
+        started_at: ISO-8601 start timestamp.
+        duration_ms: Run duration in milliseconds.
+        config_digest: Digest of the effective config.
+        iterations: Per-iteration result summaries.
+        warnings: Warning summaries.
+        error: Optional terminal error summary.
+        schema_version: RunReport schema version.
+    """
+
+    run_id: str
+    status: str
+    flow_id: str
+    mode: str
+    started_at: str
+    duration_ms: float
+    config_digest: str
+    iterations: list[dict[str, Any]]
+    warnings: list[dict[str, Any]]
+    error: dict[str, Any] | None = None
+    schema_version: str = "1"
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the report to a plain dict.
+
+        Returns:
+            Dict with ``schema_version`` as the first key.
+        """
+        return {
+            "schema_version": self.schema_version,
+            "run_id": self.run_id,
+            "status": self.status,
+            "flow_id": self.flow_id,
+            "mode": self.mode,
+            "started_at": self.started_at,
+            "duration_ms": self.duration_ms,
+            "config_digest": self.config_digest,
+            "iterations": self.iterations,
+            "warnings": self.warnings,
+            "error": self.error,
+        }
+
+    def to_json(self, *, indent: int | None = 2) -> str:
+        """Serialize the report to JSON.
+
+        Args:
+            indent: JSON indentation level. Use ``None`` for compact JSON.
+
+        Returns:
+            JSON string representation.
+        """
+        return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> RunReport:
+        """Deserialize a report from JSON.
+
+        Args:
+            json_str: JSON string produced by ``to_json()``.
+
+        Returns:
+            RunReport instance.
+        """
+        data = json.loads(json_str)
+        return cls(
+            schema_version=data["schema_version"],
+            run_id=data["run_id"],
+            status=data["status"],
+            flow_id=data["flow_id"],
+            mode=data["mode"],
+            started_at=data["started_at"],
+            duration_ms=data["duration_ms"],
+            config_digest=data["config_digest"],
+            iterations=data.get("iterations", []),
+            warnings=data.get("warnings", []),
+            error=data.get("error"),
+        )

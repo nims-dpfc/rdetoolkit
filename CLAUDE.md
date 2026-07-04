@@ -76,7 +76,7 @@ Extension module: `rdetoolkit._core` (stub: `src/rdetoolkit/_core.pyi`).
    `run(custom_dataset_function=...)`, linear Processor pipeline,
    modes: invoice / excelinvoice / extended (MultiDataTile, SmartTable)
 2. **Data Models** (`models/`) — Config (pydantic), invoice schema, paths
-3. **CLI** (`cli/`) — init, gen-invoice, gen-excelinvoice, archive
+3. **CLI** (`cli/`) — init, gen-invoice, make-excelinvoice, archive
 
 ---
 
@@ -90,9 +90,9 @@ Extension module: `rdetoolkit._core` (stub: `src/rdetoolkit/_core.pyi`).
 - **task-executor** — Executes decomposed tasks via Claude (non-Codex tasks).
 
 #### Implementation
-- **codex-worker** — Delegates to Codex (gpt-5.4 xhigh) via the `codex` CLI with a
-  **per-session `/goal`** (see "Codex CLI Integration" below). Runs Codex I/O inside
-  a subagent context so the main conversation is not flooded.
+- **codex-worker** — Delegates to Codex through agmsg with a per-session goal
+  contract (see "Codex via agmsg" below). Runs messaging inside a subagent context
+  so the main conversation is not flooded.
 - **/codex-delegate Skill** (`.claude/skills/codex-delegate/SKILL.md`) — Equivalent
   entry point for main-context delegation. Shares prompt + goal conventions.
 - **python-expert** — Complex architectural decisions when delegation isn't appropriate.
@@ -121,12 +121,12 @@ task-decomposer
 
 Session Classification:
   Cleanup / settlement      → Pipeline S  (serial, human checkpoints)   … A3
-  New-with-v1-ref           → Pipeline B  (tdd-enforcer → codex-worker) … A2, B*, C*, D*, F*
-  Direct Refactor (v1 hit)  → Pipeline C  (v1-reuse baseline → codex-worker, serialized) … A1, D2, E*
+  New-with-v1-ref           → Pipeline B  (tdd-enforcer → codex-worker via agmsg) … A2, B*, C*, D*, F*
+  Direct Refactor (v1 hit)  → Pipeline C  (v1-reuse baseline → codex-worker via agmsg, serialized) … A1, D2, E*
 
-Pipeline B:  tdd-enforcer (standard) → codex-worker (+/goal) → quality-checker
+Pipeline B:  tdd-enforcer (standard) → codex-worker (agmsg + goal contract) → quality-checker
 Pipeline C:  tdd-enforcer (v1-reuse: confirm v1 GREEN baseline)
-               → codex-worker (+/goal, serialized — never parallel with other v1-touching work)
+               → codex-worker (agmsg + goal contract, serialized — never parallel with other v1-touching work)
                → quality-checker → full tox (mandatory)
 Pipeline S:  Claude-led, step-by-step with human confirmation between A3.1/A3.2/A3.3.
              Deletion-heavy work is NOT delegated to Codex.
@@ -154,9 +154,9 @@ runs between rounds.
 ### v1 Maintenance / Bug / Refactoring / PR workflows — unchanged
 
 ```
-v1 issue:  task-decomposer (issue mode) → task-executor × N → quality-checker
+v1 issue:  task-decomposer-v1 (issue mode) → task-executor × N → quality-checker
 bug:       root-cause-analyst → python-expert → tdd-enforcer (regression) → quality-checker
-refactor:  system-architect → task-decomposer → refactoring-expert → quality-checker
+refactor:  system-architect → task-decomposer-v1 → refactoring-expert → quality-checker
 PR:        quality-checker (final) → pr-generator
 ```
 
@@ -192,76 +192,93 @@ pytest tests/v2/ -m property -v                    # PBT
 
 ---
 
-## Codex CLI Integration (with Goals)
+## Codex via agmsg
 
-v2 implementation is delegated to Codex (gpt-5.4 xhigh) via the `codex` CLI.
-**Every delegated session runs under a `/goal`** — a thread-scoped completion
-contract that keeps Codex working toward the session's acceptance criteria across
-turns, with evidence-based completion.
+v2 implementation is delegated to Codex through **agmsg**, not by calling
+`codex exec` directly from Claude Code. Claude Code owns orchestration,
+task/goal authoring, and verification. Codex receives a self-contained task
+message, works in its own session, and reports back through agmsg.
 
-### Why Goals here
+**Every delegated session still carries a goal contract**, but the contract is
+sent as a `[GOAL CONTRACT]` block in the agmsg message. The important part is
+the completion contract: outcome, verification surface, constraints, boundaries,
+iteration policy, and blocked-stop condition.
 
-Our sessions are exactly the shape Goals are designed for: a clear finish line
-(tox GREEN + checklist), an uncertain path (TDD red/green/refactor loops), and a
-strong need for constraint preservation (v1 tests must never go RED, append-only
-files, no retired-design code). The goal removes the "keep going / run tox again /
-now check ruff" babysitting and replaces it with a contract Codex audits itself
-against.
+### Why agmsg here
+
+Claude Code and Codex do not share context. agmsg gives the two sessions an
+explicit message channel with history, named agents, and clear handoff points.
+This keeps Codex work auditable without flooding the main Claude conversation,
+and it avoids relying on fragile `codex exec --last` session selection.
 
 ### Requirements & configuration
 
-- `codex` CLI **≥ 0.128.0** (Goals introduced in 0.128.0 — verify with
-  `codex --version`; older pins like 0.122.0 must be upgraded).
-- No MCP server. `.claude/settings.local.json`:
+- agmsg is installed by APM: `fujibee/agmsg#v1.1.2`.
+- `sqlite3` is available.
+- Claude Code is joined to an agmsg team for this repository.
+- Codex workers are started or contacted through agmsg scripts only.
+- Do not read or edit agmsg DB/team files directly.
+
+Recommended `.claude/settings.local.json` permissions include:
 
 ```json
 {
   "permissions": {
-    "allow": ["Bash(codex --version)", "Bash(codex exec *)", "Bash(codex *)"]
+    "allow": [
+      "Bash(~/.agents/skills/agmsg/scripts/whoami.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/join.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/spawn.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/send.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/inbox.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/history.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/team.sh *)",
+      "Bash(~/.agents/skills/agmsg/scripts/delivery.sh *)"
+    ]
   }
 }
 ```
 
-### Invocation pattern (goal-first, then session turns)
+### agmsg invocation pattern
 
 ```bash
-# Turn 0 — open the thread by setting the Goal (template from local/develop/v2/goals/)
-codex exec --full-auto -m "gpt-5.4 xhigh" -C "$PWD" -o /tmp/codex-goal.md \
-  "$(cat local/develop/v2/goals/phase-c.goal.md | sed 's/{SESSION}/C2/')"
+# 1. Confirm Claude Code identity for this project.
+~/.agents/skills/agmsg/scripts/whoami.sh "$PWD" claude-code
 
-# Turn 1..n — resume the SAME thread with the session prompt and follow-ups
-codex exec resume --last -m "gpt-5.4 xhigh" \
-  "$(awk '/^## Session C2/,/^## ✅ Session C2/' local/develop/v2/PhaseC_prompts.md)"
-codex exec resume --last -m "gpt-5.4 xhigh" "Continue toward the goal."
+# 2. If needed, join a team. There is no register.sh.
+~/.agents/skills/agmsg/scripts/join.sh <team> <claude_agent_name> claude-code "$PWD"
+
+# 3. Start a Codex worker for one delegated session.
+~/.agents/skills/agmsg/scripts/spawn.sh codex codex-c2 --project "$PWD" --team <team>
+
+# 4. Send the goal contract and task prompt.
+~/.agents/skills/agmsg/scripts/send.sh <team> <claude_agent_name> codex-c2 "<payload>"
+
+# 5. Read replies.
+~/.agents/skills/agmsg/scripts/inbox.sh <team> <claude_agent_name>
+~/.agents/skills/agmsg/scripts/history.sh <team> <claude_agent_name>
 ```
 
-- Goals are **thread-scoped state**: setting the goal in turn 0 and resuming the
-  same thread keeps the contract attached to all the evidence (diffs, test runs).
-  One session = one thread = one goal. Never reuse a thread across sessions.
-- `--full-auto` ≡ workspace-write sandbox without approval prompts.
-  Never use `--dangerously-bypass-approvals-and-sandbox`.
-- `-o <file>` captures the final message for quality-checker verification.
-- ⚠️ Verify once on your installed version that `codex exec` accepts a leading
-  `/goal` message in non-interactive mode (it is documented for the composer).
-  If it does not, fall back to: run `codex` interactively for turn 0 to set the
-  goal, or inline the goal contract as a `[GOAL CONTRACT]` block at the top of
-  every `codex exec` prompt — the six elements below matter more than the slash
-  command itself.
+- One delegated session = one Codex agent/thread = one goal contract.
+- Name workers predictably: `codex-a1`, `codex-c2`, `codex-d1`, etc.
+- Follow-ups are `send.sh` messages to the explicit Codex agent.
+- Never use ambiguous "last session" semantics when multiple Codex agents exist.
+- Codex may claim completion only when it has run the required verification
+  commands and reported output tails. quality-checker still re-verifies locally.
 
 ### Goal lifecycle in our workflow
 
 ```
-set (/goal, turn 0)
-  → work (session prompt + continuation turns)
-  → evidence check (Codex must run the verification commands itself)
+compose [GOAL CONTRACT]
+  → agmsg send to named Codex agent
+  → Codex work + agmsg progress replies
+  → evidence check (Codex must report verification output)
   → STOP — Codex reports; quality-checker independently re-runs tox/ruff/mypy
   → human checklist from PhaseX_prompts.md → human commits
-  → /goal clear (or simply end the thread)
+  → despawn or leave the Codex worker idle for explicit reuse
 ```
 
-Codex may mark the goal complete **only** when the verification surface is GREEN
-in-thread. quality-checker re-verifies independently — Codex's claim is never
-trusted without re-running the gate. Pause/resume/clear authority stays with us.
+Codex's claim is never trusted without local verification. Pause/resume/clear
+authority stays with Claude Code and the human operator.
 
 ### Writing goals — the six required elements
 
@@ -344,7 +361,7 @@ decision/input you need.
   formats from provenance), report show, repro export→import→run round-trip,
   migrate check; exit codes 0/1/2/3 uniform
 - VERIFICATION adds: `rdetoolkit --help` still lists init/gen-invoice/
-  gen-excelinvoice/archive; parametrized exit-code test GREEN; v1 CLI tests GREEN
+  make-excelinvoice/archive; parametrized exit-code test GREEN; v1 CLI tests GREEN
 - EXTRA_CONSTRAINTS: typer; do not implement `plan`/`debug-node`; only
   `cli/main.py` registration may touch existing CLI files; graph rendering in
   pure Python (no `_core`)
@@ -367,10 +384,24 @@ decision/input you need.
 - One goal spanning multiple sessions or phases — thread evidence gets stale and
   budget accounting becomes meaningless.
 
-### Codex Prompt Template (turn 1, after the goal is set)
+### Codex Task Payload Template
 
 ```
-[ROLE] You are implementing rdetoolkit v2 Session {SESSION} under the active Goal.
+[GOAL CONTRACT]
+Complete rdetoolkit v2 Session {SESSION} exactly as specified in
+local/develop/v2/Phase{P}_prompts.md (§Session {SESSION}), with
+local/develop/v2/Design.md as the overriding spec.
+
+DONE means: {OUTCOME}
+Verified by: {VERIFICATION}
+Constraints: never modify files under tests/ root; types.py, errors.py,
+errors.pyi are append-only; never implement Trace/Compile/pre-execution-DAG
+machinery; never import rdetoolkit._core from v2 modules; do not git commit;
+{EXTRA_CONSTRAINTS}.
+Boundaries: create/edit only {TARGET_FILES}; read anything.
+Iteration policy: strict TDD — confirm RED first, smallest change to GREEN,
+then refactor while keeping tests green.
+Blocked stop condition: {BLOCKED_STOP_CONDITION}
 
 [CONTEXT]
 - Python 3.12, strict mypy, ruff; test runner: .venv/bin/tox -e py312-module
@@ -382,14 +413,14 @@ decision/input you need.
 <paste the Session block from PhaseX_prompts.md verbatim>
 
 [REPORTING]
-After each TDD cycle: what changed, test output tail, next step.
-On completion: paste the verification command outputs required by the Goal.
+Reply through agmsg after each TDD cycle: what changed, test output tail, next step.
+On completion: paste the verification command outputs required by the goal contract.
 On blocker: follow the Goal's blocked stop condition exactly.
 ```
 
 ### Delegation criteria
 
-**Delegate to Codex (with goal):** all session implementation in Phases A1, A2,
+**Delegate to Codex via agmsg (with goal contract):** all session implementation in Phases A1, A2,
 B–F; large test-suite authoring; mechanical refactors.
 **Keep in Claude:** Phase A3 settlement (deletion-heavy), architecture decisions,
 Design.md edits, goal authoring/review, anything requiring judgment about
@@ -397,9 +428,9 @@ Design.md edits, goal authoring/review, anything requiring judgment about
 
 ### Choosing between subagent and Skill
 
-- Parallel dispatch / long sessions → `codex-worker` subagent (isolates I/O).
-- Single ad-hoc delegation → `/codex-delegate <task-file>` in main context.
-Both use the same goal-first invocation pattern.
+- Parallel dispatch / long sessions → `codex-worker` subagent, which uses agmsg.
+- Single ad-hoc delegation → `/codex-delegate <task-file>` in main context, which uses agmsg.
+Both use the same payload structure and named Codex-agent pattern.
 
 ---
 
@@ -481,6 +512,12 @@ system:
   phase merge — no exceptions.
 - Never implement retired-design machinery (Trace/Compile/RustDAG-in-v2) even if
   asked by an outdated document; raise the conflict instead.
-- One Codex thread = one session = one `/goal`. Goals must include all six
-  elements; goals without a blocked-stop condition are rejected.
+- One Codex agent/thread = one session = one goal contract. Goal contracts must
+  include all six elements; contracts without a blocked-stop condition are rejected.
 - The human commits. Agents stop and paste results.
+- Worktrees are created with `git gtr new <branch> --from <base>` (never plain
+  `git worktree add`). gtr symlinks `local -> ~/github/rdetoolkit/local` and
+  copies `.claude/`, so `local/develop/` docs have a single canonical copy in
+  the main repo shared by all worktrees (see AGENTS.md §6.4).
+- `local/develop/` is never committed or pushed (`git add -f local/...` is
+  forbidden). Session artifacts stay there as local-only documents.

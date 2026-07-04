@@ -306,3 +306,352 @@ def write_job_errorlog_file(code: int, message: str, *, filename: str = "job.fai
     ) as f:
         f.write(f"ErrorCode={code}\n")
         f.write(f"ErrorMessage={message}\n")
+
+
+# ---------------------------------------------------------------------------
+# v2 Error Hierarchy (append-only below this line)
+# ---------------------------------------------------------------------------
+
+import enum
+from typing import Any as _Any
+
+
+class ErrorCode(enum.Enum):
+    """Machine-readable error codes for rdetoolkit v2.
+
+    Ranges:
+        E001-E005: Graph/DAG errors
+        E006-E010: Compilation errors
+        E011-E015: Execution errors
+        E016-E020: Configuration errors
+        E021-E025: I/O errors
+    """
+
+    E001 = "E001"  # DAG cycle detected
+    E002 = "E002"  # Node not found in DAG
+    E003 = "E003"  # Duplicate node ID
+    E004 = "E004"  # Invalid edge (port mismatch)
+    E005 = "E005"  # Unconnected node
+    E006 = "E006"  # Type mismatch in compilation
+    E007 = "E007"  # Ambiguous dependency
+    E008 = "E008"  # Missing required input
+    E009 = "E009"  # Compile validation failed
+    E010 = "E010"  # Warnings treated as errors
+    E011 = "E011"  # Node execution failed
+    E012 = "E012"  # Unconnected input at runtime
+    E013 = "E013"  # DI resolution failed
+    E014 = "E014"  # Execution timeout
+    E015 = "E015"  # Iteration error
+    E016 = "E016"  # Invalid configuration
+    E017 = "E017"  # Missing configuration key
+    E018 = "E018"  # Invalid mode
+    E019 = "E019"  # Schema validation failed
+    E020 = "E020"  # Config file not found
+    E021 = "E021"  # File not found
+    E022 = "E022"  # File read error
+    E023 = "E023"  # File write error
+    E024 = "E024"  # Directory creation error
+    E025 = "E025"  # Path resolution error
+
+
+class RdeError(Exception):
+    """Base exception for rdetoolkit v2 with machine-readable error codes.
+
+    Attributes:
+        code: Error code string (e.g. 'E001').
+        message: Human-readable error description.
+        detail: Optional additional context about the error.
+    """
+
+    def __init__(self, *, code: str, message: str, detail: dict[str, _Any] | None = None) -> None:
+        self.code = code
+        self.message = message
+        self.detail = detail
+        super().__init__(f"[{code}] {message}")
+
+    def to_dict(self) -> dict[str, _Any]:
+        """Serialize error to a dictionary.
+
+        Returns:
+            Dictionary with code, message, and optional detail.
+        """
+        d: dict[str, _Any] = {"code": self.code, "message": self.message}
+        if self.detail is not None:
+            d["detail"] = self.detail
+        return d
+
+
+class RdeGraphError(RdeError):
+    """Error related to DAG graph operations (E001-E005)."""
+
+
+class RdeCompileError(RdeError):
+    """Error related to DAG compilation (E006-E010)."""
+
+
+class RdeExecutionError(RdeError):
+    """Error related to node execution (E011-E015)."""
+
+
+class RdeConfigError(RdeError):
+    """Error related to configuration (E016-E020)."""
+
+
+class RdeIOError(RdeError):
+    """Error related to I/O operations (E021-E025)."""
+
+
+class UnconnectedInputError(RdeExecutionError):
+    """Raised when DI resolution cannot find a value for a node input parameter.
+
+    This means the parameter has no upstream DAG edge result and does not match
+    a Runner reserved type by both name AND type.
+
+    Attributes:
+        node_id: The node whose input could not be resolved.
+        param_name: The parameter that has no source.
+        param_type: The declared type of the unresolved parameter.
+    """
+
+    def __init__(self, node_id: str, param_name: str, param_type: type | None = None) -> None:
+        self.node_id = node_id
+        self.param_name = param_name
+        self.param_type = param_type
+        type_info = f" (type: {param_type.__name__})" if param_type is not None else ""
+        super().__init__(
+            code=ErrorCode.E012.value,
+            message=(
+                f"Cannot resolve input '{param_name}'{type_info} for node '{node_id}': "
+                f"no DAG edge result and not a reserved type"
+            ),
+            detail={"node_id": node_id, "param_name": param_name, "param_type": str(param_type)},
+        )
+
+
+# ---------------------------------------------------------------------------
+# v2 Unified Error Catalog (Design §9, append-only A1 additions)
+# ---------------------------------------------------------------------------
+
+from dataclasses import dataclass as _dataclass
+
+def get_traceback_settings_from_env() -> _Any:
+    """Return traceback settings resolved from environment variables.
+
+    Returns:
+        Traceback settings from `rdetoolkit.config.get_traceback_settings_from_env`.
+    """
+    from rdetoolkit.config import get_traceback_settings_from_env as _get_traceback_settings_from_env
+
+    return _get_traceback_settings_from_env()
+
+
+class CompactTraceFormatter:
+    """Lazy compatibility proxy for the compact traceback formatter.
+
+    Importing the real formatter requires optional runtime dependencies. This
+    proxy keeps the restored `rdetoolkit.errors` export importable and forwards
+    construction to the real formatter when used.
+    """
+
+    def __new__(cls, *args: _Any, **kwargs: _Any) -> _Any:
+        """Create the real compact traceback formatter.
+
+        Args:
+            *args: Positional arguments forwarded to the real formatter.
+            **kwargs: Keyword arguments forwarded to the real formatter.
+
+        Returns:
+            A `rdetoolkit.traceback.formatter.CompactTraceFormatter` instance.
+        """
+        from rdetoolkit.traceback.formatter import CompactTraceFormatter as _CompactTraceFormatter
+
+        return _CompactTraceFormatter(*args, **kwargs)
+
+
+class _StorageDirProxyMeta(type):
+    def __getattr__(cls, name: str) -> _Any:
+        from rdetoolkit.rde2util import StorageDir as _StorageDir
+
+        return getattr(_StorageDir, name)
+
+
+class _StorageDirProxy(metaclass=_StorageDirProxyMeta):
+    """Lazy compatibility proxy for `rdetoolkit.rde2util.StorageDir`."""
+
+
+globals()["StorageDir"] = _StorageDirProxy
+
+
+@_dataclass(frozen=True)
+class ErrorDef:
+    """Single catalog entry for a v2 error code.
+
+    Args:
+        name: Human-readable stable error name.
+        message_template: Message template used by callers when formatting errors.
+    """
+
+    name: str
+    message_template: str
+
+
+@_dataclass(frozen=True)
+class WarningDef:
+    """Single catalog entry for a v2 warning code.
+
+    Args:
+        name: Human-readable stable warning name.
+        message_template: Message template used by callers when formatting warnings.
+    """
+
+    name: str
+    message_template: str
+
+
+ERROR_CATALOG: dict[int, ErrorDef] = {
+    1001: ErrorDef(
+        name="RunArgumentUsageError",
+        message_template="Specify exactly one of flow or custom_dataset_function.",
+    ),
+    1002: ErrorDef(
+        name="ConfigLoadFailed",
+        message_template="Failed to load RDE configuration: {reason}",
+    ),
+    2001: ErrorDef(
+        name="DuplicateNodeId",
+        message_template="Duplicate node id registered: {node_id}",
+    ),
+    2002: ErrorDef(
+        name="ReservedParamMismatch",
+        message_template="Reserved flow parameter has an incompatible type: {param_name}",
+    ),
+    2003: ErrorDef(
+        name="UnresolvableFlowParam",
+        message_template="Could not resolve flow parameter: {param_name}",
+    ),
+    3001: ErrorDef(
+        name="NodeExecutionFailed",
+        message_template="Node execution failed for call {call_id}: {reason}",
+    ),
+    3002: ErrorDef(
+        name="NodeTypeMismatch",
+        message_template="Node argument type mismatch for {node_id}.{param_name}",
+    ),
+    3003: ErrorDef(
+        name="UndecoratedNodeCall",
+        message_template="Undecorated callable cannot be recorded as a node: {callable_name}",
+    ),
+    4001: ErrorDef(
+        name="InvoiceSchemaInvalid",
+        message_template="Invoice schema validation failed: {reason}",
+    ),
+    4002: ErrorDef(
+        name="MetadataDefinitionInvalid",
+        message_template="Metadata definition validation failed: {reason}",
+    ),
+    4003: ErrorDef(
+        name="RequiredArtifactMissing",
+        message_template="Required output artifact is missing: {path}",
+    ),
+    5001: ErrorDef(
+        name="InternalInvariantViolation",
+        message_template="Internal rdetoolkit invariant failed: {reason}",
+    ),
+}
+
+WARNING_CATALOG: dict[int, WarningDef] = {
+    1001: WarningDef(
+        name="ModeOverriddenByFileDetection",
+        message_template="Configured mode was overridden by input file detection: {mode}",
+    ),
+}
+
+E_CYCLE = "E_CYCLE"
+E_UNCONNECTED_INPUT = "E_UNCONNECTED_INPUT"
+E_DUPLICATE_ID = "E_DUPLICATE_ID"
+E_AMBIGUOUS_DEPENDENCY = "E_AMBIGUOUS_DEPENDENCY"
+
+ErrorCode.__doc__ = (
+    "Deprecated legacy v2 draft error codes. 廃番、Design §9 参照. "
+    "Use ERROR_CATALOG int codes instead."
+)
+
+
+def _coerce_error_name(code: int | str, name: str | None) -> str:
+    if name is not None:
+        return name
+    if isinstance(code, int):
+        catalog_entry = ERROR_CATALOG.get(code)
+        if catalog_entry is not None:
+            return catalog_entry.name
+        return f"E{code}"
+    return code
+
+
+def _rde_error_init(
+    self: RdeError,
+    *,
+    code: int | str,
+    message: str,
+    name: str | None = None,
+    detail: dict[str, _Any] | None = None,
+) -> None:
+    error_name = _coerce_error_name(code, name)
+    error_self: _Any = self
+    error_self.code = code
+    error_self.name = error_name
+    error_self.message = message
+    error_self.detail = detail
+    Exception.__init__(self, f"[{error_name}] {message}")
+
+
+def _rde_error_to_dict(self: RdeError) -> dict[str, _Any]:
+    error_self: _Any = self
+    error_dict: dict[str, _Any] = {
+        "code": error_self.code,
+        "name": error_self.name,
+        "message": error_self.message,
+    }
+    detail = error_self.detail
+    if detail is not None:
+        error_dict["detail"] = detail
+    return error_dict
+
+
+def _rde_execution_error_init(
+    self: RdeExecutionError,
+    *,
+    code: int | str,
+    message: str,
+    name: str | None = None,
+    detail: dict[str, _Any] | None = None,
+    call_id: str | None = None,
+) -> None:
+    error_self: _Any = self
+    error_self.call_id = call_id
+    _rde_error_init(self, code=code, name=name, message=message, detail=detail)
+
+
+RdeError.__doc__ = (
+    "Base exception for rdetoolkit v2. "
+    "The canonical v2 form carries code: int and name: str; legacy string codes remain accepted."
+)
+RdeError.__init__ = _rde_error_init  # type: ignore[method-assign]
+RdeError.to_dict = _rde_error_to_dict  # type: ignore[method-assign]
+RdeExecutionError.__init__ = _rde_execution_error_init  # type: ignore[assignment, method-assign]
+RdeExecutionError.__doc__ = (
+    "Execution error for v2 3xxx codes. Preserves Python __cause__ when raised with 'from'."
+)
+RdeConfigError.__doc__ = "Configuration or usage error for v2 1xxx codes."
+
+
+class RdeRegistryError(RdeError):
+    """Registration or declaration error for v2 2xxx codes."""
+
+
+class RdeValidationError(RdeError):
+    """Validation error for v2 4xxx codes."""
+
+
+class RdeInternalError(RdeError):
+    """Internal rdetoolkit error for v2 5xxx codes."""

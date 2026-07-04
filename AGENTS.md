@@ -224,7 +224,22 @@ git commit -m "feat(v2/phase-c): eager @node/@flow with registry (Design §3.1-3
 git commit -m "test(v2/phase-c): PBT for provenance edge reconstruction invariants"
 ```
 
-### 6.4 Pull Request Rules
+### 6.4 Worktree Rules
+
+- **Create worktrees with `git gtr new <branch> --from <base>`** — never plain
+  `git worktree add`. gtr's postcreate hooks provide, per worktree:
+  `.venv` (uv, Python pinned), the symlink `local -> ~/github/rdetoolkit/local`,
+  and a copy of `.claude/`.
+- `local/develop/` therefore has exactly **one canonical copy** in the main repo
+  (`~/github/rdetoolkit/local/develop/`), shared by every worktree via the
+  symlink. Never create a real `local/` directory inside a worktree; if one
+  exists (worktree made without gtr), sync its contents back to the main repo
+  and replace it with the symlink.
+- **`local/develop/` is never committed or pushed.** It is gitignored (`local/`);
+  `git add -f local/...` is forbidden. Session artifacts (surveys, task files,
+  decision records) stay under `local/develop/` as local-only documents.
+
+### 6.5 Pull Request Rules
 
 - **Never target `main` directly.** PRs must target `develop/v<x.y.z>` or `develop/v2`.
   (Sole exception: the Phase A "B5 settlement" PR that restores/hardens v1 tests
