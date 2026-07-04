@@ -20,9 +20,9 @@ class OutputContext:
     thumbnail: Path
     raw: Path
     logs: Path
-    attachment: Path = ...
-    nonshared_raw: Path = ...
-    invoice: Path = ...
+    attachment: Path
+    nonshared_raw: Path
+    invoice: Path
     @classmethod
     def from_resource_paths(cls, resource_paths: Any) -> OutputContext: ...
     def save_csv(self, df: Any, filename: str) -> Path: ...
@@ -77,3 +77,23 @@ class RdeConfig(BaseModel):
     policy: V2PolicySettings = Field(default_factory=V2PolicySettings)
     provenance: V2ProvenanceSettings = Field(default_factory=V2ProvenanceSettings)
     custom: dict[str, Any] = Field(default_factory=dict)
+
+def _require_simple_filename(filename: str) -> None: ...
+def _build_output_context(
+    *,
+    struct: Path,
+    meta: Path,
+    main_image: Path,
+    other_image: Path,
+    thumbnail: Path,
+    raw: Path,
+    logs: Path,
+    attachment: Path,
+    nonshared_raw: Path,
+    invoice: Path,
+) -> OutputContext: ...
+
+from rdetoolkit.core.context import RunContext as RunContext
+from rdetoolkit.report.events import Event as Event
+from rdetoolkit.report.events import EventSink as EventSink
+from rdetoolkit.report.run_report import RunReport as RunReport

@@ -347,3 +347,71 @@ class TestOutputContextDocumentedExclusions:
             "OutputContext must NOT have 'temp'. "
             "Not in the canonical 10 dirs; use the standard tempfile module."
         )
+
+
+class TestFactoryOnlyConstruction:
+    """Design §4.2: OutputContext is factory-only (PR #501 review follow-up)."""
+
+    def test_direct_construction_is_rejected(self, tmp_path) -> None:
+        """OutputContext(...) without the factory must raise TypeError."""
+        from pathlib import Path
+
+        from rdetoolkit.types import OutputContext
+
+        kwargs = {
+            name: tmp_path / name
+            for name in (
+                "struct", "meta", "main_image", "other_image", "thumbnail",
+                "raw", "logs", "attachment", "nonshared_raw", "invoice",
+            )
+        }
+        with pytest.raises(TypeError, match="from_resource_paths"):
+            OutputContext(**kwargs)
+
+    def test_all_ten_fields_are_required(self) -> None:
+        """No field may fall back to a relative default path."""
+        import dataclasses
+
+        from rdetoolkit.types import OutputContext
+
+        for f in dataclasses.fields(OutputContext):
+            assert f.default is dataclasses.MISSING, (
+                f"OutputContext.{f.name} must not have a default"
+            )
+
+
+class TestFilenameTraversalGuard:
+    """Artifact filenames must be simple basenames (PR #501 review follow-up)."""
+
+    @pytest.mark.parametrize(
+        "bad_name",
+        ["../escape.csv", "sub/dir.csv", "/abs.csv", "..", "", "a\\b.csv"],
+    )
+    def test_save_bytes_rejects_path_components(self, tmp_path, bad_name) -> None:
+        from types import SimpleNamespace
+
+        from rdetoolkit.types import OutputContext
+
+        ctx = OutputContext.from_resource_paths(
+            SimpleNamespace(**{
+                name: tmp_path / name
+                for name in (
+                    "struct", "meta", "main_image", "other_image", "thumbnail",
+                    "raw", "logs", "attachment", "nonshared_raw", "invoice",
+                )
+            })
+        )
+        with pytest.raises(ValueError, match="basename"):
+            ctx.save_bytes(b"x", bad_name)
+
+
+class TestCanonicalReExports:
+    """Design §4.1.1: rdetoolkit.types is the single schema entry point."""
+
+    def test_run_context_event_run_report_importable_from_types(self) -> None:
+        from rdetoolkit.types import Event, EventSink, RunContext, RunReport  # noqa: F401
+
+        assert RunContext is not None
+        assert Event is not None
+        assert EventSink is not None
+        assert RunReport is not None

@@ -9,6 +9,14 @@ from pathlib import Path
 from typing import Any, Protocol, TextIO, runtime_checkable
 
 
+def _require_nonempty(value: str, name: str) -> str:
+    """Validate that a required event field is a non-empty string."""
+    if not value:
+        msg = f"Event field {name!r} must be a non-empty string (Design §8.1)"
+        raise ValueError(msg)
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class Event:
     """Observable event emitted during a v2 run.
@@ -39,6 +47,7 @@ class Event:
         Returns:
             Event named ``run.started``.
         """
+        _require_nonempty(run_id, "run_id")
         return cls(run_id=run_id, name="run.started")
 
     @classmethod
@@ -52,6 +61,7 @@ class Event:
         Returns:
             Event named ``run.completed``.
         """
+        _require_nonempty(run_id, "run_id")
         payload = {} if status is None else {"status": status}
         return cls(run_id=run_id, name="run.completed", payload=payload)
 
@@ -66,6 +76,7 @@ class Event:
         Returns:
             Event named ``iteration.started``.
         """
+        _require_nonempty(run_id, "run_id")
         return cls(
             run_id=run_id,
             name="iteration.started",
@@ -83,6 +94,7 @@ class Event:
         Returns:
             Event named ``iteration.completed``.
         """
+        _require_nonempty(run_id, "run_id")
         return cls(
             run_id=run_id,
             name="iteration.completed",
@@ -90,82 +102,65 @@ class Event:
         )
 
     @classmethod
-    def node_started(
-        cls,
-        node_id: str | None = None,
-        *,
-        run_id: str = "",
-        call_id: str | None = None,
-    ) -> Event:
+    def node_started(cls, *, run_id: str, node_id: str, call_id: str) -> Event:
         """Create a node.started event.
 
         Args:
-            run_id: Run identifier.
-            node_id: Node identifier.
-            call_id: Runtime call identifier.
+            run_id: Run identifier (required, non-empty).
+            node_id: Node identifier (required, non-empty).
+            call_id: Runtime call identifier (required, non-empty).
 
         Returns:
             Event named ``node.started``.
         """
-        node_id = node_id or ""
+        _require_nonempty(run_id, "run_id")
+        _require_nonempty(node_id, "node_id")
+        _require_nonempty(call_id, "call_id")
         return cls(
             run_id=run_id,
             name="node.started",
             node_id=node_id,
-            payload={"call_id": call_id or f"{node_id}#1"},
+            payload={"call_id": call_id},
         )
 
     @classmethod
     def node_completed(
         cls,
-        node_id: str | None = None,
         *,
-        run_id: str = "",
-        call_id: str | None = None,
+        run_id: str,
+        node_id: str,
+        call_id: str,
         duration_ms: float = 0.0,
     ) -> Event:
         """Create a node.completed event.
 
         Args:
-            run_id: Run identifier.
-            node_id: Node identifier.
-            call_id: Runtime call identifier.
+            run_id: Run identifier (required, non-empty).
+            node_id: Node identifier (required, non-empty).
+            call_id: Runtime call identifier (required, non-empty).
             duration_ms: Execution duration in milliseconds.
 
         Returns:
             Event named ``node.completed``.
         """
-        node_id = node_id or ""
+        _require_nonempty(run_id, "run_id")
+        _require_nonempty(node_id, "node_id")
+        _require_nonempty(call_id, "call_id")
         return cls(
             run_id=run_id,
             name="node.completed",
             node_id=node_id,
-            payload={"call_id": call_id or f"{node_id}#1", "duration_ms": duration_ms},
+            payload={"call_id": call_id, "duration_ms": duration_ms},
         )
 
-    @classmethod
-    def node_finished(cls, node_id: str, *, duration: float) -> Event:
-        """Create a legacy-compatible completed-node event.
-
-        Args:
-            node_id: Node identifier.
-            duration: Execution duration in seconds.
-
-        Returns:
-            Event named ``node.completed`` with millisecond duration.
-        """
-        return cls.node_completed(
-            node_id=node_id,
-            duration_ms=duration * 1000,
-        )
 
     @classmethod
     def node_failed(
         cls,
-        node_id: str | None = None,
         *,
-        run_id: str = "",
-        call_id: str | None = None,
+        run_id: str,
+        node_id: str,
+        call_id: str,
         error: Exception | None = None,
         error_type: str = "",
         error_msg: str = "",
@@ -173,17 +168,19 @@ class Event:
         """Create a node.failed event.
 
         Args:
-            run_id: Run identifier.
-            node_id: Node identifier.
-            call_id: Runtime call identifier.
-            error: Optional exception for legacy callers.
+            run_id: Run identifier (required, non-empty).
+            node_id: Node identifier (required, non-empty).
+            call_id: Runtime call identifier (required, non-empty).
+            error: Optional exception; overrides ``error_type``/``error_msg``.
             error_type: Exception class name.
             error_msg: Exception message.
 
         Returns:
             Event named ``node.failed``.
         """
-        node_id = node_id or ""
+        _require_nonempty(run_id, "run_id")
+        _require_nonempty(node_id, "node_id")
+        _require_nonempty(call_id, "call_id")
         if error is not None:
             error_type = type(error).__name__
             error_msg = str(error)
@@ -192,29 +189,12 @@ class Event:
             name="node.failed",
             node_id=node_id,
             payload={
-                "call_id": call_id or f"{node_id}#1",
+                "call_id": call_id,
                 "error_type": error_type,
                 "error_msg": error_msg,
             },
         )
 
-    @classmethod
-    def node_skipped(cls, node_id: str, *, reason: str) -> Event:
-        """Create a legacy-compatible skipped-node event.
-
-        Args:
-            node_id: Node identifier.
-            reason: Skip reason.
-
-        Returns:
-            Event named ``node.skipped``.
-        """
-        return cls(
-            run_id="",
-            name="node.skipped",
-            node_id=node_id,
-            payload={"reason": reason},
-        )
 
     @classmethod
     def warning(cls, *, run_id: str, code: int, message: str) -> Event:
@@ -228,6 +208,7 @@ class Event:
         Returns:
             Event named ``warning``.
         """
+        _require_nonempty(run_id, "run_id")
         return cls(
             run_id=run_id,
             name="warning",

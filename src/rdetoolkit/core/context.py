@@ -48,7 +48,8 @@ def get_reserved_mapping() -> dict[str, type]:
 
     This is the public API for accessing the RESERVED constant.
     """
-    return _get_reserved()
+    # Defensive copy: callers must not be able to mutate DI behavior globally.
+    return dict(_get_reserved())
 
 
 # Module-level RESERVED for direct import.

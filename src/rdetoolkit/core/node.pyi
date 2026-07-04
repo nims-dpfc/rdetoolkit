@@ -9,8 +9,8 @@ class NodeSpec:
     id: str
     name: str
     fn: Callable[..., Any]
-    input_schema: dict[str, type]
-    output_schema: dict[str, type]
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
     tags: tuple[str, ...]
     version: str
     idempotent: bool

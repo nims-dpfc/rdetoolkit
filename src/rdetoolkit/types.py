@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +34,23 @@ class InputPaths:
     invoice: Path
     tasksupport: Path
     raw: Path | None = None
+
+
+_FACTORY_TOKEN: object = object()
+
+
+def _require_simple_filename(filename: str) -> None:
+    """Reject path traversal in artifact filenames (must be a bare basename)."""
+    from pathlib import PurePosixPath, PureWindowsPath  # noqa: PLC0415
+
+    if (
+        not filename
+        or filename in {".", ".."}
+        or PurePosixPath(filename).name != filename
+        or PureWindowsPath(filename).name != filename
+    ):
+        msg = f"filename must be a simple basename without path components: {filename!r}"
+        raise ValueError(msg)
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,9 +101,18 @@ class OutputContext:
     thumbnail: Path
     raw: Path
     logs: Path
-    attachment: Path = Path("attachment")
-    nonshared_raw: Path = Path("nonshared_raw")
-    invoice: Path = Path("invoice")
+    attachment: Path
+    nonshared_raw: Path
+    invoice: Path
+    _token: InitVar[object | None] = None
+
+    def __post_init__(self, _token: object | None) -> None:
+        if _token is not _FACTORY_TOKEN:
+            msg = (
+                "OutputContext cannot be constructed directly; use "
+                "OutputContext.from_resource_paths() (Design §4.2: factory-only)"
+            )
+            raise TypeError(msg)
 
     @classmethod
     def from_resource_paths(cls, resource_paths: Any) -> OutputContext:
@@ -112,6 +138,7 @@ class OutputContext:
             raw=resource_paths.raw,
             invoice=resource_paths.invoice,
             logs=resource_paths.logs,
+            _token=_FACTORY_TOKEN,
         )
 
     def save_csv(self, df: Any, filename: str) -> Path:
@@ -124,6 +151,7 @@ class OutputContext:
         Returns:
             Path to the written CSV file.
         """
+        _require_simple_filename(filename)
         self.struct.mkdir(parents=True, exist_ok=True)
         dest = self.struct / filename
         df.to_csv(dest, index=False)
@@ -151,6 +179,7 @@ class OutputContext:
         Returns:
             Path to the written file.
         """
+        _require_simple_filename(filename)
         self.main_image.mkdir(parents=True, exist_ok=True)
         dest = self.main_image / filename
         if hasattr(fig, "write_image"):
@@ -172,6 +201,7 @@ class OutputContext:
         Returns:
             Path to the written file.
         """
+        _require_simple_filename(filename)
         self.struct.mkdir(parents=True, exist_ok=True)
         dest = self.struct / filename
         dest.write_bytes(content)
@@ -349,3 +379,43 @@ class RdeConfig(BaseModel):
     policy: V2PolicySettings = Field(default_factory=V2PolicySettings)
     provenance: V2ProvenanceSettings = Field(default_factory=V2ProvenanceSettings)
     custom: dict[str, Any] = Field(default_factory=dict)
+
+
+def _build_output_context(
+    *,
+    struct: Path,
+    meta: Path,
+    main_image: Path,
+    other_image: Path,
+    thumbnail: Path,
+    raw: Path,
+    logs: Path,
+    attachment: Path,
+    nonshared_raw: Path,
+    invoice: Path,
+) -> OutputContext:
+    """Package-internal constructor for rdetoolkit-owned factories.
+
+    User code must go through ``OutputContext.from_resource_paths()``.
+    """
+    return OutputContext(
+        struct=struct,
+        meta=meta,
+        main_image=main_image,
+        other_image=other_image,
+        thumbnail=thumbnail,
+        raw=raw,
+        logs=logs,
+        attachment=attachment,
+        nonshared_raw=nonshared_raw,
+        invoice=invoice,
+        _token=_FACTORY_TOKEN,
+    )
+
+
+# --- Canonical v2 schema re-exports (Design §4.1.1) --------------------------
+# ``rdetoolkit.types`` is the single canonical entry point for v2 schema types.
+# NodeCallRecord and ValueRef join this list in Phase C (provenance).
+from rdetoolkit.core.context import RunContext  # noqa: E402, F401
+from rdetoolkit.report.events import Event, EventSink  # noqa: E402, F401
+from rdetoolkit.report.run_report import RunReport  # noqa: E402, F401

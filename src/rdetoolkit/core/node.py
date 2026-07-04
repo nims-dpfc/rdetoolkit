@@ -35,8 +35,8 @@ class NodeSpec:
     id: str
     name: str
     fn: Callable[..., Any]
-    input_schema: dict[str, type]
-    output_schema: dict[str, type]
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
     tags: tuple[str, ...]
     version: str
     idempotent: bool
@@ -56,7 +56,7 @@ def _resolve_type_hints(func: Callable[..., Any]) -> dict[str, Any]:
         return {}
 
 
-def _build_output_schema(return_type: Any) -> dict[str, type]:
+def _build_output_schema(return_type: Any) -> dict[str, Any]:
     """Build an output_schema dict from a resolved return type annotation.
 
     - ``None`` / ``NoneType`` -> ``{}``
@@ -91,14 +91,14 @@ def _build_node_spec(
     hints = _resolve_type_hints(func)
 
     # Build input_schema with actual type objects
-    input_schema: dict[str, type] = {}
+    input_schema: dict[str, Any] = {}
     for name in sig.parameters:
         if name in hints:
             input_schema[name] = hints[name]
         else:
             input_schema[name] = Any
 
-    # Build output_schema as dict[str, type]
+    # Build output_schema as dict[str, Any]
     return_type = hints.get("return")
     output_schema = _build_output_schema(return_type)
 

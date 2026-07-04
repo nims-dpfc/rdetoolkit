@@ -19,6 +19,27 @@ def _dummy_fn() -> None:
 # ── 1.5.1: RunContext construction and field access ─────────────────────
 
 
+def _make_output_context() -> OutputContext:
+    """Build an OutputContext through the mandatory factory (Design §4.2)."""
+    from types import SimpleNamespace
+
+    root = Path("/out")
+    return OutputContext.from_resource_paths(
+        SimpleNamespace(
+            struct=root / "struct",
+            meta=root / "meta",
+            main_image=root / "main",
+            other_image=root / "other",
+            thumbnail=root / "thumb",
+            raw=root / "raw",
+            logs=root / "logs",
+            attachment=root / "attachment",
+            nonshared_raw=root / "nonshared_raw",
+            invoice=root / "invoice",
+        )
+    )
+
+
 class TestRunContext:
     """Tests for RunContext construction and field access."""
 
@@ -34,15 +55,7 @@ class TestRunContext:
 
     def test_construction_with_output_context(self) -> None:
         """RunContext stores OutputContext and makes it accessible."""
-        oc = OutputContext(
-            raw=Path("/out/raw"),
-            struct=Path("/out/struct"),
-            main_image=Path("/out/main"),
-            other_image=Path("/out/other"),
-            meta=Path("/out/meta"),
-            thumbnail=Path("/out/thumb"),
-            logs=Path("/out/logs"),
-        )
+        oc = _make_output_context()
         ctx = RunContext(output_context=oc)
         assert ctx.output_context is oc
 
@@ -53,15 +66,7 @@ class TestRunContext:
             invoice=Path("/data/invoice"),
             tasksupport=Path("/data/task"),
         )
-        oc = OutputContext(
-            raw=Path("/out/raw"),
-            struct=Path("/out/struct"),
-            main_image=Path("/out/main"),
-            other_image=Path("/out/other"),
-            meta=Path("/out/meta"),
-            thumbnail=Path("/out/thumb"),
-            logs=Path("/out/logs"),
-        )
+        oc = _make_output_context()
         ctx = RunContext(input_paths=ip, output_context=oc)
         assert ctx.input_paths is ip
         assert ctx.output_context is oc

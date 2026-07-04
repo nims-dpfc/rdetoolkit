@@ -19,37 +19,27 @@ class Event:
     @classmethod
     def iteration_completed(cls, *, run_id: str, index: int) -> Event: ...
     @classmethod
-    def node_started(
-        cls,
-        node_id: str | None = None,
-        *,
-        run_id: str = ...,
-        call_id: str | None = None,
-    ) -> Event: ...
+    def node_started(cls, *, run_id: str, node_id: str, call_id: str) -> Event: ...
     @classmethod
     def node_completed(
         cls,
-        node_id: str | None = None,
         *,
-        run_id: str = ...,
-        call_id: str | None = None,
+        run_id: str,
+        node_id: str,
+        call_id: str,
         duration_ms: float = ...,
     ) -> Event: ...
     @classmethod
-    def node_finished(cls, node_id: str, *, duration: float) -> Event: ...
-    @classmethod
     def node_failed(
         cls,
-        node_id: str | None = None,
         *,
-        run_id: str = ...,
-        call_id: str | None = None,
+        run_id: str,
+        node_id: str,
+        call_id: str,
         error: Exception | None = None,
         error_type: str = ...,
         error_msg: str = ...,
     ) -> Event: ...
-    @classmethod
-    def node_skipped(cls, node_id: str, *, reason: str) -> Event: ...
     @classmethod
     def warning(cls, *, run_id: str, code: int, message: str) -> Event: ...
     def to_dict(self) -> dict[str, Any]: ...
