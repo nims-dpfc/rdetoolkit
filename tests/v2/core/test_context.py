@@ -9,10 +9,10 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from rdetoolkit.core.context import RESERVED, RunContext
+from rdetoolkit.core.context import RunContext
 from rdetoolkit.core.node import NodeSpec, node
 from rdetoolkit.errors import UnconnectedInputError
-from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext
+from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
 
 
 def _dummy_fn() -> None:
@@ -88,19 +88,19 @@ class TestRunContext:
         assert reserved["paths"] is ip
 
     def test_reserved_values_excludes_none(self) -> None:
-        """reserved_values() does not include None-valued entries (except 'context')."""
+        """reserved_values() does not include None-valued entries."""
         ctx = RunContext()
         reserved = ctx.reserved_values()
         assert "paths" not in reserved
         assert "output" not in reserved
-        assert "context" in reserved
+        assert "out" not in reserved
+        assert "context" not in reserved
 
     def test_self_reference_in_reserved_values(self) -> None:
-        """RunContext itself is available as reserved_values()['context']."""
+        """RunContext itself is not a reserved injectable value."""
         ctx = RunContext()
         reserved = ctx.reserved_values()
-        assert "context" in reserved
-        assert reserved["context"] is ctx
+        assert "context" not in reserved
 
 
 # ── 1.5.3: DI resolution algorithm ─────────────────────────────────────
@@ -239,12 +239,12 @@ class TestResolveInputs:
         assert resolved["paths"] is ip
 
     def test_output_context_reserved_resolution(self) -> None:
-        """OutputContext is injected as a reserved type when name='output'."""
+        """OutputContext is injected as a reserved type when name='out'."""
         from rdetoolkit.core.context import resolve_inputs
         from rdetoolkit.core.dag import DAG
 
         dag = DAG()
-        spec = _make_spec("writer", {"output": OutputContext})
+        spec = _make_spec("writer", {"out": OutputContext})
         dag.add_node("writer", spec)
 
         oc = OutputContext(
@@ -260,10 +260,10 @@ class TestResolveInputs:
         results: dict[str, dict[str, Any]] = {}
 
         resolved = resolve_inputs(spec, dag, results, ctx)
-        assert resolved["output"] is oc
+        assert resolved["out"] is oc
 
     def test_run_context_self_injection(self) -> None:
-        """RunContext itself can be injected as a reserved type with name='context'."""
+        """RunContext itself is not injectable as a reserved type."""
         from rdetoolkit.core.context import resolve_inputs
         from rdetoolkit.core.dag import DAG
 
@@ -274,8 +274,8 @@ class TestResolveInputs:
         ctx = RunContext()
         results: dict[str, dict[str, Any]] = {}
 
-        resolved = resolve_inputs(spec, dag, results, ctx)
-        assert resolved["context"] is ctx
+        with pytest.raises(UnconnectedInputError):
+            resolve_inputs(spec, dag, results, ctx)
 
     def test_tuple_output_edge_resolution(self) -> None:
         """DAG edge with positional output ports (_0, _1) resolves correctly."""
@@ -344,6 +344,7 @@ class TestResolveInputs:
             "multi_reserved",
             {
                 "paths": InputPaths,
+                "config": RdeConfig,
                 "invoice": InvoiceData,
                 "iteration": IterationInfo,
             },
@@ -357,11 +358,13 @@ class TestResolveInputs:
         )
         inv = InvoiceData(raw={"key": "val"}, mode="invoice")
         itr = IterationInfo(index=0, total=5, mode="invoice")
-        ctx = RunContext(input_paths=ip, invoice=inv, iteration=itr)
+        cfg = RdeConfig()
+        ctx = RunContext(input_paths=ip, config=cfg, invoice=inv, iteration=itr)
         results: dict[str, dict[str, Any]] = {}
 
         resolved = resolve_inputs(spec, dag, results, ctx)
         assert resolved["paths"] is ip
+        assert resolved["config"] is cfg
         assert resolved["invoice"] is inv
         assert resolved["iteration"] is itr
 

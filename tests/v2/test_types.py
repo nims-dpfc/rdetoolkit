@@ -6,15 +6,15 @@ EP Table:
 | InputPaths()      | valid 3 paths       | normal construction     | fields accessible       | TC-EP-001   |
 | InputPaths()      | missing required    | negative                | TypeError               | TC-EP-002   |
 | InputPaths.field=  | assign after init   | immutability check      | FrozenInstanceError     | TC-EP-003   |
-| OutputContext()   | valid paths         | normal construction     | fields accessible       | TC-EP-004   |
+| OutputContext.from_resource_paths | valid paths | normal construction     | fields accessible       | TC-EP-004   |
 | OutputContext()   | missing required    | negative                | TypeError               | TC-EP-005   |
 | OutputContext     | immutability        | frozen check            | FrozenInstanceError     | TC-EP-006   |
 | OutputContext     | save_csv            | method API              | file written            | TC-EP-040   |
 | OutputContext     | save_meta           | method API              | JSON written            | TC-EP-041   |
-| OutputContext     | save_file           | method API              | bytes written           | TC-EP-042   |
+| OutputContext     | save_bytes          | method API              | bytes written           | TC-EP-042   |
 | OutputContext     | save_thumbnail      | method API              | file copied             | TC-EP-043   |
 | OutputContext     | save_main_image     | method API              | file copied             | TC-EP-044   |
-| OutputContext     | save_raw            | method API              | file copied             | TC-EP-045   |
+| OutputContext     | copy_raw            | method API              | file copied             | TC-EP-045   |
 | Metadata()        | custom/basic        | design spec fields      | fields accessible       | TC-EP-007   |
 | Metadata()        | empty               | boundary                | empty custom            | TC-EP-008   |
 | Metadata.set/get  | method API          | design spec             | set/get work            | TC-EP-046   |
@@ -35,6 +35,7 @@ BV Table:
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -95,31 +96,30 @@ class TestOutputContext:
     def _make_ctx(self, tmp_path: Path) -> "OutputContext":
         from rdetoolkit.types import OutputContext
 
-        return OutputContext(
+        return OutputContext.from_resource_paths(
+            SimpleNamespace(
             raw=tmp_path / "raw",
+            nonshared_raw=tmp_path / "nonshared_raw",
             struct=tmp_path / "struct",
             main_image=tmp_path / "main_image",
             other_image=tmp_path / "other_image",
             meta=tmp_path / "meta",
             thumbnail=tmp_path / "thumbnail",
+            attachment=tmp_path / "attachment",
+            invoice=tmp_path / "invoice",
             logs=tmp_path / "logs",
+            )
         )
 
     def test_construction_with_valid_paths__tc_ep_004(self) -> None:
-        """TC-EP-004: OutputContext constructed with valid fields."""
-        from rdetoolkit.types import OutputContext
+        """TC-EP-004: OutputContext factory constructs the canonical fields."""
 
-        ctx = OutputContext(
-            raw=Path("/out/raw"),
-            struct=Path("/out/struct"),
-            main_image=Path("/out/main_image"),
-            other_image=Path("/out/other_image"),
-            meta=Path("/out/meta"),
-            thumbnail=Path("/out/thumbnail"),
-            logs=Path("/out/logs"),
-        )
+        ctx = self._make_ctx(Path("/out"))
 
         assert ctx.raw == Path("/out/raw")
+        assert ctx.nonshared_raw == Path("/out/nonshared_raw")
+        assert ctx.attachment == Path("/out/attachment")
+        assert ctx.invoice == Path("/out/invoice")
         assert ctx.struct == Path("/out/struct")
         assert ctx.main_image == Path("/out/main_image")
         assert ctx.other_image == Path("/out/other_image")
@@ -127,7 +127,7 @@ class TestOutputContext:
         assert ctx.thumbnail == Path("/out/thumbnail")
         assert ctx.logs == Path("/out/logs")
 
-    def test_construction_missing_required_raises__tc_ep_005(self) -> None:
+    def test_direct_construction_missing_required_raises__tc_ep_005(self) -> None:
         """TC-EP-005: OutputContext without required fields raises TypeError."""
         from rdetoolkit.types import OutputContext
 
@@ -136,41 +136,22 @@ class TestOutputContext:
 
     def test_immutability__tc_ep_006(self) -> None:
         """TC-EP-006: OutputContext fields cannot be reassigned (frozen)."""
-        from rdetoolkit.types import OutputContext
-
-        ctx = OutputContext(
-            raw=Path("/out/raw"),
-            struct=Path("/out/struct"),
-            main_image=Path("/out/main_image"),
-            other_image=Path("/out/other_image"),
-            meta=Path("/out/meta"),
-            thumbnail=Path("/out/thumbnail"),
-            logs=Path("/out/logs"),
-        )
+        ctx = self._make_ctx(Path("/out"))
 
         with pytest.raises((AttributeError, TypeError)):
             ctx.raw = Path("/other")  # type: ignore[misc]
 
-    def test_all_none_optionals__tc_bv_002(self) -> None:
-        """TC-BV-002: OutputContext with required fields only."""
-        from rdetoolkit.types import OutputContext
-
-        ctx = OutputContext(
-            raw=Path("/out/raw"),
-            struct=Path("/out/struct"),
-            main_image=Path("/out/main_image"),
-            other_image=Path("/out/other_image"),
-            meta=Path("/out/meta"),
-            thumbnail=Path("/out/thumbnail"),
-            logs=Path("/out/logs"),
-        )
+    def test_all_canonical_directories__tc_bv_002(self) -> None:
+        """TC-BV-002: OutputContext exposes all canonical directories."""
+        ctx = self._make_ctx(Path("/out"))
 
         assert ctx.raw == Path("/out/raw")
+        assert ctx.attachment == Path("/out/attachment")
 
-    def test_save_file__tc_ep_042(self, tmp_path: Path) -> None:
-        """TC-EP-042: save_file writes bytes to struct dir."""
+    def test_save_bytes__tc_ep_042(self, tmp_path: Path) -> None:
+        """TC-EP-042: save_bytes writes bytes to struct dir."""
         ctx = self._make_ctx(tmp_path)
-        result = ctx.save_file(b"hello", "test.bin")
+        result = ctx.save_bytes(b"hello", "test.bin")
         assert result.exists()
         assert result.read_bytes() == b"hello"
         assert result.parent == tmp_path / "struct"
@@ -194,12 +175,12 @@ class TestOutputContext:
         assert result.exists()
         assert result.parent == tmp_path / "main_image"
 
-    def test_save_raw__tc_ep_045(self, tmp_path: Path) -> None:
-        """TC-EP-045: save_raw copies file to raw dir."""
+    def test_copy_raw__tc_ep_045(self, tmp_path: Path) -> None:
+        """TC-EP-045: copy_raw copies file to raw dir."""
         ctx = self._make_ctx(tmp_path)
         src = tmp_path / "data.raw"
         src.write_bytes(b"RAW")
-        result = ctx.save_raw(src)
+        result = ctx.copy_raw(src)
         assert result.exists()
         assert result.parent == tmp_path / "raw"
 
@@ -218,13 +199,15 @@ class TestOutputContext:
         assert data["key"] == "value"
 
     def test_has_method_api(self) -> None:
-        """OutputContext exposes method-based API (not just path bundle)."""
+        """OutputContext exposes canonical method-based API."""
         from rdetoolkit.types import OutputContext
 
-        methods = ["save_csv", "save_meta", "save_graph", "save_file",
-                    "save_thumbnail", "save_main_image", "save_raw"]
+        methods = ["save_csv", "save_meta", "save_graph", "save_bytes",
+                    "save_thumbnail", "save_main_image", "copy_raw"]
         for m in methods:
             assert hasattr(OutputContext, m), f"Missing method: {m}"
+        assert not hasattr(OutputContext, "save_file")
+        assert not hasattr(OutputContext, "save_raw")
 
 
 class TestMetadata:

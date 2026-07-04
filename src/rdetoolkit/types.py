@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, Field
+
 
 @dataclass(frozen=True, slots=True)
 class InputPaths:
@@ -25,11 +27,13 @@ class InputPaths:
         inputdata: Path to the input data directory.
         invoice: Path to the invoice directory.
         tasksupport: Path to the task support directory.
+        raw: Optional raw input directory for tile-oriented modes.
     """
 
     inputdata: Path
     invoice: Path
     tasksupport: Path
+    raw: Path | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,23 +43,76 @@ class OutputContext:
     Provides both directory paths and convenience methods for writing
     processed data to the correct output locations.
 
+    v1 ``RdeOutputResourcePath`` field coverage:
+        ``raw`` -> ``raw`` included.
+        ``nonshared_raw`` -> ``nonshared_raw`` included.
+        ``rawfiles`` excluded because it is an input file reference concept
+        handled by ``InputPaths`` or ``IterationInfo``.
+        ``struct`` -> ``struct`` included.
+        ``main_image`` -> ``main_image`` included.
+        ``other_image`` -> ``other_image`` included.
+        ``meta`` -> ``meta`` included.
+        ``thumbnail`` -> ``thumbnail`` included.
+        ``logs`` -> ``logs`` included.
+        ``invoice`` -> ``invoice`` included.
+        ``invoice_schema_json`` and ``invoice_org`` are covered under the
+        ``invoice`` directory.
+        ``smarttable_rowfile`` excluded as a SmartTable runtime artifact for
+        Phase D Runner or ``IterationInfo``.
+        ``temp`` excluded because Design §4.2 omits it; use ``tempfile``.
+        ``invoice_patch`` excluded as an advanced invoice patch feature outside
+        ``OutputContext``.
+        ``attachment`` -> ``attachment`` included.
+
     Attributes:
-        raw: Path to the raw data directory.
         struct: Path to the structured data directory.
+        meta: Path to the metadata directory.
         main_image: Path to the main image directory.
         other_image: Path to the other image directory.
-        meta: Path to the metadata directory.
         thumbnail: Path to the thumbnail directory.
+        attachment: Path to the attachment directory.
+        nonshared_raw: Path to the non-shared raw data directory.
+        raw: Path to the raw data directory.
+        invoice: Path to the invoice directory.
         logs: Path to the logs directory.
     """
 
-    raw: Path
     struct: Path
+    meta: Path
     main_image: Path
     other_image: Path
-    meta: Path
     thumbnail: Path
+    raw: Path
     logs: Path
+    attachment: Path = Path("attachment")
+    nonshared_raw: Path = Path("nonshared_raw")
+    invoice: Path = Path("invoice")
+
+    @classmethod
+    def from_resource_paths(cls, resource_paths: Any) -> OutputContext:
+        """Create an output context from v1 resource paths.
+
+        Directory creation is owned by the Runner. This factory only adapts the
+        path bundle into the canonical v2 output context.
+
+        Args:
+            resource_paths: Object exposing v1 ``RdeOutputResourcePath`` fields.
+
+        Returns:
+            Canonical v2 output context.
+        """
+        return cls(
+            struct=resource_paths.struct,
+            meta=resource_paths.meta,
+            main_image=resource_paths.main_image,
+            other_image=resource_paths.other_image,
+            thumbnail=resource_paths.thumbnail,
+            attachment=resource_paths.attachment,
+            nonshared_raw=resource_paths.nonshared_raw,
+            raw=resource_paths.raw,
+            invoice=resource_paths.invoice,
+            logs=resource_paths.logs,
+        )
 
     def save_csv(self, df: Any, filename: str) -> Path:
         """Save a DataFrame as CSV to the structured data directory.
@@ -105,7 +162,7 @@ class OutputContext:
             raise TypeError(msg)
         return dest
 
-    def save_file(self, content: bytes, filename: str) -> Path:
+    def save_bytes(self, content: bytes, filename: str) -> Path:
         """Save raw bytes to the structured data directory.
 
         Args:
@@ -148,7 +205,7 @@ class OutputContext:
         shutil.copy2(image_path, dest)
         return dest
 
-    def save_raw(self, source_path: Path) -> Path:
+    def copy_raw(self, source_path: Path) -> Path:
         """Copy a file to the raw data directory.
 
         Args:
@@ -245,3 +302,50 @@ class IterationInfo:
     index: int
     total: int
     mode: str
+
+
+class V2SystemSettings(BaseModel):
+    """Strict v2 system settings normalized by the Runner."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    extended_mode: str = "invoice"
+
+
+class V2ExecutionSettings(BaseModel):
+    """Strict v2 execution settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type_check: str = "off"
+
+
+class V2PolicySettings(BaseModel):
+    """Strict v2 policy settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    error_policy: str = "fail_fast"
+
+
+class V2ProvenanceSettings(BaseModel):
+    """Strict v2 provenance settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+
+
+class RdeConfig(BaseModel):
+    """Strict v2 Runner configuration.
+
+    This model is separate from the v1 ``models.config.Config`` contract.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    system: V2SystemSettings = Field(default_factory=V2SystemSettings)
+    execution: V2ExecutionSettings = Field(default_factory=V2ExecutionSettings)
+    policy: V2PolicySettings = Field(default_factory=V2PolicySettings)
+    provenance: V2ProvenanceSettings = Field(default_factory=V2ProvenanceSettings)
+    custom: dict[str, Any] = Field(default_factory=dict)

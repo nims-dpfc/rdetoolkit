@@ -1,7 +1,7 @@
 """V2 RunContext and DI resolution algorithm.
 
 RunContext holds Runner reserved types (InputPaths, OutputContext, etc.)
-that can be injected into @node functions via dependency injection.
+that can be injected at the flow boundary.
 
 DI Resolution Priority:
     1. DAG edge result (upstream @node output, match by param_name)
@@ -18,17 +18,23 @@ from rdetoolkit.errors import UnconnectedInputError
 if TYPE_CHECKING:
     from rdetoolkit.core.dag import DAG
     from rdetoolkit.core.node import NodeSpec
-    from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext
+    from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
 
 
 def _build_reserved() -> dict[str, type]:
     """Build the reserved name-to-type mapping (lazy to avoid circular imports)."""
-    from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext  # noqa: PLC0415
+    from rdetoolkit.types import (  # noqa: PLC0415
+        InputPaths,
+        InvoiceData,
+        IterationInfo,
+        OutputContext,
+        RdeConfig,
+    )
 
     return {
         "paths": InputPaths,
-        "output": OutputContext,
-        "context": RunContext,
+        "out": OutputContext,
+        "config": RdeConfig,
         "invoice": InvoiceData,
         "iteration": IterationInfo,
     }
@@ -66,40 +72,56 @@ class RunContext:
     """Runtime context providing Runner reserved types for DI resolution.
 
     Attributes:
-        input_paths: Input directory paths (if available).
-        output_context: Output directory context (if available).
+        paths: Input directory paths (if available).
+        out: Output directory context (if available).
+        config: Strict v2 config (if available).
         invoice: Parsed invoice data (if available).
         iteration: Current iteration info (if available).
     """
 
-    __slots__ = ("input_paths", "invoice", "iteration", "output_context")
+    __slots__ = ("config", "invoice", "iteration", "out", "paths")
 
     def __init__(
         self,
         *,
+        paths: InputPaths | None = None,
+        out: OutputContext | None = None,
+        config: RdeConfig | None = None,
         input_paths: InputPaths | None = None,
         output_context: OutputContext | None = None,
         invoice: InvoiceData | None = None,
         iteration: IterationInfo | None = None,
     ) -> None:
-        self.input_paths = input_paths
-        self.output_context = output_context
+        self.paths = paths if paths is not None else input_paths
+        self.out = out if out is not None else output_context
+        self.config = config
         self.invoice = invoice
         self.iteration = iteration
+
+    @property
+    def input_paths(self) -> InputPaths | None:
+        """Backward-compatible alias for the canonical ``paths`` slot."""
+        return self.paths
+
+    @property
+    def output_context(self) -> OutputContext | None:
+        """Backward-compatible alias for the canonical ``out`` slot."""
+        return self.out
 
     def reserved_values(self) -> dict[str, Any]:
         """Return a mapping of reserved param-name -> value.
 
         Returns:
             Dict with reserved parameter names as keys and their instances as
-            values.  ``context`` (RunContext itself) is always included.
-            ``None``-valued entries (except ``context``) are excluded.
+            values. ``None``-valued entries are excluded.
         """
-        mapping: dict[str, Any] = {"context": self}
-        if self.input_paths is not None:
-            mapping["paths"] = self.input_paths
-        if self.output_context is not None:
-            mapping["output"] = self.output_context
+        mapping: dict[str, Any] = {}
+        if self.paths is not None:
+            mapping["paths"] = self.paths
+        if self.out is not None:
+            mapping["out"] = self.out
+        if self.config is not None:
+            mapping["config"] = self.config
         if self.invoice is not None:
             mapping["invoice"] = self.invoice
         if self.iteration is not None:

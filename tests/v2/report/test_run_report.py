@@ -1,236 +1,118 @@
-"""Tests for Phase 2.1: RunReport structure and serialization.
-
-EP Table:
-| API                       | Partition               | Rationale           | Expected                       | Test ID    |
-|---------------------------|-------------------------|---------------------|--------------------------------|------------|
-| RunReport()               | valid fields            | normal construction | all fields accessible          | TC-EP-001  |
-| RunReport.to_json         | serialize               | JSON output         | valid JSON string              | TC-EP-002  |
-| RunReport.from_json       | deserialize             | round-trip          | same content as original       | TC-EP-003  |
-| RunReport.success_count   | mixed results           | aggregation         | counts only successes          | TC-EP-004  |
-| RunReport.failure_count   | mixed results           | aggregation         | counts only failures           | TC-EP-005  |
-| RunReport.to_json         | with events             | event serialization | events included in JSON        | TC-EP-006  |
-
-BV Table:
-| API                       | Boundary                | Rationale           | Expected                       | Test ID    |
-|---------------------------|-------------------------|---------------------|--------------------------------|------------|
-| RunReport()               | no node results         | empty run           | counts are 0                   | TC-BV-001  |
-| RunReport()               | all successes           | no failures         | failure_count == 0             | TC-BV-002  |
-| RunReport()               | all failures            | no successes        | success_count == 0             | TC-BV-003  |
-"""
+"""Tests for the canonical v2 RunReport schema."""
 
 from __future__ import annotations
 
+import dataclasses
 import json
+from typing import Any
 
 import pytest
 
-from rdetoolkit.report.events import Event
-from rdetoolkit.report.run_report import NodeResult, RunReport
+from rdetoolkit.report.run_report import RunReport
+
+
+def _make_report(**overrides: Any) -> RunReport:
+    """Build a minimal canonical RunReport for tests."""
+    defaults: dict[str, Any] = {
+        "run_id": "run-1",
+        "status": "success",
+        "flow_id": "pkg.mod:pipeline",
+        "mode": "invoice",
+        "started_at": "2026-01-01T00:00:00Z",
+        "duration_ms": 12.3,
+        "config_digest": "sha256:abcdef",
+        "iterations": [],
+        "warnings": [],
+    }
+    defaults.update(overrides)
+    return RunReport(**defaults)
 
 
 class TestRunReport:
     """Tests for the RunReport dataclass."""
 
     def test_construction__tc_ep_001(self) -> None:
-        """TC-EP-001: RunReport can be constructed with all fields."""
-        # Given: valid fields
-        results = [
-            NodeResult(node_id="a", status="success", duration=1.0),
-            NodeResult(node_id="b", status="failed", duration=0.5, error="oops"),
-        ]
+        """TC-EP-001: RunReport can be constructed with all canonical fields."""
+        # Given: valid canonical fields
+        iterations = [{"index": 0, "status": "success"}]
+        warnings = [{"code": 1001, "message": "mode overridden"}]
         # When: constructing a RunReport
-        report = RunReport(
-            phase="execute",
-            node_results=results,
-            duration=1.5,
-            events=[],
-        )
-        # Then: all fields accessible
-        assert report.phase == "execute"
-        assert len(report.node_results) == 2
-        assert report.duration == 1.5
-        assert report.events == []
+        report = _make_report(iterations=iterations, warnings=warnings)
+        # Then: all fields are accessible
+        assert report.schema_version == "1"
+        assert report.run_id == "run-1"
+        assert report.status == "success"
+        assert report.flow_id == "pkg.mod:pipeline"
+        assert report.mode == "invoice"
+        assert report.duration_ms == 12.3
+        assert report.config_digest == "sha256:abcdef"
+        assert report.iterations == iterations
+        assert report.warnings == warnings
+        assert report.error is None
 
     def test_to_json__tc_ep_002(self) -> None:
-        """TC-EP-002: RunReport serializes to valid JSON."""
+        """TC-EP-002: RunReport serializes to valid canonical JSON."""
         # Given: a RunReport
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-            ],
-            duration=1.0,
-            events=[],
-        )
+        report = _make_report()
         # When: serializing to JSON
         json_str = report.to_json()
-        # Then: it is valid JSON with expected fields
+        # Then: it is valid JSON with schema_version first
         data = json.loads(json_str)
-        assert data["phase"] == "execute"
-        assert len(data["node_results"]) == 1
-        assert data["node_results"][0]["node_id"] == "a"
-        assert data["duration"] == 1.0
+        assert next(iter(data)) == "schema_version"
+        assert data["schema_version"] == "1"
+        assert data["run_id"] == "run-1"
+        assert data["iterations"] == []
 
     def test_round_trip__tc_ep_003(self) -> None:
-        """TC-EP-003: JSON round-trip preserves content."""
-        # Given: a RunReport
-        original = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-                NodeResult(node_id="b", status="failed", duration=0.5, error="err"),
-            ],
-            duration=1.5,
-            events=[
-                Event(node_id="a", kind="node_started", timestamp=100.0, payload={}),
-            ],
+        """TC-EP-003: JSON round-trip preserves canonical content."""
+        # Given: a RunReport with warning and error details
+        original = _make_report(
+            status="failed",
+            iterations=[{"index": 0, "status": "failed"}],
+            warnings=[{"code": 1001, "message": "warn"}],
+            error={"code": 3001, "message": "failed"},
         )
         # When: round-tripping through JSON
-        json_str = original.to_json()
-        restored = RunReport.from_json(json_str)
+        restored = RunReport.from_json(original.to_json())
         # Then: content is identical
-        assert restored.phase == original.phase
-        assert restored.duration == original.duration
-        assert len(restored.node_results) == len(original.node_results)
-        for orig_nr, rest_nr in zip(
-            original.node_results, restored.node_results, strict=True,
-        ):
-            assert rest_nr.node_id == orig_nr.node_id
-            assert rest_nr.status == orig_nr.status
-            assert rest_nr.duration == orig_nr.duration
-            assert rest_nr.error == orig_nr.error
-        assert len(restored.events) == len(original.events)
-        assert restored.events[0].node_id == original.events[0].node_id
-        assert restored.events[0].kind == original.events[0].kind
+        assert restored == original
 
-    def test_success_count__tc_ep_004(self) -> None:
-        """TC-EP-004: success_count counts only successful nodes."""
-        # Given: mixed results
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-                NodeResult(node_id="b", status="failed", duration=0.5, error="err"),
-                NodeResult(node_id="c", status="success", duration=0.8),
-            ],
-            duration=2.3,
-            events=[],
-        )
-        # When/Then: counting successes
-        assert report.success_count == 2
+    @pytest.mark.parametrize(
+        "status",
+        ["success", "partial", "failed"],
+        ids=["success", "partial", "failed"],
+    )
+    def test_status_accepts_canonical_values__tc_ep_004(self, status: str) -> None:
+        """TC-EP-004: status can represent success, partial, and failed outcomes."""
+        # Given/When: a report with a canonical status
+        report = _make_report(status=status)
+        # Then: status is preserved
+        assert report.status == status
 
-    def test_failure_count__tc_ep_005(self) -> None:
-        """TC-EP-005: failure_count counts only failed nodes."""
-        # Given: mixed results
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-                NodeResult(node_id="b", status="failed", duration=0.5, error="err"),
-                NodeResult(node_id="c", status="failed", duration=0.3, error="err2"),
-            ],
-            duration=1.8,
-            events=[],
-        )
-        # When/Then: counting failures
-        assert report.failure_count == 2
+    def test_empty_iterations__tc_bv_001(self) -> None:
+        """TC-BV-001: RunReport accepts an empty iterations list."""
+        # Given/When: a report with no iterations
+        report = _make_report(iterations=[])
+        # Then: the list is preserved
+        assert report.iterations == []
 
-    def test_to_json_includes_events__tc_ep_006(self) -> None:
-        """TC-EP-006: Serialized JSON includes events."""
-        # Given: report with events
-        report = RunReport(
-            phase="execute",
-            node_results=[],
-            duration=0.0,
-            events=[
-                Event(node_id="a", kind="node_started", timestamp=1.0, payload={}),
-                Event(node_id="a", kind="node_finished", timestamp=2.0, payload={"duration": 1.0}),
-            ],
-        )
-        # When: serializing
-        data = json.loads(report.to_json())
-        # Then: events are present
-        assert len(data["events"]) == 2
-        assert data["events"][0]["kind"] == "node_started"
-        assert data["events"][1]["payload"]["duration"] == 1.0
+    def test_error_none_for_success__tc_bv_002(self) -> None:
+        """TC-BV-002: Successful reports may omit an error."""
+        # Given/When: a successful report
+        report = _make_report(status="success")
+        # Then: error is None
+        assert report.error is None
 
-    def test_empty_results__tc_bv_001(self) -> None:
-        """TC-BV-001: RunReport with no node results has zero counts."""
-        # Given/When: empty report
-        report = RunReport(phase="execute", node_results=[], duration=0.0, events=[])
-        # Then: counts are zero
-        assert report.success_count == 0
-        assert report.failure_count == 0
+    def test_failed_report_accepts_error_dict__tc_bv_003(self) -> None:
+        """TC-BV-003: Failed reports can carry an error dict."""
+        # Given/When: a failed report
+        report = _make_report(status="failed", error={"code": 3001, "message": "boom"})
+        # Then: error details are preserved
+        assert report.error == {"code": 3001, "message": "boom"}
 
-    def test_all_successes__tc_bv_002(self) -> None:
-        """TC-BV-002: All successes means failure_count == 0."""
-        # Given: all successful
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-                NodeResult(node_id="b", status="success", duration=1.0),
-            ],
-            duration=2.0,
-            events=[],
-        )
-        # Then:
-        assert report.success_count == 2
-        assert report.failure_count == 0
-
-    def test_all_failures__tc_bv_003(self) -> None:
-        """TC-BV-003: All failures means success_count == 0."""
-        # Given: all failed
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="failed", duration=0.5, error="e1"),
-                NodeResult(node_id="b", status="failed", duration=0.3, error="e2"),
-            ],
-            duration=0.8,
-            events=[],
-        )
-        # Then:
-        assert report.success_count == 0
-        assert report.failure_count == 2
-
-    def test_skip_count__new(self) -> None:
-        """NEW: skip_count counts only skipped nodes."""
-        # Given: mixed results including skipped
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-                NodeResult(node_id="b", status="failed", duration=0.5, error="err"),
-                NodeResult(node_id="c", status="skipped", duration=0.0),
-                NodeResult(node_id="d", status="skipped", duration=0.0),
-            ],
-            duration=1.5,
-            events=[],
-        )
-        # When/Then: counting skipped
-        assert report.success_count == 1
-        assert report.failure_count == 1
-        assert report.skip_count == 2
-
-    def test_mixed_counts_independent__new(self) -> None:
-        """NEW: success/failed/skipped counts are independent."""
-        # Given: mixed list
-        report = RunReport(
-            phase="execute",
-            node_results=[
-                NodeResult(node_id="a", status="success", duration=1.0),
-                NodeResult(node_id="b", status="failed", duration=0.5, error="e"),
-                NodeResult(node_id="c", status="skipped", duration=0.0),
-            ],
-            duration=1.5,
-            events=[],
-        )
-        # Then: three counts are independent
-        assert report.success_count == 1
-        assert report.failure_count == 1
-        assert report.skip_count == 1
-        assert (
-            report.success_count + report.failure_count + report.skip_count
-            == len(report.node_results)
-        )
+    def test_no_events_field(self) -> None:
+        """RunReport does not carry EventSink output in A2."""
+        # Given: RunReport dataclass fields
+        field_names = {field.name for field in dataclasses.fields(RunReport)}
+        # Then: events is absent because aggregation is Phase D scope
+        assert "events" not in field_names

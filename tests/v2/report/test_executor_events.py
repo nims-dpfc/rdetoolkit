@@ -55,7 +55,7 @@ class TestExecutorEventSinkIntegration:
         assert sink.events[0].node_id == "source"
         assert sink.events[1].kind == "node_finished"
         assert sink.events[1].node_id == "source"
-        assert "duration" in sink.events[1].payload
+        assert "duration_ms" in sink.events[1].payload
 
     def test_failing_node_emits_started_and_failed__tc_ep_002(self) -> None:
         """TC-EP-002: A failing node emits started and failed events."""
