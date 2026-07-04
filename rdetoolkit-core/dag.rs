@@ -1,3 +1,6 @@
+// INTERNAL — not used in v2.0 critical path (ADR-020).
+// FROZEN: unregistered from the _core pyo3 module; never imported from v2 code.
+// Do not extend or wire this into new features without a design decision.
 use std::collections::HashMap;
 
 use petgraph::algo::{tarjan_scc, toposort};

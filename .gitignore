@@ -199,3 +199,7 @@ claudedocs
 # Repo tooling scripts — the [Ss]cripts rule above targets Windows venv dirs,
 # not the repository scripts/ directory (gen_error_docs.py must be tracked).
 !/scripts/
+
+# B6 guard: the Rust extension is rdetoolkit._core — a stale core.cpython-*.so
+# from the pre-rename era must never reappear in the source tree.
+src/rdetoolkit/core.cpython-*.so

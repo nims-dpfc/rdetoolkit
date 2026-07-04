@@ -1,23 +1,15 @@
-"""V2 RunContext and DI resolution algorithm.
+"""V2 RunContext — reserved types available at the flow boundary.
 
 RunContext holds Runner reserved types (InputPaths, OutputContext, etc.)
-that can be injected at the flow boundary.
-
-DI Resolution Priority:
-    1. DAG edge result (upstream @node output, match by param_name)
-    2. Runner reserved type (match by param_name AND param_type)
-    3. UnconnectedInputError
+that can be injected at the flow boundary (Design §4.3; flow-boundary DI
+itself is implemented in Phase C).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from rdetoolkit.errors import UnconnectedInputError
-
 if TYPE_CHECKING:
-    from rdetoolkit.core.dag import DAG
-    from rdetoolkit.core.node import NodeSpec
     from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
 
 
@@ -127,74 +119,3 @@ class RunContext:
         if self.iteration is not None:
             mapping["iteration"] = self.iteration
         return mapping
-
-
-def _find_edge_result(
-    param_name: str,
-    node_id: str,
-    dag: DAG,
-    results: dict[str, dict[str, Any]],
-) -> tuple[bool, Any]:
-    """Look up the edge result for a given input parameter.
-
-    Searches DAG edges targeting this node for a matching to_port.
-    Returns (True, value) if found, (False, None) otherwise.
-    """
-    edges = dag.edge_list()
-    for from_id, to_id, from_port, to_port in edges:
-        if to_id == node_id and to_port == param_name:
-            node_results = results.get(from_id)
-            if node_results is not None and from_port in node_results:
-                return True, node_results[from_port]
-    return False, None
-
-
-def resolve_inputs(
-    node_spec: NodeSpec,
-    dag: DAG,
-    results: dict[str, dict[str, Any]],
-    context: RunContext,
-) -> dict[str, Any]:
-    """Resolve all input parameters for a node using the DI priority chain.
-
-    Priority:
-        1. DAG edge result (upstream @node output, match by param_name)
-        2. Runner reserved type (match by param_name AND param_type)
-        3. UnconnectedInputError
-
-    Args:
-        node_spec: The NodeSpec describing the node's input requirements.
-        dag: The DAG containing edge information.
-        results: Mapping of node_id -> {port_name: value} for completed nodes.
-        context: RunContext providing reserved types.
-
-    Returns:
-        Dict mapping parameter names to resolved values.
-
-    Raises:
-        UnconnectedInputError: If a parameter cannot be resolved by name+type.
-    """
-    resolved: dict[str, Any] = {}
-    reserved_map = _get_reserved()
-    reserved_vals = context.reserved_values()
-
-    for param_name, param_type in node_spec.input_schema.items():
-        # Priority 1: DAG edge result (match by param_name)
-        found, value = _find_edge_result(param_name, node_spec.id, dag, results)
-        if found:
-            resolved[param_name] = value
-            continue
-
-        # Priority 2: Runner reserved type (param_name AND param_type must both match)
-        if (
-            param_name in reserved_map
-            and reserved_map[param_name] is param_type
-            and param_name in reserved_vals
-        ):
-            resolved[param_name] = reserved_vals[param_name]
-            continue
-
-        # Priority 3: Unresolvable
-        raise UnconnectedInputError(node_spec.id, param_name, param_type)
-
-    return resolved

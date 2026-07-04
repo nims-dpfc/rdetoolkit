@@ -1,6 +1,5 @@
 from typing import Any
 
-from rdetoolkit.core.dag import DAG
 from rdetoolkit.core.node import NodeSpec
 from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
 
@@ -30,10 +29,3 @@ class RunContext:
     @property
     def output_context(self) -> OutputContext | None: ...
     def reserved_values(self) -> dict[str, Any]: ...
-
-def resolve_inputs(
-    node_spec: NodeSpec,
-    dag: DAG,
-    results: dict[str, dict[str, Any]],
-    context: RunContext,
-) -> dict[str, Any]: ...

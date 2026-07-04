@@ -21,7 +21,8 @@ pub fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
 
     module.add_class::<fsops::ManagedDirectory>()?;
     module.add_class::<fsops::DirectoryOps>()?;
-    module.add_class::<dag::RustDAG>()?;
+    // RustDAG is intentionally NOT registered: dag.rs is frozen (ADR-020),
+    // internal-only, and not on any v2.0 critical path.
 
     Ok(())
 }

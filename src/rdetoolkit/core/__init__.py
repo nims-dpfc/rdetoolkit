@@ -1,4 +1,4 @@
-"""V2 core package — @node, @flow, DAG, Compiler, Executor.
+"""V2 core package — @node / @flow (eager) and shared run context.
 
 This package also re-exports the Rust extension functions/classes
 that were previously available as ``rdetoolkit.core`` (the .so module)
