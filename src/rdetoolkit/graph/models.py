@@ -66,6 +66,9 @@ class LegendConfig:
             placement. "hide" suppresses the legend entirely.
         outside_threshold: Number of legend items above which "auto"
             switches from inside placement to outside-right placement.
+        bottom_threshold: Number of legend items at or above which "auto"
+            switches to outside-bottom placement. None disables the
+            automatic switch to bottom placement.
         ncol: Number of legend columns used for "outside_bottom" placement
             (defaults to 3 when None).
     """
@@ -82,6 +85,7 @@ class LegendConfig:
         "hide",
     ] = "legacy"
     outside_threshold: int = 8
+    bottom_threshold: int | None = 21
     ncol: int | None = None
 
 

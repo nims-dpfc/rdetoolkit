@@ -15,6 +15,8 @@ from rdetoolkit.graph.textutils import parse_header, titleize
 CENTER_POSITION = 0.5
 LEGEND_RIGHT_THRESHOLD = 0.7
 TEXT_Y_THRESHOLD = 0.9
+DEFAULT_OUTSIDE_LEGEND_NCOL = 3
+OUTSIDE_LEGEND_MARGIN_INCHES = 0.2
 
 
 class MatplotlibRenderer:
@@ -319,6 +321,7 @@ class MatplotlibRenderer:
             len(filtered_labels),
             config.legend.outside_threshold,
             config.legend.max_items,
+            bottom_threshold=config.legend.bottom_threshold,
         )
 
         if resolved_policy == "hide" or not filtered_labels:
@@ -335,26 +338,119 @@ class MatplotlibRenderer:
             return ax.legend(filtered_handles, filtered_labels, **legend_kwargs)
 
         if resolved_policy == "outside_right":
+            self._freeze_axes_layout(ax)
+            anchor_x = self._outside_anchor_beyond_decorations(ax, side="right")
             legend_obj = ax.legend(
                 filtered_handles,
                 filtered_labels,
                 loc="center left",
-                bbox_to_anchor=(1.02, 0.5),
+                bbox_to_anchor=(anchor_x, 0.5),
                 borderaxespad=0.0,
             )
-            ax.figure.subplots_adjust(right=0.75)
+            self._expand_figure_for_outside_legend(ax, legend_obj)
             return legend_obj
 
         # resolved_policy == "outside_bottom"
+        self._freeze_axes_layout(ax)
+        anchor_y = self._outside_anchor_beyond_decorations(ax, side="bottom")
         legend_obj = ax.legend(
             filtered_handles,
             filtered_labels,
             loc="upper center",
-            bbox_to_anchor=(0.5, -0.12),
-            ncol=config.legend.ncol or 3,
+            bbox_to_anchor=(0.5, anchor_y),
+            ncol=config.legend.ncol or DEFAULT_OUTSIDE_LEGEND_NCOL,
         )
-        ax.figure.subplots_adjust(bottom=0.25)
+        self._expand_figure_for_outside_legend(ax, legend_obj)
         return legend_obj
+
+    def _outside_anchor_beyond_decorations(
+        self,
+        ax: Any,
+        side: Literal["right", "bottom"],
+    ) -> float:
+        """Compute an axes-fraction anchor just outside the axes decorations.
+
+        Tick labels and axis labels spill past the axes edge, so a fixed
+        anchor offset (e.g. 1.02) can overlap them. Measure the actual
+        decoration extent and place the legend beyond it, never closer to
+        the axes than the fixed default offset.
+        """
+        default = 1.02 if side == "right" else -0.12
+        fig = ax.figure
+        canvas = getattr(fig, "canvas", None)
+        if canvas is None:
+            return default
+        try:
+            renderer = canvas.get_renderer()
+        except AttributeError:
+            return default
+
+        axes_bbox = ax.get_window_extent(renderer=renderer)
+        tight_bbox = ax.get_tightbbox(renderer)
+        if tight_bbox is None or axes_bbox.width <= 0 or axes_bbox.height <= 0:
+            return default
+
+        if side == "right":
+            spill = max(tight_bbox.x1 - axes_bbox.x1, 0.0)
+            return max(1.0 + spill / axes_bbox.width + 0.02, default)
+
+        spill = max(axes_bbox.y0 - tight_bbox.y0, 0.0)
+        return min(-(spill / axes_bbox.height) - 0.02, default)
+
+    def _freeze_axes_layout(self, ax: Any) -> None:
+        """Finalize the axes geometry before an outside legend is added.
+
+        tight_layout re-runs on every draw and includes the legend in the
+        axes decorations it tries to fit into the fixed figure size, which
+        crushes the plot area when a large legend sits outside the axes.
+        Drawing once while no legend exists locks in the geometry derived
+        from labels/titles only; disabling the layout engine afterwards
+        keeps the plot area at that size.
+        """
+        fig = ax.figure
+        canvas = getattr(fig, "canvas", None)
+        if canvas is not None:
+            canvas.draw()
+        fig.set_layout_engine("none")
+
+    def _expand_figure_for_outside_legend(self, ax: Any, legend_obj: Any) -> None:
+        """Grow the figure by the legend overflow instead of shrinking the axes.
+
+        The legend is anchored to the axes, so enlarging the canvas and
+        shifting the subplot fractions by the same physical amount keeps
+        both the plot area size and the legend-to-axes attachment intact.
+        """
+        fig = ax.figure
+        renderer = self._prepare_renderer(ax, legend_obj)
+        if renderer is None:
+            return
+
+        bbox = legend_obj.get_window_extent(renderer=renderer)
+        dpi = fig.dpi
+        fig_w, fig_h = fig.get_size_inches()
+        overflows = (
+            max(-bbox.x0 / dpi, 0.0),           # left
+            max(bbox.x1 / dpi - fig_w, 0.0),    # right
+            max(-bbox.y0 / dpi, 0.0),           # bottom
+            max(bbox.y1 / dpi - fig_h, 0.0),    # top
+        )
+        if not any(overflows):
+            return
+
+        extra_left, extra_right, extra_bottom, extra_top = (
+            overflow + OUTSIDE_LEGEND_MARGIN_INCHES if overflow else 0.0
+            for overflow in overflows
+        )
+        new_w = fig_w + extra_left + extra_right
+        new_h = fig_h + extra_bottom + extra_top
+        subplot_pars = fig.subplotpars
+        fig.set_size_inches(new_w, new_h)
+        fig.subplots_adjust(
+            left=(subplot_pars.left * fig_w + extra_left) / new_w,
+            right=(subplot_pars.right * fig_w + extra_left) / new_w,
+            bottom=(subplot_pars.bottom * fig_h + extra_bottom) / new_h,
+            top=(subplot_pars.top * fig_h + extra_bottom) / new_h,
+        )
 
     def _render_legend_legacy(
         self,
@@ -710,6 +806,7 @@ def _resolve_legend_policy(
     filtered_label_count: int,
     outside_threshold: int,
     max_items: int | None,
+    bottom_threshold: int | None = None,
 ) -> ResolvedLegendPolicy:
     """Resolve a legend policy into a concrete, non-"auto" placement.
 
@@ -723,6 +820,9 @@ def _resolve_legend_policy(
         max_items: Maximum number of legend items to display. When the
             item count exceeds this value, "auto" resolves to "hide".
             None means no upper bound.
+        bottom_threshold: Item count at or above which "auto" switches to
+            "outside_bottom" placement. None disables the bottom switch,
+            in which case "auto" behaves as before (inside/outside_right).
 
     Returns:
         A concrete policy: "legacy", "inside", "outside_right",
@@ -732,17 +832,23 @@ def _resolve_legend_policy(
         Precedence for "auto" resolution (checked in order):
         1. filtered_label_count == 0 -> "hide"
         2. max_items is not None and filtered_label_count > max_items -> "hide"
-        3. filtered_label_count > outside_threshold -> "outside_right"
-        4. otherwise -> "inside"
+        3. bottom_threshold is not None and
+           filtered_label_count >= bottom_threshold -> "outside_bottom"
+        4. filtered_label_count > outside_threshold -> "outside_right"
+        5. otherwise -> "inside"
 
-        Per the feature design, "auto" never resolves to "outside_bottom";
-        that placement is only reachable via explicit request.
+        With the defaults (outside_threshold=8, bottom_threshold=21):
+        1-8 items -> inside, 9-20 items -> outside_right,
+        21+ items -> outside_bottom.
 
     Example:
-        >>> _resolve_legend_policy("auto", 3, outside_threshold=8, max_items=20)
+        >>> _resolve_legend_policy("auto", 3, outside_threshold=8, max_items=None)
         'inside'
-        >>> _resolve_legend_policy("auto", 12, outside_threshold=8, max_items=20)
+        >>> _resolve_legend_policy("auto", 12, outside_threshold=8, max_items=None)
         'outside_right'
+        >>> _resolve_legend_policy(
+        ...     "auto", 25, outside_threshold=8, max_items=None, bottom_threshold=21)
+        'outside_bottom'
         >>> _resolve_legend_policy("auto", 25, outside_threshold=8, max_items=20)
         'hide'
         >>> _resolve_legend_policy("outside_bottom", 3, outside_threshold=8, max_items=20)
@@ -755,6 +861,8 @@ def _resolve_legend_policy(
         return "hide"
     if max_items is not None and filtered_label_count > max_items:
         return "hide"
+    if bottom_threshold is not None and filtered_label_count >= bottom_threshold:
+        return "outside_bottom"
     if filtered_label_count > outside_threshold:
         return "outside_right"
     return "inside"
