@@ -35,12 +35,13 @@ def render() -> str:
         "",
         "## Errors",
         "",
-        "| Code | Name | Message template |",
-        "|------|------|------------------|",
+        "| Code | Name | Message template | Remediation |",
+        "|------|------|------------------|-------------|",
     ]
     for code in sorted(error_catalog):
         defn = error_catalog[code]
-        lines.append(f"| {code} | {defn.name} | {defn.message_template} |")
+        name = f"~~{defn.name}~~ (retired)" if getattr(defn, "retired", False) else defn.name
+        lines.append(f"| {code} | {name} | {defn.message_template} | {defn.remediation} |")
 
     lines.extend([
         "",

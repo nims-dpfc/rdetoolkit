@@ -6,20 +6,26 @@ Authority: `local/develop/v2/Design.md` §9.
 
 ## Errors
 
-| Code | Name | Message template |
-|------|------|------------------|
-| 1001 | RunArgumentUsageError | Specify exactly one of flow or custom_dataset_function. |
-| 1002 | ConfigLoadFailed | Failed to load RDE configuration: {reason} |
-| 2001 | DuplicateNodeId | Duplicate node id registered: {node_id} |
-| 2002 | ReservedParamMismatch | Reserved flow parameter has an incompatible type: {param_name} |
-| 2003 | UnresolvableFlowParam | Could not resolve flow parameter: {param_name} |
-| 3001 | NodeExecutionFailed | Node execution failed for call {call_id}: {reason} |
-| 3002 | NodeTypeMismatch | Node argument type mismatch for {node_id}.{param_name} |
-| 3003 | UndecoratedNodeCall | Undecorated callable cannot be recorded as a node: {callable_name} |
-| 4001 | InvoiceSchemaInvalid | Invoice schema validation failed: {reason} |
-| 4002 | MetadataDefinitionInvalid | Metadata definition validation failed: {reason} |
-| 4003 | RequiredArtifactMissing | Required output artifact is missing: {path} |
-| 5001 | InternalInvariantViolation | Internal rdetoolkit invariant failed: {reason} |
+| Code | Name | Message template | Remediation |
+|------|------|------------------|-------------|
+| 1001 | RunArgumentUsageError | Specify exactly one of flow or custom_dataset_function. | Call run() with exactly one entry point: run(flow=...) for v2 pipelines or run(custom_dataset_function=...) for v1 workflows. |
+| 1002 | ConfigLoadFailed | Failed to load RDE configuration: {reason} | Fix the reported issue in rdeconfig.yaml (or [tool.rdetoolkit] in pyproject.toml). Unknown keys are rejected: check for typos and remove settings this version does not support. |
+| 2001 | DuplicateNodeId | Duplicate node id registered: {node_id} | Rename one of the functions or move it to another module (the node id is '{module}.{qualname}'), or pass an explicit id via @node(id=...). |
+| 2002 | ~~ReservedParamMismatch~~ (retired) | Reserved flow parameter has an incompatible type: {param_name} | Retired by design revision R1: DI is type-based and parameter names are advisory only, so a name mismatch is no longer an error. This number must not be reused. |
+| 2003 | UnresolvableFlowParam | Could not resolve flow parameter: {param_name} | Annotate the parameter with one of the reserved types (InputPaths, OutputContext, RdeConfig, InvoiceData, IterationInfo) or give it a default value. |
+| 2006 | DuplicateReservedTypeAnnotation | Reserved type {type_name} is annotated on more than one flow parameter: {param_names} | A flow signature may declare each reserved type at most once; merge the duplicated parameters into one. |
+| 2101 | TemplateSlotMissing | Template slot is not implemented: {slot_name} | Implement the required slot method declared by the template; 'rdetoolkit nodes lint' lists missing slots. |
+| 2102 | TemplateSlotSignatureMismatch | Template slot signature mismatch: {slot_name} | Match the slot's declared signature (parameter names and type annotations); see 'rdetoolkit templates describe <name>'. |
+| 2103 | TemplateFinalOverride | Template skeleton method must not be overridden: {method_name} | Implement only the declared slots and hooks; if you need a different pipeline shape, write a plain @flow instead. |
+| 2104 | TemplateDeepInheritance | Template subclass must not be inherited further: {class_name} | Inherit directly from the provider's template class (one level only); compose behavior via slots/hooks or a plain @flow. |
+| 2105 | TemplateCtorNotDefault | Template class must be constructible with no arguments: {class_name} | Remove required __init__ parameters; receive parameters via config.custom instead. |
+| 3001 | NodeExecutionFailed | Node execution failed for call {call_id}: {reason} | Inspect the chained original exception (__cause__) and the call-log entry for the failing call; fix the node implementation or its inputs. Nodes are plain functions - reproduce directly with pytest. |
+| 3002 | NodeTypeMismatch | Node argument type mismatch for {node_id}.{param_name} | Pass a value matching the node's type annotation, or adjust the annotation. Set execution.type_check to 'off' or 'warn' if strict checking is not desired. |
+| 3003 | UndecoratedNodeCall | Undecorated callable cannot be recorded as a node: {callable_name} | Decorate the callable with @node, or call it as a plain helper (plain calls work but are not recorded in the call log). |
+| 4001 | InvoiceSchemaInvalid | Invoice schema validation failed: {reason} | Fix invoice.schema.json (or the generated invoice.json) so it validates; the reported reason names the failing keyword and path. |
+| 4002 | MetadataDefinitionInvalid | Metadata definition validation failed: {reason} | Fix metadata-def.json to satisfy the metadata definition schema; the reported reason names the offending field. |
+| 4003 | RequiredArtifactMissing | Required output artifact is missing: {path} | Ensure the flow writes the artifact before finalize (use the save nodes in rdetoolkit.nodes); check that the reported path is produced in the expected output directory. |
+| 5001 | InternalInvariantViolation | Internal rdetoolkit invariant failed: {reason} | This is a bug in rdetoolkit, not in user code. Please report it together with the run report and the stack trace. |
 
 ## Warnings
 
