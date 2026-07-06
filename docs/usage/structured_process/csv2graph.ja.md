@@ -260,12 +260,22 @@ csv2graph(
 | `outside_bottom` | プロット領域の外側・下側に配置する                                        |
 | `hide`           | 凡例を表示しない                                                          |
 
+`auto` は項目数に応じて次のように配置を切り替えます。
+
+| 条件（デフォルト値の場合） | 配置 |
+| -------------------------- | ---- |
+| 1〜8項目（`legend_outside_threshold` 以下） | `inside` |
+| 9〜20項目 | `outside_right` |
+| 21項目以上（`legend_bottom_threshold` 以上） | `outside_bottom` |
+| `max_legend_items` 超過 | `hide` |
+
 ```python
 # 系列数が多い場合に凡例を自動でプロット外へ配置
 csv2graph(
     "data.csv",
     legend_policy="auto",
-    legend_outside_threshold=8,  # 8項目を超えると外側配置に切り替え
+    legend_outside_threshold=8,   # 8項目を超えると右外側配置に切り替え
+    legend_bottom_threshold=21,   # 21項目以上で下側配置に切り替え（Noneで無効化）
     max_legend_items=30,
 )
 
@@ -281,7 +291,17 @@ csv2graph(
     legend_policy="outside_bottom",
     legend_ncol=3,
 )
+
+# 30項目程度の凡例を10列（約3段）でグラフ下側に配置
+csv2graph(
+    "data.csv",
+    legend_policy="outside_bottom",
+    legend_ncol=10,
+)
 ```
+
+`outside_right` / `outside_bottom` では、プロット領域を縮小して凡例スペースを作るのではなく、
+凡例のサイズに応じてFigure（キャンバス）側を拡張します。系列数が多くてもグラフ本体の描画サイズは維持されます。
 
 `legend_policy` のデフォルトは `"legacy"` のため、明示的に指定しない限り既存コードの動作に影響はない。
 
@@ -564,6 +584,7 @@ python -m rdetoolkit.graph.api.csv2graph multi_series_data.csv \
     --output_dir plots \
     --legend-policy auto \
     --legend-outside-threshold 8 \
+    --legend-bottom-threshold 21 \
     --max-legend-items 30
 
 # 凡例を強制的にグラフ下側に3列で配置
