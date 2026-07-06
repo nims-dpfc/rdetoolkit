@@ -95,3 +95,28 @@ class TestAssertOutputTreeMismatch:
 
         with pytest.raises(AssertionError):
             assert_output_tree(out, golden_dir)
+
+
+class TestMissingDirectoryDetection:
+    """PR #504 review: a missing output directory must fail assert_output_tree."""
+
+    def test_missing_actual_directory_raises(self, tmp_path: Path) -> None:
+        from types import SimpleNamespace
+
+        from rdetoolkit.testing import assert_output_tree
+        from rdetoolkit.types import OutputContext
+
+        base = tmp_path / "out"
+        names = (
+            "struct", "meta", "main_image", "other_image", "thumbnail",
+            "attachment", "nonshared_raw", "raw", "invoice", "logs",
+        )
+        out = OutputContext.from_resource_paths(
+            SimpleNamespace(**{n: base / n for n in names})
+        )
+        golden = tmp_path / "golden"
+        for n in names:
+            (golden / n).mkdir(parents=True)
+        # actual has NO directories on disk -> must not be treated as complete
+        with pytest.raises(AssertionError):
+            assert_output_tree(out, golden)

@@ -45,5 +45,21 @@ def _failure_error(report: RunReport) -> tuple[int, str]:
         code = _DEFAULT_FAILURE_CODE
 
     raw_message: Any = error.get("message")
-    message = raw_message if isinstance(raw_message, str) and raw_message else ERROR_CATALOG[code].message_template
-    return code, message
+    if isinstance(raw_message, str) and raw_message:
+        return code, raw_message
+    return code, _fallback_message(code)
+
+
+class _UnknownPlaceholders(dict[str, str]):
+    def __missing__(self, key: str) -> str:
+        return "unknown"
+
+
+def _fallback_message(code: int) -> str:
+    """Render a catalog message template with any placeholders neutralized.
+
+    Templates such as ``"Node execution failed for call {call_id}: {reason}"``
+    are caller-formatted; job.failed must never contain raw ``{placeholder}``
+    text (Design §6.3).
+    """
+    return ERROR_CATALOG[code].message_template.format_map(_UnknownPlaceholders())

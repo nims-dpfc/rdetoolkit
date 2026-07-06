@@ -69,6 +69,7 @@ class V2SystemSettings(BaseModel):
 class V2ExecutionSettings(BaseModel):
     model_config: ConfigDict
     type_check: str = ...
+    on_iteration_error: Literal["continue", "fail_fast"]
 
 class V2RecordingSettings(BaseModel):
     model_config: ConfigDict

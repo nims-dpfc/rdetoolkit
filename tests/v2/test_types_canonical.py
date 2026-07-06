@@ -442,3 +442,26 @@ class TestR3DomainSaveMethodsRemoved:
         assert not hasattr(OutputContext, method), (
             f"R3: OutputContext.{method} must be removed (canonical API is rdetoolkit.nodes)"
         )
+
+
+class TestOnIterationErrorSetting:
+    """PR #504 review: Design §7.2 execution.on_iteration_error is part of the config contract."""
+
+    def test_default_is_continue(self) -> None:
+        from rdetoolkit.types import RdeConfig
+
+        assert RdeConfig().execution.on_iteration_error == "continue"
+
+    def test_accepts_fail_fast(self) -> None:
+        from rdetoolkit.types import RdeConfig
+
+        cfg = RdeConfig(execution={"on_iteration_error": "fail_fast"})
+        assert cfg.execution.on_iteration_error == "fail_fast"
+
+    def test_rejects_unknown_value(self) -> None:
+        import pydantic
+
+        from rdetoolkit.types import RdeConfig
+
+        with pytest.raises(pydantic.ValidationError):
+            RdeConfig(execution={"on_iteration_error": "abort"})

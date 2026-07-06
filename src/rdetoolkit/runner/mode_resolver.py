@@ -65,7 +65,14 @@ def resolve_mode(
         _mode_for_legacy_detector(configured_mode),
     )
     detected_mode = _mode_from_checker(checker)
-    if detected_mode != configured_mode and _file_detection_overrode_config(detected_mode):
+    # W1001 is scoped to conflicts with an EXPLICITLY configured mode (Design
+    # §6.2); file-based detection over the implicit default is normal operation.
+    mode_explicitly_configured = "extended_mode" in config.system.model_fields_set
+    if (
+        mode_explicitly_configured
+        and detected_mode != configured_mode
+        and _file_detection_overrode_config(detected_mode)
+    ):
         _emit_mode_override_warning(
             event_sink=event_sink,
             run_id=run_id,

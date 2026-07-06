@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from rdetoolkit.report.run_report import RunReport
-from rdetoolkit.runner.finalize import finalize as finalize_run
 from rdetoolkit.runner.lifecycle import Runner
 from rdetoolkit.types import OutputContext, RdeConfig
 
@@ -58,8 +57,7 @@ def assert_output_tree(out: OutputContext, golden_dir: Path) -> None:
 
 
 class _TestingRunner(Runner):
-    def finalize(self, report: RunReport, config: RdeConfig) -> None:
-        finalize_run(report, config)
+    """Alias kept for the Phase B seam; the base Runner now finalizes for real."""
 
 
 def _build_minimal_rde_tree(root: Path, fixture_dir: Path) -> None:
@@ -96,6 +94,9 @@ def _collect_output_dirs(out: OutputContext) -> set[str]:
     common_root = Path(os.path.commonpath([str(path.parent) for path in roots]))
     collected: set[str] = set()
     for root in roots:
+        if not root.exists():
+            # A missing directory must show up as a diff, not be assumed present.
+            continue
         collected.add(str(root.relative_to(common_root)))
         collected.update(_collect_dirs(root, common_root))
     return collected

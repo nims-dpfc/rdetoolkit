@@ -13,6 +13,7 @@ from rdetoolkit.errors import ERROR_CATALOG, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
 from rdetoolkit.report.events import EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
+from rdetoolkit.runner.finalize import finalize as _finalize_run
 from rdetoolkit.runner.config_loader import load_config as load_config_from_root
 from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode as resolve_mode_from_paths
 from rdetoolkit.types import RdeConfig
@@ -136,7 +137,7 @@ class Runner:
             flow_id=_flow_id(flow_fn),
             mode=mode.value,
             started_at=_iso_timestamp(started),
-            duration_ms=0.0,
+            duration_ms=(time.time() - started) * 1000.0,
             config_digest=_config_digest(config),
             iterations=[],
             warnings=[],
@@ -152,13 +153,17 @@ class Runner:
         _ = (config, report)
 
     def finalize(self, report: RunReport, config: RdeConfig) -> None:
-        """Finalize the report and job failure contract.
+        """Finalize the report and job failure contract (Design §6.1 step 6, §6.3).
+
+        Persists the RunReport JSON and, for failed runs, writes ``data/job.failed``
+        through the v1 contract. This is the production path; tests may still
+        replace this step through the injectable-step seam.
 
         Args:
             report: Report produced by iteration.
             config: Effective configuration.
         """
-        _ = (report, config)
+        _finalize_run(report, config)
 
 
 def _flow_id(flow_fn: Callable[..., Any]) -> str:

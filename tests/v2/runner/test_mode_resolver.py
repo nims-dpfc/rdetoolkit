@@ -333,3 +333,41 @@ class TestDomainModePyZeroDiff:
         assert result.stdout == "", (
             "domain/mode.py must not be modified. Diff found:\n" + result.stdout
         )
+
+
+class TestW1001ExplicitScopeOnly:
+    """PR #504 review: W1001 fires only when an EXPLICIT mode is overridden (Design §6.2)."""
+
+    def test_no_w1001_when_default_config_and_file_detection(self, tmp_path: Path) -> None:
+        """Default RdeConfig() + smarttable file: detection is normal, no warning."""
+        from rdetoolkit.report.events import MemoryEventSink
+        from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode
+        from rdetoolkit.types import RdeConfig
+
+        config = RdeConfig()  # extended_mode not explicitly set
+        inputdata, unpacked = _setup_inputdata(tmp_path, ["smarttable_data.xlsx"])
+        sink = MemoryEventSink()
+        sink.open("run-901")
+
+        mode = resolve_mode(config, inputdata, unpacked, sink, "run-901")
+
+        assert mode is ModeKind.smarttable
+        warnings = [e for e in sink.events if e.name == "warning"]
+        assert warnings == [], "W1001 must not fire for file detection over the implicit default"
+
+    def test_w1001_still_fires_for_explicit_mode_conflict(self, tmp_path: Path) -> None:
+        """Explicit MultiDataTile + smarttable file: the warning contract is unchanged."""
+        from rdetoolkit.report.events import MemoryEventSink
+        from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode
+        from rdetoolkit.types import RdeConfig, V2SystemSettings
+
+        config = RdeConfig(system=V2SystemSettings(extended_mode="MultiDataTile"))
+        inputdata, unpacked = _setup_inputdata(tmp_path, ["smarttable_data.xlsx"])
+        sink = MemoryEventSink()
+        sink.open("run-902")
+
+        mode = resolve_mode(config, inputdata, unpacked, sink, "run-902")
+
+        assert mode is ModeKind.smarttable
+        warnings = [e for e in sink.events if e.name == "warning"]
+        assert len(warnings) == 1

@@ -171,3 +171,35 @@ class TestFinalizePersistsRunReport:
         saved = json.loads(report_path.read_text(encoding="utf-8"))
         assert saved["run_id"] == "run-ok-1"
         assert saved["status"] == "success"
+
+
+class TestReviewFollowUps:
+    """PR #504 review pins: production finalize wiring and placeholder-safe fallback."""
+
+    def test_base_runner_finalize_writes_artifacts(self, tmp_path: Path, monkeypatch) -> None:
+        """Runner.finalize (production path, not a testing subclass) persists for real."""
+        from rdetoolkit.runner.lifecycle import Runner
+        from rdetoolkit.types import RdeConfig
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "data").mkdir()
+        report = _make_report(status="failed", error={"code": 3001, "message": "boom"})
+
+        Runner().finalize(report, RdeConfig())
+
+        assert (tmp_path / "data" / "logs" / f"run_report_{report.run_id}.json").exists()
+        assert (tmp_path / "data" / "job.failed").read_text(encoding="utf-8").startswith("ErrorCode=3001")
+
+    def test_fallback_message_contains_no_raw_placeholders(self, tmp_path: Path, monkeypatch) -> None:
+        """job.failed must never contain unexpanded {placeholder} template text."""
+        from rdetoolkit.runner.finalize import finalize
+        from rdetoolkit.types import RdeConfig
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "data").mkdir()
+        report = _make_report(status="failed", error={"code": 3001})  # no message
+
+        finalize(report, RdeConfig())
+
+        content = (tmp_path / "data" / "job.failed").read_text(encoding="utf-8")
+        assert "{" not in content and "}" not in content, content
