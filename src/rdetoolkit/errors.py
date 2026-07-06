@@ -489,10 +489,16 @@ class ErrorDef:
     Args:
         name: Human-readable stable error name.
         message_template: Message template used by callers when formatting errors.
+        remediation: Researcher-facing guidance on how to fix the error (R9:
+            required, never empty; rendered in error messages and generated docs).
+        retired: True when the number is permanently retired (R1). Retired
+            numbers must never be reused for a different meaning.
     """
 
     name: str
     message_template: str
+    remediation: str
+    retired: bool = False
 
 
 @_dataclass(frozen=True)
@@ -512,50 +518,94 @@ ERROR_CATALOG: dict[int, ErrorDef] = {
     1001: ErrorDef(
         name="RunArgumentUsageError",
         message_template="Specify exactly one of flow or custom_dataset_function.",
+        remediation="Call run() with exactly one entry point: run(flow=...) for v2 pipelines or run(custom_dataset_function=...) for v1 workflows.",
     ),
     1002: ErrorDef(
         name="ConfigLoadFailed",
         message_template="Failed to load RDE configuration: {reason}",
+        remediation="Fix the reported issue in rdeconfig.yaml (or [tool.rdetoolkit] in pyproject.toml). Unknown keys are rejected: check for typos and remove settings this version does not support.",
     ),
     2001: ErrorDef(
         name="DuplicateNodeId",
         message_template="Duplicate node id registered: {node_id}",
+        remediation="Rename one of the functions or move it to another module (the node id is '{module}.{qualname}'), or pass an explicit id via @node(id=...).",
     ),
     2002: ErrorDef(
         name="ReservedParamMismatch",
         message_template="Reserved flow parameter has an incompatible type: {param_name}",
+        remediation="Retired by design revision R1: DI is type-based and parameter names are advisory only, so a name mismatch is no longer an error. This number must not be reused.",
+        retired=True,
     ),
     2003: ErrorDef(
         name="UnresolvableFlowParam",
         message_template="Could not resolve flow parameter: {param_name}",
+        remediation="Annotate the parameter with one of the reserved types (InputPaths, OutputContext, RdeConfig, InvoiceData, IterationInfo) or give it a default value.",
     ),
     3001: ErrorDef(
         name="NodeExecutionFailed",
         message_template="Node execution failed for call {call_id}: {reason}",
+        remediation="Inspect the chained original exception (__cause__) and the call-log entry for the failing call; fix the node implementation or its inputs. Nodes are plain functions - reproduce directly with pytest.",
     ),
     3002: ErrorDef(
         name="NodeTypeMismatch",
         message_template="Node argument type mismatch for {node_id}.{param_name}",
+        remediation="Pass a value matching the node's type annotation, or adjust the annotation. Set execution.type_check to 'off' or 'warn' if strict checking is not desired.",
     ),
     3003: ErrorDef(
         name="UndecoratedNodeCall",
         message_template="Undecorated callable cannot be recorded as a node: {callable_name}",
+        remediation="Decorate the callable with @node, or call it as a plain helper (plain calls work but are not recorded in the call log).",
     ),
     4001: ErrorDef(
         name="InvoiceSchemaInvalid",
         message_template="Invoice schema validation failed: {reason}",
+        remediation="Fix invoice.schema.json (or the generated invoice.json) so it validates; the reported reason names the failing keyword and path.",
     ),
     4002: ErrorDef(
         name="MetadataDefinitionInvalid",
         message_template="Metadata definition validation failed: {reason}",
+        remediation="Fix metadata-def.json to satisfy the metadata definition schema; the reported reason names the offending field.",
     ),
     4003: ErrorDef(
         name="RequiredArtifactMissing",
         message_template="Required output artifact is missing: {path}",
+        remediation="Ensure the flow writes the artifact before finalize (use the save nodes in rdetoolkit.nodes); check that the reported path is produced in the expected output directory.",
     ),
     5001: ErrorDef(
         name="InternalInvariantViolation",
         message_template="Internal rdetoolkit invariant failed: {reason}",
+        remediation="This is a bug in rdetoolkit, not in user code. Please report it together with the run report and the stack trace.",
+    ),
+    2006: ErrorDef(
+        name="DuplicateReservedTypeAnnotation",
+        message_template="Reserved type {type_name} is annotated on more than one flow parameter: {param_names}",
+        remediation="A flow signature may declare each reserved type at most once; merge the duplicated parameters into one.",
+    ),
+    # --- Template errors (R6): catalog reserved here; raised from Phase F ---
+    2101: ErrorDef(
+        name="TemplateSlotMissing",
+        message_template="Template slot is not implemented: {slot_name}",
+        remediation="Implement the required slot method declared by the template; 'rdetoolkit nodes lint' lists missing slots.",
+    ),
+    2102: ErrorDef(
+        name="TemplateSlotSignatureMismatch",
+        message_template="Template slot signature mismatch: {slot_name}",
+        remediation="Match the slot's declared signature (parameter names and type annotations); see 'rdetoolkit templates describe <name>'.",
+    ),
+    2103: ErrorDef(
+        name="TemplateFinalOverride",
+        message_template="Template skeleton method must not be overridden: {method_name}",
+        remediation="Implement only the declared slots and hooks; if you need a different pipeline shape, write a plain @flow instead.",
+    ),
+    2104: ErrorDef(
+        name="TemplateDeepInheritance",
+        message_template="Template subclass must not be inherited further: {class_name}",
+        remediation="Inherit directly from the provider's template class (one level only); compose behavior via slots/hooks or a plain @flow.",
+    ),
+    2105: ErrorDef(
+        name="TemplateCtorNotDefault",
+        message_template="Template class must be constructible with no arguments: {class_name}",
+        remediation="Remove required __init__ parameters; receive parameters via config.custom instead.",
     ),
 }
 

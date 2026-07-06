@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,6 +10,19 @@ class InputPaths:
     invoice: Path
     tasksupport: Path
     raw: Path | None = ...
+
+OutputKind = Literal[
+    "struct",
+    "meta",
+    "main_image",
+    "other_image",
+    "thumbnail",
+    "attachment",
+    "nonshared_raw",
+    "raw",
+    "invoice",
+    "logs",
+]
 
 @dataclass(frozen=True, slots=True)
 class OutputContext:
@@ -25,13 +38,8 @@ class OutputContext:
     invoice: Path
     @classmethod
     def from_resource_paths(cls, resource_paths: Any) -> OutputContext: ...
-    def save_csv(self, df: Any, filename: str) -> Path: ...
-    def save_meta(self, metadata: Any) -> None: ...
-    def save_graph(self, fig: Any, filename: str) -> Path: ...
-    def save_bytes(self, content: bytes, filename: str) -> Path: ...
-    def save_thumbnail(self, image_path: Path) -> Path: ...
-    def save_main_image(self, image_path: Path) -> Path: ...
-    def copy_raw(self, source_path: Path) -> Path: ...
+    def path_for(self, kind: OutputKind, filename: str) -> Path: ...
+    def write_bytes(self, kind: OutputKind, filename: str, content: bytes) -> Path: ...
 
 @dataclass(slots=True)
 class Metadata:
@@ -61,21 +69,19 @@ class V2SystemSettings(BaseModel):
 class V2ExecutionSettings(BaseModel):
     model_config: ConfigDict
     type_check: str = ...
+    on_iteration_error: Literal["continue", "fail_fast"]
 
-class V2PolicySettings(BaseModel):
+class V2RecordingSettings(BaseModel):
     model_config: ConfigDict
-    error_policy: str = ...
+    repr_head: Literal["on", "off"]
+    repr_head_len: int
 
-class V2ProvenanceSettings(BaseModel):
-    model_config: ConfigDict
-    enabled: bool = ...
 
 class RdeConfig(BaseModel):
     model_config: ConfigDict
     system: V2SystemSettings = Field(default_factory=V2SystemSettings)
     execution: V2ExecutionSettings = Field(default_factory=V2ExecutionSettings)
-    policy: V2PolicySettings = Field(default_factory=V2PolicySettings)
-    provenance: V2ProvenanceSettings = Field(default_factory=V2ProvenanceSettings)
+    provenance: V2RecordingSettings = Field(default_factory=V2RecordingSettings)
     custom: dict[str, Any] = Field(default_factory=dict)
 
 def _require_simple_filename(filename: str) -> None: ...

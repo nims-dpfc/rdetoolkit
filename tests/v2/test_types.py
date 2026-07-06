@@ -148,66 +148,47 @@ class TestOutputContext:
         assert ctx.raw == Path("/out/raw")
         assert ctx.attachment == Path("/out/attachment")
 
-    def test_save_bytes__tc_ep_042(self, tmp_path: Path) -> None:
-        """TC-EP-042: save_bytes writes bytes to struct dir."""
+    def test_write_bytes_into_each_kind__tc_ep_042(self, tmp_path: Path) -> None:
+        """TC-EP-042 (v2.1 R3): write_bytes writes into the requested kind dir."""
         ctx = self._make_ctx(tmp_path)
-        result = ctx.save_bytes(b"hello", "test.bin")
-        assert result.exists()
-        assert result.read_bytes() == b"hello"
-        assert result.parent == tmp_path / "struct"
+        for kind in ("struct", "raw", "thumbnail", "main_image", "meta"):
+            result = ctx.write_bytes(kind, f"artifact_{kind}.bin", b"payload")
+            assert result.exists()
+            assert result.read_bytes() == b"payload"
+            assert result.parent == tmp_path / kind
 
-    def test_save_thumbnail__tc_ep_043(self, tmp_path: Path) -> None:
-        """TC-EP-043: save_thumbnail copies file to thumbnail dir."""
+    def test_path_for_resolves_without_side_effects__tc_ep_043(self, tmp_path: Path) -> None:
+        """TC-EP-043 (v2.1 R3): path_for only resolves; it never creates files or dirs."""
         ctx = self._make_ctx(tmp_path)
-        src = tmp_path / "source.png"
-        src.write_bytes(b"PNG")
-        result = ctx.save_thumbnail(src)
-        assert result.exists()
-        assert result.read_bytes() == b"PNG"
-        assert result.parent == tmp_path / "thumbnail"
+        dest = ctx.path_for("other_image", "figure.png")
+        assert dest == tmp_path / "other_image" / "figure.png"
+        assert not dest.exists()
+        assert not dest.parent.exists()
 
-    def test_save_main_image__tc_ep_044(self, tmp_path: Path) -> None:
-        """TC-EP-044: save_main_image copies file to main_image dir."""
+    def test_write_bytes_rejects_unknown_kind__tc_ep_044(self, tmp_path: Path) -> None:
+        """TC-EP-044 (v2.1 R3): unknown output kind raises ValueError."""
         ctx = self._make_ctx(tmp_path)
-        src = tmp_path / "image.png"
-        src.write_bytes(b"IMG")
-        result = ctx.save_main_image(src)
-        assert result.exists()
-        assert result.parent == tmp_path / "main_image"
+        with pytest.raises(ValueError, match="Unknown output kind"):
+            ctx.write_bytes("temp", "x.bin", b"")
 
-    def test_copy_raw__tc_ep_045(self, tmp_path: Path) -> None:
-        """TC-EP-045: copy_raw copies file to raw dir."""
+    def test_path_for_rejects_traversal__tc_ep_045(self, tmp_path: Path) -> None:
+        """TC-EP-045 (v2.1 R3): filenames must be simple basenames."""
         ctx = self._make_ctx(tmp_path)
-        src = tmp_path / "data.raw"
-        src.write_bytes(b"RAW")
-        result = ctx.copy_raw(src)
-        assert result.exists()
-        assert result.parent == tmp_path / "raw"
+        with pytest.raises(ValueError, match="basename"):
+            ctx.path_for("struct", "../escape.csv")
 
-    def test_save_meta__tc_ep_041(self, tmp_path: Path) -> None:
-        """TC-EP-041: save_meta writes metadata JSON."""
-        from rdetoolkit.types import Metadata
-
-        ctx = self._make_ctx(tmp_path)
-        meta = Metadata(custom={"key": "value"})
-        ctx.save_meta(meta)
-        dest = tmp_path / "meta" / "metadata.json"
-        assert dest.exists()
-        import json
-
-        data = json.loads(dest.read_text())
-        assert data["key"] == "value"
-
-    def test_has_method_api(self) -> None:
-        """OutputContext exposes canonical method-based API."""
+    def test_low_level_api_only(self) -> None:
+        """v2.1 R3: OutputContext keeps only path_for/write_bytes; domain saving
+        is canonical in the builtin nodes (Design §5.1)."""
         from rdetoolkit.types import OutputContext
 
-        methods = ["save_csv", "save_meta", "save_graph", "save_bytes",
-                    "save_thumbnail", "save_main_image", "copy_raw"]
-        for m in methods:
-            assert hasattr(OutputContext, m), f"Missing method: {m}"
-        assert not hasattr(OutputContext, "save_file")
-        assert not hasattr(OutputContext, "save_raw")
+        assert hasattr(OutputContext, "write_bytes")
+        assert hasattr(OutputContext, "path_for")
+        removed = ["save_csv", "save_meta", "save_graph", "save_bytes",
+                   "save_thumbnail", "save_main_image", "copy_raw",
+                   "save_file", "save_raw"]
+        for m in removed:
+            assert not hasattr(OutputContext, m), f"Removed method still present: {m}"
 
 
 class TestMetadata:

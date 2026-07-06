@@ -117,56 +117,29 @@ class TestOutputContextFactory:
 class TestOutputContextSaveBytes:
     """OutputContext.save_bytes() writes bytes; the old save_file() name is retired."""
 
-    def test_save_bytes_method_exists_and_writes_binary__tc_types_003(
+    def test_write_bytes_low_level_api_exists_and_writes__tc_types_003(
         self, tmp_path: Path
     ) -> None:
-        """TC-TYPES-003: save_bytes(content, filename) writes bytes and returns the path."""
+        """TC-TYPES-003 (v2.1 R3): write_bytes(kind, filename, content) writes bytes."""
         from rdetoolkit.types import OutputContext  # noqa: PLC0415
 
-        assert hasattr(OutputContext, "save_bytes"), (
-            "OutputContext must have save_bytes(), not save_file(). "
-            "Method was renamed for name-meaning alignment."
+        assert hasattr(OutputContext, "write_bytes"), (
+            "OutputContext must expose the low-level write_bytes(kind, filename, content)"
         )
         ctx = OutputContext.from_resource_paths(_make_v1_paths(tmp_path))
-        result = ctx.save_bytes(b"canonical bytes", "output.bin")
-        assert result.exists(), "save_bytes() must write the file to disk"
+        result = ctx.write_bytes("struct", "output.bin", b"canonical bytes")
+        assert result.exists(), "write_bytes() must write the file to disk"
         assert result.read_bytes() == b"canonical bytes"
 
-
-# ---------------------------------------------------------------------------
-# TC-TYPES-004: copy_raw() — canonical name (renamed from save_raw)
-# ---------------------------------------------------------------------------
-
-
-class TestOutputContextCopyRaw:
-    """OutputContext.copy_raw() copies a source file; save_raw() name is retired."""
-
-    def test_copy_raw_method_exists_and_copies_file__tc_types_004(
-        self, tmp_path: Path
-    ) -> None:
-        """TC-TYPES-004: copy_raw(source) copies source into the raw directory."""
+    def test_path_for_resolves_kind_paths__tc_types_004(self, tmp_path: Path) -> None:
+        """TC-TYPES-004 (v2.1 R3): path_for(kind, filename) resolves without writing."""
         from rdetoolkit.types import OutputContext  # noqa: PLC0415
 
-        assert hasattr(OutputContext, "copy_raw"), (
-            "OutputContext must have copy_raw(), not save_raw(). "
-            "Method was renamed for name-meaning alignment."
-        )
-        src = tmp_path / "source_data.raw"
-        src.write_bytes(b"original raw content")
+        assert hasattr(OutputContext, "path_for")
         ctx = OutputContext.from_resource_paths(_make_v1_paths(tmp_path))
-        result = ctx.copy_raw(src)
-        assert result.exists(), "copy_raw() must produce a file in the raw directory"
-        assert result.read_bytes() == b"original raw content"
-        assert result.name == src.name
-
-
-# ---------------------------------------------------------------------------
-# TC-TYPES-005/006: Old method names must not exist after the rename
-# ---------------------------------------------------------------------------
-
-
-class TestOutputContextDeprecatedMethodsAbsent:
-    """save_file and save_raw must not appear on OutputContext after the rename."""
+        dest = ctx.path_for("raw", "source_data.raw")
+        assert dest == tmp_path / "raw" / "source_data.raw"
+        assert not dest.exists()
 
     def test_save_file_does_not_exist_on_output_context__tc_types_005(self) -> None:
         """TC-TYPES-005: save_file() must NOT exist (renamed to save_bytes())."""
@@ -387,7 +360,7 @@ class TestFilenameTraversalGuard:
         "bad_name",
         ["../escape.csv", "sub/dir.csv", "/abs.csv", "..", "", "a\\b.csv"],
     )
-    def test_save_bytes_rejects_path_components(self, tmp_path, bad_name) -> None:
+    def test_write_bytes_rejects_path_components(self, tmp_path, bad_name) -> None:
         from types import SimpleNamespace
 
         from rdetoolkit.types import OutputContext
@@ -402,7 +375,7 @@ class TestFilenameTraversalGuard:
             })
         )
         with pytest.raises(ValueError, match="basename"):
-            ctx.save_bytes(b"x", bad_name)
+            ctx.write_bytes("struct", bad_name, b"x")
 
 
 class TestCanonicalReExports:
@@ -415,3 +388,80 @@ class TestCanonicalReExports:
         assert Event is not None
         assert EventSink is not None
         assert RunReport is not None
+
+
+class TestV21ConfigModel:
+    """Design v2.1 R2/R9 config retrofit pins (Session R)."""
+
+    def test_rdeconfig_rejects_policy_section(self) -> None:
+        """R9: the policy section (node_enforcement era) no longer exists."""
+        import pydantic
+
+        from rdetoolkit.types import RdeConfig
+
+        with pytest.raises(pydantic.ValidationError):
+            RdeConfig(policy={"node_enforcement": "strict"})
+
+    def test_rdeconfig_rejects_lineage_keys_in_provenance(self) -> None:
+        """R2/ADR-022: lineage settings do not exist in v2.0."""
+        import pydantic
+
+        from rdetoolkit.types import RdeConfig
+
+        with pytest.raises(pydantic.ValidationError):
+            RdeConfig(provenance={"lineage": "on"})
+
+    def test_recording_settings_defaults(self) -> None:
+        """provenance section is V2RecordingSettings: repr_head on, 80 chars."""
+        from rdetoolkit.types import RdeConfig
+
+        cfg = RdeConfig()
+        assert cfg.provenance.repr_head == "on"
+        assert cfg.provenance.repr_head_len == 80
+
+    def test_recording_settings_rejects_unknown_keys(self) -> None:
+        import pydantic
+
+        from rdetoolkit.types import RdeConfig
+
+        with pytest.raises(pydantic.ValidationError):
+            RdeConfig(provenance={"edge_confidence": True})
+
+
+class TestR3DomainSaveMethodsRemoved:
+    """Design v2.1 R3: domain save methods live in builtin nodes, not OutputContext."""
+
+    @pytest.mark.parametrize(
+        "method",
+        ["save_csv", "save_meta", "save_graph", "save_bytes",
+         "save_thumbnail", "save_main_image", "copy_raw"],
+    )
+    def test_domain_save_method_absent(self, method: str) -> None:
+        from rdetoolkit.types import OutputContext
+
+        assert not hasattr(OutputContext, method), (
+            f"R3: OutputContext.{method} must be removed (canonical API is rdetoolkit.nodes)"
+        )
+
+
+class TestOnIterationErrorSetting:
+    """PR #504 review: Design §7.2 execution.on_iteration_error is part of the config contract."""
+
+    def test_default_is_continue(self) -> None:
+        from rdetoolkit.types import RdeConfig
+
+        assert RdeConfig().execution.on_iteration_error == "continue"
+
+    def test_accepts_fail_fast(self) -> None:
+        from rdetoolkit.types import RdeConfig
+
+        cfg = RdeConfig(execution={"on_iteration_error": "fail_fast"})
+        assert cfg.execution.on_iteration_error == "fail_fast"
+
+    def test_rejects_unknown_value(self) -> None:
+        import pydantic
+
+        from rdetoolkit.types import RdeConfig
+
+        with pytest.raises(pydantic.ValidationError):
+            RdeConfig(execution={"on_iteration_error": "abort"})

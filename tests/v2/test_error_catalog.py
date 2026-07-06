@@ -465,3 +465,59 @@ class TestCatalogDocConsistency:
             f"gen_error_docs.py --check exited {result.returncode}:\n"
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
+
+
+class TestV21CatalogRevisions:
+    """Design v2.1 A' retrofit pins (R1 / R9, applied in Session R)."""
+
+    def test_every_error_def_has_nonempty_remediation(self) -> None:
+        """R9: remediation is required and never empty on every catalog entry."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        for code, entry in ERROR_CATALOG.items():
+            assert entry.remediation.strip(), f"E{code} has empty remediation"
+
+    def test_reserved_param_mismatch_2002_is_retired(self) -> None:
+        """R1: name-based DI mismatch is retired; the number is pinned, not reused."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        entry = ERROR_CATALOG[2002]
+        assert entry.retired is True
+        assert entry.name == "ReservedParamMismatch"
+
+    def test_retired_numbers_keep_their_original_names(self) -> None:
+        """Retired numbers must never be reassigned to a different meaning."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        RETIRED = {2002: "ReservedParamMismatch"}
+        for code, name in RETIRED.items():
+            assert ERROR_CATALOG[code].retired is True
+            assert ERROR_CATALOG[code].name == name
+
+    def test_non_retired_entries_are_active(self) -> None:
+        """Only documented retirements carry retired=True."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        retired = {code for code, e in ERROR_CATALOG.items() if e.retired}
+        assert retired == {2002}
+
+    def test_duplicate_reserved_type_annotation_2006_exists(self) -> None:
+        """R1: E2006 replaces name-based mismatch for real ambiguity."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        assert ERROR_CATALOG[2006].name == "DuplicateReservedTypeAnnotation"
+        assert ERROR_CATALOG[2006].retired is False
+
+    def test_template_error_codes_2101_to_2105_are_reserved(self) -> None:
+        """R6: template error numbers are defined now, raised from Phase F."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        expected = {
+            2101: "TemplateSlotMissing",
+            2102: "TemplateSlotSignatureMismatch",
+            2103: "TemplateFinalOverride",
+            2104: "TemplateDeepInheritance",
+            2105: "TemplateCtorNotDefault",
+        }
+        for code, name in expected.items():
+            assert ERROR_CATALOG[code].name == name
