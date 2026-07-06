@@ -8,11 +8,9 @@ Note:
 
 from __future__ import annotations
 
-import json
-import shutil
 from dataclasses import InitVar, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Literal, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -35,6 +33,34 @@ class InputPaths:
     tasksupport: Path
     raw: Path | None = None
 
+
+OutputKind = Literal[
+    "struct",
+    "meta",
+    "main_image",
+    "other_image",
+    "thumbnail",
+    "attachment",
+    "nonshared_raw",
+    "raw",
+    "invoice",
+    "logs",
+]
+
+_OUTPUT_KINDS: frozenset[str] = frozenset(
+    (
+        "struct",
+        "meta",
+        "main_image",
+        "other_image",
+        "thumbnail",
+        "attachment",
+        "nonshared_raw",
+        "raw",
+        "invoice",
+        "logs",
+    ),
+)
 
 _FACTORY_TOKEN: object = object()
 
@@ -141,113 +167,39 @@ class OutputContext:
             _token=_FACTORY_TOKEN,
         )
 
-    def save_csv(self, df: Any, filename: str) -> Path:
-        """Save a DataFrame as CSV to the structured data directory.
+    def _dir_for(self, kind: str) -> Path:
+        if kind not in _OUTPUT_KINDS:
+            msg = f"Unknown output kind: {kind!r} (expected one of {sorted(_OUTPUT_KINDS)})"
+            raise ValueError(msg)
+        return getattr(self, kind)
 
-        Args:
-            df: A pandas-like DataFrame with a ``to_csv`` method.
-            filename: Target filename (e.g. ``"normalized.csv"``).
+    def path_for(self, kind: OutputKind, filename: str) -> Path:
+        """Resolve the artifact path for ``filename`` under the ``kind`` directory.
 
-        Returns:
-            Path to the written CSV file.
+        Low-level escape hatch (Design v2.1 §4.2 R3). Domain saving (CSV, meta,
+        images, plots) is canonical in the builtin nodes (§5.1); this method
+        only resolves paths and has no side effects.
         """
         _require_simple_filename(filename)
-        self.struct.mkdir(parents=True, exist_ok=True)
-        dest = self.struct / filename
-        df.to_csv(dest, index=False)
-        return dest
+        return self._dir_for(kind) / filename
 
-    def save_meta(self, metadata: Any) -> None:
-        """Save metadata as JSON to the metadata directory.
+    def write_bytes(self, kind: OutputKind, filename: str, content: bytes) -> Path:
+        """Write raw bytes under the ``kind`` directory (low-level escape hatch).
 
-        Args:
-            metadata: A ``Metadata`` instance (with a ``.custom`` dict attribute)
-                or a plain dict.
+        Builtin nodes use this internally; direct use is legal for formats the
+        builtin nodes do not cover (Design v2.1 §4.2 R3).
         """
-        self.meta.mkdir(parents=True, exist_ok=True)
-        dest = self.meta / "metadata.json"
-        data = metadata.custom if hasattr(metadata, "custom") else metadata
-        dest.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    def save_graph(self, fig: Any, filename: str) -> Path:
-        """Save a figure/graph to the main image directory.
-
-        Args:
-            fig: A figure object with a ``savefig`` or ``write_image`` method.
-            filename: Target filename (e.g. ``"plot.png"``).
-
-        Returns:
-            Path to the written file.
-        """
-        _require_simple_filename(filename)
-        self.main_image.mkdir(parents=True, exist_ok=True)
-        dest = self.main_image / filename
-        if hasattr(fig, "write_image"):
-            fig.write_image(str(dest))
-        elif hasattr(fig, "savefig"):
-            fig.savefig(str(dest))
-        else:
-            msg = f"Unsupported figure type: {type(fig)}"
-            raise TypeError(msg)
-        return dest
-
-    def save_bytes(self, content: bytes, filename: str) -> Path:
-        """Save raw bytes to the structured data directory.
-
-        Args:
-            content: Binary content to write.
-            filename: Target filename.
-
-        Returns:
-            Path to the written file.
-        """
-        _require_simple_filename(filename)
-        self.struct.mkdir(parents=True, exist_ok=True)
-        dest = self.struct / filename
+        dest = self.path_for(kind, filename)
+        dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(content)
         return dest
 
-    def save_thumbnail(self, image_path: Path) -> Path:
-        """Copy an image to the thumbnail directory.
 
-        Args:
-            image_path: Source image file path.
 
-        Returns:
-            Path to the copied file in the thumbnail directory.
-        """
-        self.thumbnail.mkdir(parents=True, exist_ok=True)
-        dest = self.thumbnail / image_path.name
-        shutil.copy2(image_path, dest)
-        return dest
 
-    def save_main_image(self, image_path: Path) -> Path:
-        """Copy an image to the main image directory.
 
-        Args:
-            image_path: Source image file path.
 
-        Returns:
-            Path to the copied file in the main image directory.
-        """
-        self.main_image.mkdir(parents=True, exist_ok=True)
-        dest = self.main_image / image_path.name
-        shutil.copy2(image_path, dest)
-        return dest
 
-    def copy_raw(self, source_path: Path) -> Path:
-        """Copy a file to the raw data directory.
-
-        Args:
-            source_path: Source file path.
-
-        Returns:
-            Path to the copied file in the raw directory.
-        """
-        self.raw.mkdir(parents=True, exist_ok=True)
-        dest = self.raw / source_path.name
-        shutil.copy2(source_path, dest)
-        return dest
 
 
 @dataclass(slots=True)
@@ -350,20 +302,17 @@ class V2ExecutionSettings(BaseModel):
     type_check: str = "off"
 
 
-class V2PolicySettings(BaseModel):
-    """Strict v2 policy settings."""
+class V2RecordingSettings(BaseModel):
+    """Strict v2 call-log recording settings (Design v2.1 R2).
+
+    Only ``repr_head`` capture is configurable. Value-lineage settings do not
+    exist in v2.0 (ADR-022); ``extra="forbid"`` rejects them at load time.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    error_policy: str = "fail_fast"
-
-
-class V2ProvenanceSettings(BaseModel):
-    """Strict v2 provenance settings."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    enabled: bool = True
+    repr_head: Literal["on", "off"] = "on"
+    repr_head_len: int = 80
 
 
 class RdeConfig(BaseModel):
@@ -376,8 +325,7 @@ class RdeConfig(BaseModel):
 
     system: V2SystemSettings = Field(default_factory=V2SystemSettings)
     execution: V2ExecutionSettings = Field(default_factory=V2ExecutionSettings)
-    policy: V2PolicySettings = Field(default_factory=V2PolicySettings)
-    provenance: V2ProvenanceSettings = Field(default_factory=V2ProvenanceSettings)
+    provenance: V2RecordingSettings = Field(default_factory=V2RecordingSettings)
     custom: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -415,7 +363,7 @@ def _build_output_context(
 
 # --- Canonical v2 schema re-exports (Design §4.1.1) --------------------------
 # ``rdetoolkit.types`` is the single canonical entry point for v2 schema types.
-# NodeCallRecord and ValueRef join this list in Phase C (provenance).
+# NodeCallRecord and TypeSummary join this list in Phase C (call log, R2).
 from rdetoolkit.core.context import RunContext  # noqa: E402, F401
 from rdetoolkit.report.events import Event, EventSink  # noqa: E402, F401
 from rdetoolkit.report.run_report import RunReport  # noqa: E402, F401
