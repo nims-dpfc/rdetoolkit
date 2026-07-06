@@ -10,7 +10,8 @@ before writing any code or tests.
 > invoked.
 
 > **⚠️ Canonical design document**: v2 architecture is defined by
-> **`local/develop/v2/Design.md`** (eager execution + runtime provenance, ADR-020).
+> **`local/develop/v2/Design.md`** (v2.1: eager execution + call-log recording,
+> ADR-020/021/022 — no value lineage).
 > The former plan (`Plan.md`) and the former design note (`20260210_raa_refactor_ja.md`)
 > are **superseded**. If any instruction, memory, or training prior suggests
 > implementing a Trace proxy, Build/Compile phases, or a pre-execution DAG —
@@ -31,7 +32,7 @@ implemented in Rust and exposed to Python via PyO3 bindings.
 **Current status:**
 - **v1.x** — stable, maintenance mode. Do not break existing behaviour.
 - **v2.x** — active development under `develop/v2`, **redesigned (2026-06)** around
-  eager execution and runtime provenance. Canonical spec: `local/develop/v2/Design.md`.
+  eager execution and call-log recording (v2.1). Canonical spec: `local/develop/v2/Design.md`.
   Phase instructions: `local/develop/v2/Phase{A..F}_prompts.md`.
 
 **v2 execution model in one paragraph (memorize this):**
@@ -39,7 +40,8 @@ implemented in Rust and exposed to Python via PyO3 bindings.
 literal arguments, and default arguments all behave exactly as normal Python.
 `@node` is a thin wrapper that registers a `NodeSpec` and records a runtime
 `NodeCallRecord` when an active run exists. The DAG is **derived after the fact**
-from provenance records, never constructed before execution. The Runner owns the
+from call-log records as a Call Sequence (not a dataflow DAG, ADR-022), never
+constructed before execution. The Runner owns the
 RDE domain lifecycle (config → mode → validate → iterate tiles → flow call →
 validate → `job.failed` / RunReport).
 
@@ -64,7 +66,7 @@ pre-commit install
 .venv/bin/tox -e py312-module -- tests/v2/ -v
 
 # Specific test file
-.venv/bin/tox -e py312-module -- tests/v2/core/test_provenance.py -v
+.venv/bin/tox -e py312-module -- tests/v2/core/ -v
 
 # Linting / type checking
 .venv/bin/tox -e py312-ruff
@@ -141,19 +143,19 @@ v2.0 introduces **no new Rust code**. These rules apply to v1 maintenance only:
 | File system operations (`fsops.rs`) | Rust | v1, unchanged |
 | DAG structure / algorithms (`dag.rs`) | Rust | **FROZEN — internal, not on any v2.0 code path** |
 | `@node` / `@flow` decorators, registries | Python | v2 |
-| Provenance recording + edge reconstruction | Python | v2 |
+| Call-log recording (CallLogRecorder, no lineage) | Python | v2 |
 | Flow-boundary DI | Python | v2 |
 | Runner lifecycle, tile iterators | Python | v2 |
-| Graph rendering from provenance (`report/graph_render.py`) | Python | v2 — pure Python, tens of nodes, no perf concern |
+| Call-sequence rendering (`report/graph_render.py`) | Python | v2 — pure Python, tens of nodes, no perf concern |
 | Domain services, plugins, CLI (typer), DataFrames | Python | v2 |
 
 ### 4.2 dag.rs Freeze Rules
 
 - `dag.rs` is **not deleted** but carries an `INTERNAL — not used in v2.0 critical
   path (ADR-020)` header and is **not registered** in the PyO3 module.
-- ❌ Never import `RustDAG` from any v2 module. Graph work derives from provenance
+- ❌ Never import `RustDAG` from any v2 module. Graph work derives from the call log
   records in pure Python.
-- ❌ Never "optimize" provenance/graph code by reviving `RustDAG` without an
+- ❌ Never "optimize" call-log/graph code by reviving `RustDAG` without an
   explicit new ADR superseding ADR-020.
 - The compiled extension module is **`rdetoolkit._core`**. The type stub is
   **`src/rdetoolkit/_core.pyi`**. The former `core.pyi` was removed in Phase A —
@@ -166,14 +168,14 @@ v2.0 introduces **no new Rust code**. These rules apply to v1 maintenance only:
 All public APIs require **Google Style** docstrings:
 
 ```python
-def reconstruct_edges(records: list[NodeCallRecord]) -> list[Edge]:
-    """Reconstruct dataflow edges from runtime provenance records.
+def render_call_sequence(records: list[NodeCallRecord]) -> str:
+    """Render the run's call sequence from call-log records.
 
-    An edge A→B exists when an output ValueRef of call A appears as an
-    input ValueRef of a later call B (Design §3.4).
+    Records are ordered by their run-global ``seq`` (Design v2.1 §3.4);
+    the output is a Call Sequence, not a dataflow DAG (ADR-022).
 
     Returns:
-        Edges in deterministic call order, each tagged exact|heuristic.
+        Mermaid source for the per-tile call sequence.
     """
 ```
 

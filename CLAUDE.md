@@ -7,8 +7,9 @@ This file provides Claude Code-specific guidance when working with code in this 
 > **[AGENTS.md](./AGENTS.md)**. This file focuses on Claude Code-specific guidance,
 > architecture, agent usage patterns, and Codex delegation (including `/goal`).
 
-> **⚠️ Canonical design**: `local/develop/v2/Design.md` (eager execution + runtime
-> provenance, ADR-020). `Plan.md` and the 2026-02 design note are superseded.
+> **⚠️ Canonical design**: `local/develop/v2/Design.md` (**v2.1, 2026-07-04** — eager
+> execution + call-log recording; R1–R10 revisions, ADR-020/021/022). `Plan.md`,
+> the 2026-02 note, and v2.0 (retired to Design_v2.0_20260622.md) are superseded.
 > **Never implement Trace proxies, Build/Compile phases, or pre-execution DAGs** —
 > if you remember those from this repo, that is the retired design.
 
@@ -40,20 +41,21 @@ PyO3/Maturin (Rust is v1-only; v2.0 adds no Rust).
 
 ## Architecture
 
-### v2 Execution Model (eager + provenance)
+### v2 Execution Model (eager + call log, v2.1)
 
 ```
 Layer 4:  CLI / Entry Points      rdetoolkit run / nodes / flows / graph / report / repro / migrate
 Layer 3:  Runner (Orchestration)  config → mode → validate → iterate tiles → flow call → validate → finalize
 Layer 2:  Domain Services         config / mode / validation / paths / invoice
-Layer 1:  Node Registry + Provenance   @node / @flow / NodeSpec / NodeCallRecord / flow-boundary DI
+Layer 1:  Node Registry + Call Log     @node / @flow / NodeSpec / NodeCallRecord / flow-boundary DI (type-based)
 Layer 0:  Shared Kernel           types / errors (int catalog) / events (schema_version) / models
 ```
 
 Key invariants (Design §1):
 1. `@flow` runs as **plain Python** — no trace, no compile, no proxies.
 2. `@node` = registration + runtime recording + opt-in type check. Directly callable.
-3. The DAG is **observed** from provenance, rendered post-hoc (`rdetoolkit graph`).
+3. Recording is a **call log** (no value lineage, ADR-022); `rdetoolkit graph`
+   renders a Call Sequence, not a dataflow DAG.
 4. The Runner owns all RDE ceremony incl. the `job.failed` contract and directory
    contract (golden-tested against v1).
 5. v1 code path (`run(custom_dataset_function=...)`) is untouched — no bridge.
@@ -172,7 +174,7 @@ PR:        quality-checker (final) → pr-generator
 - `local/develop/v2/Design.md` — **canonical architecture spec**
 - `local/develop/v2/Phase{A..F}_prompts.md` — session instructions
 - `local/develop/v2/goals/` — per-phase `/goal` templates (see below)
-- `src/rdetoolkit/core/` — node / flow / registry / provenance / injection / context
+- `src/rdetoolkit/core/` — node / flow / registry / calllog / injection / context
 - `src/rdetoolkit/runner/` — lifecycle / paths / iterator / execute / aggregator / finalize
 - `src/rdetoolkit/report/`, `nodes/`, `protocols/`, `plugin/`, `testing/`, `cli/`
 - `tests/v2/` — all v2 tests (never touch `tests/` root)
@@ -337,11 +339,12 @@ decision/input you need.
 - EXTRA_CONSTRAINTS: `domain/mode.py` priority order unchanged;
   `write_job_errorlog_file` called, not reimplemented
 
-**Phase C — eager node/flow & provenance**
+**Phase C — eager node/flow & call log (v2.1: see PhaseC_prompts.md + review/phase_c_kickoff.md)**
 - OUTCOME: `@node`/`@flow` fully transparent plain functions; registry with
-  E2001; provenance with per-call `call_id`, edge reconstruction with
-  exact|heuristic confidence; flow-boundary DI with E2003/E2004; opt-in type
-  check with zero cost when off
+  E2001/E2005; CallLogRecorder with per-call `call_id`, run-global `seq`,
+  `parent_flow` (call log ONLY — no lineage/edges, ADR-022); flow-boundary DI
+  by type annotation with E2003/E2006 (E2002 retired, name-based DI forbidden);
+  opt-in type check with zero cost when off; rdetoolkit.testing pytest plugin
 - VERIFICATION adds: `tests/v2/core/test_eager_semantics.py` GREEN (the legacy-B2
   regression suite: if/loop/f-string/literal/default-arg/container/repeat-call);
   determinism test GREEN; PBT with branching+merging shapes GREEN
@@ -358,7 +361,8 @@ decision/input you need.
 
 **Phase E — CLI**
 - OUTCOME: run/--validate-only, nodes list|describe|lint, flows, graph (3
-  formats from provenance), report show, repro export→import→run round-trip,
+  formats from the call log, output titled "Call Sequence" — not a dataflow
+  DAG), report show, repro export→import→run round-trip,
   migrate check; exit codes 0/1/2/3 uniform
 - VERIFICATION adds: `rdetoolkit --help` still lists init/gen-invoice/
   make-excelinvoice/archive; parametrized exit-code test GREEN; v1 CLI tests GREEN
@@ -407,7 +411,8 @@ Blocked stop condition: {BLOCKED_STOP_CONDITION}
 - Python 3.12, strict mypy, ruff; test runner: .venv/bin/tox -e py312-module
 - Canonical spec: local/develop/v2/Design.md (§ refs in the task)
 - Rules: AGENTS.md (read in full; §8.2 Forbidden Actions especially)
-- Execution model: eager + provenance. NO trace, NO compile, NO RustDAG.
+- Execution model: eager + call log (v2.1). NO trace, NO compile, NO RustDAG,
+  NO value lineage (ADR-022), NO name-based DI.
 
 [TASK]
 <paste the Session block from PhaseX_prompts.md verbatim>
@@ -466,8 +471,9 @@ from rdetoolkit.utils.encoding import detect_encoding  # noqa: F401  (re-export)
 ### rdeconfig.yaml v2 sections (Design §4.4, §7.2, §3.2)
 
 ```yaml
-policy:
-  node_enforcement: off        # off (default) | recommend | strict
+provenance:
+  repr_head: on                # on (default) | off — call-log repr capture (R2)
+  repr_head_len: 80
 execution:
   type_check: off              # off (default) | warn | strict
   on_iteration_error: continue # fail_fast | continue (default)
