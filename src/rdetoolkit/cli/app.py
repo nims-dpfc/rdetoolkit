@@ -626,6 +626,13 @@ def csv2graph(
         int,
         typer.Option("--legend-outside-threshold", help="Item-count threshold for 'auto' placement (default: 8)"),
     ] = 8,
+    legend_bottom_threshold: Annotated[
+        int,
+        typer.Option(
+            "--legend-bottom-threshold",
+            help="Item count at or above which 'auto' places the legend below the graph (default: 21; 0 or less disables)",
+        ),
+    ] = 21,
     legend_ncol: Annotated[
         int | None,
         typer.Option("--legend-ncol", help="Number of legend columns for 'outside_bottom' placement"),
@@ -708,6 +715,7 @@ def csv2graph(
             legend_policy,
         ),
         legend_outside_threshold=legend_outside_threshold,
+        legend_bottom_threshold=legend_bottom_threshold if legend_bottom_threshold > 0 else None,
         legend_ncol=legend_ncol,
     )
     cmd.invoke()

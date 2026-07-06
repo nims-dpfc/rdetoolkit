@@ -70,6 +70,7 @@ def csv2graph(
     max_legend_items: Optional[int] = None,
     legend_policy: str = "legacy",
     legend_outside_threshold: int = 8,
+    legend_bottom_threshold: int = 21,
     legend_ncol: Optional[int] = None,
 ) -> None: ...
 def agent_guide(detailed: bool = False) -> None: ...

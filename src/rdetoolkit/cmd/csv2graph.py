@@ -46,6 +46,7 @@ class Csv2GraphCommand:
             "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
         ] = "legacy",
         legend_outside_threshold: int = 8,
+        legend_bottom_threshold: Optional[int] = 21,
         legend_ncol: Optional[int] = None,
     ) -> None:
         """Initialize Csv2GraphCommand.
@@ -78,6 +79,8 @@ class Csv2GraphCommand:
             legend_policy: Legend placement policy ("legacy", "auto",
                 "inside", "outside_right", "outside_bottom", "hide")
             legend_outside_threshold: Item-count threshold for "auto" placement
+            legend_bottom_threshold: Item count at or above which "auto" uses
+                outside-bottom placement (None disables the switch)
             legend_ncol: Number of legend columns for "outside_bottom" placement
         """
         self.csv_path = csv_path
@@ -106,6 +109,7 @@ class Csv2GraphCommand:
         self.max_legend_items = max_legend_items
         self.legend_policy = legend_policy
         self.legend_outside_threshold = legend_outside_threshold
+        self.legend_bottom_threshold = legend_bottom_threshold
         self.legend_ncol = legend_ncol
 
     def invoke(self) -> None:
@@ -155,6 +159,7 @@ class Csv2GraphCommand:
                 max_legend_items=self.max_legend_items,
                 legend_policy=self.legend_policy,
                 legend_outside_threshold=self.legend_outside_threshold,
+                legend_bottom_threshold=self.legend_bottom_threshold,
                 legend_ncol=self.legend_ncol,
             )
 

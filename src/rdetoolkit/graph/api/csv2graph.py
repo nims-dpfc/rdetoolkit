@@ -159,6 +159,7 @@ def _build_plot_config(
         "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
     ],
     legend_outside_threshold: int,
+    legend_bottom_threshold: int | None,
     legend_ncol: int | None,
     formats: list[str],
     no_individual: bool,
@@ -201,6 +202,7 @@ def _build_plot_config(
             max_items=max_legend_items,
             policy=legend_policy,
             outside_threshold=legend_outside_threshold,
+            bottom_threshold=legend_bottom_threshold,
             ncol=legend_ncol,
         ),
     )
@@ -289,6 +291,7 @@ def csv2graph(
         "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
     ] = "legacy",
     legend_outside_threshold: int = 8,
+    legend_bottom_threshold: int | None = 21,
     legend_ncol: int | None = None,
 ) -> None:
     """Generate graph from CSV file.
@@ -327,6 +330,9 @@ def csv2graph(
             "hide" suppresses the legend.
         legend_outside_threshold: Item-count threshold used by "auto" to
             switch from inside to outside-right placement (default: 8).
+        legend_bottom_threshold: Item count at or above which "auto"
+            switches to outside-bottom placement (default: 21). None
+            disables the automatic switch to bottom placement.
         legend_ncol: Number of legend columns for "outside_bottom"
             placement (defaults to 3 when None).
 
@@ -380,6 +386,7 @@ def csv2graph(
         max_legend_items=max_legend_items,
         legend_policy=legend_policy,
         legend_outside_threshold=legend_outside_threshold,
+        legend_bottom_threshold=legend_bottom_threshold,
         legend_ncol=legend_ncol,
         return_fig=False,
     )
@@ -416,6 +423,7 @@ def plot_from_dataframe(
         "legacy", "auto", "inside", "outside_right", "outside_bottom", "hide",
     ] = "legacy",
     legend_outside_threshold: int = 8,
+    legend_bottom_threshold: int | None = 21,
     legend_ncol: int | None = None,
     return_fig: bool = False,
 ) -> list[Any] | None:
@@ -458,6 +466,9 @@ def plot_from_dataframe(
             "hide" suppresses the legend.
         legend_outside_threshold: Item-count threshold used by "auto" to
             switch from inside to outside-right placement (default: 8).
+        legend_bottom_threshold: Item count at or above which "auto"
+            switches to outside-bottom placement (default: 21). None
+            disables the automatic switch to bottom placement.
         legend_ncol: Number of legend columns for "outside_bottom"
             placement (defaults to 3 when None).
         return_fig: Return figure objects instead of saving
@@ -530,6 +541,7 @@ def plot_from_dataframe(
         max_legend_items=max_legend_items,
         legend_policy=legend_policy,
         legend_outside_threshold=legend_outside_threshold,
+        legend_bottom_threshold=legend_bottom_threshold,
         legend_ncol=legend_ncol,
         formats=formats,
         no_individual=resolved_no_individual,
