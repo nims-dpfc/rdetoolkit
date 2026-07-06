@@ -37,13 +37,47 @@ class TestResolveLegendPolicyProperties:
         threshold=st.integers(min_value=0, max_value=100),
         max_items=st.one_of(st.none(), st.integers(min_value=0, max_value=1000)),
     )
-    def test_auto_never_resolves_to_auto_or_outside_bottom(self, count, threshold, max_items):
-        """Property: "auto" always resolves to a concrete, non-"outside_bottom" policy."""
-        # Given: policy="auto" with arbitrary count/threshold/max_items
+    def test_auto_without_bottom_threshold_never_resolves_to_outside_bottom(self, count, threshold, max_items):
+        """Property: with bottom_threshold unset, "auto" never picks "outside_bottom"."""
+        # Given: policy="auto" with arbitrary count/threshold/max_items and the
+        #        default bottom_threshold (None = bottom switch disabled)
         # When: resolving
         result = _resolve_legend_policy("auto", count, threshold, max_items)
-        # Then: result is one of the three reachable placements
+        # Then: result is one of the three placements reachable without the switch
         assert result in ("inside", "outside_right", "hide")
+
+    @given(
+        count=st.integers(min_value=0, max_value=1000),
+        threshold=st.integers(min_value=0, max_value=100),
+        max_items=st.one_of(st.none(), st.integers(min_value=0, max_value=1000)),
+        bottom_threshold=st.one_of(st.none(), st.integers(min_value=0, max_value=1000)),
+    )
+    def test_auto_always_resolves_to_concrete_policy(self, count, threshold, max_items, bottom_threshold):
+        """Property: "auto" always resolves to a concrete, non-"auto" policy."""
+        # Given: policy="auto" with arbitrary parameters
+        # When: resolving
+        result = _resolve_legend_policy(
+            "auto", count, threshold, max_items, bottom_threshold=bottom_threshold,
+        )
+        # Then: result is a concrete placement
+        assert result in ("inside", "outside_right", "outside_bottom", "hide")
+
+    @given(
+        count=st.integers(min_value=1, max_value=1000),
+        threshold=st.integers(min_value=0, max_value=100),
+        bottom_threshold=st.integers(min_value=1, max_value=1000),
+    )
+    def test_auto_at_or_above_bottom_threshold_is_outside_bottom(self, count, threshold, bottom_threshold):
+        """Property: reaching bottom_threshold resolves to "outside_bottom" (no cap)."""
+        # Given: count at or above the bottom threshold and no max_items cap
+        if count < bottom_threshold:
+            return
+        # When: resolving
+        result = _resolve_legend_policy(
+            "auto", count, threshold, None, bottom_threshold=bottom_threshold,
+        )
+        # Then: legend goes below the graph regardless of outside_threshold
+        assert result == "outside_bottom"
 
     @given(
         count=st.integers(min_value=0, max_value=1000),

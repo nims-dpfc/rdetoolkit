@@ -504,6 +504,7 @@ def test_build_plot_config_wires_legend_policy_fields() -> None:
         max_legend_items=None,
         legend_policy="outside_bottom",
         legend_outside_threshold=5,
+        legend_bottom_threshold=25,
         legend_ncol=4,
         formats=["png"],
         no_individual=True,
@@ -515,6 +516,7 @@ def test_build_plot_config_wires_legend_policy_fields() -> None:
     # Then: LegendConfig carries the requested policy fields
     assert config.legend.policy == "outside_bottom"
     assert config.legend.outside_threshold == 5
+    assert config.legend.bottom_threshold == 25
     assert config.legend.ncol == 4
 
 
@@ -549,6 +551,7 @@ def test_build_plot_config_defaults_legend_policy_to_legacy() -> None:
         max_legend_items=None,
         legend_policy="legacy",
         legend_outside_threshold=8,
+        legend_bottom_threshold=21,
         legend_ncol=None,
         formats=["png"],
         no_individual=True,
@@ -560,6 +563,7 @@ def test_build_plot_config_defaults_legend_policy_to_legacy() -> None:
     # Then: LegendConfig matches LegendConfig()'s own defaults
     assert config.legend.policy == "legacy"
     assert config.legend.outside_threshold == 8
+    assert config.legend.bottom_threshold == 21
     assert config.legend.ncol is None
 
 

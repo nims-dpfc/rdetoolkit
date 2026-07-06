@@ -168,6 +168,35 @@ class TestResolveLegendPolicy:
         # max_items smaller than outside_threshold: cap still wins.
         assert _resolve_legend_policy("auto", 6, outside_threshold=8, max_items=5) == "hide"
 
+    def test_auto_boundary_matrix_with_bottom_threshold(self):
+        """BV: defaults (outside=8, bottom=21) split counts into inside/right/bottom."""
+        expectations = {
+            8: "inside",
+            9: "outside_right",
+            20: "outside_right",
+            21: "outside_bottom",
+            30: "outside_bottom",
+        }
+        for count, expected in expectations.items():
+            result = _resolve_legend_policy(
+                "auto", count, outside_threshold=8, max_items=None, bottom_threshold=21,
+            )
+            assert result == expected, f"count={count}"
+
+    def test_auto_bottom_threshold_none_disables_bottom_switch(self):
+        """bottom_threshold=None keeps the pre-existing auto behavior (never bottom)."""
+        result = _resolve_legend_policy(
+            "auto", 30, outside_threshold=8, max_items=None, bottom_threshold=None,
+        )
+        assert result == "outside_right"
+
+    def test_auto_max_items_precedence_over_bottom_threshold(self):
+        """Exceeding max_items hides the legend even past the bottom threshold."""
+        result = _resolve_legend_policy(
+            "auto", 25, outside_threshold=8, max_items=20, bottom_threshold=21,
+        )
+        assert result == "hide"
+
 
 class TestApplyLegendPolicies:
     """Behavioral tests for MatplotlibRenderer._apply_legend() policy branches."""
@@ -183,6 +212,13 @@ class TestApplyLegendPolicies:
         for i in range(n_series):
             data[f"series_{i}"] = [i, i + 1, i + 2]
         return pd.DataFrame(data)
+
+    def _axes_size_inches(self, fig) -> tuple[float, float]:
+        """Return the physical (width, height) of the plot area in inches."""
+        fig.canvas.draw()
+        position = fig.axes[0].get_position()
+        fig_w, fig_h = fig.get_size_inches()
+        return position.width * fig_w, position.height * fig_h
 
     def test_legacy_policy_matches_pre_497_behavior(self):
         """policy="legacy" (default) preserves existing single-legend rendering."""
@@ -237,7 +273,7 @@ class TestApplyLegendPolicies:
             close_fig(fig)
 
     def test_outside_right_policy_places_legend_outside_axes(self):
-        """policy="outside_right" shrinks the axes and places the legend to its right."""
+        """policy="outside_right" grows the figure and puts the legend right of the axes."""
         df = self._multi_series_df(10)
         config = self._build_config(
             LegendConfig(policy="outside_right"), y_cols=list(range(1, 11)),
@@ -248,7 +284,14 @@ class TestApplyLegendPolicies:
             ax = fig.axes[0]
             legend = ax.get_legend()
             assert legend is not None
-            assert fig.subplotpars.right < 0.8
+            # figure expands beyond the default 8.85in width instead of shrinking axes
+            assert fig.get_size_inches()[0] > 8.85
+            fig.canvas.draw()
+            legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())
+            axes_bbox = ax.get_window_extent(fig.canvas.get_renderer())
+            assert legend_bbox.x0 >= axes_bbox.x1
+            # legend fully inside the enlarged canvas
+            assert legend_bbox.x1 <= fig.get_size_inches()[0] * fig.dpi + 1
         finally:
             close_fig(fig)
 
@@ -265,9 +308,49 @@ class TestApplyLegendPolicies:
             legend = ax.get_legend()
             assert legend is not None
             assert legend._ncols == 3  # noqa: SLF001 - matplotlib exposes ncol via private attr
-            assert fig.subplotpars.bottom > 0.2
+            # figure expands beyond the default 8in height instead of shrinking axes
+            assert fig.get_size_inches()[1] > 8.0
+            fig.canvas.draw()
+            legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())
+            axes_bbox = ax.get_window_extent(fig.canvas.get_renderer())
+            assert legend_bbox.y1 <= axes_bbox.y0
+            assert legend_bbox.y0 >= -1
         finally:
             close_fig(fig)
+
+    def test_outside_policies_preserve_plot_area_size(self):
+        """Acceptance: outside legends must not crush the plot area (issue #497 follow-up).
+
+        The plot area of a 30-series graph with an outside legend must keep
+        (approximately) the same physical size as the same graph without a
+        legend; the extra legend space is added to the figure instead.
+        """
+        n_series = 30
+        df = self._multi_series_df(n_series)
+        y_cols = list(range(1, n_series + 1))
+        renderer = MatplotlibRenderer()
+
+        baseline_fig = renderer.render_overlay(
+            df, self._build_config(LegendConfig(policy="hide"), y_cols=y_cols),
+        )
+        try:
+            baseline_w, baseline_h = self._axes_size_inches(baseline_fig)
+        finally:
+            close_fig(baseline_fig)
+
+        for policy in ("outside_right", "outside_bottom"):
+            fig = renderer.render_overlay(
+                df,
+                self._build_config(
+                    LegendConfig(policy=policy, max_items=None), y_cols=y_cols,
+                ),
+            )
+            try:
+                axes_w, axes_h = self._axes_size_inches(fig)
+                assert axes_w == pytest.approx(baseline_w, abs=0.05), policy
+                assert axes_h == pytest.approx(baseline_h, abs=0.05), policy
+            finally:
+                close_fig(fig)
 
     def test_auto_policy_resolves_to_outside_right_when_many_items(self):
         """policy="auto" resolves to outside_right once item count exceeds the threshold."""
@@ -282,7 +365,64 @@ class TestApplyLegendPolicies:
             ax = fig.axes[0]
             legend = ax.get_legend()
             assert legend is not None
-            assert fig.subplotpars.right < 0.8
+            fig.canvas.draw()
+            legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())
+            axes_bbox = ax.get_window_extent(fig.canvas.get_renderer())
+            assert legend_bbox.x0 >= axes_bbox.x1
+        finally:
+            close_fig(fig)
+
+    def test_auto_policy_resolves_to_outside_bottom_at_bottom_threshold(self):
+        """policy="auto" switches to outside_bottom once the bottom threshold is reached."""
+        n_series = 21
+        df = self._multi_series_df(n_series)
+        config = self._build_config(
+            LegendConfig(
+                policy="auto",
+                outside_threshold=8,
+                bottom_threshold=21,
+                max_items=None,
+                ncol=7,
+            ),
+            y_cols=list(range(1, n_series + 1)),
+        )
+        renderer = MatplotlibRenderer()
+        fig = renderer.render_overlay(df, config)
+        try:
+            ax = fig.axes[0]
+            legend = ax.get_legend()
+            assert legend is not None
+            assert legend._ncols == 7  # noqa: SLF001 - matplotlib exposes ncol via private attr
+            fig.canvas.draw()
+            legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())
+            axes_bbox = ax.get_window_extent(fig.canvas.get_renderer())
+            assert legend_bbox.y1 <= axes_bbox.y0
+        finally:
+            close_fig(fig)
+
+    def test_auto_policy_bottom_threshold_none_keeps_outside_right(self):
+        """bottom_threshold=None keeps auto resolving to outside_right for many items."""
+        n_series = 25
+        df = self._multi_series_df(n_series)
+        config = self._build_config(
+            LegendConfig(
+                policy="auto",
+                outside_threshold=8,
+                bottom_threshold=None,
+                max_items=None,
+            ),
+            y_cols=list(range(1, n_series + 1)),
+        )
+        renderer = MatplotlibRenderer()
+        fig = renderer.render_overlay(df, config)
+        try:
+            ax = fig.axes[0]
+            legend = ax.get_legend()
+            assert legend is not None
+            fig.canvas.draw()
+            legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())
+            axes_bbox = ax.get_window_extent(fig.canvas.get_renderer())
+            assert legend_bbox.x0 >= axes_bbox.x1
         finally:
             close_fig(fig)
 
