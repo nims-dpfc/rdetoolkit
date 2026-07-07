@@ -57,6 +57,9 @@ package_data = { "rdetoolkit" = ["py.typed", "*.pyi", "_agent/*.md"] }
 [project.scripts]
 rdetoolkit = "rdetoolkit.cli.app:app"
 
+[project.entry-points.pytest11]
+rdetoolkit = "rdetoolkit.testing.plugin"
+
 [project.urls]
 "Homepage" = "https://github.com/nims-dpfc/rdetoolkit"
 "Bug Tracker" = "https://github.com/nims-dpfc/rdetoolkit"

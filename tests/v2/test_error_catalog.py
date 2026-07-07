@@ -521,3 +521,49 @@ class TestV21CatalogRevisions:
         }
         for code, name in expected.items():
             assert ERROR_CATALOG[code].name == name
+
+
+class TestUnstableNodeIdCatalogEntry:
+    """Session C1 (Design v2.1 §3.2): catalog entry 2005, UnstableNodeId.
+
+    2005 is a lint-style, non-eager detection (Registry.find_unstable_node_ids)
+    for node ids whose `__qualname__` contains "<locals>" — it must never be
+    raised automatically at @node decoration time (see
+    local/develop/v2/tasks/session_c1.md Conflict #1). 2004 stays permanently
+    unassigned (R1); this session must not touch it.
+    """
+
+    def test_unstable_node_id_name__tc_err_c1_001(self) -> None:
+        """TC-ERR-C1-001: ERROR_CATALOG[2005].name == "UnstableNodeId"."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        assert ERROR_CATALOG[2005].name == "UnstableNodeId"
+
+    def test_unstable_node_id_not_retired__tc_err_c1_002(self) -> None:
+        """TC-ERR-C1-002: ERROR_CATALOG[2005].retired is False."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        assert ERROR_CATALOG[2005].retired is False
+
+    def test_unstable_node_id_remediation_nonempty__tc_err_c1_003(self) -> None:
+        """TC-ERR-C1-003: ERROR_CATALOG[2005].remediation is non-empty (R9)."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        assert ERROR_CATALOG[2005].remediation.strip() != ""
+
+    def test_retired_set_unchanged_after_2005_addition__tc_err_c1_004(self) -> None:
+        """TC-ERR-C1-004: adding 2005 must not change the retired-code set —
+        it must remain exactly {2002} (regression guard on top of the
+        existing test_non_retired_entries_are_active)."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        retired = {code for code, entry in ERROR_CATALOG.items() if entry.retired}
+        assert retired == {2002}
+
+    def test_2004_remains_unassigned__tc_err_c1_005(self) -> None:
+        """Guard: 2004 (permanently retired number, R1) must stay absent from
+        the catalog — it must never be reused for UnstableNodeId or anything
+        else."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        assert 2004 not in ERROR_CATALOG

@@ -4,14 +4,36 @@ from __future__ import annotations
 
 import os
 import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Mapping, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from rdetoolkit.report.run_report import RunReport
-from rdetoolkit.runner.lifecycle import Runner
-from rdetoolkit.types import OutputContext, RdeConfig
+if TYPE_CHECKING:
+    from rdetoolkit.report.run_report import RunReport
+    from rdetoolkit.runner.lifecycle import Runner
+    from rdetoolkit.types import InputPaths, InvoiceData, OutputContext
+
+
+def make_input_paths(tmp_path: Path, files: Iterable[str] = ()) -> InputPaths:
+    """Create a minimal on-disk input tree for tests."""
+    from rdetoolkit.testing.builders import make_input_paths as _make_input_paths  # noqa: PLC0415
+
+    return _make_input_paths(tmp_path, files=files)
+
+
+def make_output_context(tmp_path: Path) -> OutputContext:
+    """Create a test output context with all canonical directories present."""
+    from rdetoolkit.testing.builders import make_output_context as _make_output_context  # noqa: PLC0415
+
+    return _make_output_context(tmp_path)
+
+
+def make_invoice(overrides: Mapping[str, Any] | None = None) -> InvoiceData:
+    """Create minimal invoice data for tests."""
+    from rdetoolkit.testing.builders import make_invoice as _make_invoice  # noqa: PLC0415
+
+    return _make_invoice(overrides=overrides)
 
 
 def run_flow(flow_fn_or_template: Callable[..., Any], fixture_dir: Path) -> RunReport:
@@ -24,12 +46,15 @@ def run_flow(flow_fn_or_template: Callable[..., Any], fixture_dir: Path) -> RunR
     Returns:
         Run report produced by the Runner.
     """
+    from rdetoolkit.runner.lifecycle import Runner  # noqa: PLC0415
+
     fixture_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as run_dir:
         root = Path(run_dir)
         _build_minimal_rde_tree(root, fixture_dir)
         with _chdir(root):
-            runner = _TestingRunner(root=root, inputdata_path=root / "inputdata", unpacked_dir_path=root / "unpacked")
+            runner_cls = _make_testing_runner()
+            runner = runner_cls(root=root, inputdata_path=root / "inputdata", unpacked_dir_path=root / "unpacked")
             return runner.run(flow_fn_or_template)
 
 
@@ -56,8 +81,13 @@ def assert_output_tree(out: OutputContext, golden_dir: Path) -> None:
         raise AssertionError(msg)
 
 
-class _TestingRunner(Runner):
-    """Alias kept for the Phase B seam; the base Runner now finalizes for real."""
+def _make_testing_runner() -> type[Runner]:
+    from rdetoolkit.runner.lifecycle import Runner  # noqa: PLC0415
+
+    class _TestingRunner(Runner):
+        """Alias kept for the Phase B seam; the base Runner now finalizes for real."""
+
+    return _TestingRunner
 
 
 def _build_minimal_rde_tree(root: Path, fixture_dir: Path) -> None:

@@ -100,6 +100,8 @@ def _build_output_context(
 ) -> OutputContext: ...
 
 from rdetoolkit.core.context import RunContext as RunContext
+from rdetoolkit.core.calllog import NodeCallRecord as NodeCallRecord
+from rdetoolkit.core.calllog import TypeSummary as TypeSummary
 from rdetoolkit.report.events import Event as Event
 from rdetoolkit.report.events import EventSink as EventSink
 from rdetoolkit.report.run_report import RunReport as RunReport

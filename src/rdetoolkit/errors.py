@@ -581,6 +581,11 @@ ERROR_CATALOG: dict[int, ErrorDef] = {
         message_template="Reserved type {type_name} is annotated on more than one flow parameter: {param_names}",
         remediation="A flow signature may declare each reserved type at most once; merge the duplicated parameters into one.",
     ),
+    2005: ErrorDef(
+        name="UnstableNodeId",
+        message_template="Node id is unstable because it is derived from a local function qualname: {node_id}",
+        remediation="Move the node function to module scope or pass a stable explicit id via @node(id=...).",
+    ),
     # --- Template errors (R6): catalog reserved here; raised from Phase F ---
     2101: ErrorDef(
         name="TemplateSlotMissing",

@@ -368,3 +368,4 @@ def _build_output_context(
 from rdetoolkit.core.context import RunContext  # noqa: E402, F401
 from rdetoolkit.report.events import Event, EventSink  # noqa: E402, F401
 from rdetoolkit.report.run_report import RunReport  # noqa: E402, F401
+from rdetoolkit.core.calllog import NodeCallRecord, TypeSummary  # noqa: E402, F401
