@@ -139,7 +139,7 @@ def test_process_metadata_overwrites_existing_value(smarttable_processing_contex
 
 
 def test_process_metadata_def_missing_raises(smarttable_processing_context) -> None:
-    """metadata-def.json が無い場合は StructuredError となることを確認。"""
+    """Verify that StructuredError is raised when metadata-def.json is missing."""
 
     processor = SmartTableInvoiceInitializer()
     context = smarttable_processing_context
