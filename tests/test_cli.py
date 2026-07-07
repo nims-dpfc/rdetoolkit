@@ -899,6 +899,69 @@ def test_csv2graph_with_options(sample_csv_file, csv_output_dir):
     assert "✨ Graphs generated successfully" in result.output
 
 
+def test_csv2graph_legend_policy_outside_right(sample_csv_file, csv_output_dir):
+    """Test csv2graph command with --legend-policy outside_right."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--legend-policy", "outside_right",
+        ],
+    )
+    assert result.exit_code == 0
+
+
+def test_csv2graph_legend_policy_auto_with_threshold(sample_csv_file, csv_output_dir):
+    """Test csv2graph command with --legend-policy auto and --legend-outside-threshold."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--legend-policy", "auto",
+            "--legend-outside-threshold", "3",
+            "--max-legend-items", "20",
+        ],
+    )
+    assert result.exit_code == 0
+
+
+def test_csv2graph_legend_policy_outside_bottom_with_ncol(sample_csv_file, csv_output_dir):
+    """Test csv2graph command with --legend-policy outside_bottom and --legend-ncol."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--legend-policy", "outside_bottom",
+            "--legend-ncol", "2",
+        ],
+    )
+    assert result.exit_code == 0
+
+
+def test_csv2graph_invalid_legend_policy_raises_bad_parameter(sample_csv_file, csv_output_dir):
+    """Test csv2graph command rejects invalid --legend-policy values."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--legend-policy", "not_a_real_policy",
+        ],
+    )
+    assert result.exit_code != 0
+
+
 def test_csv2graph_individual_mode(sample_csv_file, csv_output_dir):
     """Test csv2graph command in individual plotting mode."""
     runner = CliRunner()
