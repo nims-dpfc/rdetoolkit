@@ -147,6 +147,8 @@ def _build_plot_config(
     y_label: str | None,
     logx: bool,
     logy: bool,
+    x_tick_format: Literal["auto", "plain", "sci", "eng"],
+    y_tick_format: Literal["auto", "plain", "sci", "eng"],
     xlim: tuple[float | None, float | None] | None,
     ylim: tuple[float | None, float | None] | None,
     grid: bool,
@@ -177,6 +179,7 @@ def _build_plot_config(
             lim=normalize_axis_limits(xlim),
             grid=grid,
             invert=invert_x,
+            tick_format=x_tick_format,
         ),
     )
     builder.set_y_axis(
@@ -186,6 +189,7 @@ def _build_plot_config(
             lim=normalize_axis_limits(ylim),
             grid=grid,
             invert=invert_y,
+            tick_format=y_tick_format,
         ),
     )
     builder.set_direction(direction_config)
@@ -277,6 +281,8 @@ def csv2graph(
     invert_y: bool = False,
     no_individual: bool | None = None,
     max_legend_items: int | None = None,
+    x_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
+    y_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
 ) -> None:
     """Generate graph from CSV file.
 
@@ -308,6 +314,10 @@ def csv2graph(
         invert_y: Invert y-axis
         no_individual: Skip individual plots; None enables auto-detection (overlay)
         max_legend_items: Maximum legend items to display
+        x_tick_format: X-axis tick label formatter
+                       ("auto", "plain", "sci", or "eng")
+        y_tick_format: Y-axis tick label formatter
+                       ("auto", "plain", "sci", or "eng")
 
     Example:
         >>> csv2graph(
@@ -357,6 +367,8 @@ def csv2graph(
         invert_y=invert_y,
         no_individual=no_individual,
         max_legend_items=max_legend_items,
+        x_tick_format=x_tick_format,
+        y_tick_format=y_tick_format,
         return_fig=False,
     )
 
@@ -388,6 +400,8 @@ def plot_from_dataframe(
     invert_y: bool = False,
     no_individual: bool | None = None,
     max_legend_items: int | None = None,
+    x_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
+    y_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
     return_fig: bool = False,
 ) -> list[Any] | None:
     """Generate graph from pandas DataFrame.
@@ -423,6 +437,10 @@ def plot_from_dataframe(
         invert_y: Invert y-axis
         no_individual: Skip individual plots; None enables auto-detection (overlay)
         max_legend_items: Maximum legend items to display
+        x_tick_format: X-axis tick label formatter
+                       ("auto", "plain", "sci", or "eng")
+        y_tick_format: Y-axis tick label formatter
+                       ("auto", "plain", "sci", or "eng")
         return_fig: Return figure objects instead of saving
 
     Returns:
@@ -483,6 +501,8 @@ def plot_from_dataframe(
         y_label=y_label,
         logx=logx,
         logy=logy,
+        x_tick_format=x_tick_format,
+        y_tick_format=y_tick_format,
         xlim=xlim,
         ylim=ylim,
         grid=grid,

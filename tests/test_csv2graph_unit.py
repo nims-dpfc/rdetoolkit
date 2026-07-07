@@ -37,6 +37,8 @@ if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
 # Ensure plotting uses a headless backend inside tests
 matplotlib.use("Agg")  # pragma: no cover - configuration
 
+from matplotlib.ticker import ScalarFormatter
+
 from rdetoolkit.graph.api.csv2graph import plot_from_dataframe
 from rdetoolkit.graph.exceptions import ColumnNotFoundError
 from rdetoolkit.graph.normalizers import ColumnNormalizer
@@ -470,3 +472,38 @@ def test_plot_from_dataframe_mode_boundary__tc_bv_api_002(tmp_path: Path) -> Non
     assert len(individual_artifacts) == 2
     assert all(artifact.filename != "mode_boundary.png" for artifact in individual_artifacts)
     _close_artifacts(individual_artifacts)
+
+
+def test_plot_from_dataframe_applies_y_tick_format_sci__tc_ep_api_006(tmp_path: Path) -> None:
+    """y_tick_format='sci' propagates through to the rendered Axes' y-axis formatter.
+
+    Issue #483 Task 04: verifies that the x_tick_format/y_tick_format
+    parameters added to plot_from_dataframe() reach the matplotlib renderer
+    (Task 03's _apply_tick_formatting()) end-to-end.
+    """
+    df = pd.DataFrame({"time": [0, 1, 2, 3], "value": [1_000, 2_000, 3_000, 4_000]})
+
+    # Given: a DataFrame plotted with explicit y_tick_format="sci"
+    # When: plotting with return_fig=True
+    artifacts = plot_from_dataframe(
+        df=df,
+        output_dir=tmp_path,
+        name="tick_format_sci",
+        x_col="time",
+        y_cols=["value"],
+        y_tick_format="sci",
+        return_fig=True,
+    )
+
+    # Then: the figure is returned without error and the y-axis formatter is a
+    # ScalarFormatter configured for scientific notation (powerlimits (0, 0))
+    assert artifacts is not None
+    assert len(artifacts) == 1
+    figure = artifacts[0].figure
+    ax = figure.axes[0]
+    formatter = ax.yaxis.get_major_formatter()
+    assert isinstance(formatter, ScalarFormatter)
+    assert formatter.get_useMathText() is True
+    assert formatter._scientific is True
+    assert formatter._powerlimits == (0, 0)
+    _close_artifacts(artifacts)
