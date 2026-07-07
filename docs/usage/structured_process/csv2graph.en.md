@@ -160,6 +160,40 @@ csv2graph(
 )
 ```
 
+## Tick Label Format
+
+When plotted values span several orders of magnitude, matplotlib's default
+tick labels can display a small offset multiplier (e.g. `x10^-5`) near the
+top of the axis, which can be visually misleading. csv2graph automatically
+applies readable tick formatting (limited to 6 major ticks, with the
+multiplier rendered at the same font size as the tick labels) for any axis
+that is not explicitly configured otherwise.
+
+For finer control, specify `x_tick_format` / `y_tick_format`:
+
+- `auto` (default): Automatically switch to `x10^n` notation only when
+  values fall outside the `-3` to `4` power-of-ten range.
+- `plain`: Always display plain (non-scientific) numbers.
+- `sci`: Always display scientific (`x10^n`) notation.
+- `eng`: Display engineering notation with an SI-like suffix (e.g. `3.6 M`).
+
+```python
+plot_from_dataframe(
+    df,
+    output_dir="plots",
+    y_tick_format="eng",
+)
+```
+
+```bash
+rdetoolkit csv2graph data.csv --y-tick-format eng
+```
+
+If an axis `label` already includes a unit (e.g. `Voltage (V)`), the unit is
+rendered as specified without duplication; see
+[Automatic Header Conversion](#automatic-header-conversion) below for how
+axis labels and units are derived from CSV headers.
+
 ## Automatic Header Conversion
 
 When CSV headers are in snake_case format, they are automatically converted to Title Case in axis labels and legends.
