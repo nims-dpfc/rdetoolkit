@@ -110,14 +110,15 @@ class TestRunContext:
 
 def _make_spec(
     node_id: str,
-    input_schema: dict[str, type],
+    input_schema: dict[str, dict[str, object]],
     output_schema: tuple[str, ...] | None = None,
 ) -> NodeSpec:
     """Helper to build a NodeSpec for testing.
 
     Signature updated for Session C1: NodeSpec no longer holds `fn` (Design
     v2.1 §3.2, JSON-serializability requirement) and output_schema is now a
-    tuple[str, ...] of type-name strings rather than a dict of type objects.
+    tuple[str, ...] of type-name strings; input_schema entries are the
+    JSON-serializable InputSchemaEntry dicts (type_name/has_default/default_repr).
     This helper remains unused within this file (no call sites) — only its
     signature is kept in sync with the new NodeSpec shape so the module still
     collects.

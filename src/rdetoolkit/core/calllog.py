@@ -153,6 +153,24 @@ class CallLogRecorder:
                 continue
             raise _mismatch_error(node_id, name)
 
+    def _check_return_type(self, node_id: str, fn: Callable[..., Any], result: Any) -> None:
+        """Validate the return value against the return annotation (Design §4.4).
+
+        strict mode raises the cataloged mismatch error; warn mode emits a
+        UserWarning; off is never reached (guarded by the caller).
+        """
+        if self.type_check == "off":
+            return
+        hints = self._resolve_hints(fn)
+        annotation = hints.get("return", inspect.signature(fn).return_annotation)
+        if _matches_annotation(result, annotation):
+            return
+        message = f"Node argument type mismatch for {node_id}.return"
+        if self.type_check == "warn":
+            warnings.warn(message, UserWarning, stacklevel=3)
+            return
+        raise _mismatch_error(node_id, "return")
+
     @staticmethod
     def _resolve_hints(fn: Callable[..., Any]) -> dict[str, Any]:
         try:
@@ -171,7 +189,6 @@ class CallLogRecorder:
     def call_node(self, spec: Any, fn: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
         """Execute ``fn`` and append a call-log record."""
         self._check_types(spec.id, fn, args, kwargs)
-        seq = len(self._records) + 1
         started_at = datetime.now(UTC).isoformat()
         start = time.perf_counter()
         inputs = self._summarize_inputs(fn, args, kwargs)
@@ -179,6 +196,10 @@ class CallLogRecorder:
             result = fn(*args, **kwargs)
         except Exception as exc:
             duration_ms = (time.perf_counter() - start) * 1000
+            # seq is allocated at append time: nested @node calls append their
+            # records first, so pre-computing seq would duplicate numbers (R2:
+            # the call log must be a deterministic, uniquely-ordered sequence).
+            seq = len(self._records) + 1
             self._records.append(
                 NodeCallRecord(
                     call_id=f"{spec.id}#{seq}",
@@ -196,6 +217,8 @@ class CallLogRecorder:
             )
             raise
         duration_ms = (time.perf_counter() - start) * 1000
+        self._check_return_type(spec.id, fn, result)
+        seq = len(self._records) + 1
         self._records.append(
             NodeCallRecord(
                 call_id=f"{spec.id}#{seq}",

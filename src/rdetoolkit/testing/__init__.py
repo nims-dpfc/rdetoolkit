@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Mapping, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -29,7 +29,7 @@ def make_output_context(tmp_path: Path) -> OutputContext:
     return _make_output_context(tmp_path)
 
 
-def make_invoice(overrides: dict[str, Any] | None = None) -> InvoiceData:
+def make_invoice(overrides: Mapping[str, Any] | None = None) -> InvoiceData:
     """Create minimal invoice data for tests."""
     from rdetoolkit.testing.builders import make_invoice as _make_invoice  # noqa: PLC0415
 

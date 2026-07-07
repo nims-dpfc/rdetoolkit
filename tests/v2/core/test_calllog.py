@@ -314,3 +314,70 @@ class TestCallLogCoverageBranches:
         # Then: no type-check exception is raised and the call is recorded
         assert result == 1
         assert recorder.records[0].status == "completed"
+
+
+class TestPR508ReviewPins:
+    """PR #508 review: nested-node seq uniqueness, strict return check, root exports."""
+
+    def test_nested_node_calls_get_unique_monotonic_seq(self) -> None:
+        """A recorded node calling another recorded node must not duplicate seq."""
+        from rdetoolkit.core.calllog import CallLogRecorder
+        from rdetoolkit.core.node import node
+
+        @node
+        def inner_leaf(x: int) -> int:
+            return x + 1
+
+        @node
+        def outer_caller(x: int) -> int:
+            return inner_leaf(x) * 2
+
+        with CallLogRecorder() as rec:
+            outer_caller(1)
+
+        seqs = [r.seq for r in rec.records]
+        assert len(seqs) == 2
+        assert len(set(seqs)) == 2, f"duplicate seq numbers: {seqs}"
+        assert seqs == sorted(seqs), "records tuple must be monotonic in seq"
+        call_ids = [r.call_id for r in rec.records]
+        assert len(set(call_ids)) == 2, f"duplicate call_ids: {call_ids}"
+
+    def test_strict_mode_rejects_wrong_return_type(self) -> None:
+        """Design §4.4: strict type check validates the return value too."""
+        from rdetoolkit.core.calllog import CallLogRecorder
+        from rdetoolkit.core.node import node
+        from rdetoolkit.errors import RdeError
+
+        @node
+        def lies_about_return(x: int) -> int:
+            return f"not-an-int-{x}"  # type: ignore[return-value]
+
+        with CallLogRecorder(type_check="strict") as rec:
+            with pytest.raises(RdeError) as exc_info:
+                lies_about_return(1)
+
+        assert getattr(exc_info.value, "code", None) == 3002
+        _ = rec
+
+    def test_warn_mode_warns_on_wrong_return_type(self) -> None:
+        from rdetoolkit.core.calllog import CallLogRecorder
+        from rdetoolkit.core.node import node
+
+        @node
+        def fibs_return(x: int) -> int:
+            return str(x)  # type: ignore[return-value]
+
+        with CallLogRecorder(type_check="warn") as rec:
+            with pytest.warns(UserWarning, match="return"):
+                fibs_return(1)
+
+        assert rec.records[-1].status == "completed"
+
+    def test_node_and_flow_importable_from_package_root(self) -> None:
+        """Design §3.1: from rdetoolkit import node, flow."""
+        from rdetoolkit import flow, node
+        from rdetoolkit.core.flow import flow as flow_impl
+        from rdetoolkit.core.node import node as node_impl
+
+        assert node is node_impl
+        assert flow is flow_impl
