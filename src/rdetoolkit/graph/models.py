@@ -5,6 +5,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
 
+from rdetoolkit.graph.legend_policy import VALID_LEGEND_POLICIES
+
 
 class PlotMode(str, Enum):
     """Plot rendering modes."""
@@ -71,6 +73,9 @@ class LegendConfig:
             automatic switch to bottom placement.
         ncol: Number of legend columns used for "outside_bottom" placement
             (defaults to 3 when None).
+
+    Raises:
+        ValueError: If ``policy`` is not one of the supported values.
     """
 
     max_items: int | None = 20
@@ -87,6 +92,14 @@ class LegendConfig:
     outside_threshold: int = 8
     bottom_threshold: int | None = 21
     ncol: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.policy not in VALID_LEGEND_POLICIES:
+            msg = (
+                f"Invalid legend policy: {self.policy!r}. "
+                f"Choose from {list(VALID_LEGEND_POLICIES)}"
+            )
+            raise ValueError(msg)
 
 
 @dataclass
