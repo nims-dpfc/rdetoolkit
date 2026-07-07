@@ -41,6 +41,14 @@ class AxisConfig:
         grid: Whether to show grid lines
         invert: Whether to invert axis direction
         lim: Axis limits as (min, max) tuple (optional)
+        tick_format: Tick label formatting mode.
+            - "auto": Phase 1 default behavior (ScalarFormatter with scilimits-based
+              automatic switch to ×10^n notation)
+            - "plain": Always use plain (non-scientific) notation
+            - "sci": Always use scientific (×10^n) notation
+            - "eng": Use engineering notation with SI-like unit suffix (e.g. "3.6 M")
+        scilimits: Power-of-ten range outside of which "auto"/"sci" formatting
+            switches to scientific notation (passed to ScalarFormatter.set_powerlimits)
     """
 
     label: str
@@ -49,6 +57,8 @@ class AxisConfig:
     grid: bool = True
     invert: bool = False
     lim: tuple[float, float] | None = None
+    tick_format: Literal["auto", "plain", "sci", "eng"] = "auto"
+    scilimits: tuple[int, int] = (-3, 4)
 
 
 @dataclass
