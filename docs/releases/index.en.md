@@ -4,6 +4,7 @@
 
 | Version | Release Date | Key Changes | Details |
 | ------- | ------------ | ----------- | ------- |
+| v1.7.0  | unreleased   | **BREAKING**: SmartTable row CSV excluded from `rawfiles` / `smarttable_rowfile` renamed to `smarttable_rawfile` / `save_table_file: true` original file now registers at `divided/0001` | [v1.7.0](#v170-unreleased) |
 | v1.6.4  | 2026-06-03   | Fix SmartTable data registration order to follow table row order / Remove direct click dependency from CLI | [v1.6.4](#v164-2026-06-03) |
 | v1.6.3  | 2026-04-13   | Fix SmartTable new sample `sampleId` set to None instead of empty string / Support uppercase image extensions in thumbnail copy | [v1.6.3](#v163-2026-04-13) |
 | v1.6.2  | 2026-03-16   | Fix silent inheritance of dummy sampleId when SmartTable specifies `sample/names` / Improve error messages for missing SmartTable file references in zip | [v1.6.2](#v162-2026-03-16) |
@@ -24,6 +25,142 @@
 | v1.2.0  | 2025-04-14   | MinIO integration / Archive generation / Report tooling | [v1.2.0](#v120-2025-04-14) |
 
 # Release Details
+
+## v1.7.0 (unreleased)
+
+!!! warning "Breaking Changes"
+    In SmartTable invoice mode, `paths.rawfiles` no longer contains the
+    auto-generated row CSV, and the `smarttable_rowfile` accessor is
+    renamed to `smarttable_rawfile`. `smarttable.save_table_file: true`
+    also changes the original table file's registration position.
+
+!!! info "References"
+    - Key issue: [#503](https://github.com/nims-mdpf/rdetoolkit/issues/503)
+
+#### Highlights
+- `paths.rawfiles` in SmartTable invoice mode now contains only the user's
+  data files, never the auto-generated row CSV (`fsmarttable_*.csv`), so
+  invoice-mode structured-processing templates run unmodified under
+  SmartTable mode
+- `smarttable_rowfile` is renamed to `smarttable_rawfile` (typo fix); the
+  `rawfiles[0]` fallback heuristic is removed
+- With `smarttable.save_table_file: true`, the original table file now
+  registers at `divided/0001` (first) instead of the `data/` root (last)
+- `rdetoolkit gen-config smarttable` now defaults `save_table_file` to
+  `false`
+
+### Breaking Changes
+
+#### SmartTable Row CSV Excluded from `rawfiles` (Issue #503)
+
+**Problem**: The auto-generated row CSV (`fsmarttable_*.csv`) was injected
+as an element of `paths.rawfiles`, so structured-processing programs
+written for Invoice mode (which iterate `rawfiles` by extension, count, or
+`rawfiles[0]`) could not be reused for SmartTable mode without modification.
+
+**Changes**:
+
+- `SmartTableChecker.parse()` no longer folds the row CSV into `rawfiles`.
+  `paths.rawfiles` now contains only the user's data files in every mode.
+- To retrieve the row CSV itself, use the new `paths.smarttable_rawfile`
+  accessor (`Path | None`).
+- The row CSV is never copied to `raw` / `nonshared_raw`, regardless of
+  `system.save_raw` / `save_nonshared_raw`.
+
+#### `smarttable_rowfile` Renamed to `smarttable_rawfile` (Issue #503)
+
+**Problem**: The accessor name `smarttable_rowfile` contained a typo, and
+its fallback heuristic (using `rawfiles[0]` when the row CSV was not set)
+was made obsolete by the change above.
+
+**Changes**:
+
+- `RdeOutputResourcePath.smarttable_rowfile`,
+  `RdeDatasetPaths.smarttable_rowfile`, and
+  `ProcessingContext.smarttable_rowfile` are renamed to
+  `smarttable_rawfile`.
+- The old `smarttable_rowfile` name remains available on all three classes
+  as a deprecated alias (getter/setter) emitting `DeprecationWarning`;
+  removal is planned for v2.0.
+- The `rawfiles[0]` fallback heuristic is removed entirely; the accessor
+  now only reflects the actual row CSV path (or `None`).
+
+#### `save_table_file: true` Registers the Original File at `divided/0001` (Issue #503)
+
+**Problem**: When `smarttable.save_table_file: true` was set, the original
+SmartTable file was registered at the `data/` root (last), and data rows
+occupied `divided/0001` onward.
+
+**Changes**:
+
+- The original SmartTable file now registers at `divided/0001` (first).
+- Data rows shift to `divided/0002` onward, with the last data row
+  registered at the `data/` root; row ordering among data rows is
+  unchanged.
+- `save_table_file: false` (default) behavior is unchanged: the last data
+  row registers at the `data/` root, earlier rows at `divided/0001+`.
+
+### Changed
+
+- `rdetoolkit gen-config smarttable` now defaults `save_table_file` to
+  `false`, matching the Pydantic model default and interactive-mode
+  default (non-breaking: only affects newly generated config files).
+
+### Fixed
+
+#### `divided/0001` Tile Missing `invoice.json` When `save_table_file: true` (Issue #503)
+
+**Problem**: With `smarttable.save_table_file: true`, the `divided/0001`
+tile (the original SmartTable file, relocated there by the change above)
+had no `invoice.json`, since it never passes through
+`SmartTableInvoiceInitializer`. `SmartTableEarlyExitProcessor` then tried
+to update `dataName` on a nonexistent file, raising `FileNotFoundError`
+and aborting the whole workflow run.
+
+**Changes**:
+
+- `SmartTableEarlyExitProcessor._seed_tile_invoice()` now seeds the tile's
+  `invoice.json` from `invoice_org` before `_update_invoice_data_name()`
+  updates `dataName` to the original file name.
+
+### Migration Guide
+
+SmartTable-mode templates that scanned `rawfiles` for the row CSV, or
+relied on `rawfiles[0]`, must switch to `paths.smarttable_rawfile`:
+
+```python
+# Before (v1.6.x): scanning rawfiles for the row CSV
+def custom_module(srcpaths, resource_paths):
+    csv_file = next(f for f in resource_paths.rawfiles if f.name.startswith("fsmarttable_"))
+    ...
+
+# After (v1.7.0+): use the dedicated accessor
+def custom_module(srcpaths, resource_paths):
+    csv_file = resource_paths.smarttable_rawfile
+    ...
+```
+
+If you rely on `smarttable.save_table_file: true`, review any logic that
+assumed the original table file's tile index: it now registers at
+`divided/0001` (first) instead of the `data/` root (last), and data rows
+shift to `divided/0002` onward. Invoice-mode and Excel-invoice-mode
+templates are unaffected by any of the changes in this release.
+
+### Testing
+
+- `tests/test_smarttable_workflow_integration.py` (new): end-to-end
+  `rdetoolkit.workflows.run()` tests exercising an unmodified invoice-mode
+  style `custom_dataset_function` under SmartTable mode, verifying
+  registration order, absence of the row CSV from `rawfiles`, and that the
+  row CSV is never copied to `raw` / `nonshared_raw`
+- `tests/test_smarttable_rawfile_deprecation.py` (new): regression tests
+  for the `smarttable_rowfile` deprecated alias and removal of the
+  `rawfiles[0]` fallback
+- `tests/test_smarttable_checker.py`, `tests/test_generate_folder_paths_iterator.py`,
+  `tests/test_smarttable_file_copier.py`, and related processor/context
+  tests updated for the new `rawfiles` / `smarttable_rawfile` structure
+
+---
 
 ## v1.6.4 (2026-06-03)
 

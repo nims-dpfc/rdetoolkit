@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+#### SmartTable Row CSV Excluded from `rawfiles` / Accessor Renamed (#503)
+
+- `paths.rawfiles` no longer contains the auto-generated row CSV
+  (`fsmarttable_*.csv`) in SmartTable invoice mode. `paths.rawfiles` now
+  contains only the user's data files in all modes, allowing invoice-mode
+  structured-processing templates to run unmodified under SmartTable mode.
+- `paths.smarttable_rowfile` is renamed to `paths.smarttable_rawfile` (typo
+  fix). The old name remains available as a deprecated alias emitting
+  `DeprecationWarning` (removal planned for v2.0).
+- The `rawfiles[0]` fallback heuristic previously used by
+  `RdeDatasetPaths.smarttable_rowfile` / `ProcessingContext.smarttable_rowfile`
+  has been removed.
+- With `smarttable.save_table_file: true`, the original SmartTable file is
+  now registered as `divided/0001` (registered first) instead of the `data/`
+  root (registered last); data rows shift accordingly (`divided/0002`
+  onward), while preserving `row1..rowN` registration order among
+  themselves.
+- The row CSV is never copied to `raw` / `nonshared_raw`, regardless of
+  `system.save_raw` / `save_nonshared_raw`.
+
+### Changed
+
+- `rdetoolkit gen-config smarttable` now defaults `save_table_file` to
+  `false`, matching the Pydantic model default and interactive-mode default
+  (non-breaking: only affects newly generated config files).
+
+### Fixed
+
+- Fixed a bug where, with `smarttable.save_table_file: true`, the
+  `divided/0001` tile (the original SmartTable file) had no `invoice.json`,
+  causing the workflow to abort. `SmartTableEarlyExitProcessor` now seeds
+  the tile's `invoice.json` from `invoice_org` before updating `dataName`.
+
+### Migration Guide
+
+SmartTable-mode templates that scanned `rawfiles` for the row CSV (e.g. an
+`fsmarttable_` prefix match) or relied on `rawfiles[0]` must switch to
+`paths.smarttable_rawfile`:
+
+```python
+# Before (v1.6.x): scanning rawfiles for the row CSV
+def custom_module(srcpaths, resource_paths):
+    csv_file = next(f for f in resource_paths.rawfiles if f.name.startswith("fsmarttable_"))
+    ...
+
+# After (v1.7.0+): use the dedicated accessor
+def custom_module(srcpaths, resource_paths):
+    csv_file = resource_paths.smarttable_rawfile
+    ...
+```
+
+If `smarttable.save_table_file: true` is used, review any logic that
+assumed the original table file's tile index (previously `data/` root /
+registered last; now `divided/0001` / registered first). Invoice-mode and
+Excel-invoice-mode templates are unaffected.
+
 ## [1.6.4] - 2026-06-03
 
 ### Fixed
