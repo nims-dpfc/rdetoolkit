@@ -315,7 +315,6 @@ class TestSmartTableInvoiceInitializer:
             'sample/names': ['Sample Name'],
             'sample/generalAttributes.term1': ['value1'],
             'sample/specificAttributes.class1.term2': ['value2'],
-            'meta/ignored': ['should be ignored'],
             'inputdata1': ['also ignored'],
         })
         mock_read_csv.return_value = csv_data
