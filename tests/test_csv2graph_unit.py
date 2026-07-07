@@ -618,6 +618,52 @@ def test_csv2graph_legend_policy_hide_suppresses_legend_end_to_end(tmp_path: Pat
     _close_artifacts(figs)
 
 
+def test_csv2graph_legend_policy_hide_applies_to_html_output(tmp_path: Path) -> None:
+    """Regression: legend_policy="hide" must also disable the legend in Plotly HTML."""
+    pytest.importorskip("plotly")
+    from rdetoolkit.graph import csv2graph
+
+    df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3], "y2": [3, 2, 1]})
+    csv_path = tmp_path / "data.csv"
+    df.to_csv(csv_path, index=False)
+
+    # Given: a multi-series CSV rendered with html=True and legend_policy="hide"
+    # When: generating outputs via the public csv2graph() API
+    csv2graph(
+        csv_path,
+        output_dir=tmp_path,
+        html_output_dir=tmp_path,
+        x_col="x",
+        y_cols=["y1", "y2"],
+        legend_policy="hide",
+        html=True,
+        no_individual=True,
+    )
+
+    # Then: the generated HTML disables the Plotly legend
+    html_files = list(tmp_path.glob("*.html"))
+    assert html_files, "HTML output was not generated"
+    html_content = html_files[0].read_text(encoding="utf-8").replace(" ", "")
+    assert '"showlegend":false' in html_content
+
+
+def test_plot_from_dataframe_rejects_invalid_legend_policy(tmp_path: Path) -> None:
+    """The public API rejects an invalid legend_policy with ValueError."""
+    df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3]})
+
+    # Given/When: calling the public API with an unsupported legend_policy value
+    # Then: a ValueError is raised before any rendering happens
+    with pytest.raises(ValueError, match="Invalid legend policy"):
+        plot_from_dataframe(
+            df,
+            output_dir=tmp_path,
+            x_col="x",
+            y_cols=["y1"],
+            legend_policy="typo",  # type: ignore[arg-type]
+            no_individual=True,
+        )
+
+
 def test_csv2graph_default_legend_policy_is_legacy(tmp_path: Path) -> None:
     """Default legend_policy="legacy" preserves pre-#497 output."""
     df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3], "y2": [3, 2, 1]})

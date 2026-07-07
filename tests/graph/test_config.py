@@ -81,6 +81,16 @@ class TestPlotConfigBuilderInitialization:
         assert legend.outside_threshold == 5
         assert legend.ncol == 4
 
+    def test_legend_config_rejects_invalid_policy(self):
+        """LegendConfig raises ValueError at runtime for unsupported policies."""
+        with pytest.raises(ValueError, match="Invalid legend policy"):
+            LegendConfig(policy="typo")  # type: ignore[arg-type]
+
+    def test_legend_config_accepts_every_valid_policy(self):
+        """All documented legend policies construct without error."""
+        for policy in ("legacy", "auto", "inside", "outside_right", "outside_bottom", "hide"):
+            assert LegendConfig(policy=policy).policy == policy  # type: ignore[arg-type]
+
     def test_default_direction_config(self):
         """Builder initializes with default direction configuration."""
         builder = PlotConfigBuilder()
