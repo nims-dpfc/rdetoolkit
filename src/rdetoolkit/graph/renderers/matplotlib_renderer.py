@@ -6,7 +6,14 @@ from typing import Any
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.figure import Figure
-from matplotlib.ticker import LogFormatterMathtext, LogLocator, NullFormatter, NullLocator
+from matplotlib.ticker import (
+    LogFormatterMathtext,
+    LogLocator,
+    MaxNLocator,
+    NullFormatter,
+    NullLocator,
+    ScalarFormatter,
+)
 
 from rdetoolkit.graph.models import Direction, PlotConfig
 from rdetoolkit.graph.config import apply_matplotlib_config
@@ -244,9 +251,13 @@ class MatplotlibRenderer:
         if config.x_axis.scale == "log":
             ax.set_xscale("log")
             self._apply_log_axis_formatting(ax.xaxis)
+        else:
+            self._apply_linear_axis_formatting(ax.xaxis)
         if config.y_axis.scale == "log":
             ax.set_yscale("log")
             self._apply_log_axis_formatting(ax.yaxis)
+        else:
+            self._apply_linear_axis_formatting(ax.yaxis)
 
         if config.x_axis.lim:
             ax.set_xlim(config.x_axis.lim)
@@ -582,6 +593,16 @@ class MatplotlibRenderer:
         axis.set_minor_locator(NullLocator())
         axis.set_major_formatter(LogFormatterMathtext(base=10, labelOnlyBase=True))
         axis.set_minor_formatter(NullFormatter())
+
+    @staticmethod
+    def _apply_linear_axis_formatting(axis: Any) -> None:
+        """Readable tick labels regardless of data magnitude."""
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_powerlimits((-3, 4))   # 範囲外は ×10^n 表記
+        axis.set_major_formatter(formatter)
+        axis.set_major_locator(MaxNLocator(nbins=6))
+        offset = axis.get_offset_text()
+        offset.set_fontsize(plt.rcParams.get("xtick.labelsize", 20))
 
 
 def _resolve_column_index(df: pd.DataFrame, column: int | str) -> int:
