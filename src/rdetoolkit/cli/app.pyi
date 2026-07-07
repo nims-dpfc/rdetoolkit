@@ -68,5 +68,7 @@ def csv2graph(
     invert_y: bool = False,
     no_individual: Optional[bool] = None,
     max_legend_items: Optional[int] = None,
+    x_tick_format: str = "auto",
+    y_tick_format: str = "auto",
 ) -> None: ...
 def agent_guide(detailed: bool = False) -> None: ...

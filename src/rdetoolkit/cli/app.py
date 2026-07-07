@@ -615,6 +615,8 @@ def csv2graph(
     invert_y: Annotated[bool, typer.Option("--invert-y", help="Invert y-axis")] = False,
     no_individual: Annotated[bool | None, typer.Option("--no-individual/--individual", help="Skip individual plots; defaults to auto for single-series overlay.")] = None,
     max_legend_items: Annotated[int | None, typer.Option("--max-legend-items", help="Maximum legend items")] = None,
+    x_tick_format: Annotated[str, typer.Option("--x-tick-format", help="X-axis tick label format: auto, plain, sci, or eng")] = "auto",
+    y_tick_format: Annotated[str, typer.Option("--y-tick-format", help="Y-axis tick label format: auto, plain, sci, or eng")] = "auto",
 ) -> None:
     """Generate graphs from CSV files."""
     # Lazy imports
@@ -636,6 +638,16 @@ def csv2graph(
             msg,
             param_hint="--mode",
         )
+
+    # Validate x_tick_format
+    if x_tick_format not in ["auto", "plain", "sci", "eng"]:
+        msg = f"Invalid x-tick-format: {x_tick_format}. Choose from ['auto', 'plain', 'sci', 'eng']"
+        raise typer.BadParameter(msg, param_hint="--x-tick-format")
+
+    # Validate y_tick_format
+    if y_tick_format not in ["auto", "plain", "sci", "eng"]:
+        msg = f"Invalid y-tick-format: {y_tick_format}. Choose from ['auto', 'plain', 'sci', 'eng']"
+        raise typer.BadParameter(msg, param_hint="--y-tick-format")
 
     # Parse column specifications
     parsed_x_col = [parse_column(c) for c in x_col] if x_col else None
@@ -677,6 +689,8 @@ def csv2graph(
         invert_y=invert_y,
         no_individual=no_individual,
         max_legend_items=max_legend_items,
+        x_tick_format=cast(Literal["auto", "plain", "sci", "eng"], x_tick_format),
+        y_tick_format=cast(Literal["auto", "plain", "sci", "eng"], y_tick_format),
     )
     cmd.invoke()
 

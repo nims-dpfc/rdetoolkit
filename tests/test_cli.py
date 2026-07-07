@@ -947,6 +947,60 @@ def test_csv2graph_main_image_dir(sample_csv_file, csv_output_dir, tmp_path: Pat
     assert individual_files, "Individual plots were not written to output directory"
 
 
+def test_csv2graph_cli_tick_format_success__tc_ep_cli_005(sample_csv_file, csv_output_dir):
+    """Explicit --x-tick-format/--y-tick-format values should be accepted and produce output."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--x-tick-format", "eng",
+            "--y-tick-format", "plain",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "✨ Graphs generated successfully" in result.output
+    output_files = list(csv_output_dir.glob("*.png"))
+    assert len(output_files) > 0, "No PNG files were generated"
+
+
+def test_csv2graph_cli_invalid_x_tick_format__tc_ep_cli_006(sample_csv_file, csv_output_dir):
+    """An unsupported --x-tick-format value should be rejected with a BadParameter error."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--x-tick-format", "invalid_value",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Invalid x-tick-format" in result.output
+
+
+def test_csv2graph_cli_invalid_y_tick_format__tc_ep_cli_007(sample_csv_file, csv_output_dir):
+    """An unsupported --y-tick-format value should be rejected with a BadParameter error."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "csv2graph",
+            str(sample_csv_file),
+            "--output-dir", str(csv_output_dir),
+            "--y-tick-format", "invalid_value",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Invalid y-tick-format" in result.output
+
+
 def test_csv2graph_file_not_found():
     """Test csv2graph command with non-existent CSV file."""
     runner = CliRunner()
