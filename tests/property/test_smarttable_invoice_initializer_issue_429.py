@@ -171,14 +171,25 @@ def _is_invalid_number_string(value: str) -> bool:
 
 
 def _is_csv_missing_string(value: str) -> bool:
-    """Return True when the SmartTable CSV loader normalizes the text to missing."""
+    """Return True when the SmartTable CSV loader normalizes the text to missing.
+
+    Whitespace-only strings (including bare CR/LF control characters) are
+    indistinguishable from empty cells after the CSV round trip, so the
+    production loader treats them as missing rather than invalid input.
+    """
+    if value.strip() == "":
+        return True
+
     csv_buffer = io.StringIO()
     writer = csv.DictWriter(csv_buffer, fieldnames=["value"], escapechar="\\")
     writer.writeheader()
     writer.writerow({"value": value})
     csv_buffer.seek(0)
 
-    parsed = pd.read_csv(csv_buffer, dtype=str).iloc[0, 0]
+    frame = pd.read_csv(csv_buffer, dtype=str)
+    if frame.empty:
+        return True
+    parsed = frame.iloc[0, 0]
     return bool(pd.isna(parsed) or parsed == "")
 
 

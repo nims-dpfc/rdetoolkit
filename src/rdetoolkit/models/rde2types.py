@@ -83,7 +83,7 @@ from __future__ import annotations
 import os
 import warnings
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NewType, Protocol, TypedDict, Union, overload
 
@@ -1017,9 +1017,24 @@ class RdeOutputResourcePath:
     temp: Path | None = None
     invoice_patch: Path | None = None
     attachment: Path | None = None
+    # Deprecated constructor alias for smarttable_rawfile. An InitVar keeps the
+    # old keyword accepted by the generated __init__; the same name is rebound to
+    # a property below for deprecated attribute access, so the InitVar default
+    # seen by __post_init__ is that property object rather than None.
+    smarttable_rowfile: InitVar[Path | None] = None
 
-    @property
-    def smarttable_rowfile(self) -> Path | None:
+    def __post_init__(self, smarttable_rowfile: object = None) -> None:
+        if isinstance(smarttable_rowfile, Path):
+            warnings.warn(
+                "Passing smarttable_rowfile to RdeOutputResourcePath is deprecated; use smarttable_rawfile instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if self.smarttable_rawfile is None:
+                self.smarttable_rawfile = smarttable_rowfile
+
+    @property  # type: ignore[no-redef]
+    def smarttable_rowfile(self) -> Path | None:  # noqa: F811
         """Deprecated alias for :pyattr:`smarttable_rawfile`."""
         warnings.warn(
             "RdeOutputResourcePath.smarttable_rowfile is deprecated; use smarttable_rawfile instead.",

@@ -9,6 +9,9 @@ Equivalence Partitioning:
 | RdeDatasetPaths.smarttable_rowfile read                             | DeprecationWarning raised, same value as smarttable_rawfile | TC-EP-003 |
 | ProcessingContext.smarttable_rowfile read                           | DeprecationWarning raised, same value as smarttable_rawfile | TC-EP-004 |
 | ProcessingContext.smarttable_rawfile with rawfiles fsmarttable_ file | No fallback; returns None                                    | TC-EP-005 |
+| RdeOutputResourcePath(smarttable_rowfile=...) constructor kwarg      | DeprecationWarning raised, smarttable_rawfile populated      | TC-EP-006 |
+| Constructor with both smarttable_rawfile and smarttable_rowfile      | smarttable_rawfile wins, DeprecationWarning still raised     | TC-EP-007 |
+| Constructor without either keyword                                   | No warning, smarttable_rawfile is None                       | TC-EP-008 |
 """
 
 from __future__ import annotations
@@ -156,3 +159,69 @@ def test_processing_context_rawfile_does_not_fall_back_to_rawfiles__tc_ep_005(tm
 
     # Then: no fallback occurs; None is returned without any warning
     assert value is None
+
+
+def _base_constructor_kwargs(base_dir: Path) -> dict[str, Path | tuple[Path, ...]]:
+    """Return the required RdeOutputResourcePath keyword arguments."""
+    return {
+        "raw": base_dir / "raw",
+        "nonshared_raw": base_dir / "nonshared_raw",
+        "rawfiles": (),
+        "struct": base_dir / "structured",
+        "main_image": base_dir / "main_image",
+        "other_image": base_dir / "other_image",
+        "meta": base_dir / "meta",
+        "thumbnail": base_dir / "thumbnail",
+        "logs": base_dir / "logs",
+        "invoice": base_dir / "invoice",
+        "invoice_schema_json": base_dir / "tasksupport" / "invoice.schema.json",
+        "invoice_org": base_dir / "invoice" / "invoice.json",
+    }
+
+
+def test_constructor_accepts_deprecated_rowfile_keyword__tc_ep_006(tmp_path: Path) -> None:
+    """TC-EP-006: The legacy smarttable_rowfile constructor keyword still works with a DeprecationWarning.
+
+    Backward compatibility: pre-v1.7.0 code constructs RdeOutputResourcePath with
+    smarttable_rowfile=... and must keep working until the alias is removed in v2.0.
+    """
+    # Given: constructor arguments using the legacy keyword
+    row_csv = tmp_path / "temp" / "fsmarttable_test_0000.csv"
+
+    # When: constructing with smarttable_rowfile=
+    with pytest.warns(DeprecationWarning):
+        resource_paths = RdeOutputResourcePath(**_base_constructor_kwargs(tmp_path), smarttable_rowfile=row_csv)
+
+    # Then: the value is transferred to smarttable_rawfile
+    assert resource_paths.smarttable_rawfile == row_csv
+
+
+def test_constructor_new_keyword_wins_over_deprecated_one__tc_ep_007(tmp_path: Path) -> None:
+    """TC-EP-007: When both keywords are given, smarttable_rawfile takes precedence."""
+    # Given: constructor arguments using both the new and the legacy keyword
+    new_csv = tmp_path / "temp" / "fsmarttable_new_0000.csv"
+    old_csv = tmp_path / "temp" / "fsmarttable_old_0000.csv"
+
+    # When: constructing with both keywords
+    with pytest.warns(DeprecationWarning):
+        resource_paths = RdeOutputResourcePath(
+            **_base_constructor_kwargs(tmp_path),
+            smarttable_rawfile=new_csv,
+            smarttable_rowfile=old_csv,
+        )
+
+    # Then: the new keyword wins
+    assert resource_paths.smarttable_rawfile == new_csv
+
+
+def test_constructor_without_row_keywords_emits_no_warning__tc_ep_008(tmp_path: Path) -> None:
+    """TC-EP-008: Constructing without either keyword emits no DeprecationWarning."""
+    # Given/When: constructing without smarttable_rawfile / smarttable_rowfile
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        resource_paths = RdeOutputResourcePath(**_base_constructor_kwargs(tmp_path))
+
+    # Then: no warning was raised and the field defaults to None
+    assert resource_paths.smarttable_rawfile is None

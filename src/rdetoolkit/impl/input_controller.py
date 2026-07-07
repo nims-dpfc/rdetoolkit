@@ -397,7 +397,9 @@ class SmartTableChecker(IInputFileChecker):
     ``data/divided/0001``.. and are registered first in ascending index order.
     When ``save_table_file`` is ``True``, the original SmartTable file occupies
     ``data/divided/0001`` (registered first); otherwise the tile for the last
-    data row occupies ``data/`` (registered last).
+    data row occupies ``data/`` (registered last). Special case: when
+    ``save_table_file`` is ``True`` and the table yields zero data rows, the
+    original file is the only tile and occupies ``data/`` (index 0) itself.
 
     Attributes:
         out_dir_temp (Path): Temporary directory for the unpacked content.

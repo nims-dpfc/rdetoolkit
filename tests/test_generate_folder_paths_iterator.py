@@ -135,6 +135,40 @@ def test_generate_folder_paths_iterator_sets_smarttable_rawfile(tmp_path):
     assert results[0].rawfiles == (related_file,)
 
 
+def test_generate_folder_paths_iterator_rejects_legacy_shape_in_smarttable_mode(tmp_path):
+    """A legacy flat RawFiles tuple with smarttable_mode=True raises a clear TypeError."""
+    import pytest
+
+    legacy_flat_tuple = [(tmp_path / "fsmarttable_sample_0000.csv", tmp_path / "file.txt", tmp_path / "other.txt")]
+
+    with pytest.raises(TypeError, match="smarttable_mode=True requires"):
+        list(
+            generate_folder_paths_iterator(
+                legacy_flat_tuple,
+                tmp_path / "invoice_org.json",
+                tmp_path / "invoice.schema.json",
+                smarttable_mode=True,
+            ),
+        )
+
+
+def test_generate_folder_paths_iterator_rejects_smarttable_shape_without_mode(tmp_path):
+    """A SmartTableRawFiles pair with smarttable_mode=False raises a clear TypeError."""
+    import pytest
+
+    smarttable_pair = [(tmp_path / "fsmarttable_sample_0000.csv", (tmp_path / "file.txt",))]
+
+    with pytest.raises(TypeError, match="smarttable_mode=False requires"):
+        list(
+            generate_folder_paths_iterator(
+                smarttable_pair,
+                tmp_path / "invoice_org.json",
+                tmp_path / "invoice.schema.json",
+                smarttable_mode=False,
+            ),
+        )
+
+
 def test_generate_folder_paths_iterator_smarttable_original_file_entry(tmp_path):
     """Verify the original-file tile ((None, (smarttable_file,))) is handled when save_table_file=True."""
     smarttable_file = tmp_path / "smarttable_test.xlsx"

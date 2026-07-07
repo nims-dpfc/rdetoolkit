@@ -16,6 +16,9 @@ if TYPE_CHECKING:
 
 from rdetoolkit.exceptions import StructuredError
 
+# Expected arity of a SmartTableRawFiles element: (row_csv | None, user_files).
+_SMARTTABLE_PAIR_LEN = 2
+
 
 def excel_invoice_mode_process(*args: Any, **kwargs: Any) -> WorkflowExecutionStatus:
     """Run the Excel invoice workflow.
@@ -274,6 +277,9 @@ def generate_folder_paths_iterator(
 
     Raises:
         StructuredError: Occurs when the structured process fails to process correctly.
+        TypeError: If an element of ``raw_files_group`` does not match the shape
+            implied by ``smarttable_mode`` (e.g. a flat ``RawFiles`` tuple passed
+            with ``smarttable_mode=True``, or vice versa).
 
     Example:
         ```python
@@ -300,8 +306,26 @@ def generate_folder_paths_iterator(
             # raw_files is a SmartTableRawFiles element: (row_csv | None, user_files).
             # This is a runtime-only distinction (driven by smarttable_mode), so mypy
             # cannot narrow the RawFiles | SmartTableRawFiles union statically here.
+            # Validate the shape explicitly so that a legacy flat RawFiles tuple
+            # fails with a clear message instead of an obscure unpacking error.
+            if (
+                len(raw_files) != _SMARTTABLE_PAIR_LEN
+                or not (raw_files[0] is None or isinstance(raw_files[0], Path))
+                or not isinstance(raw_files[1], tuple)
+            ):
+                msg = (
+                    "smarttable_mode=True requires each raw_files_group element to be a "
+                    f"(row_csv | None, user_files) pair; got {raw_files!r} at index {idx}"
+                )
+                raise TypeError(msg)
             row_csv, user_files = cast("tuple[Path | None, PathTuple]", raw_files)
         else:
+            if not all(isinstance(f, Path) for f in raw_files):
+                msg = (
+                    "smarttable_mode=False requires each raw_files_group element to be a "
+                    f"tuple of Path objects; got {raw_files!r} at index {idx}"
+                )
+                raise TypeError(msg)
             row_csv, user_files = None, cast("PathTuple", raw_files)
 
         rdeoutput_resource_path = RdeOutputResourcePath(
