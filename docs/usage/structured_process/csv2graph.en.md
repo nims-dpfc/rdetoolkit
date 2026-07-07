@@ -178,9 +178,8 @@ For finer control, specify `x_tick_format` / `y_tick_format`:
 - `eng`: Display engineering notation with an SI-like suffix (e.g. `3.6 M`).
 
 ```python
-plot_from_dataframe(
-    df,
-    output_dir="plots",
+csv2graph(
+    "data.csv",
     y_tick_format="eng",
 )
 ```

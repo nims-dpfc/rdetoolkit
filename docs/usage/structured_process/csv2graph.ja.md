@@ -172,9 +172,8 @@ csv2graph(
 - `eng`: SI接頭辞のようなサフィックスを付けた工学表記（例: `3.6 M`）で表示します。
 
 ```python
-plot_from_dataframe(
-    df,
-    output_dir="plots",
+csv2graph(
+    "data.csv",
     y_tick_format="eng",
 )
 ```
