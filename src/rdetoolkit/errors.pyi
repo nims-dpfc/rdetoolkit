@@ -46,14 +46,25 @@ class ErrorCode(enum.Enum):
 
 class RdeError(Exception):
     code: Incomplete
+    name: Incomplete
     message: Incomplete
     detail: Incomplete
-    def __init__(self, *, code: str, message: str, detail: dict[str, _Any] | None = None) -> None: ...
+    def __init__(self, *, code: int | str, message: str, name: str | None = None, detail: dict[str, _Any] | None = None) -> None: ...
     def to_dict(self) -> dict[str, _Any]: ...
 
 class RdeGraphError(RdeError): ...
 class RdeCompileError(RdeError): ...
-class RdeExecutionError(RdeError): ...
+class RdeExecutionError(RdeError):
+    call_id: str | None
+    def __init__(
+        self,
+        *,
+        code: int | str,
+        message: str,
+        name: str | None = None,
+        detail: dict[str, _Any] | None = None,
+        call_id: str | None = None,
+    ) -> None: ...
 class RdeConfigError(RdeError): ...
 class RdeIOError(RdeError): ...
 
@@ -66,7 +77,9 @@ class UnconnectedInputError(RdeExecutionError):
 class ErrorDef:
     name: str
     message_template: str
-    def __init__(self, name: str, message_template: str) -> None: ...
+    remediation: str
+    retired: bool
+    def __init__(self, name: str, message_template: str, remediation: str, retired: bool = False) -> None: ...
 
 class WarningDef:
     name: str
