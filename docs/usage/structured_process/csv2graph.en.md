@@ -304,6 +304,13 @@ With `outside_right` / `outside_bottom`, the figure (canvas) is enlarged to fit
 the legend instead of shrinking the plot area, so the graph itself keeps its
 size even with many series.
 
+`legend_policy` is also honored by the Plotly HTML output (`--html`): `hide`
+disables the legend, and `inside` / `outside_right` / `outside_bottom` map to
+the corresponding Plotly legend positions (`legacy` keeps Plotly's default
+placement as before).
+
+Passing an unsupported `legend_policy` value raises a `ValueError`.
+
 `legend_policy` defaults to `"legacy"`, so existing code is unaffected unless
 this option is set explicitly.
 

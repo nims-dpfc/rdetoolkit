@@ -303,6 +303,10 @@ csv2graph(
 `outside_right` / `outside_bottom` では、プロット領域を縮小して凡例スペースを作るのではなく、
 凡例のサイズに応じてFigure（キャンバス）側を拡張します。系列数が多くてもグラフ本体の描画サイズは維持されます。
 
+`legend_policy` は Plotly HTML 出力（`--html`）にも反映されます。`hide` は凡例を非表示にし、`inside` / `outside_right` / `outside_bottom` は対応する Plotly の凡例位置にマッピングされます（`legacy` は従来どおり Plotly のデフォルト位置に表示）。
+
+`legend_policy` に未対応の値を渡すと `ValueError` が送出されます。
+
 `legend_policy` のデフォルトは `"legacy"` のため、明示的に指定しない限り既存コードの動作に影響はない。
 
 ## Python実行例
