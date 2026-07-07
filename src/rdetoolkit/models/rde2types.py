@@ -100,6 +100,11 @@ PathTuple = tuple[Path, ...]
 # Legacy type - use FileGroup for new code
 InputFilesGroup = tuple[ZipFilesPathList, ExcelInvoicePathList, OtherFilesPathList]
 RawFiles = Sequence[PathTuple]
+# SmartTable-specific raw file grouping: (row_csv, user_files).
+# row_csv is None only for the tile holding the original SmartTable file
+# (smarttable.save_table_file=True case, early-exit tile). user_files are
+# the actual data files referenced from the table's related-file columns.
+SmartTableRawFiles = Sequence[tuple[Path | None, PathTuple]]
 MetaType = dict[str, Union[str, int, float, list, bool]]
 RepeatedMetaType = dict[str, list[Union[str, int, float, list, bool]]]
 MetaItem = dict[str, Union[str, int, float, list, bool]]
@@ -886,8 +891,9 @@ class RdeOutputResourcePath:
             Preserved copy of the original invoice.json before processing.
             Useful for comparing changes or recovering original configuration.
 
-        smarttable_rowfile: Optional path to the SmartTable-generated row CSV file.
-            Available only in SmartTable mode. Contains the current row being processed.
+        smarttable_rawfile: Optional path to the SmartTable-generated row CSV file.
+            Set only in SmartTable mode; ``None`` otherwise. Contains the current
+            row being processed.
             File name format: fsmarttable_<row_index>.csv
 
         smarttable_row_data: Optional dictionary of parsed SmartTable row data.
@@ -1006,11 +1012,30 @@ class RdeOutputResourcePath:
     invoice: Path
     invoice_schema_json: Path
     invoice_org: Path
-    smarttable_rowfile: Path | None = None
+    smarttable_rawfile: Path | None = None
     smarttable_row_data: dict[str, Any] | None = None
     temp: Path | None = None
     invoice_patch: Path | None = None
     attachment: Path | None = None
+
+    @property
+    def smarttable_rowfile(self) -> Path | None:
+        """Deprecated alias for :pyattr:`smarttable_rawfile`."""
+        warnings.warn(
+            "RdeOutputResourcePath.smarttable_rowfile is deprecated; use smarttable_rawfile instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.smarttable_rawfile
+
+    @smarttable_rowfile.setter
+    def smarttable_rowfile(self, value: Path | None) -> None:
+        warnings.warn(
+            "RdeOutputResourcePath.smarttable_rowfile is deprecated; use smarttable_rawfile instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.smarttable_rawfile = value
 
 
 @dataclass(slots=True)
@@ -1067,23 +1092,19 @@ class RdeDatasetPaths:
         return self.output_paths.nonshared_raw
 
     @property
-    def smarttable_rowfile(self) -> Path | None:
-        """Return SmartTable row CSV path with rawfiles fallback."""
-        rowfile = self.output_paths.smarttable_rowfile
-        if rowfile is not None:
-            return rowfile
+    def smarttable_rawfile(self) -> Path | None:
+        """Return SmartTable row CSV path (None outside SmartTable mode)."""
+        return self.output_paths.smarttable_rawfile
 
-        rawfiles = getattr(self.output_paths, "rawfiles", ())
-        if rawfiles:
-            candidate = rawfiles[0]
-            if isinstance(candidate, Path) and candidate.suffix.lower() == ".csv" and candidate.stem.startswith("fsmarttable_"):
-                warnings.warn(
-                    "RdeDatasetPaths.smarttable_rowfile uses rawfiles[0] fallback; update generators to populate smarttable_rowfile.",
-                    FutureWarning,
-                    stacklevel=2,
-                )
-                return candidate
-        return None
+    @property
+    def smarttable_rowfile(self) -> Path | None:
+        """Deprecated alias for :pyattr:`smarttable_rawfile`."""
+        warnings.warn(
+            "RdeDatasetPaths.smarttable_rowfile is deprecated; use smarttable_rawfile instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.smarttable_rawfile
 
     @property
     def smarttable_row_data(self) -> dict[str, Any] | None:

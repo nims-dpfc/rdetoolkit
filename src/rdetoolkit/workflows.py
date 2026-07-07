@@ -4,12 +4,12 @@ import contextlib
 import traceback
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 
 if TYPE_CHECKING:
     from rdetoolkit.models.config import Config
-    from rdetoolkit.models.rde2types import DatasetCallback, RawFiles, RdeInputDirPaths, RdeOutputResourcePath
+    from rdetoolkit.models.rde2types import DatasetCallback, PathTuple, RawFiles, RdeInputDirPaths, RdeOutputResourcePath, SmartTableRawFiles
     from rdetoolkit.models.result import WorkflowExecutionStatus
     from rdetoolkit.result import Result
 
@@ -121,7 +121,7 @@ def _create_error_status(
     )
 
 
-def check_files_result(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config | None = None) -> Result[tuple[RawFiles, Path | None, Path | None], StructuredError]:
+def check_files_result(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config | None = None) -> Result[tuple[RawFiles | SmartTableRawFiles, Path | None, Path | None], StructuredError]:
     """Classify input files with explicit Result type error handling.
 
     Returns Result type instead of raising exceptions, enabling type-safe error handling.
@@ -133,7 +133,10 @@ def check_files_result(srcpaths: RdeInputDirPaths, *, mode: str | None, config: 
 
     Returns:
         Result containing:
-            Success: tuple of (RawFiles, excel_invoice_path, smarttable_path)
+            Success: tuple of (RawFiles | SmartTableRawFiles, excel_invoice_path, smarttable_path).
+                In SmartTable mode, the first element is a ``SmartTableRawFiles`` sequence of
+                ``(row_csv | None, user_files)`` pairs; in other modes it is a plain ``RawFiles``
+                sequence of file path tuples.
             Failure: StructuredError with error details
 
     Example:
@@ -176,7 +179,7 @@ def check_files_result(srcpaths: RdeInputDirPaths, *, mode: str | None, config: 
         return Failure(error)
 
 
-def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config | None = None) -> tuple[RawFiles, Path | None, Path | None]:
+def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config | None = None) -> tuple[RawFiles | SmartTableRawFiles, Path | None, Path | None]:
     """Classify input files to determine if the input pattern is appropriate.
 
     1. Invoice
@@ -192,7 +195,9 @@ def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config 
 
     Returns:
         tuple(list[tuple[Path, ...]]), Optional[Path], Optional[Path]):
-        Registered data file path group, presence of Excel invoice file, presence of SmartTable file
+        Registered data file path group, presence of Excel invoice file, presence of SmartTable file.
+        In SmartTable mode, the file path group is a ``SmartTableRawFiles`` sequence of
+        ``(row_csv | None, user_files)`` pairs instead of a plain ``RawFiles`` sequence.
 
     Example:
         ```python
@@ -242,7 +247,7 @@ def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config 
 
 
 def generate_folder_paths_iterator(
-    raw_files_group: RawFiles,
+    raw_files_group: RawFiles | SmartTableRawFiles,
     invoice_org_filepath: Path,
     invoice_schema_filepath: Path,
     *,
@@ -254,10 +259,15 @@ def generate_folder_paths_iterator(
     Excel invoice: Create divided folders according to the number of registered data.
 
     Args:
-        raw_files_group (List[Tuple[pathlib.Path, ...]]): A list of tuples containing raw file paths.
+        raw_files_group (RawFiles | SmartTableRawFiles): A list of tuples containing raw
+            file paths. When ``smarttable_mode`` is True, each element is instead a
+            ``(row_csv | None, user_files)`` pair as returned by ``SmartTableChecker.parse()``.
         invoice_org_filepath (pathlib.Path): invoice_org.json file path
         invoice_schema_filepath (Path): invoice.schema.json file path
-        smarttable_mode (bool): Set to True when running in SmartTable mode to populate ``smarttable_rowfile``.
+        smarttable_mode (bool): Set to True when running in SmartTable mode. In that case
+            each element of ``raw_files_group`` is unpacked directly into the per-tile row
+            CSV (``smarttable_rawfile``) and the user's data files (``rawfiles``); no
+            heuristic detection of the row CSV is performed.
 
     Yields:
         RdeOutputResourcePath: A named tuple of output folder paths for RDE resources
@@ -273,19 +283,30 @@ def generate_folder_paths_iterator(
 
         create_folders(raw_files_group, excel_invoice_files)
         ```
+
+        ```python
+        # SmartTable mode: each element is a (row_csv, user_files) pair.
+        smarttable_raw_files = [(Path('data/temp/fsmarttable_test_0000.csv'), (Path('data/temp/file0.txt'),))]
+
+        list(generate_folder_paths_iterator(smarttable_raw_files, invoice_org, invoice_schema, smarttable_mode=True))
+        ```
     """
     from rdetoolkit.core import DirectoryOps
     from rdetoolkit.models.rde2types import RdeOutputResourcePath
 
     dir_ops = DirectoryOps("data")
     for idx, raw_files in enumerate(raw_files_group):
-        smarttable_rowfile = None
         if smarttable_mode:
-            smarttable_rowfile = _select_smarttable_rowfile(raw_files)
+            # raw_files is a SmartTableRawFiles element: (row_csv | None, user_files).
+            # This is a runtime-only distinction (driven by smarttable_mode), so mypy
+            # cannot narrow the RawFiles | SmartTableRawFiles union statically here.
+            row_csv, user_files = cast("tuple[Path | None, PathTuple]", raw_files)
+        else:
+            row_csv, user_files = None, cast("PathTuple", raw_files)
 
         rdeoutput_resource_path = RdeOutputResourcePath(
             raw=Path(dir_ops.raw(idx).path),
-            rawfiles=raw_files,
+            rawfiles=user_files,
             struct=Path(dir_ops.structured(idx).path),
             main_image=Path(dir_ops.main_image(idx).path),
             other_image=Path(dir_ops.other_image(idx).path),
@@ -295,38 +316,13 @@ def generate_folder_paths_iterator(
             invoice=Path(dir_ops.invoice(idx).path),
             invoice_schema_json=invoice_schema_filepath,
             invoice_org=invoice_org_filepath,
-            smarttable_rowfile=smarttable_rowfile,
+            smarttable_rawfile=row_csv,
             temp=Path(dir_ops.temp(idx).path),
             nonshared_raw=Path(dir_ops.nonshared_raw(idx).path),
             invoice_patch=Path(dir_ops.invoice_patch(idx).path),
             attachment=Path(dir_ops.attachment(idx).path),
         )
         yield rdeoutput_resource_path
-
-
-def _select_smarttable_rowfile(raw_files: tuple[Path, ...]) -> Path | None:
-    """Return SmartTable row CSV if detected in path tuple."""
-    if not raw_files:
-        return None
-
-    candidate = raw_files[0]
-    if candidate.suffix.lower() != ".csv":
-        return None
-
-    name_without_ext = candidate.stem
-    if not name_without_ext.startswith("fsmarttable_"):
-        return None
-
-    parts = name_without_ext.split("_")
-    min_parts = 2
-    if len(parts) < min_parts:
-        return None
-
-    suffix = parts[-1]
-    if not suffix.isdigit():
-        return None
-
-    return candidate
 
 
 def _process_mode(  # noqa: C901 PLR0912

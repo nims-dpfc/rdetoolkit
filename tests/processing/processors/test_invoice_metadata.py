@@ -37,7 +37,7 @@ def _write_metadata_def(context, payload: dict[str, dict[str, object]]) -> None:
 
 
 def _write_smarttable_row(context, columns: list[str], values: list[str]) -> None:
-    csv_path = context.resource_paths.rawfiles[0]
+    csv_path = context.resource_paths.smarttable_rawfile
     dataframe = pd.DataFrame([values], columns=columns)
     dataframe.to_csv(csv_path, index=False)
 

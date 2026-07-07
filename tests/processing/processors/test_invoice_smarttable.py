@@ -32,7 +32,7 @@ class TestSmartTableInvoiceInitializerIntegration:
         })
 
         # Write CSV to actual file
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -102,7 +102,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'sample/generalAttributes.term3': ['new_value3'],
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -144,7 +144,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'custom/field1': ['value1'],
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -174,7 +174,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'custom/sample3': ['1'],
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -208,7 +208,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'custom/flag_mixed': ['False'],         # Should be False
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -238,7 +238,7 @@ class TestSmartTableInvoiceInitializerIntegration:
 
         # Remove rawfiles
         context.resource_paths.rawfiles = ()
-        context.resource_paths.smarttable_rowfile = None
+        context.resource_paths.smarttable_rawfile = None
 
         with pytest.raises(StructuredError, match="No SmartTable row CSV file found"):
             processor.process(context)
@@ -249,7 +249,7 @@ class TestSmartTableInvoiceInitializerIntegration:
         context = smarttable_processing_context
 
         # Make the CSV file path point to a non-existent file to trigger a read error
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         # Delete the file if it exists to ensure FileNotFoundError
         if csv_path.exists():
@@ -272,7 +272,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'sample/specificAttributes.class2.term1': ['value3'],
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -306,7 +306,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'sample/generalAttributes.weight': ['100kg'],
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -339,7 +339,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             'sample/otherField': ['Not an array'],
         })
 
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -370,17 +370,6 @@ class TestSmartTableInvoiceInitializerIntegration:
         with pytest.raises(ValueError, match="SmartTable file not provided in processing context"):
             processor.process(context)
 
-    def test_smarttable_rowfile_fallback_emits_warning(self, smarttable_processing_context):
-        """Fallback to rawfiles[0] should emit FutureWarning when no explicit rowfile is set."""
-        context = smarttable_processing_context
-
-        context.resource_paths.smarttable_rowfile = None
-
-        with pytest.warns(FutureWarning):
-            fallback_path = context.smarttable_rowfile
-
-        assert fallback_path == context.resource_paths.rawfiles[0]
-
     def test_get_name(self):
         """Test processor name."""
         processor = SmartTableInvoiceInitializer()
@@ -399,7 +388,7 @@ class TestSmartTableInvoiceInitializerIntegration:
         })
 
         # Write CSV to actual file
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -424,7 +413,7 @@ class TestSmartTableInvoiceInitializerIntegration:
         context = smarttable_processing_context
 
         # Create CSV with only headers, no data rows
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_path.write_text("basic/dataName,sample/names,custom/temperature\n")
 
@@ -482,7 +471,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             "sample/names": ["New Sample Name"],
             "basic/dataName": ["New Data"],
         })
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -516,7 +505,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             "sample/names": ["Existing Sample"],
             "sample/sampleId": [explicit_uuid],
         })
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -539,7 +528,7 @@ class TestSmartTableInvoiceInitializerIntegration:
         original = self._setup_invoice_with_dummy_sample(context)
 
         csv_data = pd.DataFrame({"basic/dataName": ["Only Basic"]})
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -563,7 +552,7 @@ class TestSmartTableInvoiceInitializerIntegration:
         expected_owner_id = original["basic"]["dataOwnerId"]
 
         csv_data = pd.DataFrame({"sample/names": ["New Sample"]})
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -595,7 +584,7 @@ class TestSmartTableInvoiceInitializerIntegration:
             "sample/names": ["Brand New Sample"],
             "basic/dataName": ["Issue470 Data"],
         })
-        csv_path = context.smarttable_rowfile
+        csv_path = context.smarttable_rawfile
         assert csv_path is not None
         csv_data.to_csv(csv_path, index=False)
 
@@ -656,7 +645,7 @@ class TestSmartTableEarlyExitProcessorIntegration:
         # Set up SmartTable file path with XLSX extension
         smarttable_file = Path("/data/inputdata/smarttable_experiment_data.xlsx")
         context.resource_paths.rawfiles = (smarttable_file,)
-        context.resource_paths.smarttable_rowfile = None
+        context.resource_paths.smarttable_rawfile = None
 
         # Enable save_table_file
         if context.srcpaths.config.smarttable is None:
@@ -852,7 +841,7 @@ class TestSmartTableEarlyExitProcessorIntegration:
             Path("/data/temp/fsmarttable_extracted.csv"),  # This is not original SmartTable
         )
         context.resource_paths.rawfiles = smarttable_files
-        context.resource_paths.smarttable_rowfile = None
+        context.resource_paths.smarttable_rawfile = None
         if context.srcpaths.config.smarttable is None:
             from unittest.mock import Mock
             context.srcpaths.config.smarttable = Mock()
