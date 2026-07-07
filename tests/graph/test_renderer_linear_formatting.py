@@ -29,7 +29,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 import pandas as pd
-import pytest
 
 from rdetoolkit.graph.models import AxisConfig, DirectionConfig, LegendConfig, OutputConfig, PlotConfig, PlotMode
 from rdetoolkit.graph.renderers.matplotlib_renderer import MatplotlibRenderer
