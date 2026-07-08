@@ -10,6 +10,7 @@ Equivalence Partitioning Table
 | MatplotlibRenderer.render_overlay  | AxisConfig.scilimits custom value                        | Custom scilimits must be forwarded to ScalarFormatter            | formatter._powerlimits == custom scilimits                           | TC-EP-005 |
 | MatplotlibRenderer.render_overlay  | AxisConfig.unit set, label without unit suffix           | Unit must be composed into the axis label                       | ax.get_ylabel() == "IonSource (mPa)"                                  | TC-EP-006 |
 | MatplotlibRenderer.render_overlay  | AxisConfig.unit set, label already containing unit suffix| Unit must not be double-composed                                | ax.get_ylabel() == "Voltage (V)"                                      | TC-EP-007 |
+| MatplotlibRenderer.render_overlay  | tick_format="plain" with large additive offset values     | Plain mode must also suppress additive offset (+1e6) notation   | formatter.get_useOffset() is False, offset text is empty             | TC-EP-008 |
 
 Pytest Execution Commands:
 - Direct: PYTHONPATH=src pytest -q --maxfail=1 --cov=rdetoolkit --cov-branch --cov-report=term-missing --cov-report=html tests/graph/test_renderer_tick_format.py
@@ -63,6 +64,28 @@ def test_matplotlib_renderer_plain_format_suppresses_offset__tc_ep_001() -> None
         formatter = ax.yaxis.get_major_formatter()
         assert isinstance(formatter, ScalarFormatter)
         assert formatter._scientific is False
+        offset_text = ax.yaxis.get_offset_text()
+        assert offset_text.get_text() == ""
+    finally:
+        plt.close(fig)
+
+
+def test_matplotlib_renderer_plain_format_suppresses_additive_offset__tc_ep_008() -> None:
+    # Given: tick_format="plain" with values sharing a large additive offset
+    # (small spread around 1e6 triggers ScalarFormatter's useOffset behavior)
+    df = pd.DataFrame({"x": [0, 1, 2], "y": [1_000_000, 1_000_001, 1_000_002]})
+    config = build_config(y_axis=AxisConfig(label="y", scale="linear", tick_format="plain"))
+
+    # When: rendering the overlay plot
+    fig = MatplotlibRenderer().render_overlay(df, config)
+    try:
+        fig.canvas.draw()
+        ax = fig.axes[0]
+
+        # Then: no additive offset (e.g. "+1e6") is shown and tick labels stay plain
+        formatter = ax.yaxis.get_major_formatter()
+        assert isinstance(formatter, ScalarFormatter)
+        assert formatter.get_useOffset() is False
         offset_text = ax.yaxis.get_offset_text()
         assert offset_text.get_text() == ""
     finally:

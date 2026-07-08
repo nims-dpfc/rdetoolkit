@@ -615,6 +615,7 @@ class MatplotlibRenderer:
         if tick_format == "plain":
             formatter = ScalarFormatter(useMathText=True)
             formatter.set_scientific(False)
+            formatter.set_useOffset(False)
             axis.set_major_formatter(formatter)
             axis.set_major_locator(MaxNLocator(nbins=6))
         elif tick_format == "sci":
