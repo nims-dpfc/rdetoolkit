@@ -32,6 +32,7 @@ class InputPaths:
     invoice: Path
     tasksupport: Path
     raw: Path | None = None
+    rawfiles: tuple[Path, ...] = ()
 
 
 OutputKind = Literal[

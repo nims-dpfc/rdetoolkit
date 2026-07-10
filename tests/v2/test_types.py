@@ -89,6 +89,50 @@ class TestInputPaths:
 
         assert paths.inputdata == Path("")
 
+    def test_rawfiles_field_populated__tc_ep_012(self) -> None:
+        """TC-EP-012 (Decision D1-A): InputPaths.rawfiles carries a tile's raw file tuple."""
+        from rdetoolkit.types import InputPaths
+
+        files = (Path("/data/inputdata/a.txt"), Path("/data/inputdata/b.txt"))
+        paths = InputPaths(
+            inputdata=Path("/data/inputdata"),
+            invoice=Path("/data/invoice"),
+            tasksupport=Path("/data/tasksupport"),
+            rawfiles=files,
+        )
+
+        assert paths.rawfiles == files
+
+    def test_rawfiles_defaults_to_empty_tuple__tc_bv_004(self) -> None:
+        """TC-BV-004 (Decision D1-A): rawfiles defaults to () when omitted."""
+        from rdetoolkit.types import InputPaths
+
+        paths = InputPaths(
+            inputdata=Path("/data/inputdata"),
+            invoice=Path("/data/invoice"),
+            tasksupport=Path("/data/tasksupport"),
+        )
+
+        assert paths.rawfiles == ()
+
+    def test_raw_best_effort_single_file_convenience_is_not_auto_derived__tc_ep_013(self) -> None:
+        """TC-EP-013 (Decision D1-A): InputPaths itself does not derive raw from
+        rawfiles — that convenience is owned by the iterator (runner/iterator.py),
+        not by the InputPaths dataclass constructor."""
+        from rdetoolkit.types import InputPaths
+
+        paths = InputPaths(
+            inputdata=Path("/data/inputdata"),
+            invoice=Path("/data/invoice"),
+            tasksupport=Path("/data/tasksupport"),
+            rawfiles=(Path("/data/inputdata/only.txt"),),
+        )
+
+        assert paths.raw is None, (
+            "InputPaths is a plain dataclass; raw is only populated by the "
+            "iterator's best-effort convenience logic, not by __init__ itself."
+        )
+
 
 class TestOutputContext:
     """Tests for OutputContext frozen dataclass and method API."""

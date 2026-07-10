@@ -15,7 +15,10 @@ from rdetoolkit.report.events import EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.finalize import finalize as _finalize_run
 from rdetoolkit.runner.config_loader import load_config as load_config_from_root
+from rdetoolkit.runner.execute import run_tile
+from rdetoolkit.runner.iterator import iterate_tiles
 from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode as resolve_mode_from_paths
+from rdetoolkit.core.context import RunContext
 from rdetoolkit.types import RdeConfig
 
 
@@ -120,7 +123,7 @@ class Runner:
         mode: ModeKind,
         config: RdeConfig,
     ) -> RunReport:
-        """Return a minimal report until flow dispatch is implemented.
+        """Execute the flow once per tile and return a minimal run report.
 
         Args:
             flow_fn: Flow function placeholder.
@@ -131,6 +134,28 @@ class Runner:
             Minimal successful run report.
         """
         started = time.time()
+        iterations: list[dict[str, Any]] = []
+        for info, paths, out in iterate_tiles(
+            mode,
+            self.inputdata_path,
+            self.unpacked_dir_path,
+            Path("data"),
+        ):
+            result = run_tile(
+                flow_fn,
+                RunContext(paths=paths, out=out, config=config, invoice=None, iteration=info),
+                event_sink=self.event_sink,
+                run_id=self.run_id,
+                config=config,
+            )
+            iterations.append(
+                {
+                    "iteration_index": result.iteration_index,
+                    "status": result.status,
+                    "call_count": len(result.call_records),
+                    "output_count": len(result.outputs),
+                },
+            )
         return RunReport(
             run_id=self.run_id,
             status="success",
@@ -139,7 +164,7 @@ class Runner:
             started_at=_iso_timestamp(started),
             duration_ms=(time.time() - started) * 1000.0,
             config_digest=_config_digest(config),
-            iterations=[],
+            iterations=iterations,
             warnings=[],
         )
 

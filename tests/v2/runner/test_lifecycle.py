@@ -330,3 +330,57 @@ class TestRunnerLifecycle:
             f"positions: iterate={iterate_pos}, post_validate={postvalidate_pos}, "
             f"finalize={finalize_pos}"
         )
+
+
+class TestRunnerIterateRealDispatch:
+    """TC-RUN-008 (Session D1): Runner.iterate() replaces the Phase B stub with a
+    real dispatch through runner/iterator.py + runner/execute.py.
+
+    Unlike the tests above (which all patch.object(runner, "iterate", ...) and
+    therefore never exercise the real method body), this test calls the
+    unpatched Runner.iterate() directly. Design authority:
+    local/develop/v2/tasks/session_d1.md ("D1.8" / "runner/lifecycle.py").
+    """
+
+    def test_iterate_real_multidatatile_dispatches_flow_once_per_tile(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        """Real iterate() over a 2-file multidatatile input calls the flow twice,
+        returns a RunReport, and creates the step-4a output directories relative
+        to cwd (Path("data") convention, per session_d1.md's lifecycle.py note)."""
+        from rdetoolkit.core.flow import flow
+        from rdetoolkit.core.node import node
+        from rdetoolkit.report.run_report import RunReport
+        from rdetoolkit.runner.lifecycle import Runner
+        from rdetoolkit.runner.mode_resolver import ModeKind
+        from rdetoolkit.types import InputPaths, RdeConfig
+
+        root = tmp_path / "run_root"
+        (root / "inputdata").mkdir(parents=True)
+        (root / "inputdata" / "a.txt").write_text("a")
+        (root / "inputdata" / "b.txt").write_text("b")
+        (root / "unpacked").mkdir()
+        (root / "invoice").mkdir()
+        (root / "tasksupport").mkdir()
+
+        calls: list[Path] = []
+
+        @node
+        def _record(paths: InputPaths) -> None:
+            calls.append(paths.inputdata)
+            return None
+
+        @flow
+        def _tile_flow(paths: InputPaths) -> None:
+            _record(paths)
+
+        monkeypatch.chdir(root)
+        runner = Runner(root=root, inputdata_path=root / "inputdata", unpacked_dir_path=root / "unpacked")
+        runner.run_id = "test-real-iterate"
+
+        report = runner.iterate(_tile_flow, ModeKind.multidatatile, RdeConfig())
+
+        assert isinstance(report, RunReport)
+        assert len(calls) == 2, "flow must be called once per tile (2 loose input files)"
+        assert (root / "data" / "structured").is_dir()
+        assert (root / "data" / "divided" / "0001" / "structured").is_dir()
