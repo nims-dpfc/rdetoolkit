@@ -293,7 +293,7 @@ class TestRdeErrorHierarchyV2:
         ("RdeExecutionError", 3001, "E3001"),
     ])
     def test_rde_execution_error_cause_is_preserved_in_pytest_raises(
-        self, exc_class: str, code: int, name: str
+        self, exc_class: str, code: int, name: str,
     ) -> None:
         """__cause__ is set when using 'raise RdeExecutionError(...) from original'."""
         from rdetoolkit.errors import RdeExecutionError
@@ -451,13 +451,13 @@ class TestCatalogDocConsistency:
         assert script.exists(), f"Expected {script} to exist (A1.8)"
 
     def test_gen_error_docs_check_exits_zero(self) -> None:
-        """python scripts/gen_error_docs.py --check must exit 0 (docs match catalog)."""
+        """Python scripts/gen_error_docs.py --check must exit 0 (docs match catalog)."""
         repo_root = Path(__file__).parent.parent.parent
         script = repo_root / "scripts" / "gen_error_docs.py"
 
         result = subprocess.run(
             [sys.executable, str(script), "--check"],
-            capture_output=True,
+            check=False, capture_output=True,
             text=True,
             cwd=str(repo_root),
         )
@@ -554,7 +554,8 @@ class TestUnstableNodeIdCatalogEntry:
     def test_retired_set_unchanged_after_2005_addition__tc_err_c1_004(self) -> None:
         """TC-ERR-C1-004: adding 2005 must not change the retired-code set —
         it must remain exactly {2002} (regression guard on top of the
-        existing test_non_retired_entries_are_active)."""
+        existing test_non_retired_entries_are_active).
+        """
         from rdetoolkit.errors import ERROR_CATALOG
 
         retired = {code for code, entry in ERROR_CATALOG.items() if entry.retired}
@@ -563,7 +564,53 @@ class TestUnstableNodeIdCatalogEntry:
     def test_2004_remains_unassigned__tc_err_c1_005(self) -> None:
         """Guard: 2004 (permanently retired number, R1) must stay absent from
         the catalog — it must never be reused for UnstableNodeId or anything
-        else."""
+        else.
+        """
         from rdetoolkit.errors import ERROR_CATALOG
 
         assert 2004 not in ERROR_CATALOG
+
+
+# ---------------------------------------------------------------------------
+# Session D2 — E2201-E2299 band reservation (Conflict #2, Ruling-2-recommended,
+# non-blocking: PhaseD_prompts.md's D2 goal contract allows this addition to
+# be dropped after one failed attempt if it proves disruptive).
+# ---------------------------------------------------------------------------
+
+
+class TestRdetoolkitNbBandReservation:
+    """TC-ERR-2201/2208/2211/2212: 4 drafted rdetoolkit-nb entries exist as
+    full ErrorDef entries (name/message_template/remediation), mirroring the
+    2101-2105 "reserved here, raised from a future session" comment style
+    (session_d2.md Conflict #2). Only these 4 codes are asserted -- the rest
+    of the E2201-E2299 band is comment-only reservation, not catalog entries.
+    """
+
+    @pytest.mark.parametrize("code", [2201, 2208, 2211, 2212])
+    def test_rdetoolkit_nb_entry_exists_with_nonempty_remediation__tc_err_2201_family(
+        self,
+        code: int,
+    ) -> None:
+        """TC-ERR-2201/2208/2211/2212: the entry exists and remediation is non-empty (R9)."""
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        assert code in ERROR_CATALOG, f"{code} must be reserved as a full ErrorDef entry (Conflict #2)"
+        entry = ERROR_CATALOG[code]
+        assert entry.name.strip() != ""
+        assert entry.message_template.strip() != ""
+        assert entry.remediation.strip() != ""
+        assert entry.retired is False
+
+    def test_rest_of_band_not_individually_catalogued__tc_err_2201_family_scope(self) -> None:
+        """The remaining ~95 codes in E2201-E2299 must NOT be catalogued yet
+        (Conflict #2: only 4 codes have a documented basis; the rest stay a
+        comment-only reservation until a future nb design session defines
+        them).
+        """
+        from rdetoolkit.errors import ERROR_CATALOG
+
+        reserved_but_undefined = set(range(2202, 2300)) - {2208, 2211, 2212}
+        catalogued_prematurely = reserved_but_undefined & set(ERROR_CATALOG)
+        assert catalogued_prematurely == set(), (
+            f"codes catalogued without a documented basis: {sorted(catalogued_prematurely)}"
+        )

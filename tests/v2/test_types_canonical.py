@@ -166,27 +166,36 @@ class TestOutputContextSaveBytes:
 
 
 class TestInputPathsRawField:
-    """InputPaths must have a 4th field raw: Path | None with default None."""
+    """InputPaths must have a raw: Path | None field with default None, plus
+    rawfiles: tuple[Path, ...] (Decision D1-A, local/develop/v2/decisions_pre_D.md)."""
 
     def test_input_paths_has_raw_field_defaulting_to_none__tc_types_007(self) -> None:
-        """TC-TYPES-007: InputPaths.raw exists with None default; total field count is 4."""
+        """TC-TYPES-007: InputPaths.raw exists with None default; total field count
+        is 5 (updated per Decision D1-A: additive rawfiles: tuple[Path, ...] = ()
+        field, decisions_pre_D.md — this replaces the prior 4-field pin, which
+        predates D1's need to carry a tile's raw file tuple)."""
         from rdetoolkit.types import InputPaths  # noqa: PLC0415
 
         field_names = {f.name for f in dataclasses.fields(InputPaths)}
         assert "raw" in field_names, (
             "InputPaths must have a raw: Path | None field per Design §4.2"
         )
-        assert len(dataclasses.fields(InputPaths)) == 4, (
-            f"InputPaths must have exactly 4 fields, got {len(dataclasses.fields(InputPaths))}: "
-            f"{field_names}"
+        assert "rawfiles" in field_names, (
+            "InputPaths must have a rawfiles: tuple[Path, ...] field per "
+            "Decision D1-A (decisions_pre_D.md)"
         )
-        # Omitting raw must work (default None)
+        assert len(dataclasses.fields(InputPaths)) == 5, (
+            f"InputPaths must have exactly 5 fields (D1-A adds rawfiles), got "
+            f"{len(dataclasses.fields(InputPaths))}: {field_names}"
+        )
+        # Omitting raw/rawfiles must work (defaults: None / ())
         paths = InputPaths(
             inputdata=Path("/data/inputdata"),
             invoice=Path("/data/invoice"),
             tasksupport=Path("/data/tasksupport"),
         )
         assert paths.raw is None
+        assert paths.rawfiles == ()
 
     def test_input_paths_raw_accepts_path_value__tc_types_008(self) -> None:
         """TC-TYPES-008: InputPaths.raw can be set to a Path (non-None)."""

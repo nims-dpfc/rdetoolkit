@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import traceback
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from rdetoolkit.models.config import Config
     from rdetoolkit.models.rde2types import DatasetCallback, RawFiles, RdeInputDirPaths, RdeOutputResourcePath
     from rdetoolkit.models.result import WorkflowExecutionStatus
+    from rdetoolkit.report.run_report import RunReport
     from rdetoolkit.result import Result
 
 
@@ -399,7 +400,12 @@ def _process_mode(  # noqa: C901 PLR0912
         raise StructuredError(emsg, 999) from e
 
 
-def run(*, custom_dataset_function: DatasetCallback | None = None, config: Config | None = None) -> str:  # pragma: no cover
+def run(  # pragma: no cover  # noqa: PLR0915
+    *,
+    flow: Callable[..., Any] | None = None,
+    custom_dataset_function: DatasetCallback | None = None,
+    config: Any = None,
+) -> str | RunReport:
     """Execute the RDE workflow pipeline with custom processing.
 
     This is the main entry point for rdetoolkit. It orchestrates the entire RDE workflow:
@@ -416,6 +422,8 @@ def run(*, custom_dataset_function: DatasetCallback | None = None, config: Confi
     6. Output Generation: Produce final RDE-structured output
 
     Args:
+        flow: Optional v2 flow function. When provided, execution is delegated
+            to the v2 Runner and a RunReport is returned.
         custom_dataset_function: Optional user-defined function for data processing.
             Must have signature: (RdeDatasetPaths) -> None or (RdeInputDirPaths, RdeOutputResourcePath) -> None.
             The recommended signature uses the unified `RdeDatasetPaths` class, which bundles
@@ -429,8 +437,9 @@ def run(*, custom_dataset_function: DatasetCallback | None = None, config: Confi
             and mode-specific settings (multidata_tile, smarttable configurations)
 
     Returns:
-        str: JSON representation of workflow execution results containing a list of
-            WorkflowExecutionStatus objects (one per dataset). Each status includes:
+        For ``run(flow=...)``, a v2 ``RunReport``. For the v1
+        ``custom_dataset_function`` path, a JSON ``str`` containing a list of
+        WorkflowExecutionStatus objects (one per dataset). Each status includes:
             - run_id: Dataset identifier
             - title: Processing title
             - status: "success" or "failed"
@@ -538,6 +547,33 @@ def run(*, custom_dataset_function: DatasetCallback | None = None, config: Confi
         - RdeOutputResourcePath: Output path structure (legacy)
         - WorkflowExecutionStatus: Execution result details
     """
+    if flow is not None and custom_dataset_function is not None:
+        from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError
+
+        error_def = ERROR_CATALOG[1001]
+        error_cls: Any = RdeConfigError
+        raise error_cls(
+            code=1001,
+            name=error_def.name,
+            message=error_def.message_template,
+        )
+    if flow is not None:
+        from rdetoolkit.runner.lifecycle import Runner
+
+        root = Path.cwd()
+        data_root = root / "data"
+        if config is None:
+            overrides: dict[str, Any] = {}
+        elif isinstance(config, dict):
+            overrides = config
+        else:
+            overrides = config.model_dump()
+        return Runner(
+            root=root,
+            inputdata_path=data_root / "inputdata",
+            unpacked_dir_path=data_root / "temp",
+        ).run(flow, **overrides)
+
     from rdetoolkit.config import load_config
     from rdetoolkit.errors import handle_and_exit_on_structured_error, handle_generic_error
     from rdetoolkit.invoicefile import backup_invoice_json_files

@@ -192,3 +192,35 @@ class TestFileEventSink:
         assert len(lines) == 3
         assert json.loads(lines[1])["name"] == "run.started"
         assert json.loads(lines[2])["payload"]["status"] == "success"
+
+    def test_file_sink_flushes_after_each_emit__tc_ep_flush_001(self, tmp_path: Path) -> None:
+        """TC-EP-flush-001 (Session D2, decisions_pre_D2.md Ruling 2 mini-task 2):
+        immediately after emit(), a line written by this emit must be
+        readable through a SEPARATE, independently-opened file handle --
+        proving the write was flushed to the OS rather than buffered inside
+        this process only.
+
+        Implementation note (session_d2.md Current-State Survey): as of this
+        session's survey, FileEventSink._write_line already calls
+        self._file.flush() after every write (events.py:343) -- this test is
+        expected to be an ANCHOR (already GREEN) rather than a genuine Red
+        failure. It exists because the contract itself was previously
+        untested, not because the behavior is new.
+        """
+        logs_dir = tmp_path / "logs"
+        sink = FileEventSink(logs_dir)
+        sink.open("run-flush")
+
+        sink.emit(Event.node_started(run_id="run-flush", node_id="a", call_id="a#1"))
+
+        # A second, independent file handle must already see the line --
+        # the original sink object is never used to read back.
+        with (logs_dir / "events_run-flush.jsonl").open(encoding="utf-8") as separate_handle:
+            lines = separate_handle.read().strip().split("\n")
+
+        sink.close()
+
+        assert len(lines) == 2, "header line plus the just-emitted event line must both be visible"
+        emitted = json.loads(lines[1])
+        assert emitted["name"] == "node.started"
+        assert emitted["node_id"] == "a"

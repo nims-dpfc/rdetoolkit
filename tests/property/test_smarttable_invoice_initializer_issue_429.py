@@ -197,10 +197,25 @@ def _is_invalid_boolean_string(value: str) -> bool:
     return value.strip().lower() not in {"true", "false"}
 
 
-invalid_number_strings = st.text(min_size=1, max_size=20).filter(
+# Non-printable characters (NUL, CR, zero-width/format chars, line/paragraph
+# separators, ...) do not survive the CSV file round-trip the way the StringIO
+# probe predicts: the real SmartTable loader normalizes them away, so the
+# expected cast error never fires (Hypothesis counterexamples '\r' and
+# '0\x00'). Generate only printable text — the realistic content of a
+# hand-authored CSV cell. The category blacklist ("C" = all control/format/
+# surrogate/private/unassigned, "Zl"/"Zp" = line/paragraph separators) does the
+# bulk of the work; the str.isprintable() filter guarantees the stated intent
+# for anything the categories miss.
+_csv_representable_text = st.text(
+    alphabet=st.characters(blacklist_categories=("C", "Zl", "Zp")),
+    min_size=1,
+    max_size=20,
+).filter(str.isprintable)
+
+invalid_number_strings = _csv_representable_text.filter(
     lambda value: _is_invalid_number_string(value) and not _is_csv_missing_string(value),
 )
-invalid_boolean_strings = st.text(min_size=1, max_size=20).filter(
+invalid_boolean_strings = _csv_representable_text.filter(
     lambda value: _is_invalid_boolean_string(value) and not _is_csv_missing_string(value),
 )
 
