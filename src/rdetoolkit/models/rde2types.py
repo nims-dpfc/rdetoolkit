@@ -1033,7 +1033,7 @@ class RdeOutputResourcePath:
             if self.smarttable_rawfile is None:
                 self.smarttable_rawfile = smarttable_rowfile
 
-    @property  # type: ignore[no-redef]
+    @property  # type: ignore[misc]
     def smarttable_rowfile(self) -> Path | None:  # noqa: F811
         """Deprecated alias for :pyattr:`smarttable_rawfile`."""
         warnings.warn(
