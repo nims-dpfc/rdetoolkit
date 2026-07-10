@@ -171,13 +171,11 @@ def _is_invalid_number_string(value: str) -> bool:
 
 
 def _is_csv_missing_string(value: str) -> bool:
-    """Return True when the SmartTable CSV loader normalizes the text to missing.
-
-    Whitespace-only strings (including bare CR/LF control characters) are
-    indistinguishable from empty cells after the CSV round trip, so the
-    production loader treats them as missing rather than invalid input.
-    """
+    """Return True when the SmartTable CSV loader normalizes the text to missing."""
     if value.strip() == "":
+        # Whitespace/control-only strings (e.g. "\r") survive the StringIO
+        # round-trip below as quoted text, but the real SmartTable file loader
+        # normalizes them to missing, so no cast error is ever raised (#429).
         return True
 
     csv_buffer = io.StringIO()
@@ -186,10 +184,11 @@ def _is_csv_missing_string(value: str) -> bool:
     writer.writerow({"value": value})
     csv_buffer.seek(0)
 
-    frame = pd.read_csv(csv_buffer, dtype=str)
-    if frame.empty:
+    parsed_df = pd.read_csv(csv_buffer, dtype=str)
+    if parsed_df.empty or parsed_df.shape[1] == 0:
         return True
-    parsed = frame.iloc[0, 0]
+
+    parsed = parsed_df.iloc[0, 0]
     return bool(pd.isna(parsed) or parsed == "")
 
 
@@ -198,10 +197,25 @@ def _is_invalid_boolean_string(value: str) -> bool:
     return value.strip().lower() not in {"true", "false"}
 
 
-invalid_number_strings = st.text(min_size=1, max_size=20).filter(
+# Non-printable characters (NUL, CR, zero-width/format chars, line/paragraph
+# separators, ...) do not survive the CSV file round-trip the way the StringIO
+# probe predicts: the real SmartTable loader normalizes them away, so the
+# expected cast error never fires (Hypothesis counterexamples '\r' and
+# '0\x00'). Generate only printable text — the realistic content of a
+# hand-authored CSV cell. The category blacklist ("C" = all control/format/
+# surrogate/private/unassigned, "Zl"/"Zp" = line/paragraph separators) does the
+# bulk of the work; the str.isprintable() filter guarantees the stated intent
+# for anything the categories miss.
+_csv_representable_text = st.text(
+    alphabet=st.characters(blacklist_categories=("C", "Zl", "Zp")),
+    min_size=1,
+    max_size=20,
+).filter(str.isprintable)
+
+invalid_number_strings = _csv_representable_text.filter(
     lambda value: _is_invalid_number_string(value) and not _is_csv_missing_string(value),
 )
-invalid_boolean_strings = st.text(min_size=1, max_size=20).filter(
+invalid_boolean_strings = _csv_representable_text.filter(
     lambda value: _is_invalid_boolean_string(value) and not _is_csv_missing_string(value),
 )
 
