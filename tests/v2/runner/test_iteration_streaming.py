@@ -14,8 +14,10 @@ observable behavior end-to-end through the real Runner.iterate() loop, i.e.
 that lifecycle.py actually wires the aggregator in rather than batching
 results itself.
 """
+
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from rdetoolkit.core.flow import flow
@@ -73,11 +75,7 @@ class TestPerTileStreamingDuringRealRun:
         runner.iterate(_observing_flow, ModeKind.multidatatile, config)
 
         assert len(observed_before_start) == tile_count - 1
-        assert all(observed_before_start.values()), (
-            "each tile's predecessor iteration_{n-1}.json must already exist "
-            "before this tile's flow call starts -- streaming must not batch "
-            "until the run finishes"
-        )
+        assert all(observed_before_start.values()), "each tile's predecessor iteration_{n-1}.json must already exist before this tile's flow call starts -- streaming must not batch until the run finishes"
 
 
 class TestManyTilesMemorySummaryOnly:
@@ -117,3 +115,82 @@ class TestManyTilesMemorySummaryOnly:
         for entry in report.iterations:
             assert "call_records" not in entry
             assert "outputs" not in entry
+
+
+class TestFailedTileCallLogStreaming:
+    """Review-response preservation of recorder primary state (Design §8.2)."""
+
+    def test_failed_node_record_reaches_stream_and_report__tc_d2r_f4(
+        self,
+        tmp_path: Path,
+        monkeypatch,
+    ) -> None:
+        """TC-D2R-F4: a failed node remains visible in both iteration outputs."""
+        # Given: one tile whose decorated node fails after recording begins
+        root = _build_multidatatile_root(tmp_path, 1)
+        monkeypatch.chdir(root)
+
+        @node(id="tc_d2r_f4_failed_node")
+        def _fail() -> None:
+            msg = "intentional failure"
+            raise ValueError(msg)
+
+        @flow
+        def _pipeline() -> None:
+            _fail()
+
+        runner = Runner(root=root, inputdata_path=root / "inputdata", unpacked_dir_path=root / "unpacked")
+        runner.run_id = "tc-d2r-f4"
+
+        # When: executing with the continue error policy
+        report = runner.iterate(_pipeline, ModeKind.multidatatile, RdeConfig())
+
+        # Then: recorder snapshots, not EventSink reconstruction, supply both views
+        streamed = json.loads((root / "data" / "logs" / "iterations" / "iteration_0.json").read_text(encoding="utf-8"))
+        assert streamed["call_records"][0]["node_id"] == "tc_d2r_f4_failed_node"
+        assert streamed["call_records"][0]["status"] == "failed"
+        assert report.iterations[0]["node_calls"][0]["node_id"] == "tc_d2r_f4_failed_node"
+        assert report.iterations[0]["node_calls"][0]["status"] == "failed"
+
+
+class TestCanonicalIterationSummary:
+    """Literal RunReport iteration schema from Design §8.3."""
+
+    def test_iteration_summary_has_exact_canonical_shape__tc_d2r_f5(
+        self,
+        tmp_path: Path,
+        monkeypatch,
+    ) -> None:
+        """TC-D2R-F5: summaries use exact keys, deterministic id, and node arrays."""
+        # Given: one named raw file and one successful node call
+        root = _build_multidatatile_root(tmp_path, 1)
+        monkeypatch.chdir(root)
+
+        @node(id="tc_d2r_f5_node")
+        def _noop() -> None:
+            return None
+
+        @flow
+        def _pipeline() -> None:
+            _noop()
+
+        runner = Runner(root=root, inputdata_path=root / "inputdata", unpacked_dir_path=root / "unpacked")
+        runner.run_id = "tc-d2r-f5"
+
+        # When: building the report from the primary execution result
+        report = runner.iterate(_pipeline, ModeKind.multidatatile, RdeConfig())
+
+        # Then: §8.3 is literal, with first-rawfile stem as deterministic id
+        summary = report.iterations[0]
+        assert set(summary) == {"index", "datatile_id", "status", "node_calls", "error"}
+        assert summary["index"] == 0
+        assert summary["datatile_id"] == "file_0"
+        assert summary["status"] == "completed"
+        assert summary["error"] is None
+        assert set(summary["node_calls"][0]) == {
+            "call_id",
+            "node_id",
+            "seq",
+            "status",
+            "duration_ms",
+        }

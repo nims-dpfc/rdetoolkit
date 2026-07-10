@@ -45,6 +45,7 @@ EventSink independence (D2.3, Design §8.2): RunAggregator's constructor and
 methods never take an EventSink; a RunReport built from a given
 ExecutionResult sequence is a pure function of that sequence.
 """
+
 from __future__ import annotations
 
 import json
@@ -65,6 +66,7 @@ def _completed_result(index: int, *, output_count: int = 1) -> ExecutionResult:
         call_records=(),
         outputs=tuple(TypeSummary(type_name="NoneType", repr_head=None) for _ in range(output_count)),
         error=None,
+        datatile_id=f"tile_{index}",
     )
 
 
@@ -108,7 +110,9 @@ class TestRunAggregatorBuildsReport:
         assert report.status == "success"
         assert report.config_digest == "sha256:deadbeef"
         assert len(report.iterations) == 2
-        assert {entry["iteration_index"] for entry in report.iterations} == {0, 1}
+        assert {entry["index"] for entry in report.iterations} == {0, 1}
+        assert {entry["datatile_id"] for entry in report.iterations} == {"tile_0", "tile_1"}
+        assert all(set(entry) == {"index", "datatile_id", "status", "node_calls", "error"} for entry in report.iterations)
 
 
 class TestRunAggregatorEventSinkIndependence:
@@ -173,10 +177,7 @@ class TestRunAggregatorStreaming:
         for index in range(5):
             aggregator.record(_completed_result(index))
             iteration_file = logs_dir / "iterations" / f"iteration_{index}.json"
-            assert iteration_file.exists(), (
-                f"iteration_{index}.json must exist immediately after record(), "
-                "before build_report() and before later tiles are processed"
-            )
+            assert iteration_file.exists(), f"iteration_{index}.json must exist immediately after record(), before build_report() and before later tiles are processed"
             payload = json.loads(iteration_file.read_text(encoding="utf-8"))
             assert payload["iteration_index"] == index
             for future_index in range(index + 1, 5):
@@ -207,15 +208,15 @@ class TestRunAggregatorMemorySummaryOnly:
             call_records=tuple(_dummy_call_record(i) for i in range(500)),
             outputs=tuple(TypeSummary(type_name="int", repr_head=str(i)) for i in range(500)),
             error=None,
+            datatile_id="heavy",
         )
         aggregator.record(heavy_result)
 
         summary = aggregator.iterations[0]
         assert "call_records" not in summary, "full call_records must not be retained in the in-memory summary"
         assert "outputs" not in summary, "full outputs detail must not be retained in the in-memory summary"
-        # A lightweight count is an acceptable substitute (session_d2.md TC-AGG-004).
-        assert summary.get("call_count") == 500 or summary.get("node_calls") == 500
-        assert summary.get("output_count") == 500
+        assert len(summary["node_calls"]) == 500
+        assert all(set(call) == {"call_id", "node_id", "seq", "status", "duration_ms"} for call in summary["node_calls"])
 
 
 class TestRunAggregatorOutputsPassthrough:
@@ -238,11 +239,8 @@ class TestRunAggregatorOutputsPassthrough:
         result = _completed_result(0, output_count=3)
         aggregator.record(result)
 
-        entry = aggregator.iterations[0]
-        assert entry.get("output_count") == 3, (
-            "RunAggregator must reflect ExecutionResult.outputs count as-is; "
-            "it must never filter to 'terminal' outputs only (Conflict #1, ADR-022)"
-        )
+        payload = json.loads((tmp_path / "data" / "logs" / "iterations" / "iteration_0.json").read_text(encoding="utf-8"))
+        assert len(payload["outputs"]) == 3, "the streamed primary result must preserve ExecutionResult.outputs without terminal-node inference (Conflict #1, ADR-022)"
 
 
 class TestRunAggregatorRecordFailure:
@@ -266,5 +264,6 @@ class TestRunAggregatorRecordFailure:
         assert len(aggregator.iterations) == 1
         entry = aggregator.iterations[0]
         assert entry["status"] == "failed"
-        assert entry["iteration_index"] == 0
+        assert entry["index"] == 0
+        assert set(entry) == {"index", "datatile_id", "status", "node_calls", "error"}
         assert (logs_dir / "iterations" / "iteration_0.json").exists(), "record_failure() must stream too"

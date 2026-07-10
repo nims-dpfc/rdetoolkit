@@ -99,7 +99,13 @@ def build_excelinvoice_tile_invoice(
         Parsed tile invoice data.
     """
     dist_path.parent.mkdir(parents=True, exist_ok=True)
-    ExcelInvoiceFile.overwrite(ExcelInvoiceFile(excel_path), invoice_org, dist_path, invoice_schema_path, idx)
+    ExcelInvoiceFile.overwrite(
+        ExcelInvoiceFile(excel_path),
+        invoice_org,
+        dist_path,
+        invoice_schema_path,
+        idx,
+    )
     return load_invoice(dist_path, schema_path=invoice_schema_path)
 
 

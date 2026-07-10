@@ -10,6 +10,7 @@ from typing import Any, Literal, cast
 from rdetoolkit.core.calllog import CallLogRecorder, NodeCallRecord, TypeSummary
 from rdetoolkit.core.context import RunContext, get_reserved_mapping
 from rdetoolkit.core.injection import resolve_flow_kwargs
+from rdetoolkit.errors import ERROR_CATALOG, RdeError, RdeExecutionError
 from rdetoolkit.report.events import Event, EventSink
 from rdetoolkit.types import RdeConfig
 
@@ -23,6 +24,21 @@ class ExecutionResult:
     call_records: tuple[NodeCallRecord, ...]
     outputs: tuple[TypeSummary, ...]
     error: dict[str, Any] | None = None
+    datatile_id: str = ""
+
+
+class TileExecutionError(RdeExecutionError):
+    """Catalogued tile failure carrying the recorder's primary snapshot."""
+
+    def __init__(self, result: ExecutionResult, cause: Exception) -> None:
+        error = result.error or _failed_error(cause, result.call_records)
+        super().__init__(  # type: ignore[call-arg]
+            code=int(error["code"]),  # type: ignore[arg-type]
+            name=str(error["name"]),
+            message=str(error["message"]),
+            call_id=str(error.get("call_id", "")) or None,
+        )
+        self.result = result
 
 
 def run_tile(
@@ -32,6 +48,7 @@ def run_tile(
     event_sink: EventSink,
     run_id: str,
     config: RdeConfig,
+    emit_iteration_events: bool = True,
 ) -> ExecutionResult:
     """Execute one tile by injecting reserved values and calling the flow eagerly.
 
@@ -41,6 +58,9 @@ def run_tile(
         event_sink: Sink receiving iteration lifecycle events.
         run_id: Current run identifier.
         config: Effective Runner configuration.
+        emit_iteration_events: Whether this direct tile call owns iteration
+            boundary events. Runner.iterate disables this and emits a wider
+            boundary that also covers invoice preparation.
 
     Returns:
         Completed tile execution result.
@@ -51,7 +71,8 @@ def run_tile(
 
     iteration_index = run_context.iteration.index
     kwargs = resolve_flow_kwargs(_flow_for_di(flow_fn), run_context)
-    event_sink.emit(Event.iteration_started(run_id=run_id, index=iteration_index))
+    if emit_iteration_events:
+        event_sink.emit(Event.iteration_started(run_id=run_id, index=iteration_index))
     recorder = CallLogRecorder(
         repr_head=config.provenance.repr_head,
         repr_head_len=config.provenance.repr_head_len,
@@ -61,23 +82,35 @@ def run_tile(
     try:
         with recorder:
             result = flow_fn(**kwargs)
-    except Exception:
+    except Exception as exc:
         _emit_node_events(event_sink, run_id=run_id, records=recorder.records)
-        event_sink.emit(Event.iteration_completed(run_id=run_id, index=iteration_index))
-        raise
+        if emit_iteration_events:
+            event_sink.emit(Event.iteration_completed(run_id=run_id, index=iteration_index))
+        error = _failed_error(exc, recorder.records)
+        failed = ExecutionResult(
+            iteration_index=iteration_index,
+            status="failed",
+            call_records=recorder.records,
+            outputs=(),
+            error=error,
+            datatile_id=_datatile_id(run_context),
+        )
+        raise TileExecutionError(failed, exc) from exc
     outputs = _summarize_outputs(
         result,
         repr_head=config.provenance.repr_head,
         repr_head_len=config.provenance.repr_head_len,
     )
     _emit_node_events(event_sink, run_id=run_id, records=recorder.records)
-    event_sink.emit(Event.iteration_completed(run_id=run_id, index=iteration_index))
+    if emit_iteration_events:
+        event_sink.emit(Event.iteration_completed(run_id=run_id, index=iteration_index))
     return ExecutionResult(
         iteration_index=iteration_index,
         status="completed",
         call_records=recorder.records,
         outputs=outputs,
         error=None,
+        datatile_id=_datatile_id(run_context),
     )
 
 
@@ -87,6 +120,45 @@ def _summarize_outputs(value: Any, *, repr_head: str, repr_head_len: int) -> tup
     if isinstance(value, tuple):
         return tuple(_summarize(item, repr_head=repr_head, repr_head_len=repr_head_len) for item in value)
     return (_summarize(value, repr_head=repr_head, repr_head_len=repr_head_len),)
+
+
+def _failed_error(exc: Exception, records: tuple[NodeCallRecord, ...]) -> dict[str, Any]:
+    error_def = ERROR_CATALOG[3001]
+    failed_record = next((record for record in reversed(records) if record.status == "failed"), None)
+    call_id = failed_record.call_id if failed_record is not None else "unknown"
+    if isinstance(exc, RdeError) and isinstance(exc.code, int):
+        code = exc.code
+        catalog_entry = ERROR_CATALOG.get(code, error_def)
+        name = exc.name
+        message = exc.message
+    else:
+        code = 3001
+        catalog_entry = error_def
+        name = error_def.name
+        message = error_def.message_template.format(call_id=call_id, reason=str(exc))
+    if "Remediation:" not in message:
+        message = f"{message} Remediation: {catalog_entry.remediation}"
+    return {
+        "code": code,
+        "name": name,
+        "message": message,
+        "remediation": catalog_entry.remediation,
+        "call_id": call_id,
+    }
+
+
+def _datatile_id(run_context: RunContext) -> str:
+    """Return a deterministic tile id from the first raw-file stem.
+
+    Tiles without raw files use their decimal iteration index. This keeps the
+    identifier stable without introducing timestamps or random values.
+    """
+    paths = run_context.paths
+    if paths is not None and paths.rawfiles:
+        return paths.rawfiles[0].stem
+    if run_context.iteration is None:
+        return "0"
+    return str(run_context.iteration.index)
 
 
 def _summarize(value: Any, *, repr_head: str, repr_head_len: int) -> TypeSummary:
@@ -156,11 +228,7 @@ def _flow_for_di(flow_fn: Callable[..., Any]) -> Callable[..., Any]:
 
     resolved_signature = signature.replace(parameters=parameters)
     flow_fn.__signature__ = resolved_signature  # type: ignore[attr-defined]
-    flow_fn.__annotations__ = {
-        parameter.name: parameter.annotation
-        for parameter in parameters
-        if parameter.annotation is not inspect.Signature.empty
-    }
+    flow_fn.__annotations__ = {parameter.name: parameter.annotation for parameter in parameters if parameter.annotation is not inspect.Signature.empty}
     if signature.return_annotation is not inspect.Signature.empty:
         flow_fn.__annotations__["return"] = signature.return_annotation
     return flow_fn

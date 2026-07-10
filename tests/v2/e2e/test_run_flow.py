@@ -25,6 +25,7 @@ pieces of ``tests/v2/golden/test_dir_tree_parity.py``'s and
 ``tests/v2/runner/test_iterator.py``'s already-proven fixture shapes rather
 than importing those modules.
 """
+
 from __future__ import annotations
 
 import json
@@ -49,8 +50,16 @@ from rdetoolkit.workflows import run as v1_run
 # v1 RdeOutputResourcePath field -> on-disk directory basename, matching
 # runner/paths.py's _DIRNAMES and the golden test's _OUTPUT_FIELD_TO_DIRNAME.
 _OUTPUT_DIRNAMES = (
-    "structured", "meta", "main_image", "other_image", "thumbnail",
-    "attachment", "nonshared_raw", "raw", "invoice", "logs",
+    "structured",
+    "meta",
+    "main_image",
+    "other_image",
+    "thumbnail",
+    "attachment",
+    "nonshared_raw",
+    "raw",
+    "invoice",
+    "logs",
 )
 
 
@@ -292,9 +301,7 @@ class TestExcelinvoiceRealModeDispatch:
             report = runner.run(pipeline)
 
         assert isinstance(report, RunReport)
-        assert report.mode == "excelinvoice", (
-            "mode must be auto-detected from the Excel file's presence, not forced"
-        )
+        assert report.mode == "excelinvoice", "mode must be auto-detected from the Excel file's presence, not forced"
         assert len(report.iterations) == 2
         assert (root / "data" / "divided" / "0001" / "structured").is_dir()
 
@@ -379,7 +386,12 @@ class TestExcelinvoiceContentParity:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        rows = [["test_child1.txt", "excel_value_0"], ["test_child2.txt", "excel_value_1"]]
+        # Given: three Excel rows and identical v1/v2 source invoices
+        rows = [
+            ["test_child1.txt", "excel_value_0"],
+            ["test_child2.txt", "excel_value_1"],
+            ["test_child3.txt", "excel_value_2"],
+        ]
 
         v1_root = tmp_path / "v1"
         # No loose files alongside the Excel file (see TC-E2E-003's comment).
@@ -390,13 +402,17 @@ class TestExcelinvoiceContentParity:
 
         v2_root = tmp_path / "v2"
         _build_data_fixture(v2_root, input_files={})
+        original_invoice = (v2_root / "data" / "invoice" / "invoice.json").read_text(encoding="utf-8")
         _write_minimal_excel_invoice(v2_root / "data" / "inputdata" / "sample_excel_invoice.xlsx", rows)
         pipeline = _noop_pipeline("e2e006")
+
+        # When: the real v2 excelinvoice lifecycle processes all rows
         with _chdir(v2_root):
             runner = _make_v2_runner(v2_root)
             runner.run_id = "e2e-excelinvoice-content"
             runner.run(pipeline)
 
+        # Then: tile contents match v1 and the backed-up source stays pristine
         v1_tile0 = json.loads((v1_root / "data" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
         v2_tile0 = json.loads((v2_root / "data" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
         assert v1_tile0["basic"]["dataName"] == v2_tile0["basic"]["dataName"] == "excel_value_0"
@@ -404,6 +420,11 @@ class TestExcelinvoiceContentParity:
         v1_tile1 = json.loads((v1_root / "data" / "divided" / "0001" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
         v2_tile1 = json.loads((v2_root / "data" / "divided" / "0001" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
         assert v1_tile1["basic"]["dataName"] == v2_tile1["basic"]["dataName"] == "excel_value_1"
+
+        v1_tile2 = json.loads((v1_root / "data" / "divided" / "0002" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
+        v2_tile2 = json.loads((v2_root / "data" / "divided" / "0002" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
+        assert v1_tile2["basic"]["dataName"] == v2_tile2["basic"]["dataName"] == "excel_value_2"
+        assert (v2_root / "data" / "temp" / "invoice_org.json").read_text(encoding="utf-8") == original_invoice
 
 
 def _patched_smarttable_rows(rows: list[tuple[Path, tuple[Path, ...]]]):

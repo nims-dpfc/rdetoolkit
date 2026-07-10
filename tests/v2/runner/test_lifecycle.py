@@ -7,8 +7,11 @@ Design authority: local/develop/v2/Design.md §6.1
   6-step lifecycle: (1) load_config → (2) resolve_mode → (3) pre_validate
                  → (4) iterate → (5) post_validate → (6) finalize
 """
+
 from __future__ import annotations
 
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -126,9 +129,7 @@ class TestRunnerLifecycle:
         ):
             result = runner.run(lambda: None)
 
-        assert isinstance(result, RunReport), (
-            f"Runner.run() must return a RunReport instance, got {type(result)}"
-        )
+        assert isinstance(result, RunReport), f"Runner.run() must return a RunReport instance, got {type(result)}"
 
     def test_run_load_config_is_called_before_resolve_mode(self) -> None:
         """TC-RUN-004: load_config (step 1) is called before resolve_mode (step 2)."""
@@ -175,10 +176,7 @@ class TestRunnerLifecycle:
 
         config_pos = call_log.index("load_config")
         mode_pos = call_log.index("resolve_mode")
-        assert config_pos < mode_pos, (
-            f"load_config must precede resolve_mode; positions: "
-            f"load_config={config_pos}, resolve_mode={mode_pos}"
-        )
+        assert config_pos < mode_pos, f"load_config must precede resolve_mode; positions: load_config={config_pos}, resolve_mode={mode_pos}"
 
     def test_run_finalize_is_the_last_step_called(self) -> None:
         """TC-RUN-005: finalize (step 6) is always the last step in the lifecycle."""
@@ -223,9 +221,7 @@ class TestRunnerLifecycle:
         ):
             runner.run(lambda: None)
 
-        assert call_log[-1] == "finalize", (
-            f"finalize must be the last step, but step order was: {call_log}"
-        )
+        assert call_log[-1] == "finalize", f"finalize must be the last step, but step order was: {call_log}"
 
     def test_run_pre_validate_is_called_after_resolve_mode_and_before_iterate(self) -> None:
         """TC-RUN-006: pre_validate (step 3) is after resolve_mode and before iterate."""
@@ -273,11 +269,7 @@ class TestRunnerLifecycle:
         mode_pos = call_log.index("resolve_mode")
         prevalidate_pos = call_log.index("pre_validate")
         iterate_pos = call_log.index("iterate")
-        assert mode_pos < prevalidate_pos < iterate_pos, (
-            f"pre_validate must follow resolve_mode and precede iterate; "
-            f"positions: resolve_mode={mode_pos}, pre_validate={prevalidate_pos}, "
-            f"iterate={iterate_pos}"
-        )
+        assert mode_pos < prevalidate_pos < iterate_pos, f"pre_validate must follow resolve_mode and precede iterate; positions: resolve_mode={mode_pos}, pre_validate={prevalidate_pos}, iterate={iterate_pos}"
 
     def test_run_post_validate_is_called_after_iterate_and_before_finalize(self) -> None:
         """TC-RUN-007: post_validate (step 5) is after iterate and before finalize."""
@@ -325,11 +317,7 @@ class TestRunnerLifecycle:
         iterate_pos = call_log.index("iterate")
         postvalidate_pos = call_log.index("post_validate")
         finalize_pos = call_log.index("finalize")
-        assert iterate_pos < postvalidate_pos < finalize_pos, (
-            f"post_validate must follow iterate and precede finalize; "
-            f"positions: iterate={iterate_pos}, post_validate={postvalidate_pos}, "
-            f"finalize={finalize_pos}"
-        )
+        assert iterate_pos < postvalidate_pos < finalize_pos, f"post_validate must follow iterate and precede finalize; positions: iterate={iterate_pos}, post_validate={postvalidate_pos}, finalize={finalize_pos}"
 
 
 class TestRunnerIterateRealDispatch:
@@ -343,7 +331,9 @@ class TestRunnerIterateRealDispatch:
     """
 
     def test_iterate_real_multidatatile_dispatches_flow_once_per_tile(
-        self, tmp_path, monkeypatch,
+        self,
+        tmp_path,
+        monkeypatch,
     ) -> None:
         """Real iterate() over a 2-file multidatatile input calls the flow twice,
         returns a RunReport, and creates the step-4a output directories relative
@@ -384,3 +374,140 @@ class TestRunnerIterateRealDispatch:
         assert len(calls) == 2, "flow must be called once per tile (2 loose input files)"
         assert (root / "data" / "structured").is_dir()
         assert (root / "data" / "divided" / "0001" / "structured").is_dir()
+
+
+class TestLifecycleInitializationFailure:
+    """Review-response lifecycle failure contract (Design §6.3, §8.2)."""
+
+    def test_missing_invoice_finalizes_failed_report__tc_d2r_f3(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-D2R-F3: missing invariant invoice still finalizes and completes the run."""
+        from rdetoolkit.core.flow import flow
+        from rdetoolkit.report.events import MemoryEventSink
+        from rdetoolkit.report.run_report import RunReport
+        from rdetoolkit.runner.lifecycle import Runner
+
+        # Given: invoice-mode input with the required invariant invoice absent
+        monkeypatch.chdir(tmp_path)
+        inputdata = tmp_path / "data" / "inputdata"
+        inputdata.mkdir(parents=True)
+        (inputdata / "sample.txt").write_text("sample", encoding="utf-8")
+        (tmp_path / "data" / "tasksupport").mkdir()
+        sink = MemoryEventSink()
+        runner = Runner(
+            root=tmp_path,
+            inputdata_path=inputdata,
+            unpacked_dir_path=tmp_path / "data" / "temp",
+            event_sink=sink,
+            run_id_factory=lambda: "missing-invoice",
+        )
+
+        @flow
+        def _pipeline() -> None:
+            return None
+
+        # When: executing the complete lifecycle
+        report = runner.run(_pipeline)
+
+        # Then: the catalogued failure is finalized and observably completed
+        assert isinstance(report, RunReport)
+        assert report.status == "failed"
+        assert report.error is not None
+        assert report.error["code"] == 1002
+        assert report.error["name"] == "ConfigLoadFailed"
+        assert report.error["remediation"]
+        assert "Remediation:" in report.error["message"]
+        assert (tmp_path / "data" / "job.failed").exists()
+        assert sink.events[-1].name == "run.completed"
+        assert sink.events[-1].payload == {"status": "failed"}
+
+
+class TestIterationPreparationEvents:
+    """Review-response event boundary includes per-tile invoice preparation."""
+
+    def test_invoice_preparation_failure_emits_event_pair__tc_d2r_f6(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-D2R-F6: preparation failure emits started then completed(failed)."""
+        from rdetoolkit.report.events import MemoryEventSink
+        from rdetoolkit.runner.lifecycle import Runner
+        from rdetoolkit.runner.mode_resolver import ModeKind
+        from rdetoolkit.types import InputPaths, IterationInfo, RdeConfig
+
+        # Given: one excelinvoice tile whose invoice preparation fails
+        sink = MemoryEventSink()
+        sink.open("tc-d2r-f6")
+        info = IterationInfo(index=0, total=1, mode="excelinvoice")
+        rawfile = tmp_path / "row.xlsx"
+        rawfile.write_text("placeholder", encoding="utf-8")
+        paths = InputPaths(
+            inputdata=tmp_path,
+            invoice=tmp_path / "invoice",
+            tasksupport=tmp_path / "tasksupport",
+            raw=rawfile,
+            rawfiles=(rawfile,),
+        )
+        out = SimpleNamespace(invoice=tmp_path / "output" / "invoice")
+        runner = Runner(root=tmp_path, event_sink=sink)
+        runner.run_id = "tc-d2r-f6"
+        monkeypatch.setattr(
+            "rdetoolkit.runner.lifecycle.iterate_tiles",
+            lambda *args, **kwargs: iter(((info, paths, out),)),
+        )
+
+        def _fail_preparation(*args: object, **kwargs: object) -> None:
+            msg = "invoice preparation failed"
+            raise ValueError(msg)
+
+        monkeypatch.setattr("rdetoolkit.runner.lifecycle._tile_invoice", _fail_preparation)
+
+        # When: iterating the tile
+        report = runner.iterate(lambda: None, ModeKind.excelinvoice, RdeConfig())
+
+        # Then: the full tile boundary is observable despite pre-flow failure
+        iteration_events = [event for event in sink.events if event.name.startswith("iteration.")]
+        assert [event.name for event in iteration_events] == ["iteration.started", "iteration.completed"]
+        assert iteration_events[1].payload == {"iteration_index": 0, "status": "failed"}
+        assert report.iterations[0]["status"] == "failed"
+
+
+class TestExcelinvoiceSourceBackup:
+    """Review-response delegation guard for the immutable Excel source."""
+
+    def test_run_invoice_source_delegates_to_v1_backup__tc_d2r_f9(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-D2R-F9: Excel mode obtains its source from the v1 backup helper."""
+        from rdetoolkit.runner.lifecycle import _run_invoice_source
+        from rdetoolkit.runner.mode_resolver import ModeKind
+
+        # Given: one Excel input and an observable v1 backup delegation
+        excel_path = tmp_path / "inputdata" / "invoice.xlsx"
+        excel_path.parent.mkdir()
+        excel_path.write_text("placeholder", encoding="utf-8")
+        expected = tmp_path / "data" / "temp" / "invoice_org.json"
+        calls: list[tuple[Path | None, str | None]] = []
+
+        def _backup(excel_invoice_file: Path | None, mode: str | None) -> Path:
+            calls.append((excel_invoice_file, mode))
+            return expected
+
+        monkeypatch.setattr("rdetoolkit.runner.lifecycle.backup_invoice_json_files", _backup)
+
+        # When: preparing the run-level Excel invoice source
+        actual = _run_invoice_source(
+            ModeKind.excelinvoice,
+            root=tmp_path,
+            inputdata_path=excel_path.parent,
+        )
+
+        # Then: Runner uses the exact source returned by the v1 convention
+        assert actual == expected
+        assert calls == [(excel_path, None)]

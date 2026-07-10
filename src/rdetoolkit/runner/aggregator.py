@@ -72,11 +72,10 @@ class RunAggregator:
         self._write_iteration(iteration_index, payload)
         self.iterations.append(
             {
-                "iteration_index": iteration_index,
+                "index": iteration_index,
+                "datatile_id": str(iteration_index),
                 "status": "failed",
-                "call_count": 0,
-                "node_calls": 0,
-                "output_count": 0,
+                "node_calls": [],
                 "error": error,
             },
         )
@@ -131,13 +130,19 @@ def _result_payload(result: ExecutionResult) -> dict[str, Any]:
 
 
 def _summary_payload(result: ExecutionResult) -> dict[str, Any]:
-    summary: dict[str, Any] = {
-        "iteration_index": result.iteration_index,
+    return {
+        "index": result.iteration_index,
+        "datatile_id": result.datatile_id or str(result.iteration_index),
         "status": result.status,
-        "call_count": len(result.call_records),
-        "node_calls": len(result.call_records),
-        "output_count": len(result.outputs),
+        "node_calls": [
+            {
+                "call_id": record.call_id,
+                "node_id": record.node_id,
+                "seq": record.seq,
+                "status": record.status,
+                "duration_ms": record.duration_ms,
+            }
+            for record in result.call_records
+        ],
+        "error": result.error,
     }
-    if result.error is not None:
-        summary["error"] = result.error
-    return summary

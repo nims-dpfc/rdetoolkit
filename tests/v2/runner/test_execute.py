@@ -12,6 +12,7 @@ Session authority: local/develop/v2/tasks/session_d1.md
 Target import (fails until implementation exists — expected in Red phase):
     from rdetoolkit.runner.execute import ExecutionResult, run_tile
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -42,8 +43,16 @@ def _make_paths(tmp_path: Path) -> InputPaths:
 def _make_out(tmp_path: Path) -> OutputContext:
     base = tmp_path / "data"
     names = (
-        "struct", "meta", "main_image", "other_image", "thumbnail",
-        "attachment", "nonshared_raw", "raw", "invoice", "logs",
+        "struct",
+        "meta",
+        "main_image",
+        "other_image",
+        "thumbnail",
+        "attachment",
+        "nonshared_raw",
+        "raw",
+        "invoice",
+        "logs",
     )
     return OutputContext.from_resource_paths(SimpleNamespace(**{n: base / n for n in names}))
 
@@ -79,6 +88,7 @@ class TestExecutionResultShape:
             "call_records",
             "outputs",
             "error",
+            "datatile_id",
         }
 
     def test_execution_result_error_defaults_to_none(self) -> None:

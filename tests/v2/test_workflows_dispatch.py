@@ -23,7 +23,16 @@ Pinned dispatch contract:
 
 This file is entirely separate from ``tests/test_workflow.py`` (v1, never
 modified) -- it only exercises the new v2-side dispatch branch.
+
+Review-response EP/BV table:
+    TC-D2R-F1 (EP normal, BV one raw file): standard ``cwd/data`` layout ->
+        the flow receives the existing ``data/inputdata`` path and one raw file.
+    TC-D2R-F2 (EP override): v2 ``RdeConfig``/mapping configuration -> the
+        effective iteration error policy is passed to ``Runner.load_config``.
+    TC-D2R-F7 (EP typing split): v2 flow call -> ``RunReport``; v1/no-flow
+        call -> ``str`` under strict mypy.
 """
+
 from __future__ import annotations
 
 import json
@@ -124,6 +133,61 @@ class TestFlowDispatch:
         assert isinstance(result, RunReport)
         assert result.status in {"success", "partial", "failed"}
 
+    def test_run_flow_uses_standard_cwd_data_paths__tc_d2r_f1(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-D2R-F1: v2 dispatch resolves the standard cwd/data directory tree."""
+        from rdetoolkit.core.flow import flow
+        from rdetoolkit.types import InputPaths
+        from rdetoolkit.workflows import run
+
+        # Given: the one-file boundary case in the standard RDE cwd/data layout
+        monkeypatch.chdir(tmp_path)
+        _build_v1_invoice_fixture(tmp_path)
+        received: list[InputPaths] = []
+
+        @flow
+        def _pipeline(paths: InputPaths) -> None:
+            received.append(paths)
+
+        # When: dispatching the flow through the public v2 API
+        run(flow=_pipeline)
+
+        # Then: flow-boundary DI exposes the real input directory and raw file
+        assert len(received) == 1
+        assert received[0].inputdata == tmp_path / "data" / "inputdata"
+        assert received[0].inputdata.is_dir()
+        assert received[0].rawfiles == (tmp_path / "data" / "inputdata" / "test_single.txt",)
+
+    def test_run_flow_propagates_v2_config_overrides__tc_d2r_f2(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-D2R-F2: v2 dispatch propagates the requested iteration error policy."""
+        from rdetoolkit.core.flow import flow
+        from rdetoolkit.types import RdeConfig
+        from rdetoolkit.workflows import run
+
+        # Given: a standard one-tile fixture and an explicit fail-fast v2 config
+        monkeypatch.chdir(tmp_path)
+        _build_v1_invoice_fixture(tmp_path)
+        received_policies: list[str] = []
+
+        @flow
+        def _pipeline(config: RdeConfig) -> None:
+            received_policies.append(config.execution.on_iteration_error)
+
+        requested = RdeConfig(execution={"on_iteration_error": "fail_fast"})
+
+        # When: passing the config through the public workflow dispatcher
+        run(flow=_pipeline, config=requested)  # type: ignore[arg-type]
+
+        # Then: Runner config loading preserves the caller's explicit policy
+        assert received_policies == ["fail_fast"]
+
 
 class TestCustomDatasetFunctionDispatch:
     """TC-DISPATCH-002: run(custom_dataset_function=...) keeps the v1 code
@@ -191,10 +255,7 @@ class TestNeitherSpecifiedStaysV1Compatible:
             result = run(config=_v1_config())
         except RdeConfigError as exc:
             assert exc.code != 1001, (
-                "run() with BOTH flow and custom_dataset_function unspecified must "
-                "NOT raise the 1xxx mutual-exclusion usage error at the Python API "
-                "layer (Design §11) -- 'neither specified' usage-error behavior is "
-                "a CLI-layer contract (§9.3) only"
+                "run() with BOTH flow and custom_dataset_function unspecified must NOT raise the 1xxx mutual-exclusion usage error at the Python API layer (Design §11) -- 'neither specified' usage-error behavior is a CLI-layer contract (§9.3) only"
             )
         else:
             assert isinstance(result, str)
@@ -225,15 +286,8 @@ class TestNoDeprecationWarningOnV1Path:
             warnings.simplefilter("always")
             v1_run(custom_dataset_function=_no_op_dataset_function, config=_v1_config())
 
-        dispatch_deprecation_warnings = [
-            w
-            for w in caught
-            if issubclass(w.category, DeprecationWarning) and "custom_dataset_function" in str(w.message).lower()
-        ]
-        assert dispatch_deprecation_warnings == [], (
-            "run(custom_dataset_function=...) must never emit a DeprecationWarning "
-            "about the dispatch itself (Design §11)"
-        )
+        dispatch_deprecation_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning) and "custom_dataset_function" in str(w.message).lower()]
+        assert dispatch_deprecation_warnings == [], "run(custom_dataset_function=...) must never emit a DeprecationWarning about the dispatch itself (Design §11)"
 
 
 class TestFlowIsKeywordOnly:
@@ -252,3 +306,50 @@ class TestFlowIsKeywordOnly:
 
         with pytest.raises(TypeError):
             run(_dummy_flow)  # type: ignore[misc]
+
+
+class TestWorkflowRunTyping:
+    """Review-response overload contract for public typing consumers."""
+
+    def test_mypy_accepts_v2_and_v1_run_return_types__tc_d2r_f7(self, tmp_path: Path) -> None:
+        """TC-D2R-F7: overloads expose RunReport for flow and str for v1."""
+        from mypy import api as mypy_api
+
+        # Given: a strict consumer using both public dispatch forms
+        consumer = tmp_path / "consumer.py"
+        consumer.write_text(
+            "from rdetoolkit.report.run_report import RunReport\n"
+            "from rdetoolkit.workflows import run\n\n"
+            "def pipeline() -> None:\n"
+            "    return None\n\n"
+            "report: RunReport = run(flow=pipeline, config={'execution': {'on_iteration_error': 'fail_fast'}})\n"
+            "legacy: str = run()\n",
+            encoding="utf-8",
+        )
+
+        # When: mypy checks the installed public stub
+        stdout, stderr, exit_status = mypy_api.run(["--strict", "--no-incremental", str(consumer)])
+
+        # Then: both overload selections are accepted without Any leakage
+        assert exit_status == 0, stdout + stderr
+
+
+class TestWorkflowRunRuntimeContract:
+    """Review-response runtime annotation and documentation contract."""
+
+    def test_return_annotation_and_doc_cover_both_paths__tc_d2r_f8(self) -> None:
+        """TC-D2R-F8: runtime contract is str | RunReport with both paths documented."""
+        import inspect
+
+        from rdetoolkit.workflows import run
+
+        # Given/When: inspecting the public workflow entry point
+        signature = inspect.signature(run)
+        docstring = inspect.getdoc(run) or ""
+
+        # Then: no Any leaks and both dispatch return contracts are explained
+        assert signature.return_annotation == "str | RunReport"
+        assert "run(flow=...)" in docstring
+        assert "RunReport" in docstring
+        assert "custom_dataset_function" in docstring
+        assert "JSON" in docstring
