@@ -281,6 +281,7 @@ def csv2graph(
     invert_y: bool = False,
     no_individual: bool | None = None,
     max_legend_items: int | None = None,
+    *,
     x_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
     y_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
 ) -> None:
@@ -400,9 +401,10 @@ def plot_from_dataframe(
     invert_y: bool = False,
     no_individual: bool | None = None,
     max_legend_items: int | None = None,
+    return_fig: bool = False,
+    *,
     x_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
     y_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
-    return_fig: bool = False,
 ) -> list[Any] | None:
     """Generate graph from pandas DataFrame.
 
@@ -437,11 +439,11 @@ def plot_from_dataframe(
         invert_y: Invert y-axis
         no_individual: Skip individual plots; None enables auto-detection (overlay)
         max_legend_items: Maximum legend items to display
+        return_fig: Return figure objects instead of saving
         x_tick_format: X-axis tick label formatter
                        ("auto", "plain", "sci", or "eng")
         y_tick_format: Y-axis tick label formatter
                        ("auto", "plain", "sci", or "eng")
-        return_fig: Return figure objects instead of saving
 
     Returns:
         List of figure objects if return_fig=True, otherwise None

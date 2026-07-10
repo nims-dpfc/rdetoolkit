@@ -507,3 +507,50 @@ def test_plot_from_dataframe_applies_y_tick_format_sci__tc_ep_api_006(tmp_path: 
     assert formatter._scientific is True
     assert formatter._powerlimits == (0, 0)
     _close_artifacts(artifacts)
+
+
+def test_plot_from_dataframe_positional_return_fig_backward_compat__tc_ep_api_007(tmp_path: Path) -> None:
+    """Legacy positional return_fig calls keep working after new parameters were added.
+
+    Issue #483 review follow-up: x_tick_format/y_tick_format must not shift the
+    position of return_fig, otherwise pre-existing callers passing return_fig
+    positionally (v1.6.5 argument order) would bind True to x_tick_format.
+    """
+    df = pd.DataFrame({"time": [0, 1, 2, 3], "value": [1.0, 2.0, 3.0, 4.0]})
+
+    # Given: a fully positional call in the v1.6.5 argument order, where the
+    # 27th argument is return_fig=True
+    artifacts = plot_from_dataframe(
+        df,          # df
+        tmp_path,    # output_dir
+        None,        # main_image_dir
+        None,        # html_output_dir
+        False,       # logy
+        False,       # logx
+        False,       # html
+        "overlay",   # mode
+        0,           # x_col
+        [1],         # y_cols
+        None,        # direction_cols
+        None,        # direction_filter
+        None,        # direction_colors
+        "Legacy",    # title
+        "legacy",    # name
+        None,        # x_label
+        None,        # y_label
+        None,        # legend_info
+        None,        # legend_loc
+        None,        # xlim
+        None,        # ylim
+        False,       # grid
+        False,       # invert_x
+        False,       # invert_y
+        True,        # no_individual
+        None,        # max_legend_items
+        True,        # return_fig
+    )
+
+    # Then: the call succeeds and returns figure artifacts (return_fig=True)
+    assert artifacts is not None
+    assert len(artifacts) == 1
+    _close_artifacts(artifacts)
