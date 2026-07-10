@@ -2433,7 +2433,7 @@
 </ul>
 <p>これらの課題を解決するために、Magic Variable機能が開発されました。</p>
 <h2 id="magic-variable_1">Magic Variableの使い方</h2>
-<p>RDEデータ登録時に、<code>サポートされる変数</code>記載の変数を指定すると、ルールに従ってRDE構造化処理内でデータセット名が自動補完されます。</p>
+<p>RDEデータ登録時に、<code>サポートされる変数</code>記載の変数を指定すると、ルールに従ってRDE構造化処理内でデータ名（拡張モードではデータタイル名）が自動補完されます。</p>
 <p>ローカルでテストする際は、invoice.jsonに事前にMagic Variableを設定してください。(後述)</p>
 <p>![docs/img/magic_filename.svg]</p>
 <h2 id="_3">サポートされる変数</h2>
@@ -2449,7 +2449,7 @@
 <tr>
 <td><code>${filename}</code></td>
 <td>拡張子を含んだ元ファイル名</td>
-<td><code>sample.csv</code> → <code>sample.csv</code></td>
+<td><code>${filename}</code> → <code>sample.csv</code></td>
 </tr>
 <tr>
 <td><code>${invoice:basic:&lt;field&gt;}</code></td>

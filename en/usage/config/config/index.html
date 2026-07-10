@@ -2850,6 +2850,14 @@ If you set <code>save_nonshared_raw</code> to <strong>true</strong>, make sure <
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #070">smarttable</span>:
 <span style="color: #BBB">  </span><span style="color: #070">save_table_file</span>:<span style="color: #BBB"> </span>true
 </code></pre></div></td></tr></table></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>As of v1.7.0, <code>rdetoolkit gen-config smarttable</code> also generates
+<code>save_table_file: false</code> in the template it produces, matching this
+default. See <a href="../../mode/mode_smarttableinvoice/#registering-the-table-data-file-with-rde">SmartTableInvoice Mode</a>
+for the registration-order change that applies when this is set to
+<code>true</code>.</p>
+</div>
 <hr/>
 <h3 id="5-add-logging-stacktrace-settings"><strong>5. Add logging / stack‑trace settings</strong></h3>
 <h4 id="traceback"><strong>Traceback</strong></h4>

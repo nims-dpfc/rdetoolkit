@@ -2465,7 +2465,27 @@
 </td>
 <td>
 <div class="doc-md-description">
-<p>Registered data file path group, presence of Excel invoice file, presence of SmartTable file</p>
+<p>Registered data file path group, presence of Excel invoice file, presence of SmartTable file.</p>
+</div>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td></td> <td>
+<code><span title="pathlib.Path">Path</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>In SmartTable mode, the file path group is a <code>SmartTableRawFiles</code> sequence of</p>
+</div>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td></td> <td>
+<code><span title="tuple">tuple</span>[<span title="rdetoolkit.models.rde2types.RawFiles">RawFiles</span> | <span title="rdetoolkit.models.rde2types.SmartTableRawFiles">SmartTableRawFiles</span>, <span title="pathlib.Path">Path</span> | None, <span title="pathlib.Path">Path</span> | None]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p><code>(row_csv | None, user_files)</code> pairs instead of a plain <code>RawFiles</code> sequence.</p>
 </div>
 </td>
 </tr>
@@ -2583,11 +2603,13 @@ Excel invoice: Create divided folders according to the number of registered data
 <code>raw_files_group</code>
 </td>
 <td>
-<code><span title="List">List</span>[<span title="Tuple">Tuple</span>[<span title="pathlib.Path">Path</span>, ...]]</code>
+<code><span title="rdetoolkit.models.rde2types.RawFiles">RawFiles</span> | <span title="rdetoolkit.models.rde2types.SmartTableRawFiles">SmartTableRawFiles</span></code>
 </td>
 <td>
 <div class="doc-md-description">
-<p>A list of tuples containing raw file paths.</p>
+<p>A list of tuples containing raw
+file paths. When <code>smarttable_mode</code> is True, each element is instead a
+<code>(row_csv | None, user_files)</code> pair as returned by <code>SmartTableChecker.parse()</code>.</p>
 </div>
 </td>
 <td>
@@ -2635,7 +2657,10 @@ Excel invoice: Create divided folders according to the number of registered data
 </td>
 <td>
 <div class="doc-md-description">
-<p>Set to True when running in SmartTable mode to populate <code>smarttable_rowfile</code>.</p>
+<p>Set to True when running in SmartTable mode. In that case
+each element of <code>raw_files_group</code> is unpacked directly into the per-tile row
+CSV (<code>smarttable_rawfile</code>) and the user's data files (<code>rawfiles</code>); no
+heuristic detection of the row CSV is performed.</p>
 </div>
 </td>
 <td>
@@ -2684,6 +2709,18 @@ Excel invoice: Create divided folders according to the number of registered data
 </div>
 </td>
 </tr>
+<tr class="doc-section-item">
+<td>
+<code><span title="TypeError">TypeError</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>If an element of <code>raw_files_group</code> does not match the shape
+implied by <code>smarttable_mode</code> (e.g. a flat <code>RawFiles</code> tuple passed
+with <code>smarttable_mode=True</code>, or vice versa).</p>
+</div>
+</td>
+</tr>
 </tbody>
 </table>
 <details class="example" open="">
@@ -2697,6 +2734,14 @@ Excel invoice: Create divided folders according to the number of registered data
 excel_invoice_files <span style="color: #333">=</span> Path(<span style="background-color: #FFF0F0">"data/inputdata/sample_excel_invoice.xlsx"</span>)
 
 create_folders(raw_files_group, excel_invoice_files)
+</code></pre></div></td></tr></table></div>
+<div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">3</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">4</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #888"># SmartTable mode: each element is a (row_csv, user_files) pair.</span>
+smarttable_raw_files <span style="color: #333">=</span> [(Path(<span style="background-color: #FFF0F0">'data/temp/fsmarttable_test_0000.csv'</span>), (Path(<span style="background-color: #FFF0F0">'data/temp/file0.txt'</span>),))]
+
+<span style="color: #007020">list</span>(generate_folder_paths_iterator(smarttable_raw_files, invoice_org, invoice_schema, smarttable_mode<span style="color: #333">=</span><span style="color: #080; font-weight: bold">True</span>))
 </code></pre></div></td></tr></table></div>
 </details>
 </div>

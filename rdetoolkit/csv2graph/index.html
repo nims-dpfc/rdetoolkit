@@ -2684,6 +2684,9 @@
 <li>Axis labels inherit from parsed headers (<code>parse_header</code>) and are humanised when headers use snake_case or include units; override with <code>x_label</code> / <code>y_label</code>.</li>
 <li><code>logx</code>, <code>logy</code>, <code>invert_x</code>, <code>invert_y</code>, <code>xlim</code>, <code>ylim</code>, and <code>grid</code> map directly onto Matplotlib axis configuration. Limits are applied only when both bounds are provided.</li>
 <li>Legends honour <code>legend_loc</code> and <code>max_legend_items</code>. When the visible series count exceeds <code>max_legend_items</code>, the legend is suppressed to keep plots readable.</li>
+<li><code>legend_policy</code> controls where the legend is placed: <code>"legacy"</code> (default) preserves the behavior above; <code>"auto"</code> picks placement based on item count, <code>legend_outside_threshold</code> (above it: outside right), and <code>legend_bottom_threshold</code> (at or above it: outside bottom; <code>None</code> disables the bottom switch); <code>"inside"</code>, <code>"outside_right"</code>, and <code>"outside_bottom"</code> force a specific placement; <code>"hide"</code> suppresses the legend entirely. Use <code>legend_ncol</code> to control the number of columns for <code>"outside_bottom"</code>.</li>
+<li>With the outside placements the figure canvas is enlarged to make room for the legend, so the plot area keeps its size even when the legend is large.</li>
+<li>The Plotly HTML output honors <code>legend_policy</code> as well: <code>hide</code> disables the legend and the concrete placements map to the corresponding Plotly legend positions, while <code>legacy</code> keeps Plotly's default placement. Unsupported <code>legend_policy</code> values raise <code>ValueError</code> at configuration time.</li>
 <li>Provide <code>legend_info</code> with newline placeholders (<code>\n</code>) to render supplemental text near the legend (Matplotlib) or as a Plotly annotation.</li>
 <li><code>title</code> sets the overlay title; individual plots append <code>- {series}</code>. If omitted in <code>csv2graph()</code>, the CSV stem becomes the title. <code>plot_from_dataframe()</code> also accepts <code>name</code> to override the base filename independently of the display title.</li>
 </ul>
@@ -2739,7 +2742,7 @@
 </div>
 <div class="doc doc-object doc-function">
 <h3 class="doc doc-heading" id="rdetoolkit.graph.csv2graph.csv2graph">
-<code class="highlight language-python">csv2graph(csv_path, output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, main_image_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, html_output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, csv_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'standard'</span>, logy<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, logx<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, html<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, mode<span style="color: #333">=</span><span style="background-color: #FFF0F0">'overlay'</span>, x_col<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_filter<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_colors<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, title<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_info<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_loc<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, xlim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, ylim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, grid<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_x<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_y<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, no_individual<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, max_legend_items<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>)</code>
+<code class="highlight language-python">csv2graph(csv_path, output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, main_image_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, html_output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, csv_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'standard'</span>, logy<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, logx<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, html<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, mode<span style="color: #333">=</span><span style="background-color: #FFF0F0">'overlay'</span>, x_col<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_filter<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_colors<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, title<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_info<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_loc<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, xlim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, ylim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, grid<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_x<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_y<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, no_individual<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, max_legend_items<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_policy<span style="color: #333">=</span><span style="background-color: #FFF0F0">'legacy'</span>, legend_outside_threshold<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">8</span>, legend_bottom_threshold<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">21</span>, legend_ncol<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, <span style="color: #333">*</span>, x_tick_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'auto'</span>, y_tick_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'auto'</span>)</code>
 </h3>
 <div class="doc doc-contents">
 <p>Generate graph from CSV file.</p>
@@ -3140,6 +3143,111 @@
 <code>None</code>
 </td>
 </tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_policy</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['legacy', 'auto', 'inside', 'outside_right', 'outside_bottom', 'hide']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Legend placement policy. "legacy" (default) preserves
+existing behavior. "auto" chooses placement based on item count.
+"inside"/"outside_right"/"outside_bottom" force a placement.
+"hide" suppresses the legend.</p>
+</div>
+</td>
+<td>
+<code>'legacy'</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_outside_threshold</code>
+</td>
+<td>
+<code><span title="int">int</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Item-count threshold used by "auto" to
+switch from inside to outside-right placement (default: 8).</p>
+</div>
+</td>
+<td>
+<code>8</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_bottom_threshold</code>
+</td>
+<td>
+<code><span title="int">int</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Item count at or above which "auto"
+switches to outside-bottom placement (default: 21). None
+disables the automatic switch to bottom placement.</p>
+</div>
+</td>
+<td>
+<code>21</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_ncol</code>
+</td>
+<td>
+<code><span title="int">int</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Number of legend columns for "outside_bottom"
+placement (defaults to 3 when None).</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>x_tick_format</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['auto', 'plain', 'sci', 'eng']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>X-axis tick label formatter
+           ("auto", "plain", "sci", or "eng")</p>
+</div>
+</td>
+<td>
+<code>'auto'</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>y_tick_format</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['auto', 'plain', 'sci', 'eng']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Y-axis tick label formatter
+           ("auto", "plain", "sci", or "eng")</p>
+</div>
+</td>
+<td>
+<code>'auto'</code>
+</td>
+</tr>
 </tbody>
 </table>
 <details class="example" open="">
@@ -3162,7 +3270,7 @@
 </div>
 <div class="doc doc-object doc-function">
 <h3 class="doc doc-heading" id="rdetoolkit.graph.csv2graph.plot_from_dataframe">
-<code class="highlight language-python">plot_from_dataframe(df, output_dir, main_image_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, html_output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, logy<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, logx<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, html<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, mode<span style="color: #333">=</span><span style="background-color: #FFF0F0">'overlay'</span>, x_col<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_filter<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_colors<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, title<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, name<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, x_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_info<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_loc<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, xlim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, ylim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, grid<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_x<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_y<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, no_individual<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, max_legend_items<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, return_fig<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>)</code>
+<code class="highlight language-python">plot_from_dataframe(df, output_dir, main_image_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, html_output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, logy<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, logx<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, html<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, mode<span style="color: #333">=</span><span style="background-color: #FFF0F0">'overlay'</span>, x_col<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_filter<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_colors<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, title<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, name<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, x_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_info<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_loc<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, xlim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, ylim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, grid<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_x<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_y<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, no_individual<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, max_legend_items<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, return_fig<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, <span style="color: #333">*</span>, legend_policy<span style="color: #333">=</span><span style="background-color: #FFF0F0">'legacy'</span>, legend_outside_threshold<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">8</span>, legend_bottom_threshold<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">21</span>, legend_ncol<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, x_tick_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'auto'</span>, y_tick_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'auto'</span>)</code>
 </h3>
 <div class="doc doc-contents">
 <p>Generate graph from pandas DataFrame.</p>
@@ -3612,6 +3720,111 @@ Maintains backward compatibility with existing code.</p>
 <code>False</code>
 </td>
 </tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_policy</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['legacy', 'auto', 'inside', 'outside_right', 'outside_bottom', 'hide']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Legend placement policy. "legacy" (default) preserves
+existing behavior. "auto" chooses placement based on item count.
+"inside"/"outside_right"/"outside_bottom" force a placement.
+"hide" suppresses the legend.</p>
+</div>
+</td>
+<td>
+<code>'legacy'</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_outside_threshold</code>
+</td>
+<td>
+<code><span title="int">int</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Item-count threshold used by "auto" to
+switch from inside to outside-right placement (default: 8).</p>
+</div>
+</td>
+<td>
+<code>8</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_bottom_threshold</code>
+</td>
+<td>
+<code><span title="int">int</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Item count at or above which "auto"
+switches to outside-bottom placement (default: 21). None
+disables the automatic switch to bottom placement.</p>
+</div>
+</td>
+<td>
+<code>21</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_ncol</code>
+</td>
+<td>
+<code><span title="int">int</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Number of legend columns for "outside_bottom"
+placement (defaults to 3 when None).</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>x_tick_format</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['auto', 'plain', 'sci', 'eng']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>X-axis tick label formatter
+           ("auto", "plain", "sci", or "eng")</p>
+</div>
+</td>
+<td>
+<code>'auto'</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>y_tick_format</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['auto', 'plain', 'sci', 'eng']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Y-axis tick label formatter
+           ("auto", "plain", "sci", or "eng")</p>
+</div>
+</td>
+<td>
+<code>'auto'</code>
+</td>
+</tr>
 </tbody>
 </table>
 <p><span class="doc-section-title">戻り値：</span></p>
@@ -3660,7 +3873,7 @@ plot_from_dataframe(
 </div><hr/>
 <div class="doc doc-object doc-function">
 <h2 class="doc doc-heading" id="rdetoolkit.graph.plot_from_dataframe">
-<code class="highlight language-python">rdetoolkit<span style="color: #333">.</span>graph<span style="color: #333">.</span>plot_from_dataframe(df, output_dir, main_image_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, html_output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, logy<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, logx<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, html<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, mode<span style="color: #333">=</span><span style="background-color: #FFF0F0">'overlay'</span>, x_col<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_filter<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_colors<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, title<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, name<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, x_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_info<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_loc<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, xlim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, ylim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, grid<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_x<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_y<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, no_individual<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, max_legend_items<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, return_fig<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>)</code>
+<code class="highlight language-python">rdetoolkit<span style="color: #333">.</span>graph<span style="color: #333">.</span>plot_from_dataframe(df, output_dir, main_image_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, html_output_dir<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, logy<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, logx<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, html<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, mode<span style="color: #333">=</span><span style="background-color: #FFF0F0">'overlay'</span>, x_col<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_cols<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_filter<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, direction_colors<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, title<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, name<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, x_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, y_label<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_info<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, legend_loc<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, xlim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, ylim<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, grid<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_x<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, invert_y<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, no_individual<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, max_legend_items<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, return_fig<span style="color: #333">=</span><span style="color: #080; font-weight: bold">False</span>, <span style="color: #333">*</span>, legend_policy<span style="color: #333">=</span><span style="background-color: #FFF0F0">'legacy'</span>, legend_outside_threshold<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">8</span>, legend_bottom_threshold<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">21</span>, legend_ncol<span style="color: #333">=</span><span style="color: #080; font-weight: bold">None</span>, x_tick_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'auto'</span>, y_tick_format<span style="color: #333">=</span><span style="background-color: #FFF0F0">'auto'</span>)</code>
 </h2>
 <div class="doc doc-contents first">
 <p>Generate graph from pandas DataFrame.</p>
@@ -4108,6 +4321,111 @@ Maintains backward compatibility with existing code.</p>
 </td>
 <td>
 <code>False</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_policy</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['legacy', 'auto', 'inside', 'outside_right', 'outside_bottom', 'hide']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Legend placement policy. "legacy" (default) preserves
+existing behavior. "auto" chooses placement based on item count.
+"inside"/"outside_right"/"outside_bottom" force a placement.
+"hide" suppresses the legend.</p>
+</div>
+</td>
+<td>
+<code>'legacy'</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_outside_threshold</code>
+</td>
+<td>
+<code><span title="int">int</span></code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Item-count threshold used by "auto" to
+switch from inside to outside-right placement (default: 8).</p>
+</div>
+</td>
+<td>
+<code>8</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_bottom_threshold</code>
+</td>
+<td>
+<code><span title="int">int</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Item count at or above which "auto"
+switches to outside-bottom placement (default: 21). None
+disables the automatic switch to bottom placement.</p>
+</div>
+</td>
+<td>
+<code>21</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>legend_ncol</code>
+</td>
+<td>
+<code><span title="int">int</span> | None</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Number of legend columns for "outside_bottom"
+placement (defaults to 3 when None).</p>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>x_tick_format</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['auto', 'plain', 'sci', 'eng']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>X-axis tick label formatter
+           ("auto", "plain", "sci", or "eng")</p>
+</div>
+</td>
+<td>
+<code>'auto'</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td>
+<code>y_tick_format</code>
+</td>
+<td>
+<code><span title="typing.Literal">Literal</span>['auto', 'plain', 'sci', 'eng']</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Y-axis tick label formatter
+           ("auto", "plain", "sci", or "eng")</p>
+</div>
+</td>
+<td>
+<code>'auto'</code>
 </td>
 </tr>
 </tbody>

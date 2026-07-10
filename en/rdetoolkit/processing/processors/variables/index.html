@@ -3595,11 +3595,19 @@ pipeline<span style="color: #333">.</span>process(context)
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">10</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">11</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">12</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">13</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>logger<span style="color: #333">.</span>debug(<span style="background-color: #FFF0F0">"Starting magic variable processing"</span>)
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">13</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">14</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">15</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">16</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">17</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code>logger<span style="color: #333">.</span>debug(<span style="background-color: #FFF0F0">"Starting magic variable processing"</span>)
 <span style="color: #080; font-weight: bold">try</span>:
+    <span style="color: #888"># smarttable_rawfile is None outside SmartTable mode (and for the</span>
+    <span style="color: #888"># original-file tile when save_table_file=true); fall back to the</span>
+    <span style="color: #888"># first raw file in that case.</span>
+    rawfile_path <span style="color: #333">=</span> context<span style="color: #333">.</span>smarttable_rawfile <span style="color: #000; font-weight: bold">or</span> context<span style="color: #333">.</span>resource_paths<span style="color: #333">.</span>rawfiles[<span style="color: #00D; font-weight: bold">0</span>]
     result <span style="color: #333">=</span> apply_magic_variable(
         context<span style="color: #333">.</span>invoice_dst_filepath,
-        context<span style="color: #333">.</span>smarttable_rowfile <span style="color: #000; font-weight: bold">or</span> context<span style="color: #333">.</span>resource_paths<span style="color: #333">.</span>rawfiles[<span style="color: #00D; font-weight: bold">0</span>],
+        rawfile_path,
         save_filepath<span style="color: #333">=</span>context<span style="color: #333">.</span>invoice_dst_filepath
     )
     <span style="color: #080; font-weight: bold">if</span> result:

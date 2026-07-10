@@ -2645,7 +2645,7 @@ basic/dataName,inputdata1,custom/cycle,custom/thickness,custom/temperature,sampl
 <li><code>sample/&lt;invoice.jsonのキー名&gt;</code>: invoice.jsonのsampleセクションにマッピングされます。</li>
 <li><code>sample/generalAttributes.&lt;termId&gt;</code>: <code>generalAttributes</code>配列内の該当する<code>termId</code>の<code>value</code>にマッピング</li>
 <li><code>sample/specificAttributes.&lt;classId&gt;.&lt;termId&gt;</code>: <code>specificAttributes</code>配列内の該当する<code>classId</code>と<code>termId</code>の<code>value</code>にマッピング</li>
-<li><code>meta/&lt;metadata-defのキー&gt;</code>: <code>metadata-def.json</code>の定義に従って<code>metadata.json</code>の<code>constant</code>セクションへ書き込み（<code>schema.type</code>で型変換し、<code>unit</code>があれば付与）。<code>variable</code>定義は現時点では対応しません。<code>metadata-def.json</code>が存在しない場合は従来どおり書き込みをスキップします。</li>
+<li><code>meta/&lt;metadata-defのキー&gt;</code>: <code>metadata-def.json</code>の定義に従って<code>metadata.json</code>の<code>constant</code>セクションへ書き込み（<code>schema.type</code>で型変換し、<code>unit</code>があれば付与）。<code>variable</code>定義は現時点では対応しません。<code>meta/</code>列を1つでも指定する場合は<code>tasksupport/metadata-def.json</code>ファイルの配置が必須です。ファイル自体が存在しない場合や、指定したキーが定義に存在しない場合はエラー（<code>StructuredError</code>）となります。</li>
 <li><code>inputdataX</code>: zipファイル内のファイルパスを指定（X=1,2,3...）</li>
 </ul>
 <blockquote>
@@ -2728,7 +2728,8 @@ basic/dataName,inputdata1,custom/cycle,custom/thickness,custom/temperature,sampl
 <span style="color: #BBB">    </span>└──<span style="color: #BBB"> </span>fsmarttable_experiment_0002.csv
 </code></pre></div></td></tr></table></div>
 <h2 id="1_1">テーブルデータの1行分のデータを構造化処理で取得する</h2>
-<p>構造化処理を以下のように定義した場合、<code>RdeOutputResourcePath.rawfiles</code>からcsvのパスを取得できます。上記のディレクトリ構造の例では、<code>temp/fsmarttable_experiment_0001.csv</code>等になります。</p>
+<p><code>RdeOutputResourcePath.rawfiles</code>には、その行に紐づく<strong>ユーザーのデータファイルのみ</strong>（例: <code>file1.txt</code>、<code>file2.txt</code>）が含まれ、自動生成される行CSV（<code>fsmarttable_*.csv</code>）は含まれません。これにより、Invoiceモード向けに書かれた構造化処理プログラム（拡張子・件数・<code>rawfiles[0]</code>を前提に<code>rawfiles</code>を走査するもの）を、SmartTableInvoiceモードでも改修なしに流用できます。</p>
+<p>生成された行CSV自体のパスを取得したい場合は、<code>RdeOutputResourcePath.smarttable_rawfile</code>（<code>Path | None</code>、SmartTableInvoiceモード以外では<code>None</code>）を使用します。上記のディレクトリ構造の例では、<code>temp/fsmarttable_experiment_0001.csv</code>等になります。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 1</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 2</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;"> 3</span>
@@ -2745,7 +2746,10 @@ basic/dataName,inputdata1,custom/cycle,custom/thickness,custom/temperature,sampl
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">14</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">15</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">16</span>
-<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">17</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">custom_module</span>(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath) <span style="color: #333">-&gt;</span> <span style="color: #080; font-weight: bold">None</span>:
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">17</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">18</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">19</span>
+<span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">20</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">custom_module</span>(srcpaths: RdeInputDirPaths, resource_paths: RdeOutputResourcePath) <span style="color: #333">-&gt;</span> <span style="color: #080; font-weight: bold">None</span>:
 <span style="color: #BBB">    </span><span style="color: #D42">"""Execute structured text processing, metadata extraction, and visualization.</span>
 
 <span style="color: #D42">    It handles structured text processing, metadata extraction, and graphing.</span>
@@ -2761,14 +2765,34 @@ basic/dataName,inputdata1,custom/cycle,custom/thickness,custom/temperature,sampl
 <span style="color: #D42">    Note:</span>
 <span style="color: #D42">        The actual function names and processing details may vary depending on the project.</span>
 <span style="color: #D42">    """</span>
+    <span style="color: #888"># resource_paths.rawfiles contains only the user's data files</span>
+    <span style="color: #888"># (e.g. file1.txt, file2.txt), never the generated row CSV.</span>
+    row_csv <span style="color: #333">=</span> resource_paths<span style="color: #333">.</span>smarttable_rawfile  <span style="color: #888"># e.g. temp/fsmarttable_experiment_0001.csv</span>
     <span style="color: #333">...</span>
 </code></pre></div></td></tr></table></div>
+<div class="admonition note">
+<p class="admonition-title">v1.7.0での破壊的変更</p>
+<p>v1.7.0より前は、自動生成される行CSVが<code>RdeOutputResourcePath.rawfiles</code>の
+先頭要素として含まれており、アクセサ名も<code>smarttable_rowfile</code>でした。
+v1.7.0以降、<code>rawfiles</code>に行CSVは含まれなくなり、アクセサ名は
+<code>smarttable_rawfile</code>に変更されました。旧名<code>smarttable_rowfile</code>は
+<code>DeprecationWarning</code>付きの非推奨エイリアスとして引き続き利用できますが、
+v2.0で削除される予定です。</p>
+</div>
 <h2 id="rde">テーブルデータファイルをRDEに登録する場合</h2>
 <p>デフォルトでは、SmartTableInvoiceモードで使用したテーブルデータは、RDEに登録されません。設定ファイル<code>rdeconfig.yml</code>に、以下のように設定することで、テーブルデータをRDEに登録することができます。</p>
 <div class="highlight" style="background: #ffffff"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">1</span>
 <span style="color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px;">2</span></pre></div></td><td class="code"><div><pre style="line-height: 125%;"><span></span><code><span style="color: #070">smarttable</span>:
 <span style="color: #BBB">    </span><span style="color: #070">save_table_file</span>:<span style="color: #BBB"> </span>true
 </code></pre></div></td></tr></table></div>
+<div class="admonition note">
+<p class="admonition-title">v1.7.0での破壊的変更</p>
+<p><code>save_table_file: true</code>を設定した場合、元のテーブルデータファイルの登録先が
+<code>data/</code>ルート（最後のタイル）から<strong><code>divided/0001</code></strong>（最初のタイル）に
+変更されました。それに伴い、データ行は<code>divided/0002</code>以降にずれ、
+最後のデータ行が<code>data/</code>ルートに登録されるようになります。
+データ行同士の順序自体は変わりません。</p>
+</div>
 <h2 id="_12">試料フィールドの自動クリアルール（新規試料登録）</h2>
 <p>SmartTableInvoiceモードの <code>invoice.json</code> 生成は、元の <code>invoice.json</code> をベースに各行の値を部分上書きする方式です。そのため、<code>sample</code> 系の列を何も指定しないと、元の <code>invoice.json</code> に入っている試料情報がそのまま残ります。</p>
 <p>この挙動を踏まえ、SmartTableモードでは <code>sample/names</code> 列が指定され、かつ <code>sample/sampleId</code> 列に有効な値がない場合、その行は <strong>新規試料として登録する意図</strong> として扱われます。このとき、元の <code>invoice.json</code> から継承されたダミー試料の各フィールドが自動的にクリアされます。</p>

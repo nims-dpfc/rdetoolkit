@@ -3456,7 +3456,12 @@ enhanced type safety. Migration path: RawFiles -&gt; list[FileGroup] in future v
 processing them for metadata extraction and invoice generation.
 The returned <code>raw_files</code> order is tied to RDE registration order:
 index 0 maps to <code>data/</code> and is registered last, while index 1..N map to
-<code>data/divided/0001</code>.. and are registered first in ascending index order.</p>
+<code>data/divided/0001</code>.. and are registered first in ascending index order.
+When <code>save_table_file</code> is <code>True</code>, the original SmartTable file occupies
+<code>data/divided/0001</code> (registered first); otherwise the tile for the last
+data row occupies <code>data/</code> (registered last). Special case: when
+<code>save_table_file</code> is <code>True</code> and the table yields zero data rows, the
+original file is the only tile and occupies <code>data/</code> (index 0) itself.</p>
 <p><span class="doc-section-title">属性：</span></p>
 <table>
 <thead>
@@ -3563,12 +3568,16 @@ index 0 maps to <code>data/</code> and is registered last, while index 1..N map 
 <tbody>
 <tr class="doc-section-item">
 <td>
-<code><span title="tuple">tuple</span>[<span title="rdetoolkit.models.rde2types.RawFiles">RawFiles</span>, <span title="pathlib.Path">Path</span> | None]</code>
+<code><span title="tuple">tuple</span>[<span title="rdetoolkit.models.rde2types.SmartTableRawFiles">SmartTableRawFiles</span>, <span title="pathlib.Path">Path</span> | None]</code>
 </td>
 <td>
 <div class="doc-md-description">
-<p>tuple[RawFiles, Path | None]:
-- RawFiles: A list of tuples where each tuple contains (csv_file, related_files...)
+<p>tuple[SmartTableRawFiles, Path | None]:
+- SmartTableRawFiles: A list of <code>(row_csv, user_files)</code> pairs. <code>row_csv</code> is
+  the path to the auto-generated per-row CSV, or <code>None</code> for the tile that
+  holds only the original SmartTable file (<code>save_table_file=True</code> case).
+  <code>user_files</code> are the actual data files referenced from the table's
+  related-file columns.
 - Path | None: Path to the SmartTable file if found, otherwise None.</p>
 </div>
 </td>
@@ -3596,12 +3605,6 @@ index 0 maps to <code>data/</code> and is registered last, while index 1..N map 
 </tr>
 </tbody>
 </table>
-<details class="note" open="">
-<summary>Note</summary>
-<p>This method uses legacy RawFiles type for backward compatibility.
-New implementations should consider FileGroup and ProcessedFileGroup for
-enhanced type safety. Migration path: RawFiles -&gt; list[FileGroup] in future version.</p>
-</details>
 </div>
 </div>
 </div>
