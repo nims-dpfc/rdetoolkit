@@ -6,9 +6,17 @@ from typing import Any, Literal
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.figure import Figure
-from matplotlib.ticker import LogFormatterMathtext, LogLocator, NullFormatter, NullLocator
+from matplotlib.ticker import (
+    EngFormatter,
+    LogFormatterMathtext,
+    LogLocator,
+    MaxNLocator,
+    NullFormatter,
+    NullLocator,
+    ScalarFormatter,
+)
 
-from rdetoolkit.graph.models import Direction, PlotConfig
+from rdetoolkit.graph.models import AxisConfig, Direction, PlotConfig
 from rdetoolkit.graph.config import apply_matplotlib_config
 from rdetoolkit.graph.legend_policy import (
     resolve_legend_policy as _resolve_legend_policy,
@@ -243,15 +251,19 @@ class MatplotlibRenderer:
         return legend_handles, legend_labels
 
     def _configure_axes(self, ax: Any, config: PlotConfig, title: str | None) -> None:
-        ax.set_xlabel(config.x_axis.label or "X")
-        ax.set_ylabel(config.y_axis.label or "Y")
+        ax.set_xlabel(self._compose_axis_label(config.x_axis, "X"))
+        ax.set_ylabel(self._compose_axis_label(config.y_axis, "Y"))
 
         if config.x_axis.scale == "log":
             ax.set_xscale("log")
             self._apply_log_axis_formatting(ax.xaxis)
+        else:
+            self._apply_tick_formatting(ax.xaxis, config.x_axis)
         if config.y_axis.scale == "log":
             ax.set_yscale("log")
             self._apply_log_axis_formatting(ax.yaxis)
+        else:
+            self._apply_tick_formatting(ax.yaxis, config.y_axis)
 
         if config.x_axis.lim:
             ax.set_xlim(config.x_axis.lim)
@@ -750,6 +762,54 @@ class MatplotlibRenderer:
         axis.set_minor_locator(NullLocator())
         axis.set_major_formatter(LogFormatterMathtext(base=10, labelOnlyBase=True))
         axis.set_minor_formatter(NullFormatter())
+
+    @staticmethod
+    def _apply_linear_axis_formatting(
+        axis: Any,
+        scilimits: tuple[int, int] = (-3, 4),
+    ) -> None:
+        """Readable tick labels regardless of data magnitude."""
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_powerlimits(scilimits)   # 範囲外は ×10^n 表記
+        axis.set_major_formatter(formatter)
+        axis.set_major_locator(MaxNLocator(nbins=6))
+        offset = axis.get_offset_text()
+        offset.set_fontsize(plt.rcParams.get("xtick.labelsize", 20))
+
+    @staticmethod
+    def _apply_tick_formatting(axis: Any, axis_config: AxisConfig) -> None:
+        """Apply tick formatter based on AxisConfig.tick_format."""
+        tick_format = axis_config.tick_format
+        if tick_format == "plain":
+            formatter = ScalarFormatter(useMathText=True)
+            formatter.set_scientific(False)
+            formatter.set_useOffset(False)
+            axis.set_major_formatter(formatter)
+            axis.set_major_locator(MaxNLocator(nbins=6))
+        elif tick_format == "sci":
+            formatter = ScalarFormatter(useMathText=True)
+            formatter.set_powerlimits((0, 0))
+            axis.set_major_formatter(formatter)
+            axis.set_major_locator(MaxNLocator(nbins=6))
+            offset = axis.get_offset_text()
+            offset.set_fontsize(plt.rcParams.get("xtick.labelsize", 20))
+        elif tick_format == "eng":
+            axis.set_major_formatter(EngFormatter(unit=axis_config.unit or ""))
+            axis.set_major_locator(MaxNLocator(nbins=6))
+        else:  # "auto"
+            MatplotlibRenderer._apply_linear_axis_formatting(axis, axis_config.scilimits)
+
+    @staticmethod
+    def _compose_axis_label(axis_config: AxisConfig, default_label: str) -> str:
+        """Compose axis label with unit suffix, avoiding double-composition."""
+        label = axis_config.label or default_label
+        unit = axis_config.unit
+        if not unit:
+            return label
+        # Already contains the unit (e.g. derived label already has "(V)") -> no-op
+        if f"({unit})" in label:
+            return label
+        return f"{label} ({unit})"
 
 
 def _resolve_column_index(df: pd.DataFrame, column: int | str) -> int:

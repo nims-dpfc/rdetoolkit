@@ -97,10 +97,25 @@ class PlotlyRenderer:
             use_custom_direction_colors=use_custom_direction_colors,
         )
 
-        layout = self._build_layout(df, config, y_cols)
+        legend_item_count = self._count_legend_visible_traces(traces)
+        layout = self._build_layout(df, config, y_cols, legend_item_count)
         fig = go.Figure(data=traces, layout=layout)
         self._apply_legend_annotation(fig, config.legend.info)
         return fig
+
+    @staticmethod
+    def _count_legend_visible_traces(traces: list[Any]) -> int:
+        """Count traces that will appear as legend entries.
+
+        Direction filtering can drop configured series entirely, and split
+        series mark only their first segment with showlegend=True, so the
+        legend size must be derived from the built traces rather than the
+        configured series count.
+        """
+        return sum(
+            1 for trace in traces
+            if getattr(trace, "showlegend", True) is not False
+        )
 
     def _ensure_plotly_available(self) -> None:
         if go is None:  # pragma: no cover - hit only when plotly missing
@@ -311,6 +326,7 @@ class PlotlyRenderer:
         df: pd.DataFrame,
         config: PlotConfig,
         y_cols: list[int | str],
+        legend_item_count: int,
     ) -> Any:
         y_reference = y_cols[0]
         default_title = (
@@ -319,7 +335,7 @@ class PlotlyRenderer:
             else str(y_reference)
         )
         title = config.title if config.title else default_title
-        showlegend, legend_layout = self._resolve_legend_layout(config, len(y_cols))
+        showlegend, legend_layout = self._resolve_legend_layout(config, legend_item_count)
         layout_kwargs: dict[str, Any] = {
             "title": title,
             "xaxis": self._build_axis_layout(config.x_axis, default_label="X"),

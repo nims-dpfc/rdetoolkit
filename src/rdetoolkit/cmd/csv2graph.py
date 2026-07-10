@@ -48,6 +48,8 @@ class Csv2GraphCommand:
         legend_outside_threshold: int = 8,
         legend_bottom_threshold: Optional[int] = 21,
         legend_ncol: Optional[int] = None,
+        x_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
+        y_tick_format: Literal["auto", "plain", "sci", "eng"] = "auto",
     ) -> None:
         """Initialize Csv2GraphCommand.
 
@@ -82,6 +84,8 @@ class Csv2GraphCommand:
             legend_bottom_threshold: Item count at or above which "auto" uses
                 outside-bottom placement (None disables the switch)
             legend_ncol: Number of legend columns for "outside_bottom" placement
+            x_tick_format: X-axis tick label format ("auto", "plain", "sci", or "eng")
+            y_tick_format: Y-axis tick label format ("auto", "plain", "sci", or "eng")
         """
         self.csv_path = csv_path
         self.output_dir = output_dir
@@ -111,6 +115,8 @@ class Csv2GraphCommand:
         self.legend_outside_threshold = legend_outside_threshold
         self.legend_bottom_threshold = legend_bottom_threshold
         self.legend_ncol = legend_ncol
+        self.x_tick_format = x_tick_format
+        self.y_tick_format = y_tick_format
 
     def invoke(self) -> None:
         """Execute the csv2graph command.
@@ -161,6 +167,8 @@ class Csv2GraphCommand:
                 legend_outside_threshold=self.legend_outside_threshold,
                 legend_bottom_threshold=self.legend_bottom_threshold,
                 legend_ncol=self.legend_ncol,
+                x_tick_format=self.x_tick_format,
+                y_tick_format=self.y_tick_format,
             )
 
             output_location = self.output_dir if self.output_dir else self.csv_path.parent

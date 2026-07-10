@@ -637,6 +637,8 @@ def csv2graph(
         int | None,
         typer.Option("--legend-ncol", help="Number of legend columns for 'outside_bottom' placement"),
     ] = None,
+    x_tick_format: Annotated[str, typer.Option("--x-tick-format", help="X-axis tick label format: auto, plain, sci, or eng")] = "auto",
+    y_tick_format: Annotated[str, typer.Option("--y-tick-format", help="Y-axis tick label format: auto, plain, sci, or eng")] = "auto",
 ) -> None:
     """Generate graphs from CSV files."""
     # Lazy imports
@@ -669,6 +671,15 @@ def csv2graph(
             msg,
             param_hint="--legend-policy",
         )
+    # Validate x_tick_format
+    if x_tick_format not in ["auto", "plain", "sci", "eng"]:
+        msg = f"Invalid x-tick-format: {x_tick_format}. Choose from ['auto', 'plain', 'sci', 'eng']"
+        raise typer.BadParameter(msg, param_hint="--x-tick-format")
+
+    # Validate y_tick_format
+    if y_tick_format not in ["auto", "plain", "sci", "eng"]:
+        msg = f"Invalid y-tick-format: {y_tick_format}. Choose from ['auto', 'plain', 'sci', 'eng']"
+        raise typer.BadParameter(msg, param_hint="--y-tick-format")
 
     # Parse column specifications
     parsed_x_col = [parse_column(c) for c in x_col] if x_col else None
@@ -717,6 +728,8 @@ def csv2graph(
         legend_outside_threshold=legend_outside_threshold,
         legend_bottom_threshold=legend_bottom_threshold if legend_bottom_threshold > 0 else None,
         legend_ncol=legend_ncol,
+        x_tick_format=cast(Literal["auto", "plain", "sci", "eng"], x_tick_format),
+        y_tick_format=cast(Literal["auto", "plain", "sci", "eng"], y_tick_format),
     )
     cmd.invoke()
 

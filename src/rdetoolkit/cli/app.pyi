@@ -72,5 +72,7 @@ def csv2graph(
     legend_outside_threshold: int = 8,
     legend_bottom_threshold: int = 21,
     legend_ncol: Optional[int] = None,
+    x_tick_format: str = "auto",
+    y_tick_format: str = "auto",
 ) -> None: ...
 def agent_guide(detailed: bool = False) -> None: ...

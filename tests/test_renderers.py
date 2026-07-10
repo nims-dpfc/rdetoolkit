@@ -226,6 +226,40 @@ def test_plotly_renderer_max_items_caps_explicit_policy() -> None:
     assert fig.layout.showlegend is False
 
 
+def test_plotly_renderer_auto_policy_counts_rendered_traces_not_series() -> None:
+    """Legend visibility must follow actually rendered legend-visible traces.
+
+    Three series are configured, but the direction filter leaves only one
+    rendered trace. With max_items=2 the legend must stay visible: basing the
+    decision on len(y_cols) (3 > 2) would wrongly hide it.
+    """
+    df = pd.DataFrame({
+        "X": [0, 1, 2, 3],
+        "Y0": [1, 2, 3, 4],
+        "Y1": [2, 3, 4, 5],
+        "Y2": [3, 4, 5, 6],
+        "D0": ["A", "A", "A", "A"],
+        "D1": ["B", "B", "B", "B"],
+        "D2": ["B", "B", "B", "B"],
+    })
+    config = build_config(
+        y_cols=[1, 2, 3],
+        direction=DirectionConfig(filters=["A"]),
+        direction_cols=[4, 5, 6],
+    )
+    config.legend.policy = "auto"
+    config.legend.max_items = 2
+
+    fig = PlotlyRenderer().render_html(df, config)
+
+    legend_visible = [
+        trace for trace in fig.data
+        if getattr(trace, "showlegend", True) is not False
+    ]
+    assert len(legend_visible) == 1
+    assert fig.layout.showlegend is True
+
+
 def test_plotly_renderer_respects_direction_filtering() -> None:
     df = pd.DataFrame({
         "X": [0, 1, 2, 3],
