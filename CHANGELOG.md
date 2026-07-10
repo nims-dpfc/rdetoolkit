@@ -29,7 +29,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The row CSV is never copied to `raw` / `nonshared_raw`, regardless of
   `system.save_raw` / `save_nonshared_raw`.
 
+### Added
+
+#### csv2graph Legend Placement Policy (#497)
+
+Added a `legend_policy` option (`legacy` / `auto` / `inside` / `outside_right`
+/ `outside_bottom` / `hide`) to `csv2graph()`, `plot_from_dataframe()`, and
+the CLI (`--legend-policy`, `--legend-outside-threshold`,
+`--legend-bottom-threshold`, `--legend-ncol`). `auto` resolves placement by
+legend item count, and outside legends no longer shrink the plot area — the
+renderer measures the legend overflow and enlarges the figure canvas instead
+of compressing the axes via `tight_layout`. The policy is honored by both
+the Matplotlib and Plotly (HTML) renderers through a shared
+`rdetoolkit.graph.legend_policy` module. Invalid policy values now raise
+`ValueError`.
+
+#### csv2graph Axis Tick Label Formatting (#483)
+
+Added a `tick_format: Literal["auto", "plain", "sci", "eng"]` and
+`scilimits` option to `AxisConfig`, `csv2graph()`, `plot_from_dataframe()`,
+and the CLI (`--x-tick-format` / `--y-tick-format`). By default (`auto`),
+out-of-range magnitudes on linear axes now render as `×10ⁿ` offset notation
+(via `ScalarFormatter` with `MaxNLocator`-capped tick count), aligning the
+Matplotlib PNG output with the existing Plotly HTML scientific-notation
+behavior; values in the normal range (e.g. 0–100) are unaffected. Axis
+labels automatically append the configured unit when not already present.
+
 ### Changed
+
+#### SmartTable meta/ Column Now Requires metadata-def.json (#496)
+
+**Breaking change**: In SmartTableInvoice mode, specifying a `meta/<key>`
+column now raises `StructuredError` if `tasksupport/metadata-def.json` does
+not exist, instead of silently skipping the column as before. This makes
+the missing-file case consistent with the existing "key not defined in
+metadata-def.json" error, so a missing or misplaced `metadata-def.json` is
+no longer masked as a silent no-op. Templates that do not use `meta/`
+columns are unaffected.
 
 - `rdetoolkit gen-config smarttable` now defaults `save_table_file` to
   `false`, matching the Pydantic model default and interactive-mode default
@@ -37,10 +73,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### csv2graph Plotly Legend Item Counting (#483)
+
+Fixed the Plotly renderer counting legend items incorrectly, which could
+show or hide the legend inconsistently with the configured `legend_policy`
+threshold.
+
 - Fixed a bug where, with `smarttable.save_table_file: true`, the
   `divided/0001` tile (the original SmartTable file) had no `invoice.json`,
   causing the workflow to abort. `SmartTableEarlyExitProcessor` now seeds
   the tile's `invoice.json` from `invoice_org` before updating `dataName`.
+
+#### Magic Variable Documentation Examples (#491)
+
+Corrected the `${filename}` example in the English and Japanese magic
+variable documentation, and clarified the Japanese description of the
+auto-completed target (dataset name, with data tile name noted for
+extended mode).
 
 ### Migration Guide
 
@@ -328,7 +377,7 @@ For detailed release notes, see [docs/releases/index.en.md](docs/releases/index.
 - Archive generation utilities
 - Report tooling
 
-[Unreleased]: https://github.com/nims-mdpf/rdetoolkit/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/nims-mdpf/rdetoolkit/compare/v1.6.4...HEAD
 [1.6.0]: https://github.com/nims-mdpf/rdetoolkit/compare/v1.5.2...v1.6.0
 [1.5.2]: https://github.com/nims-mdpf/rdetoolkit/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/nims-mdpf/rdetoolkit/compare/v1.5.0...v1.5.1
