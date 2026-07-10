@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 import time
 import uuid
 from collections.abc import Callable
@@ -11,14 +12,21 @@ from typing import Any
 
 from rdetoolkit.errors import ERROR_CATALOG, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
-from rdetoolkit.report.events import EventSink, MemoryEventSink
+from rdetoolkit.report.events import Event, EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.finalize import finalize as _finalize_run
+from rdetoolkit.runner.aggregator import RunAggregator
 from rdetoolkit.runner.config_loader import load_config as load_config_from_root
+from rdetoolkit.runner.execute import ExecutionResult
 from rdetoolkit.runner.execute import run_tile
 from rdetoolkit.runner.iterator import iterate_tiles
 from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode as resolve_mode_from_paths
 from rdetoolkit.core.context import RunContext
+from rdetoolkit.domain.invoice import (
+    build_excelinvoice_tile_invoice,
+    build_smarttable_tile_invoice,
+    load_invoice,
+)
 from rdetoolkit.types import RdeConfig
 
 
@@ -67,7 +75,9 @@ class Runner:
         """
         self.run_id = self._run_id_factory()
         self.event_sink.open(self.run_id)
+        report: RunReport | None = None
         try:
+            self.event_sink.emit(Event.run_started(run_id=self.run_id))
             config = self.load_config(overrides)
             mode = self.resolve_mode(config)
             self.pre_validate(config)
@@ -76,6 +86,8 @@ class Runner:
             self.finalize(report, config)
             return report
         finally:
+            if report is not None:
+                self.event_sink.emit(Event.run_completed(run_id=self.run_id, status=report.status))
             self.event_sink.close()
 
     def load_config(self, overrides: dict[str, Any] | None = None) -> RdeConfig:
@@ -134,38 +146,76 @@ class Runner:
             Minimal successful run report.
         """
         started = time.time()
-        iterations: list[dict[str, Any]] = []
+        aggregator = RunAggregator(
+            run_id=self.run_id,
+            flow_id=_flow_id(flow_fn),
+            mode=mode.value,
+            config_digest=_config_digest(config),
+            logs_dir=Path("data") / "logs",
+        )
+        failed_count = 0
+        completed_count = 0
+        terminal_error: dict[str, Any] | None = None
+        invariant_invoice = _invariant_invoice(mode, root=self.root)
         for info, paths, out in iterate_tiles(
             mode,
             self.inputdata_path,
             self.unpacked_dir_path,
             Path("data"),
         ):
-            result = run_tile(
-                flow_fn,
-                RunContext(paths=paths, out=out, config=config, invoice=None, iteration=info),
-                event_sink=self.event_sink,
-                run_id=self.run_id,
-                config=config,
-            )
-            iterations.append(
-                {
-                    "iteration_index": result.iteration_index,
-                    "status": result.status,
-                    "call_count": len(result.call_records),
-                    "output_count": len(result.outputs),
-                },
-            )
-        return RunReport(
-            run_id=self.run_id,
-            status="success",
-            flow_id=_flow_id(flow_fn),
-            mode=mode.value,
+            try:
+                result = run_tile(
+                    flow_fn,
+                    RunContext(
+                        paths=paths,
+                        out=out,
+                        config=config,
+                        invoice=_tile_invoice(
+                            mode,
+                            root=self.root,
+                            paths=paths,
+                            invoice_dir=out.invoice,
+                            iteration_index=info.index,
+                            invariant_invoice=invariant_invoice,
+                        ),
+                        iteration=info,
+                    ),
+                    event_sink=self.event_sink,
+                    run_id=self.run_id,
+                    config=config,
+                )
+            except Exception as exc:  # noqa: BLE001
+                failed_count += 1
+                error = _exception_error(exc)
+                terminal_error = error
+                aggregator.record(
+                    ExecutionResult(
+                        iteration_index=info.index,
+                        status="failed",
+                        call_records=(),
+                        outputs=(),
+                        error=error,
+                    ),
+                )
+                if config.execution.on_iteration_error == "fail_fast":
+                    break
+                continue
+            completed_count += 1
+            aggregator.record(result)
+        status = _run_status(
+            completed_count=completed_count,
+            failed_count=failed_count,
+            fail_fast=config.execution.on_iteration_error == "fail_fast",
+        )
+        warnings = _failure_warnings(failed_count) if failed_count else []
+        if failed_count:
+            sys.stderr.write(f"{failed_count} iteration(s) failed\n")
+        return aggregator.build_report(
+            status=status,
             started_at=_iso_timestamp(started),
             duration_ms=(time.time() - started) * 1000.0,
-            config_digest=_config_digest(config),
-            iterations=iterations,
-            warnings=[],
+            warnings=warnings,
+            error=terminal_error if status == "failed" else None,
         )
 
     def post_validate(self, config: RdeConfig, report: RunReport) -> None:
@@ -204,6 +254,114 @@ def _config_digest(config: RdeConfig) -> str:
 
 def _iso_timestamp(timestamp: float) -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(timestamp))
+
+
+def _exception_error(exc: Exception) -> dict[str, Any]:
+    code = getattr(exc, "code", 3001)
+    return {
+        "code": code,
+        "type": type(exc).__name__,
+        "message": str(exc),
+    }
+
+
+def _run_status(*, completed_count: int, failed_count: int, fail_fast: bool = False) -> str:
+    """Classify the run outcome (Design §7.2).
+
+    Under fail_fast, any tile failure aborts the run, so the run as a whole is
+    "failed" even when earlier tiles completed — "partial" exists only for the
+    continue policy (no implicit partial success).
+    """
+    if failed_count == 0:
+        return "success"
+    if fail_fast or completed_count == 0:
+        return "failed"
+    return "partial"
+
+
+def _failure_warnings(failed_count: int) -> list[dict[str, Any]]:
+    return [
+        {
+            "code": 3001,
+            "message": f"{failed_count} iteration(s) failed",
+            "failed_count": failed_count,
+        },
+    ]
+
+
+def _invariant_invoice(mode: ModeKind, *, root: Path) -> Any:
+    data_root = _data_root(root)
+    invoice_path = data_root / "invoice" / "invoice.json"
+    if mode is ModeKind.invoice:
+        inputdata_path = data_root / "inputdata"
+        if not invoice_path.exists() and inputdata_path.exists() and not any(inputdata_path.iterdir()):
+            return None
+        return load_invoice(invoice_path)
+    if mode in {ModeKind.multidatatile, ModeKind.rdeformat} and invoice_path.exists():
+        return load_invoice(invoice_path)
+    return None
+
+
+def _tile_invoice(
+    mode: ModeKind,
+    *,
+    root: Path,
+    paths: Any,
+    invoice_dir: Path,
+    iteration_index: int,
+    invariant_invoice: Any,
+) -> Any:
+    if invariant_invoice is not None:
+        return invariant_invoice
+    data_root = _data_root(root)
+    invoice_org = data_root / "invoice" / "invoice.json"
+    invoice_schema_path = data_root / "tasksupport" / "invoice.schema.json"
+    dist_path = invoice_dir / "invoice.json"
+    if mode is ModeKind.excelinvoice:
+        inputdata_path = data_root / "inputdata"
+        excel_candidates = (*paths.rawfiles, *tuple(inputdata_path.iterdir() if inputdata_path.exists() else ()))
+        return build_excelinvoice_tile_invoice(
+            excel_path=_first_matching(excel_candidates, suffixes=(".xlsx", ".xlsm", ".xls")),
+            invoice_org=invoice_org,
+            invoice_schema_path=invoice_schema_path,
+            dist_path=dist_path,
+            idx=iteration_index,
+        )
+    if mode is ModeKind.smarttable:
+        return build_smarttable_tile_invoice(
+            smarttable_rowfile=_first_matching(paths.rawfiles, prefixes=("fsmarttable_",), suffixes=(".csv",)),
+            invoice_org=invoice_org,
+            invoice_schema_path=invoice_schema_path,
+            dist_path=dist_path,
+            rawfiles=paths.rawfiles,
+        )
+    return None
+
+
+def _first_matching(
+    paths: tuple[Path, ...],
+    *,
+    prefixes: tuple[str, ...] = (),
+    suffixes: tuple[str, ...],
+) -> Path:
+    for path in paths:
+        if path.suffix.lower() not in suffixes:
+            continue
+        if prefixes and not path.name.startswith(prefixes):
+            continue
+        return path
+    for path in paths:
+        if path.suffix.lower() in suffixes:
+            return path
+    msg = f"No input file matched suffixes {suffixes}"
+    raise FileNotFoundError(msg)
+
+
+def _data_root(root: Path) -> Path:
+    candidate = root / "data"
+    if (candidate / "inputdata").exists() or (candidate / "invoice").exists() or (candidate / "tasksupport").exists():
+        return candidate
+    return root
 
 
 def _validation_error(code: int, reason: str) -> RdeValidationError:

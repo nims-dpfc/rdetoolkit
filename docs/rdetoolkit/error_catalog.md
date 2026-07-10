@@ -20,6 +20,10 @@ Authority: `local/develop/v2/Design.md` §9.
 | 2103 | TemplateFinalOverride | Template skeleton method must not be overridden: {method_name} | Implement only the declared slots and hooks; if you need a different pipeline shape, write a plain @flow instead. |
 | 2104 | TemplateDeepInheritance | Template subclass must not be inherited further: {class_name} | Inherit directly from the provider's template class (one level only); compose behavior via slots/hooks or a plain @flow. |
 | 2105 | TemplateCtorNotDefault | Template class must be constructible with no arguments: {class_name} | Remove required __init__ parameters; receive parameters via config.custom instead. |
+| 2201 | MarkerFormatInvalid | Notebook marker line does not match the canonical `# rde:` format: {line} | Insert a single space after 'rde:' (e.g. '# rde: slot=read'); if the line is not meant to be a marker, remove the 'rde:' prefix. |
+| 2208 | RequiredSlotMissing | Notebook does not implement required slot: {slot_name} | Add a cell marked '# rde: slot={slot_name}' implementing the required slot. |
+| 2211 | NotebookUnreadable | Notebook file could not be read: {reason} | Open the notebook in Jupyter and re-save it; notebooks below nbformat 4 are not supported. |
+| 2212 | NoMarkersFound | No `# rde:` markers were found in the notebook | Add at least one '# rde: slot=<name>' marker cell, or check for a typo in the marker prefix. |
 | 3001 | NodeExecutionFailed | Node execution failed for call {call_id}: {reason} | Inspect the chained original exception (__cause__) and the call-log entry for the failing call; fix the node implementation or its inputs. Nodes are plain functions - reproduce directly with pytest. |
 | 3002 | NodeTypeMismatch | Node argument type mismatch for {node_id}.{param_name} | Pass a value matching the node's type annotation, or adjust the annotation. Set execution.type_check to 'off' or 'warn' if strict checking is not desired. |
 | 3003 | UndecoratedNodeCall | Undecorated callable cannot be recorded as a node: {callable_name} | Decorate the callable with @node, or call it as a plain helper (plain calls work but are not recorded in the call log). |

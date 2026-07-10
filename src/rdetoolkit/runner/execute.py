@@ -58,13 +58,19 @@ def run_tile(
         type_check=cast("Literal['off', 'warn', 'strict']", config.execution.type_check),
         iteration_index=iteration_index,
     )
-    with recorder:
-        result = flow_fn(**kwargs)
+    try:
+        with recorder:
+            result = flow_fn(**kwargs)
+    except Exception:
+        _emit_node_events(event_sink, run_id=run_id, records=recorder.records)
+        event_sink.emit(Event.iteration_completed(run_id=run_id, index=iteration_index))
+        raise
     outputs = _summarize_outputs(
         result,
         repr_head=config.provenance.repr_head,
         repr_head_len=config.provenance.repr_head_len,
     )
+    _emit_node_events(event_sink, run_id=run_id, records=recorder.records)
     event_sink.emit(Event.iteration_completed(run_id=run_id, index=iteration_index))
     return ExecutionResult(
         iteration_index=iteration_index,
@@ -106,6 +112,31 @@ def _safe_repr_head(value: Any, *, enabled: bool, length: int) -> str | None:
         return repr(value)[:length]
     except Exception:  # noqa: BLE001
         return None
+
+
+def _emit_node_events(event_sink: EventSink, *, run_id: str, records: tuple[NodeCallRecord, ...]) -> None:
+    for record in sorted(records, key=lambda item: item.seq):
+        event_sink.emit(Event.node_started(run_id=run_id, node_id=record.node_id, call_id=record.call_id))
+        if record.status == "failed":
+            error = record.error or {}
+            event_sink.emit(
+                Event.node_failed(
+                    run_id=run_id,
+                    node_id=record.node_id,
+                    call_id=record.call_id,
+                    error_type=str(error.get("type", "")),
+                    error_msg=str(error.get("message", "")),
+                ),
+            )
+            continue
+        event_sink.emit(
+            Event.node_completed(
+                run_id=run_id,
+                node_id=record.node_id,
+                call_id=record.call_id,
+                duration_ms=record.duration_ms,
+            ),
+        )
 
 
 def _flow_for_di(flow_fn: Callable[..., Any]) -> Callable[..., Any]:

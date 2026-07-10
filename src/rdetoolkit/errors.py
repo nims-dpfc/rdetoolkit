@@ -612,6 +612,33 @@ ERROR_CATALOG: dict[int, ErrorDef] = {
         message_template="Template class must be constructible with no arguments: {class_name}",
         remediation="Remove required __init__ parameters; receive parameters via config.custom instead.",
     ),
+    # --- rdetoolkit-nb marker/slot errors (band reservation only, name/message
+    #     drafted by the Phase D dispatch decomposition from
+    #     local/develop/v2/editor/05_計画評価_20260707.md §2.1/2.5/2.6 - not yet a
+    #     ratified nb design; correct via retired=True + new number if wrong,
+    #     never edit in place): raised from a future nb session, not Phase D ---
+    2201: ErrorDef(
+        name="MarkerFormatInvalid",
+        message_template="Notebook marker line does not match the canonical `# rde:` format: {line}",
+        remediation="Insert a single space after 'rde:' (e.g. '# rde: slot=read'); if the line is not meant to be a marker, remove the 'rde:' prefix.",
+    ),
+    2208: ErrorDef(
+        name="RequiredSlotMissing",
+        message_template="Notebook does not implement required slot: {slot_name}",
+        remediation="Add a cell marked '# rde: slot={slot_name}' implementing the required slot.",
+    ),
+    2211: ErrorDef(
+        name="NotebookUnreadable",
+        message_template="Notebook file could not be read: {reason}",
+        remediation="Open the notebook in Jupyter and re-save it; notebooks below nbformat 4 are not supported.",
+    ),
+    2212: ErrorDef(
+        name="NoMarkersFound",
+        message_template="No `# rde:` markers were found in the notebook",
+        remediation="Add at least one '# rde: slot=<name>' marker cell, or check for a typo in the marker prefix.",
+    ),
+    # E2201-E2299 reserved for rdetoolkit-nb (see local/develop/v2/editor/05_計画評価_20260707.md §2.5);
+    # allocate further codes only when the nb design session defines them.
 }
 
 WARNING_CATALOG: dict[int, WarningDef] = {
