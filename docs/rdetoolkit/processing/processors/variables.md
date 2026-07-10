@@ -473,7 +473,7 @@ except Exception as e:
    try:
        result = apply_magic_variable(
            context.invoice_dst_filepath,
-           context.smarttable_rowfile or context.resource_paths.rawfiles[0],
+           context.smarttable_rawfile,
            save_filepath=context.invoice_dst_filepath
        )
        if result:

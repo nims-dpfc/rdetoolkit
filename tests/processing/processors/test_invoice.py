@@ -585,7 +585,7 @@ class TestSmartTableInvoiceInitializer:
 
         # Remove rawfiles
         context.resource_paths.rawfiles = ()
-        context.resource_paths.smarttable_rowfile = None
+        context.resource_paths.smarttable_rawfile = None
 
         with pytest.raises(StructuredError, match="No SmartTable row CSV file found"):
             processor.process(context)

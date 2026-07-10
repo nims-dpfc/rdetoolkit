@@ -176,7 +176,7 @@ class SmartTableInvoiceInitializer(Processor):
             raise ValueError(error_msg)
 
         try:
-            csv_file = context.smarttable_rowfile
+            csv_file = context.smarttable_rawfile
             if csv_file is None:
                 error_msg = "No SmartTable row CSV file found"
                 raise StructuredError(error_msg)
