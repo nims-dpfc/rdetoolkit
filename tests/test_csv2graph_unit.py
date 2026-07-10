@@ -39,8 +39,9 @@ matplotlib.use("Agg")  # pragma: no cover - configuration
 
 from matplotlib.ticker import ScalarFormatter
 
-from rdetoolkit.graph.api.csv2graph import plot_from_dataframe
+from rdetoolkit.graph.api.csv2graph import _build_plot_config, plot_from_dataframe
 from rdetoolkit.graph.exceptions import ColumnNotFoundError
+from rdetoolkit.graph.models import DirectionConfig, NormalizedColumns, PlotMode
 from rdetoolkit.graph.normalizers import ColumnNormalizer
 from rdetoolkit.graph.parsers import CSVParser
 from rdetoolkit.graph.textutils import parse_header
@@ -554,3 +555,217 @@ def test_plot_from_dataframe_positional_return_fig_backward_compat__tc_ep_api_00
     assert artifacts is not None
     assert len(artifacts) == 1
     _close_artifacts(artifacts)
+
+
+def test_build_plot_config_wires_legend_policy_fields() -> None:
+    """_build_plot_config() must forward legend_policy/outside_threshold/ncol into LegendConfig."""
+    normalized = NormalizedColumns(
+        x_col=0,
+        y_cols=[1, 2],
+        direction_cols=[None, None],
+        derived_x_label="X",
+        derived_y_label="Y",
+    )
+
+    # Given: explicit non-default legend policy parameters
+    # When: building the PlotConfig via _build_plot_config()
+    config = _build_plot_config(
+        plot_mode=PlotMode.OVERLAY,
+        normalized=normalized,
+        direction_config=DirectionConfig(),
+        display_title=None,
+        x_label=None,
+        y_label=None,
+        logx=False,
+        logy=False,
+        xlim=None,
+        ylim=None,
+        grid=False,
+        invert_x=False,
+        invert_y=False,
+        legend_info=None,
+        legend_loc=None,
+        max_legend_items=None,
+        legend_policy="outside_bottom",
+        legend_outside_threshold=5,
+        legend_bottom_threshold=25,
+        legend_ncol=4,
+        formats=["png"],
+        no_individual=True,
+        return_fig=False,
+        base_filename="plot",
+        main_image_dir_path=None,
+    )
+
+    # Then: LegendConfig carries the requested policy fields
+    assert config.legend.policy == "outside_bottom"
+    assert config.legend.outside_threshold == 5
+    assert config.legend.bottom_threshold == 25
+    assert config.legend.ncol == 4
+
+
+def test_build_plot_config_defaults_legend_policy_to_legacy() -> None:
+    """_build_plot_config() default legend policy values preserve backward compatibility."""
+    normalized = NormalizedColumns(
+        x_col=0,
+        y_cols=[1],
+        direction_cols=[None],
+        derived_x_label="X",
+        derived_y_label="Y",
+    )
+
+    # Given: legend policy parameters matching the public API defaults
+    # When: building the PlotConfig via _build_plot_config()
+    config = _build_plot_config(
+        plot_mode=PlotMode.OVERLAY,
+        normalized=normalized,
+        direction_config=DirectionConfig(),
+        display_title=None,
+        x_label=None,
+        y_label=None,
+        logx=False,
+        logy=False,
+        xlim=None,
+        ylim=None,
+        grid=False,
+        invert_x=False,
+        invert_y=False,
+        legend_info=None,
+        legend_loc=None,
+        max_legend_items=None,
+        legend_policy="legacy",
+        legend_outside_threshold=8,
+        legend_bottom_threshold=21,
+        legend_ncol=None,
+        formats=["png"],
+        no_individual=True,
+        return_fig=False,
+        base_filename="plot",
+        main_image_dir_path=None,
+    )
+
+    # Then: LegendConfig matches LegendConfig()'s own defaults
+    assert config.legend.policy == "legacy"
+    assert config.legend.outside_threshold == 8
+    assert config.legend.bottom_threshold == 21
+    assert config.legend.ncol is None
+
+
+def test_csv2graph_legend_policy_outside_right_end_to_end(tmp_path: Path) -> None:
+    """legend_policy="outside_right" reaches the renderer through the public API."""
+    df = pd.DataFrame({
+        "x": [0, 1, 2],
+        **{f"y{i}": [i, i + 1, i + 2] for i in range(10)},
+    })
+
+    # Given: a DataFrame with enough series to trigger an outside-right legend
+    # When: plotting via the public plot_from_dataframe() API with legend_policy="outside_right"
+    figs = plot_from_dataframe(
+        df,
+        output_dir=tmp_path,
+        x_col="x",
+        y_cols=[f"y{i}" for i in range(10)],
+        legend_policy="outside_right",
+        no_individual=True,
+        return_fig=True,
+    )
+
+    # Then: the rendered figure carries a legend
+    assert figs is not None
+    fig = figs[0].figure if hasattr(figs[0], "figure") else figs[0]
+    ax = fig.axes[0]
+    assert ax.get_legend() is not None
+    _close_artifacts(figs)
+
+
+def test_csv2graph_legend_policy_hide_suppresses_legend_end_to_end(tmp_path: Path) -> None:
+    """legend_policy="hide" suppresses the legend through the public API."""
+    df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3], "y2": [3, 2, 1]})
+
+    # Given: a small multi-series DataFrame
+    # When: plotting via the public plot_from_dataframe() API with legend_policy="hide"
+    figs = plot_from_dataframe(
+        df,
+        output_dir=tmp_path,
+        x_col="x",
+        y_cols=["y1", "y2"],
+        legend_policy="hide",
+        no_individual=True,
+        return_fig=True,
+    )
+
+    # Then: no legend is attached to the rendered figure
+    assert figs is not None
+    fig = figs[0].figure if hasattr(figs[0], "figure") else figs[0]
+    ax = fig.axes[0]
+    assert ax.get_legend() is None
+    _close_artifacts(figs)
+
+
+def test_csv2graph_legend_policy_hide_applies_to_html_output(tmp_path: Path) -> None:
+    """Regression: legend_policy="hide" must also disable the legend in Plotly HTML."""
+    pytest.importorskip("plotly")
+    from rdetoolkit.graph import csv2graph
+
+    df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3], "y2": [3, 2, 1]})
+    csv_path = tmp_path / "data.csv"
+    df.to_csv(csv_path, index=False)
+
+    # Given: a multi-series CSV rendered with html=True and legend_policy="hide"
+    # When: generating outputs via the public csv2graph() API
+    csv2graph(
+        csv_path,
+        output_dir=tmp_path,
+        html_output_dir=tmp_path,
+        x_col="x",
+        y_cols=["y1", "y2"],
+        legend_policy="hide",
+        html=True,
+        no_individual=True,
+    )
+
+    # Then: the generated HTML disables the Plotly legend
+    html_files = list(tmp_path.glob("*.html"))
+    assert html_files, "HTML output was not generated"
+    html_content = html_files[0].read_text(encoding="utf-8").replace(" ", "")
+    assert '"showlegend":false' in html_content
+
+
+def test_plot_from_dataframe_rejects_invalid_legend_policy(tmp_path: Path) -> None:
+    """The public API rejects an invalid legend_policy with ValueError."""
+    df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3]})
+
+    # Given/When: calling the public API with an unsupported legend_policy value
+    # Then: a ValueError is raised before any rendering happens
+    with pytest.raises(ValueError, match="Invalid legend policy"):
+        plot_from_dataframe(
+            df,
+            output_dir=tmp_path,
+            x_col="x",
+            y_cols=["y1"],
+            legend_policy="typo",  # type: ignore[arg-type]
+            no_individual=True,
+        )
+
+
+def test_csv2graph_default_legend_policy_is_legacy(tmp_path: Path) -> None:
+    """Default legend_policy="legacy" preserves pre-#497 output."""
+    df = pd.DataFrame({"x": [0, 1, 2], "y1": [1, 2, 3], "y2": [3, 2, 1]})
+
+    # Given: no legend_policy override
+    # When: plotting via the public plot_from_dataframe() API
+    figs = plot_from_dataframe(
+        df,
+        output_dir=tmp_path,
+        x_col="x",
+        y_cols=["y1", "y2"],
+        no_individual=True,
+        return_fig=True,
+    )
+
+    # Then: rendering succeeds and produces a legend as before
+    assert figs is not None
+    fig = figs[0].figure if hasattr(figs[0], "figure") else figs[0]
+    ax = fig.axes[0]
+    assert ax.get_legend() is not None
+    _close_artifacts(figs)

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### SmartTable meta/ Column Now Requires metadata-def.json (#496)
+
+**Breaking change**: In SmartTableInvoice mode, specifying a `meta/<key>` column now raises `StructuredError` if `tasksupport/metadata-def.json` does not exist, instead of silently skipping the column as before. This makes the missing-file case consistent with the existing "key not defined in metadata-def.json" error, so a missing or misplaced `metadata-def.json` is no longer masked as a silent no-op. Templates that do not use `meta/` columns are unaffected.
+
 ## [1.6.4] - 2026-06-03
 
 ### Fixed
