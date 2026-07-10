@@ -770,7 +770,7 @@ class MatplotlibRenderer:
     ) -> None:
         """Readable tick labels regardless of data magnitude."""
         formatter = ScalarFormatter(useMathText=True)
-        formatter.set_powerlimits(scilimits)   # 範囲外は ×10^n 表記
+        formatter.set_powerlimits(scilimits)   # out-of-range magnitudes use ×10^n notation
         axis.set_major_formatter(formatter)
         axis.set_major_locator(MaxNLocator(nbins=6))
         offset = axis.get_offset_text()

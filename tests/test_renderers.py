@@ -159,6 +159,18 @@ def test_plotly_renderer_legacy_policy_keeps_legend_visible() -> None:
     assert fig.layout.legend is None
 
 
+def test_plotly_renderer_legacy_policy_hides_legend_beyond_max_items() -> None:
+    """Regression: legacy policy must still honor max_items (matches Matplotlib)."""
+    y_cols = list(range(1, 4))
+    df = pd.DataFrame({"X": [0, 1], **{f"Y{i}": [i, i + 1] for i in y_cols}})
+    config = build_config(y_cols=y_cols)
+    config.legend.max_items = 2
+
+    fig = PlotlyRenderer().render_html(df, config)
+
+    assert fig.layout.showlegend is False
+
+
 def test_plotly_renderer_hide_policy_disables_legend() -> None:
     """Regression: legend_policy="hide" must disable the legend in HTML output."""
     df = pd.DataFrame({"X": [0, 1], "Y1": [1, 2], "Y2": [2, 3]})

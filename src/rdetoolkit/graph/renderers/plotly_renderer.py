@@ -354,28 +354,28 @@ class PlotlyRenderer:
     ) -> tuple[bool, dict[str, Any] | None]:
         """Map config.legend.policy onto Plotly's showlegend/legend layout.
 
-        "legacy" preserves the pre-policy Plotly behavior (legend always
-        shown at Plotly's default position). Other policies mirror the
-        Matplotlib renderer: "hide" and any placement whose item count
-        exceeds max_items suppress the legend, while the concrete
-        placements map to the corresponding Plotly legend positions.
+        "legacy" preserves the pre-policy Plotly behavior (legend shown at
+        Plotly's default position, suppressed once max_items is exceeded).
+        Other policies mirror the Matplotlib renderer: "hide" and any
+        placement whose item count exceeds max_items suppress the legend,
+        while the concrete placements map to the corresponding Plotly
+        legend positions.
         """
+        max_items = config.legend.max_items
+        over_limit = max_items is not None and legend_item_count > max_items
+
         policy = config.legend.policy
         if policy == "legacy":
-            return True, None
+            return not over_limit, None
 
         resolved = resolve_legend_policy(
             policy,
             legend_item_count,
             config.legend.outside_threshold,
-            config.legend.max_items,
+            max_items,
             bottom_threshold=config.legend.bottom_threshold,
         )
-        if resolved == "hide":
-            return False, None
-
-        max_items = config.legend.max_items
-        if max_items is not None and legend_item_count > max_items:
+        if resolved == "hide" or over_limit:
             return False, None
 
         if resolved == "inside":
