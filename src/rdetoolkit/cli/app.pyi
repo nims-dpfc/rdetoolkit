@@ -7,6 +7,8 @@ from typing import Literal, Optional, Union
 import typer
 
 app: typer.Typer
+nodes_app: typer.Typer
+flows_app: typer.Typer
 
 def validate_json_file(value: pathlib.Path) -> pathlib.Path: ...
 def parse_column(col: str) -> Union[int, str]: ...
@@ -19,7 +21,12 @@ def init(
     other: Optional[list[pathlib.Path]] = None,
 ) -> None: ...
 def version() -> None: ...
-def run(target: str) -> None: ...
+def run(
+    target: Optional[str] = None,
+    flow: Optional[str] = None,
+    validate_only: bool = False,
+    config: Optional[pathlib.Path] = None,
+) -> None: ...
 def gen_config(
     output_dir: pathlib.Optional[Path] = None,
     template_name: str = "minimal",
