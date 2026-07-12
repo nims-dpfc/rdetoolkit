@@ -727,6 +727,16 @@ RdeExecutionError.__doc__ = (
 RdeConfigError.__doc__ = "Configuration or usage error for v2 1xxx codes."
 
 
+ERROR_CATALOG[3004] = ErrorDef(
+    name="RunInterrupted",
+    message_template="The run was interrupted by an external termination signal.",
+    remediation=(
+        "Review partial results in data/logs/iterations/, then rerun the workflow "
+        "to complete the interrupted processing."
+    ),
+)
+
+
 class RdeRegistryError(RdeError):
     """Registration or declaration error for v2 2xxx codes."""
 

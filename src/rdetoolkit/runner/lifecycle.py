@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import hashlib
+import signal
 import sys
 import time
 import uuid
 from collections.abc import Callable
 from pathlib import Path
+from types import FrameType
 from typing import Any
 
-from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeValidationError
+from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
 from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.report.events import Event, EventSink, MemoryEventSink
@@ -29,6 +31,9 @@ from rdetoolkit.domain.invoice import (
     load_invoice,
 )
 from rdetoolkit.types import RdeConfig
+
+
+_RUN_INTERRUPTED_CODE = 3004
 
 
 class Runner:
@@ -74,42 +79,55 @@ class Runner:
         Returns:
             Run report produced by ``iterate`` and finalized by this Runner.
         """
-        self.run_id = self._run_id_factory()
-        self.event_sink.open(self.run_id)
-        started = time.time()
-        config: RdeConfig | None = None
-        mode: ModeKind | None = None
-        report: RunReport | None = None
+        previous_sigterm: Any = None
+        sigterm_installed = False
         try:
-            self.event_sink.emit(Event.run_started(run_id=self.run_id))
-            config = self.load_config(overrides)
-            mode = self.resolve_mode(config)
-            self.pre_validate(config)
-            report = self.iterate(flow_fn, mode, config)
-            self.post_validate(config, report)
-            self.finalize(report, config)
-            return report
-        except Exception as exc:  # noqa: BLE001
-            effective_config = config or RdeConfig()
-            error = _lifecycle_error(exc)
-            report = RunReport(
-                run_id=self.run_id,
-                status="failed",
-                flow_id=_flow_id(flow_fn),
-                mode=mode.value if mode is not None else "unknown",
-                started_at=_iso_timestamp(started),
-                duration_ms=(time.time() - started) * 1000.0,
-                config_digest=_config_digest(effective_config),
-                iterations=[],
-                warnings=[],
-                error=_exception_error(error),
-            )
-            self.finalize(report, effective_config)
-            return report
+            try:
+                previous_sigterm = signal.getsignal(signal.SIGTERM)
+                signal.signal(signal.SIGTERM, _raise_run_interrupted)
+                sigterm_installed = True
+            except ValueError:
+                pass
+
+            self.run_id = self._run_id_factory()
+            self.event_sink.open(self.run_id)
+            started = time.time()
+            config: RdeConfig | None = None
+            mode: ModeKind | None = None
+            report: RunReport | None = None
+            try:
+                self.event_sink.emit(Event.run_started(run_id=self.run_id))
+                config = self.load_config(overrides)
+                mode = self.resolve_mode(config)
+                self.pre_validate(config)
+                report = self.iterate(flow_fn, mode, config)
+                self.post_validate(config, report)
+                self.finalize(report, config)
+                return report
+            except Exception as exc:  # noqa: BLE001
+                effective_config = config or RdeConfig()
+                error = _lifecycle_error(exc)
+                report = RunReport(
+                    run_id=self.run_id,
+                    status="failed",
+                    flow_id=_flow_id(flow_fn),
+                    mode=mode.value if mode is not None else "unknown",
+                    started_at=_iso_timestamp(started),
+                    duration_ms=(time.time() - started) * 1000.0,
+                    config_digest=_config_digest(effective_config),
+                    iterations=[],
+                    warnings=[],
+                    error=_exception_error(error),
+                )
+                self.finalize(report, effective_config)
+                return report
+            finally:
+                if report is not None:
+                    self.event_sink.emit(Event.run_completed(run_id=self.run_id, status=report.status))
+                self.event_sink.close()
         finally:
-            if report is not None:
-                self.event_sink.emit(Event.run_completed(run_id=self.run_id, status=report.status))
-            self.event_sink.close()
+            if sigterm_installed:
+                signal.signal(signal.SIGTERM, previous_sigterm)
 
     def load_config(self, overrides: dict[str, Any] | None = None) -> RdeConfig:
         """Load the effective v2 Runner config.
@@ -221,6 +239,8 @@ class Runner:
                 )
                 iteration_status = "completed"
             except Exception as exc:  # noqa: BLE001
+                if _is_run_interrupted(exc):
+                    raise
                 failed_count += 1
                 failed_result = (
                     exc.result
@@ -293,6 +313,19 @@ def _flow_id(flow_fn: Callable[..., Any]) -> str:
     module = getattr(flow_fn, "__module__", "")
     qualname = getattr(flow_fn, "__qualname__", getattr(flow_fn, "__name__", repr(flow_fn)))
     return f"{module}.{qualname}" if module else qualname
+
+
+def _raise_run_interrupted(signum: int, frame: FrameType | None) -> None:
+    """Interrupt the active Runner so its existing failure path can finalize."""
+    _ = (signum, frame)
+    error_def = ERROR_CATALOG[_RUN_INTERRUPTED_CODE]
+    message = f"{error_def.message_template} Remediation: {error_def.remediation}"
+    error_cls: Any = RdeExecutionError
+    raise error_cls(code=_RUN_INTERRUPTED_CODE, name=error_def.name, message=message)
+
+
+def _is_run_interrupted(exc: Exception) -> bool:
+    return isinstance(exc, RdeExecutionError) and exc.code == _RUN_INTERRUPTED_CODE
 
 
 def _config_digest(config: RdeConfig) -> str:
