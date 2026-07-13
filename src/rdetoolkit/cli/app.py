@@ -756,3 +756,20 @@ def _register_v2_inspection_commands() -> tuple[typer.Typer, typer.Typer]:
 
 
 nodes_app, flows_app = _register_v2_inspection_commands()
+
+
+def _register_v2_reporting_commands() -> tuple[typer.Typer, typer.Typer, typer.Typer, typer.Typer]:
+    """Register v2 reporting subcommands."""
+    from rdetoolkit.cli.graph_cmd import app as graph_app_local
+    from rdetoolkit.cli.migrate_cmd import app as migrate_app_local
+    from rdetoolkit.cli.report_cmd import app as report_app_local
+    from rdetoolkit.cli.repro_cmd import app as repro_app_local
+
+    app.add_typer(graph_app_local, name="graph")
+    app.add_typer(report_app_local, name="report")
+    app.add_typer(repro_app_local, name="repro")
+    app.add_typer(migrate_app_local, name="migrate")
+    return graph_app_local, report_app_local, repro_app_local, migrate_app_local
+
+
+graph_app, report_app, repro_app, migrate_app = _register_v2_reporting_commands()

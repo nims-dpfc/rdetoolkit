@@ -9,6 +9,10 @@ import typer
 app: typer.Typer
 nodes_app: typer.Typer
 flows_app: typer.Typer
+graph_app: typer.Typer
+report_app: typer.Typer
+repro_app: typer.Typer
+migrate_app: typer.Typer
 
 def validate_json_file(value: pathlib.Path) -> pathlib.Path: ...
 def parse_column(col: str) -> Union[int, str]: ...
