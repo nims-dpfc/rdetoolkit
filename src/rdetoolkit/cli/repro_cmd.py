@@ -83,6 +83,8 @@ def import_run(
     target: Annotated[Path, typer.Argument(metavar="<target_dir>")],
 ) -> None:
     """Reconstruct archived run inputs beneath a fresh target directory."""
+    if target.exists() and not target.is_dir():
+        _usage_error(f"Import target is not a directory: {target}")
     if target.exists() and any(target.iterdir()):
         _usage_error(f"Import target is not empty: {target}")
     try:

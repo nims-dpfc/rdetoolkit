@@ -272,6 +272,25 @@ class TestReproImportUsageErrors:
     """TC-CLI-REPRO-BV-002/003: corrupt/missing archive, conflicting import
     target."""
 
+    def test_import_target_is_existing_file_exits_3__tc_pr513_c2(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: Path,
+    ) -> None:
+        """PR #513 Copilot C2: an existing-file target must be a usage error
+        (exit 3), never an unhandled NotADirectoryError (exit 1)."""
+        archive_path = tmp_path / "any.zip"
+        archive_path.write_bytes(b"placeholder")
+        file_target = tmp_path / "target_file.txt"
+        file_target.write_text("occupied", encoding="utf-8")
+
+        result = cli_runner.invoke(
+            app,
+            ["repro", "import", str(archive_path), str(file_target)],
+        )
+
+        assert result.exit_code == 3
+
     def test_import_nonexistent_archive_exits_3__tc_cli_repro_bv_002_missing(
         self,
         cli_runner: CliRunner,
