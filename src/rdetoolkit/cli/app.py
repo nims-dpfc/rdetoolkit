@@ -245,9 +245,25 @@ def version() -> None:
 
 
 @app.command()
-def run(target: Annotated[str, typer.Argument(metavar="<module_or_file::attr>")]) -> None:
+def run(
+    target: Annotated[str | None, typer.Argument(metavar="<module_or_file::attr>")] = None,
+    flow: Annotated[str | None, typer.Option("--flow", help="Dotted v2 flow reference (pkg.mod:callable).")] = None,
+    validate_only: Annotated[bool, typer.Option("--validate-only", help="Validate config and mode without calling the flow.")] = False,
+    config: Annotated[Path | None, typer.Option("--config", help="YAML configuration overrides.")] = None,
+) -> None:
     """Run rdetoolkit workflows with a user-defined dataset function."""
-    func = _load_target_function(target)
+    from rdetoolkit.cli.run_cmd import run_flow, usage_error
+
+    if (target is None) == (flow is None):
+        usage_error("Provide exactly one of TARGET or --flow")
+    if validate_only and flow is None:
+        usage_error("--validate-only requires --flow")
+    if config is not None and flow is None:
+        usage_error("--config requires --flow")
+    if flow is not None:
+        run_flow(flow, validate_only_requested=validate_only, config_path=config)
+        return
+    func = _load_target_function(cast(str, target))
     from rdetoolkit import cli as cli_module
 
     try:
@@ -727,3 +743,33 @@ def _register_validate_commands() -> typer.Typer:
 
 
 validate_app = _register_validate_commands()
+
+
+def _register_v2_inspection_commands() -> tuple[typer.Typer, typer.Typer]:
+    """Register v2 node and flow inspection subcommands."""
+    from rdetoolkit.cli.flows_cmd import app as flows_app_local
+    from rdetoolkit.cli.nodes_cmd import app as nodes_app_local
+
+    app.add_typer(nodes_app_local, name="nodes")
+    app.add_typer(flows_app_local, name="flows")
+    return nodes_app_local, flows_app_local
+
+
+nodes_app, flows_app = _register_v2_inspection_commands()
+
+
+def _register_v2_reporting_commands() -> tuple[typer.Typer, typer.Typer, typer.Typer, typer.Typer]:
+    """Register v2 reporting subcommands."""
+    from rdetoolkit.cli.graph_cmd import app as graph_app_local
+    from rdetoolkit.cli.migrate_cmd import app as migrate_app_local
+    from rdetoolkit.cli.report_cmd import app as report_app_local
+    from rdetoolkit.cli.repro_cmd import app as repro_app_local
+
+    app.add_typer(graph_app_local, name="graph")
+    app.add_typer(report_app_local, name="report")
+    app.add_typer(repro_app_local, name="repro")
+    app.add_typer(migrate_app_local, name="migrate")
+    return graph_app_local, report_app_local, repro_app_local, migrate_app_local
+
+
+graph_app, report_app, repro_app, migrate_app = _register_v2_reporting_commands()

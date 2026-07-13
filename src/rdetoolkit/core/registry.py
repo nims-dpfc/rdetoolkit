@@ -77,3 +77,22 @@ def get_flow(flow_id: str) -> FlowSpec:
         KeyError: If ``flow_id`` is not registered.
     """
     return _flow_specs[flow_id]
+
+
+def list_nodes() -> tuple[_Spec, ...]:
+    """Return all registered node specs, in registration order."""
+    return tuple(_node_specs.values())
+
+
+def list_flows() -> tuple[FlowSpec, ...]:
+    """Return all registered flow specs, in registration order."""
+    return tuple(_flow_specs.values())
+
+
+def get_flow_function(flow_id: str) -> Any:
+    """Return a registered flow's underlying callable.
+
+    Raises:
+        KeyError: If ``flow_id`` is not registered.
+    """
+    return _flow_functions[flow_id]

@@ -203,3 +203,6 @@ claudedocs
 # B6 guard: the Rust extension is rdetoolkit._core — a stale core.cpython-*.so
 # from the pre-rename era must never reappear in the source tree.
 src/rdetoolkit/core.cpython-*.so
+
+# Machine-generated codex/agmsg hook config (absolute local paths)
+.codex/
