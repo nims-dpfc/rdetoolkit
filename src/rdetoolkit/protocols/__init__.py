@@ -1,21 +1,17 @@
-"""Structural protocol definitions for rdetoolkit v2.
-
-This package exports the core protocols used throughout the v2 DAG-based workflow engine.
-All protocols support runtime isinstance() checks via @runtime_checkable decorator.
-"""
+"""Appendix M migration-only protocols for class-based v1 assets."""
 
 from rdetoolkit.protocols.protocols import (
-    DataValidator,
+    DataProcessor,
     FileReader,
-    FormatHandler,
     MetadataExtractor,
-    NodeRunner,
+    ResultWriter,
+    Visualizer,
 )
 
 __all__ = [
     "FileReader",
     "MetadataExtractor",
-    "DataValidator",
-    "NodeRunner",
-    "FormatHandler",
+    "DataProcessor",
+    "ResultWriter",
+    "Visualizer",
 ]

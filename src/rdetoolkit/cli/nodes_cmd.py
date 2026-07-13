@@ -9,6 +9,7 @@ from dataclasses import asdict
 from typing import Annotated, cast
 
 import typer
+import rdetoolkit.nodes  # noqa: F401  # Design v2.1 §5.1: builtin nodes must always appear in `nodes list`, no --module required
 
 from rdetoolkit.cli._v2_common import load_modules
 from rdetoolkit.core import registry

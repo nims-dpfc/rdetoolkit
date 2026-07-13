@@ -1,134 +1,79 @@
-"""Structural protocol definitions for rdetoolkit v2.
-
-This module defines the core protocols used throughout the v2 DAG-based workflow engine.
-Protocols use typing_extensions.Protocol with @runtime_checkable to enable isinstance()
-checks at runtime while maintaining structural typing semantics.
-"""
+"""Appendix M migration-only structural contracts for rdetoolkit v2."""
 
 from __future__ import annotations
 
-from typing import Any
+from pathlib import Path
 
+import pandas as pd
 from typing_extensions import Protocol, runtime_checkable
 
-from rdetoolkit.result import Result
+from rdetoolkit.types import InputPaths, InvoiceData, Metadata, OutputContext
 
 
 @runtime_checkable
 class FileReader(Protocol):
-    """Protocol for file reading implementations.
+    """Migration-only contract for v1-style file-reader classes.
 
-    Defines the interface for any object capable of reading binary file data
-    from a file path.
+    New code should use templates (Design §5.2) or plain functions (Design §3).
     """
 
-    def read(self, path: str) -> bytes:
-        """Read binary data from file path.
-
-        Args:
-            path: File path to read from.
-
-        Returns:
-            Binary file contents as bytes.
-        """
+    def read(self, paths: InputPaths) -> tuple[Metadata, pd.DataFrame]:
+        """Read metadata and structured data from input paths."""
         ...
 
 
 @runtime_checkable
 class MetadataExtractor(Protocol):
-    """Protocol for metadata extraction from binary data.
+    """Migration-only contract for v1-style metadata extractors.
 
-    Defines the interface for any object capable of parsing and extracting
-    metadata from binary data.
+    New code should use templates (Design §5.2) or plain functions (Design §3).
     """
 
-    def extract(self, data: bytes) -> dict[str, object]:
-        """Extract metadata from binary data.
-
-        Args:
-            data: Binary data to extract metadata from.
-
-        Returns:
-            Dictionary containing extracted metadata with string keys and
-            object values (open dict pattern).
-        """
+    def extract(self, df: pd.DataFrame, invoice: InvoiceData) -> Metadata:
+        """Extract metadata from structured data and invoice content."""
         ...
 
 
 @runtime_checkable
-class DataValidator(Protocol):
-    """Protocol for data validation.
+class DataProcessor(Protocol):
+    """Migration-only contract for v1-style data processors.
 
-    Defines the interface for any object capable of validating structured data.
+    New code should use templates (Design §5.2) or plain functions (Design §3).
     """
 
-    def validate(self, data: dict[str, object]) -> bool:
-        """Validate data dictionary.
-
-        Args:
-            data: Data dictionary to validate.
-
-        Returns:
-            True if data is valid, False otherwise.
-        """
+    def process(self, df: pd.DataFrame, meta: Metadata) -> pd.DataFrame:
+        """Process structured data using extracted metadata."""
         ...
 
 
 @runtime_checkable
-class NodeRunner(Protocol):
-    """Protocol for node execution in DAG workflows.
+class ResultWriter(Protocol):
+    """Migration-only contract for v1-style result writers.
 
-    Defines the interface for any object capable of executing a workflow node
-    with a given execution context.
+    New code should use templates (Design §5.2) or plain functions (Design §3).
     """
 
-    def run(self, context: Any) -> Result[Any, Exception]:
-        """Run node with execution context.
-
-        Args:
-            context: Execution context (type to be defined in Phase 1.5).
-
-        Returns:
-            Result wrapping either a success value or an Exception.
-        """
+    def write(self, df: pd.DataFrame, meta: Metadata, out: OutputContext) -> None:
+        """Write structured data and metadata to an output context."""
         ...
 
 
 @runtime_checkable
-class FormatHandler(Protocol):
-    """Protocol for file format detection and handling.
+class Visualizer(Protocol):
+    """Migration-only contract for v1-style visualizers.
 
-    Defines the interface for any object capable of detecting whether it can
-    handle a specific file format and reading files in that format.
+    New code should use templates (Design §5.2) or plain functions (Design §3).
     """
 
-    def can_handle(self, path: str) -> bool:
-        """Check if handler can process file at path.
-
-        Args:
-            path: File path to check.
-
-        Returns:
-            True if handler supports the file format, False otherwise.
-        """
-        ...
-
-    def read(self, path: str) -> bytes:
-        """Read file in supported format.
-
-        Args:
-            path: File path to read.
-
-        Returns:
-            Binary file contents as bytes.
-        """
+    def visualize(self, df: pd.DataFrame, out: OutputContext) -> list[Path]:
+        """Render visualizations and return their output paths."""
         ...
 
 
 __all__ = [
     "FileReader",
     "MetadataExtractor",
-    "DataValidator",
-    "NodeRunner",
-    "FormatHandler",
+    "DataProcessor",
+    "ResultWriter",
+    "Visualizer",
 ]

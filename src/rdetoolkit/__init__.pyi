@@ -21,3 +21,4 @@ def get_agent_guide(detailed: bool = False) -> str:
 
 from rdetoolkit.core.flow import flow as flow
 from rdetoolkit.core.node import node as node
+from rdetoolkit.nodes import as_node as as_node
