@@ -62,9 +62,19 @@ def export_run(
 
 
 def _write_tree(archive: zipfile.ZipFile, source: Path, destination: Path) -> None:
+    _write_directory(archive, destination)
     for path in sorted(source.rglob("*")):
         if path.is_file():
             archive.write(path, destination / path.relative_to(source))
+        elif path.is_dir() and not any(path.iterdir()):
+            _write_directory(archive, destination / path.relative_to(source))
+
+
+def _write_directory(archive: zipfile.ZipFile, destination: Path) -> None:
+    name = destination.as_posix().rstrip("/") + "/"
+    info = zipfile.ZipInfo(name)
+    info.external_attr = (0o40775 << 16) | 0x10
+    archive.writestr(info, b"")
 
 
 @app.command("import")

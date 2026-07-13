@@ -10,6 +10,7 @@ from typing import Annotated, cast
 
 import typer
 
+from rdetoolkit.cli._v2_common import load_modules
 from rdetoolkit.core import registry
 from rdetoolkit.core.injection import find_duplicate_reserved_annotations
 from rdetoolkit.core.node import NodeSpec
@@ -32,8 +33,13 @@ def _emit_usage_error(message: str) -> None:
 @app.command("list")
 def list_nodes(
     as_json: Annotated[bool, typer.Option("--json", help="Emit machine-readable JSON.")] = False,
+    modules: Annotated[
+        list[str] | None,
+        typer.Option("--module", help="Import a project module before listing; repeatable."),
+    ] = None,
 ) -> None:
     """List nodes in the current process registry."""
+    load_modules(modules or [])
     specs = cast(tuple[NodeSpec, ...], registry.list_nodes())
     values = [asdict(spec) for spec in specs]
     if as_json:
@@ -47,8 +53,13 @@ def list_nodes(
 def describe(
     node_id: Annotated[str, typer.Argument(metavar="<id>")],
     as_json: Annotated[bool, typer.Option("--json", help="Emit machine-readable JSON.")] = False,
+    modules: Annotated[
+        list[str] | None,
+        typer.Option("--module", help="Import a project module before describing; repeatable."),
+    ] = None,
 ) -> None:
     """Describe a registered node."""
+    load_modules(modules or [])
     try:
         value = asdict(cast(NodeSpec, registry.get_node(node_id)))
     except KeyError:
@@ -86,8 +97,14 @@ def _lint_messages() -> list[str]:
 
 
 @app.command()
-def lint() -> None:
+def lint(
+    modules: Annotated[
+        list[str] | None,
+        typer.Option("--module", help="Import a project module before linting; repeatable."),
+    ] = None,
+) -> None:
     """Run static checks over the current node and flow registries."""
+    load_modules(modules or [])
     messages = _lint_messages()
     if not messages:
         typer.echo("0 violations")

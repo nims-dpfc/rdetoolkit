@@ -9,8 +9,8 @@ Binding API-shape pin (precision standard): ``rdetoolkit.report.graph_render
 .render_call_sequence(report: RunReport, format: str = "json") -> str`` is a
 pure function -- no filesystem access, no ``rdetoolkit._core`` import. It
 renders a **Call Sequence** (call order only, via ``seq``) from
-``RunReport.iterations[*].node_calls`` -- never a dataflow/dependency
-edge between two different node calls (ADR-022). Supported ``format``
+``RunReport.iterations[*].node_calls``. Mermaid uses labeled sequence links
+between consecutive calls solely to preserve that recorded order (ADR-022). Supported ``format``
 values: ``"json"``, ``"mermaid"``, ``"html"``; any other value raises
 ``ValueError``.
 
@@ -136,10 +136,9 @@ class TestRenderCallSequenceJson:
 
 class TestRenderCallSequenceMermaid:
     """TC-GRAPH-UNIT-002: format="mermaid" is a valid Mermaid diagram
-    declaration, titled, containing every call_id, with no dependency edge
-    between two different node calls."""
+    declaration whose labeled links preserve each tile's recorded order."""
 
-    def test_mermaid_output_is_valid_declaration_titled_and_edge_free__tc_graph_unit_002(self) -> None:
+    def test_mermaid_output_links_only_consecutive_calls_per_tile__tc_graph_unit_002(self) -> None:
         report = _two_tile_report()
 
         rendered = render_call_sequence(report, format="mermaid")
@@ -149,7 +148,15 @@ class TestRenderCallSequenceMermaid:
         assert "Call Sequence" in rendered
         for call_id in _all_call_ids(report):
             assert call_id in rendered
-        assert "-->" not in rendered, "ADR-022: no directed edge between node calls is permitted"
+        link_lines = [line.strip() for line in rendered.splitlines() if "-->" in line]
+        assert link_lines == [
+            "call_0_0 -->|seq| call_0_1",
+            "call_0_1 -->|seq| call_0_2",
+            "call_1_0 -->|seq| call_1_1",
+            "call_1_1 -->|seq| call_1_2",
+        ]
+        assert all("-->|seq|" in line for line in link_lines)
+        _assert_no_banned_vocabulary(rendered)
 
     def test_mermaid_negative_guard_no_banned_vocabulary(self) -> None:
         rendered = render_call_sequence(_two_tile_report(), format="mermaid")

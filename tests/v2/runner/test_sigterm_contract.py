@@ -8,6 +8,7 @@ EP table:
 
 BV table:
     TC-E0-003 | run outside main thread | signal API unavailable | run remains usable
+    TC-E-REVIEW-F1-001 | SIGTERM during run-id creation | handler not active yet | run succeeds
 """
 
 from __future__ import annotations
@@ -135,6 +136,32 @@ class TestSigtermIntegration:
 
 
 class TestSigtermHandlerScope:
+    def test_sigterm_before_failure_state_exists_uses_previous_handler__tc_e_review_f1_001(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """TC-E-REVIEW-F1-001: startup completes before Runner installs its handler."""
+        # Given: a harmless previous handler and a run-id factory that delivers SIGTERM
+        original = signal.getsignal(signal.SIGTERM)
+        received: list[int] = []
+        signal.signal(signal.SIGTERM, lambda signum, frame: received.append(signum))
+        runner = _runner_without_io(tmp_path)
+
+        def interrupting_factory() -> str:
+            os.kill(os.getpid(), signal.SIGTERM)
+            return "unit-run"
+
+        runner._run_id_factory = interrupting_factory
+        try:
+            # When: the signal arrives while the run id is being created
+            report = runner.run(lambda: None)
+        finally:
+            signal.signal(signal.SIGTERM, original)
+
+        # Then: the previous handler receives it and the ordinary run completes
+        assert received == [signal.SIGTERM]
+        assert report.status == "success"
+
     def test_run_restores_previous_handler__tc_e0_002(self, tmp_path: Path) -> None:
         """TC-E0-002: Runner.run restores the process SIGTERM handler."""
         # Given: the process SIGTERM handler before an ordinary run

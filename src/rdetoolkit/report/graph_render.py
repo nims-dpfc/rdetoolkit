@@ -59,6 +59,8 @@ def _render_mermaid(iterations: list[dict[str, Any]]) -> str:
         for call_position, call in enumerate(calls):
             label = _call_label(call).replace('"', "'")
             lines.append(f'        call_{position}_{call_position}["{label}"]')
+        for call_position in range(len(calls) - 1):
+            lines.append(f"        call_{position}_{call_position} -->|seq| call_{position}_{call_position + 1}")
         lines.append("    end")
     return "\n".join(lines)
 

@@ -8,6 +8,7 @@ from typing import Annotated
 
 import typer
 
+from rdetoolkit.cli._v2_common import load_modules
 from rdetoolkit.core import registry
 
 app = typer.Typer(help="Inspect registered v2 flows.")
@@ -21,8 +22,13 @@ def _emit_usage_error(message: str) -> None:
 @app.command("list")
 def list_flows(
     as_json: Annotated[bool, typer.Option("--json", help="Emit machine-readable JSON.")] = False,
+    modules: Annotated[
+        list[str] | None,
+        typer.Option("--module", help="Import a project module before listing; repeatable."),
+    ] = None,
 ) -> None:
     """List flows in the current process registry."""
+    load_modules(modules or [])
     values = [asdict(spec) for spec in registry.list_flows()]
     if as_json:
         typer.echo(json.dumps(values, sort_keys=True))
@@ -35,8 +41,13 @@ def list_flows(
 def describe(
     flow_id: Annotated[str, typer.Argument(metavar="<name>")],
     as_json: Annotated[bool, typer.Option("--json", help="Emit machine-readable JSON.")] = False,
+    modules: Annotated[
+        list[str] | None,
+        typer.Option("--module", help="Import a project module before describing; repeatable."),
+    ] = None,
 ) -> None:
     """Describe a registered flow."""
+    load_modules(modules or [])
     try:
         value = asdict(registry.get_flow(flow_id))
     except KeyError:

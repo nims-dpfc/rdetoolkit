@@ -82,6 +82,12 @@ class Runner:
         previous_sigterm: Any = None
         sigterm_installed = False
         try:
+            started = time.time()
+            self.run_id = self._run_id_factory()
+            self.event_sink.open(self.run_id)
+            config: RdeConfig | None = None
+            mode: ModeKind | None = None
+            report: RunReport | None = None
             try:
                 previous_sigterm = signal.getsignal(signal.SIGTERM)
                 signal.signal(signal.SIGTERM, _raise_run_interrupted)
@@ -89,12 +95,6 @@ class Runner:
             except ValueError:
                 pass
 
-            self.run_id = self._run_id_factory()
-            self.event_sink.open(self.run_id)
-            started = time.time()
-            config: RdeConfig | None = None
-            mode: ModeKind | None = None
-            report: RunReport | None = None
             try:
                 self.event_sink.emit(Event.run_started(run_id=self.run_id))
                 config = self.load_config(overrides)

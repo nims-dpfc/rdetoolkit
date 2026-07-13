@@ -31,6 +31,10 @@ empty directory before re-running is ordinary environment preparation, not
 a weakening of the round-trip acceptance criterion (which concerns
 ``inputdata``/``invoice``/``tasksupport``/config/call-log reproduction, per
 Conflict #6).
+
+Review EP/BV table:
+    TC-E-REVIEW-F4-001 | empty required root | ZIP round trip | root recreated
+    TC-E-REVIEW-F4-002 | empty nested directory | ZIP round trip | child recreated
 """
 
 from __future__ import annotations
@@ -169,6 +173,38 @@ class TestReproImport:
         assert imported_invoice == _SEED_INVOICE_JSON
         assert (target_dir / "data" / "tasksupport" / "invoice.schema.json").is_file()
         assert (target_dir / "data" / "tasksupport" / "metadata-def.json").is_file()
+
+    def test_import_recreates_empty_required_and_nested_directories__tc_e_review_f4_001_002(
+        self,
+        cli_runner: CliRunner,
+        tmp_path: Path,
+    ) -> None:
+        """TC-E-REVIEW-F4-001/002: archive directory entries preserve empty trees."""
+        # Given: valid run inputs with an empty required root and empty nested directory
+        root = tmp_path / "empty_source"
+        logs = root / "data" / "logs"
+        logs.mkdir(parents=True)
+        report_path = logs / "run_report_empty.json"
+        report_path.write_text(json.dumps(_VALID_REPORT_TEMPLATE), encoding="utf-8")
+        (root / "data" / "inputdata").mkdir()
+        (root / "data" / "invoice" / "empty-child").mkdir(parents=True)
+        (root / "data" / "tasksupport").mkdir()
+        archive_path = tmp_path / "empty.zip"
+
+        # When: the inputs are exported and imported into a fresh target
+        export_result = cli_runner.invoke(
+            app,
+            ["repro", "export", str(report_path), "--output", str(archive_path)],
+        )
+        target = tmp_path / "empty_target"
+        import_result = cli_runner.invoke(app, ["repro", "import", str(archive_path), str(target)])
+
+        # Then: both the empty required roots and empty descendant survive
+        assert export_result.exit_code == 0, export_result.output
+        assert import_result.exit_code == 0, import_result.output
+        assert (target / "data" / "inputdata").is_dir()
+        assert (target / "data" / "tasksupport").is_dir()
+        assert (target / "data" / "invoice" / "empty-child").is_dir()
 
 
 class TestReproRoundTrip:
