@@ -1,6 +1,43 @@
 # rdetoolkit v2 changelog
 
-## Phase F — migration protocol alignment
+## 2.0.0a1 — 2026-07-14
+
+This alpha is the Phase F feature baseline. It keeps the current dual-entry
+runtime as a canary and rollback point while unified-runner work continues;
+the public v2 result model is `RunReport`.
+
+The release is identified by the git tag `v2.0.0a1`, while the in-code version
+remains `2.0.0` for now because the v1 ExcelInvoice template embeds a version
+whose format contract accepts only stable `X.Y.Z`. Relaxing that contract will
+ship in an independent PR to `main` before the first release candidate.
+
+### Added
+
+- Eager `@node` and `@flow` execution with runtime call-log recording and
+  post-run call-sequence reports.
+- RDE Runner lifecycle, five registration modes, validation, iteration error
+  policies, Events, `RunReport`, `job.failed`, report/graph/repro commands, and
+  testing fixtures.
+- Fifteen canonical builtin nodes for input, structured output, metadata,
+  images, and plots.
+- `ProcessingTemplate`, required slots, template discovery, `templates`
+  commands, and `init --processing-template` skeleton generation.
+- Declarative plugin discovery for node sets, format handlers, and processing
+  templates; `formats list` and `nodes list --plugin`.
+- Dry-run-first `migrate check` / `migrate apply` and the level-3
+  `rdetoolkit.testing.run_flow` helper.
+- Generated error-catalog documentation, an executed progressive tutorial,
+  and a provisional v1-to-v2 migration guide.
+
+### Compatibility notes
+
+- v2 flow executions return `RunReport`.
+- `on_iteration_error` defaults to `continue`; select `fail_fast` explicitly
+  when immediate termination is required.
+- Runtime unification and final compatibility commitments are scheduled after
+  this alpha and before the release candidate.
+
+### Changed — migration protocol alignment
 
 The unreleased pre-v2.1 protocol surface was replaced by the migration-only
 contracts in Design Appendix M:
@@ -15,7 +52,7 @@ contracts in Design Appendix M:
 These protocols are migration aids only. New code should use processing
 templates (Design §5.2) or plain node/flow functions (Design §3).
 
-## Phase F — plugin discovery and migration application
+### Added — plugin discovery and migration application
 
 - Added declarative discovery for plugin-provided nodes, format handlers, and
   processing templates, with provenance-aware inspection commands and
