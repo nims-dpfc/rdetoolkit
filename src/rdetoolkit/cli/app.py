@@ -774,6 +774,17 @@ def _register_v2_inspection_commands() -> tuple[typer.Typer, typer.Typer, typer.
 nodes_app, flows_app, templates_app = _register_v2_inspection_commands()
 
 
+def _register_v2_format_commands() -> typer.Typer:
+    """Register plugin format inspection subcommands."""
+    from rdetoolkit.cli.formats_cmd import app as formats_app_local
+
+    app.add_typer(formats_app_local, name="formats")
+    return formats_app_local
+
+
+formats_app = _register_v2_format_commands()
+
+
 def _register_v2_reporting_commands() -> tuple[typer.Typer, typer.Typer, typer.Typer, typer.Typer]:
     """Register v2 reporting subcommands."""
     from rdetoolkit.cli.graph_cmd import app as graph_app_local

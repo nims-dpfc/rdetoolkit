@@ -10,6 +10,7 @@ app: typer.Typer
 nodes_app: typer.Typer
 flows_app: typer.Typer
 templates_app: typer.Typer
+formats_app: typer.Typer
 graph_app: typer.Typer
 report_app: typer.Typer
 repro_app: typer.Typer

@@ -38,6 +38,10 @@ def _emit_usage_error(message: str) -> None:
 @app.command("list")
 def list_nodes(
     as_json: Annotated[bool, typer.Option("--json", help="Emit machine-readable JSON.")] = False,
+    plugin_only: Annotated[
+        bool,
+        typer.Option("--plugin", help="List only nodes registered by discovered plugins."),
+    ] = False,
     modules: Annotated[
         list[str] | None,
         typer.Option("--module", help="Import a project module before listing; repeatable."),
@@ -45,13 +49,39 @@ def list_nodes(
 ) -> None:
     """List nodes in the current process registry."""
     load_modules(modules or [])
+    plugin_by_node = {
+        node_id: plugin.name
+        for plugin in _discover_plugins()
+        for node_id in plugin.node_ids
+    } if plugin_only else {}
     specs = cast(tuple[NodeSpec, ...], registry.list_nodes())
-    values = [asdict(spec) for spec in specs]
+    values = _node_values(specs, plugin_by_node, plugin_only=plugin_only)
     if as_json:
         typer.echo(json.dumps(values, sort_keys=True))
         return
     for value in values:
         typer.echo(value["id"])
+
+
+def _discover_plugins() -> tuple[Any, ...]:
+    from rdetoolkit.plugin import discover_plugins  # noqa: PLC0415
+
+    return discover_plugins()
+
+
+def _node_values(
+    specs: tuple[NodeSpec, ...],
+    plugin_by_node: dict[str, str],
+    *,
+    plugin_only: bool,
+) -> list[dict[str, Any]]:
+    if not plugin_only:
+        return [asdict(spec) for spec in specs]
+    return [
+        {**asdict(spec), "plugin": plugin_by_node[spec.id]}
+        for spec in specs
+        if spec.id in plugin_by_node
+    ]
 
 
 @app.command()

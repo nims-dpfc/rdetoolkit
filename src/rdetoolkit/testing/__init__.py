@@ -94,9 +94,14 @@ def _make_testing_runner() -> type[Runner]:
 def _build_minimal_rde_tree(root: Path, fixture_dir: Path) -> None:
     for name in ("inputdata", "invoice", "tasksupport", "unpacked"):
         (root / name).mkdir(parents=True, exist_ok=True)
-    for path in fixture_dir.iterdir():
+    for path in fixture_dir.rglob("*"):
+        destination = root / "inputdata" / path.relative_to(fixture_dir)
+        if path.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+            continue
         if path.is_file():
-            (root / "inputdata" / path.name).write_bytes(path.read_bytes())
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(path.read_bytes())
     from rdetoolkit.testing.builders import make_invoice  # noqa: PLC0415
 
     (root / "invoice" / "invoice.json").write_text(

@@ -40,6 +40,9 @@ def list_templates(
 ) -> None:
     """List registered depth-1 template skeletons."""
     load_modules(modules or [])
+    from rdetoolkit.plugin import discover_plugins  # noqa: PLC0415
+
+    discover_plugins()
     values = [asdict(spec) for spec in registry.list_templates()]
     if as_json:
         typer.echo(json.dumps(values, sort_keys=True))
