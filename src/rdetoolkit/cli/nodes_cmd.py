@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import ast
+import importlib
+import inspect
 import json
+import textwrap
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import asdict
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 import typer
 import rdetoolkit.nodes  # noqa: F401  # Design v2.1 §5.1: builtin nodes must always appear in `nodes list`, no --module required
@@ -15,7 +19,7 @@ from rdetoolkit.cli._v2_common import load_modules
 from rdetoolkit.core import registry
 from rdetoolkit.core.injection import find_duplicate_reserved_annotations
 from rdetoolkit.core.node import NodeSpec
-from rdetoolkit.errors import ERROR_CATALOG
+from rdetoolkit.errors import ERROR_CATALOG, WARNING_CATALOG, RdeRegistryError
 
 app = typer.Typer(help="Inspect and lint registered v2 nodes.")
 
@@ -94,6 +98,58 @@ def _lint_messages() -> list[str]:
                 f"E2006 duplicate reserved annotation {type_name} on "
                 f"{flow_spec.id}: {', '.join(parameter_names)}. {ERROR_CATALOG[2006].remediation}",
             )
+    messages.extend(_template_self_state_messages())
+    return messages
+
+
+def _self_attributes(method: object) -> set[str]:
+    try:
+        source = textwrap.dedent(inspect.getsource(cast(Any, method)))
+        tree = ast.parse(source)
+    except (OSError, TypeError, SyntaxError):
+        return set()
+    return {
+        node.attr
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "self"
+    }
+
+
+def _template_self_state_messages() -> list[str]:
+    from rdetoolkit.templates import registry as template_registry
+
+    warning = WARNING_CATALOG[1101]
+    messages: list[str] = []
+    for template_cls in template_registry.list_concrete_templates():
+        init_attributes = _self_attributes(vars(template_cls).get("__init__"))
+        for method_name, method in vars(template_cls).items():
+            if not callable(method) or not hasattr(method, "__node_spec__"):
+                continue
+            for attribute_name in sorted(_self_attributes(method) - init_attributes):
+                qualified_name = f"{template_cls.__module__}.{template_cls.__qualname__}.{method_name}"
+                detail = warning.message_template.format(
+                    qualified_name=qualified_name,
+                    attribute_name=attribute_name,
+                )
+                messages.append(f"W1101 {warning.name}: {detail}")
+    return messages
+
+
+def _load_modules_for_lint(module_names: Sequence[str]) -> list[str]:
+    messages: list[str] = []
+    for module_name in module_names:
+        try:
+            importlib.import_module(module_name)
+        except RdeRegistryError as exc:
+            code = exc.code
+            if not isinstance(code, int) or code not in {2101, 2102, 2103, 2104, 2105}:
+                raise
+            messages.append(f"{ERROR_CATALOG[code].name} (E{code}): {exc.message}")
+        except Exception as exc:  # noqa: BLE001
+            typer.echo(f"Unable to import module {module_name}: {exc}", err=True)
+            raise typer.Exit(code=3) from exc
     return messages
 
 
@@ -105,8 +161,8 @@ def lint(
     ] = None,
 ) -> None:
     """Run static checks over the current node and flow registries."""
-    load_modules(modules or [])
-    messages = _lint_messages()
+    messages = _load_modules_for_lint(modules or [])
+    messages.extend(_lint_messages())
     if not messages:
         typer.echo("0 violations")
         return

@@ -10,7 +10,10 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 from types import FrameType
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from rdetoolkit.templates import ProcessingTemplate
 
 from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
@@ -69,7 +72,7 @@ class Runner:
         self._run_id_factory = run_id_factory or (lambda: uuid.uuid4().hex)
         self.run_id = ""
 
-    def run(self, flow_fn: Callable[..., Any], **overrides: Any) -> RunReport:
+    def run(self, flow_fn: Callable[..., Any] | type[ProcessingTemplate], **overrides: Any) -> RunReport:
         """Execute the six Runner lifecycle steps in Design §6.1 order.
 
         Args:
@@ -79,6 +82,14 @@ class Runner:
         Returns:
             Run report produced by ``iterate`` and finalized by this Runner.
         """
+        from rdetoolkit.templates.base import flow_from_template, is_template_class  # noqa: PLC0415
+
+        if is_template_class(flow_fn):
+            flow_fn = flow_from_template(flow_fn)
+        elif isinstance(flow_fn, type):
+            msg = "Runner flow class target is not a ProcessingTemplate subclass"
+            raise TypeError(msg)
+
         previous_sigterm: Any = None
         sigterm_installed = False
         try:

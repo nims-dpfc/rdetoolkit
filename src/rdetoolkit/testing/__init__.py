@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from collections.abc import Mapping, Callable, Iterable, Iterator
@@ -96,6 +97,12 @@ def _build_minimal_rde_tree(root: Path, fixture_dir: Path) -> None:
     for path in fixture_dir.iterdir():
         if path.is_file():
             (root / "inputdata" / path.name).write_bytes(path.read_bytes())
+    from rdetoolkit.testing.builders import make_invoice  # noqa: PLC0415
+
+    (root / "invoice" / "invoice.json").write_text(
+        json.dumps(make_invoice().raw),
+        encoding="utf-8",
+    )
 
 
 @contextmanager

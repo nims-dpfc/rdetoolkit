@@ -194,12 +194,21 @@ class TestRunFlowResolutionUsageErrors:
         isolated_root: Path,
         workflows_run_spy: list[tuple],
     ) -> None:
+        """UPDATE (session_f2.md Conflict #9): the pre-F2 OR-condition
+        (``"phase f" in output or "template" in output``) is replaced by a
+        single precise assertion. Phase F now exists, so "not supported
+        until Phase F" is a factually stale message; the OR-condition
+        would perversely still pass on that stale wording alone. The new
+        assertion checks the class is specifically rejected for NOT being
+        a ``ProcessingTemplate`` subclass -- a real semantic distinction,
+        not a temporal one -- which is strictly stronger: it can only pass
+        for the right reason, never the old (now-wrong) one."""
         _build_data_fixture(isolated_root)
 
         result = cli_runner.invoke(app, ["run", "--flow", f"{FIXTURE_MODULE}:NotAFunctionTarget"])
 
         assert result.exit_code == 3
-        assert "phase f" in result.output.lower() or "template" in result.output.lower()
+        assert "processingtemplate" in result.output.lower()
         assert workflows_run_spy == []
 
     def test_target_and_flow_both_given_exits_3__tc_cli_run_ep_007(
@@ -328,3 +337,51 @@ class TestRunConfigOverride:
         result = cli_runner.invoke(app, ["run", "legacy_target::attr", "--config", str(config_path)])
 
         assert result.exit_code == 3
+
+
+@pytest.fixture
+def workflows_run_recording_spy(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    """Spy on ``rdetoolkit.workflows.run`` that DELEGATES to the real
+    implementation (unlike ``workflows_run_spy`` above, which raises to
+    prove a path never calls it) -- TC-CLI-RUN-EP-014 needs to observe a
+    real, successful call, not merely that a call was attempted. Uses the
+    same late-attribute-lookup contract as ``workflows_run_spy`` (see this
+    file's module docstring)."""
+    from rdetoolkit import workflows as workflows_module
+
+    calls: list[dict] = []
+    original = workflows_module.run
+
+    def _spy(**kwargs: object) -> object:
+        calls.append(kwargs)
+        return original(**kwargs)
+
+    monkeypatch.setattr("rdetoolkit.workflows.run", _spy)
+    return calls
+
+
+class TestRunFlowTemplateClassAcceptance:
+    """TC-CLI-RUN-EP-014 (UPDATE table net-new row, session_f2.md Conflict
+    #9): a genuinely valid ``ProcessingTemplate`` subclass target resolves
+    via ``--flow`` and runs end-to-end -- proving Design §5.2.3's
+    Runner/CLI dual-acceptance clause and Conflict #3's flow_id-identity
+    ruling (RunReport.flow_id must identify the concrete fixture class,
+    not the skeleton it derives from)."""
+
+    def test_valid_template_class_target_runs__tc_cli_run_ep_014(
+        self,
+        cli_runner: CliRunner,
+        isolated_root: Path,
+        workflows_run_recording_spy: list[dict],
+    ) -> None:
+        _build_data_fixture(isolated_root)
+
+        result = cli_runner.invoke(app, ["run", "--flow", f"{FIXTURE_MODULE}:ValidTemplateTarget"])
+
+        assert result.exit_code == 0, result.output
+        assert len(workflows_run_recording_spy) == 1
+
+        report = json.loads(result.output)
+        assert report["status"] == "success"
+        assert report["flow_id"].endswith("ValidTemplateTarget"), report["flow_id"]
+        assert "_Ep014Skeleton" not in report["flow_id"]

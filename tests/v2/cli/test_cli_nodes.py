@@ -287,3 +287,77 @@ class TestFindDuplicateNodeIdsPureFunction:
         result = find_duplicate_node_ids(specs)
 
         assert len(result) == 0
+
+
+class TestNodesLintTemplateExtension:
+    """TC-CLI-NODES-EP-011..013 (Session F2, Conflict #8, Known Traps
+    #1/#2): ``nodes lint --module <dotted>`` catches E2101-E2105
+    import-time ``RdeRegistryError``s raised while loading a violating
+    ``ProcessingTemplate`` module and reports them as clean lint messages
+    (never a raw traceback); W1101 ``TemplateSelfStateUsage`` is a
+    genuinely new, lint-time-only advisory check via source inspection.
+    Fixture modules: ``tests/v2/templates/fixtures/e2101_violation_template.py``
+    (import-time E2101) and ``tests/v2/templates/fixtures/self_state_template.py``
+    (imports cleanly; W1101 only, via ``inspect.getsource``)."""
+
+    def test_lint_module_with_e2101_violation_reports_clean_message_no_traceback__tc_cli_nodes_ep_011(
+        self,
+        cli_runner: CliRunner,
+    ) -> None:
+        result = cli_runner.invoke(
+            app,
+            ["nodes", "lint", "--module", "tests.v2.templates.fixtures.e2101_violation_template"],
+        )
+
+        assert result.exit_code == 3
+        # NOTE: do not assert on the bare substring "2101" -- the fixture
+        # module's own dotted path ("e2101_violation_template") contains
+        # that digit sequence, so a generic, un-caught ImportError from
+        # load_modules() (pre-implementation: "No module named
+        # 'rdetoolkit.templates'") would trivially satisfy a bare "2101"
+        # check without the E2101 catch-and-report logic existing at all.
+        # Require the catalog NAME instead, which cannot leak from the
+        # module path, and require the generic import-failure prefix to be
+        # ABSENT -- proving the new try/except replaces that message with
+        # a catalogued diagnostic rather than merely surfacing the raw
+        # import failure text.
+        assert "TemplateSlotMissing" in result.output, result.output
+        assert "Unable to import module" not in result.output, result.output
+        assert "Traceback (most recent call last)" not in result.output
+
+    def test_lint_module_with_self_state_usage_reports_w1101_advisory__tc_cli_nodes_ep_012(
+        self,
+        cli_runner: CliRunner,
+    ) -> None:
+        result = cli_runner.invoke(
+            app,
+            ["nodes", "lint", "--module", "tests.v2.templates.fixtures.self_state_template"],
+        )
+
+        assert result.exit_code == 3
+        assert "1101" in result.output
+        assert "Traceback (most recent call last)" not in result.output
+
+    def test_lint_e2101_wrapper_does_not_swallow_pre_existing_e2006_check__tc_cli_nodes_ep_013(
+        self,
+        cli_runner: CliRunner,
+    ) -> None:
+        # Given: a pre-existing E2006 violation (duplicate reserved-type
+        # annotation) registered in-process, exactly like TC-CLI-NODES-EP-009.
+        @flow
+        def _fixture_flow_ep013(paths: InputPaths, paths2: InputPaths) -> None:
+            return None
+
+        # When: lint also loads a template-clean --module (self_state_template
+        # imports without error; only its W1101 advisory should add to the
+        # message list) -- the new E2101-catching try/except around
+        # load_modules() must not shadow or swallow the existing,
+        # already-registered E2006 check.
+        result = cli_runner.invoke(
+            app,
+            ["nodes", "lint", "--module", "tests.v2.templates.fixtures.self_state_template"],
+        )
+
+        assert result.exit_code == 3
+        assert "InputPaths" in result.output  # the pre-existing E2006 check must still fire
+        assert "1101" in result.output  # AND the new W1101 advisory must still fire
