@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import inspect
 import sys
 from dataclasses import dataclass
 from importlib import metadata
 from typing import Any
 
-from rdetoolkit.core import registry as node_registry
-from rdetoolkit.templates import registry as template_registry
+from rdetoolkit.templates import ProcessingTemplate
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,8 +46,37 @@ class DiscoveredPlugin:
 _discovered: dict[tuple[str, str], DiscoveredPlugin] = {}
 
 
-def _ids(specs: tuple[Any, ...]) -> tuple[str, ...]:
-    return tuple(str(spec.id) for spec in specs)
+def _provider_members(provider: object) -> tuple[object, ...]:
+    namespace = getattr(provider, "__dict__", {})
+    values = [provider, *namespace.values()]
+    if not inspect.isclass(provider):
+        values.extend(vars(type(provider)).values())
+    unique: dict[int, object] = {}
+    for value in values:
+        unique.setdefault(id(value), value)
+    return tuple(unique.values())
+
+
+def _provider_node_ids(provider: object) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            str(spec.id)
+            for member in _provider_members(provider)
+            if (spec := getattr(member, "__node_spec__", None)) is not None
+        ),
+    )
+
+
+def _provider_template_ids(provider: object) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            f"{member.__module__}.{member.__qualname__}"
+            for member in _provider_members(provider)
+            if inspect.isclass(member)
+            and member is not ProcessingTemplate
+            and issubclass(member, ProcessingTemplate)
+        ),
+    )
 
 
 def _handlers(provider: object) -> tuple[FormatHandler, ...]:
@@ -66,19 +95,11 @@ def _warning(plugin_name: str, exc: Exception) -> None:
 
 
 def _load_plugin(entry_point: Any) -> DiscoveredPlugin:
-    before_nodes = set(_ids(node_registry.list_nodes()))
-    before_templates = set(_ids(template_registry.list_templates()))
     provider = entry_point.load()
-    node_ids = tuple(node_id for node_id in _ids(node_registry.list_nodes()) if node_id not in before_nodes)
-    template_ids = tuple(
-        template_id
-        for template_id in _ids(template_registry.list_templates())
-        if template_id not in before_templates
-    )
     return DiscoveredPlugin(
         name=str(entry_point.name),
-        node_ids=node_ids,
-        template_ids=template_ids,
+        node_ids=_provider_node_ids(provider),
+        template_ids=_provider_template_ids(provider),
         format_handlers=_handlers(provider),
     )
 

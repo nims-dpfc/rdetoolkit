@@ -13,6 +13,8 @@ missing input path       Click path validation     exit 2                       
 output inside input      unsafe destination        exit 3 with remediation               TC-MIG-APPLY-EP-005
 existing output          overwrite attempt         exit 3 with remediation               TC-MIG-APPLY-EP-006
 directory without Python application usage error   exit 3 with remediation               TC-MIG-APPLY-EP-007
+PEP 263 CP932 source    declared non-UTF-8 input    conversion succeeds as UTF-8 output  TC-MIG-APPLY-EP-008
+broken encoded source  sibling valid source        diagnose and continue, exit 0         TC-MIG-APPLY-EP-009
 =======================  ========================  ====================================  ====================
 
 BV table
@@ -200,3 +202,61 @@ def test_apply_single_file_writes_one_external_file__tc_mig_apply_bv_001(tmp_pat
     assert result.exit_code == 0, result.output
     assert [path.name for path in output.iterdir()] == ["main.py"]
     assert source.read_bytes() == before
+
+
+def test_apply_reads_pep263_cp932_source__tc_mig_apply_ep_008(tmp_path: Path) -> None:
+    """TC-MIG-APPLY-EP-008: declared source encodings are honored on input."""
+    # Given: a CP932 v1 source with an encoding cookie and Japanese comment
+    source = tmp_path / "legacy_cp932.py"
+    text = (
+        "# -*- coding: cp932 -*-\n"
+        "# 日本語のコメント\n"
+        "from rdetoolkit import workflows\n\n"
+        "def dataset(src, resource_paths):\n"
+        "    return None\n\n"
+        "workflows.run(custom_dataset_function=dataset)\n"
+    )
+    source.write_bytes(text.encode("cp932"))
+    output = tmp_path / "converted"
+
+    # When: apply reads using the declared PEP 263 encoding
+    result = CliRunner().invoke(
+        app,
+        ["migrate", "apply", str(source), "--out", str(output), "--no-dry-run"],
+    )
+
+    # Then: conversion succeeds and the output contract remains UTF-8
+    assert result.exit_code == 0, result.output
+    converted = (output / source.name).read_text(encoding="utf-8")
+    assert "@flow" in converted
+    assert "def pipeline" in converted
+
+
+def test_apply_reports_broken_encoding_and_continues__tc_mig_apply_ep_009(tmp_path: Path) -> None:
+    """TC-MIG-APPLY-EP-009: one undecodable file cannot abort a directory apply."""
+    # Given: one malformed declared-UTF-8 source beside one valid v1 source
+    source = tmp_path / "sources"
+    source.mkdir()
+    broken = source / "broken.py"
+    broken.write_bytes(b"# coding: utf-8\n# \xff\n")
+    valid = source / "valid.py"
+    valid.write_text(
+        "from rdetoolkit import workflows\n"
+        "def dataset(src, resource_paths):\n    return None\n"
+        "workflows.run(custom_dataset_function=dataset)\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "converted"
+
+    # When: apply processes the directory
+    result = CliRunner().invoke(
+        app,
+        ["migrate", "apply", str(source), "--out", str(output), "--no-dry-run"],
+    )
+
+    # Then: it diagnoses the file, continues, and preserves the current success exit convention
+    assert result.exit_code == 0, result.output
+    assert "broken.py" in result.output
+    assert "Remediation:" in result.output
+    assert "@flow" in (output / "valid.py").read_text(encoding="utf-8")
+    assert "TODO(rdetoolkit-migrate)" in (output / "broken.py").read_text(encoding="utf-8")

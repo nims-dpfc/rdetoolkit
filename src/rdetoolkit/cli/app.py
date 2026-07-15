@@ -168,6 +168,10 @@ def init(
         list[str] | None,
         typer.Option("--module", help="Import a template provider module; repeatable."),
     ] = None,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Overwrite existing processing-template output files."),
+    ] = False,
     entry_point: Annotated[
         Path | None,
         typer.Option(
@@ -228,7 +232,7 @@ def init(
     if processing_template is not None:
         from rdetoolkit.cli.templates_cmd import generate_processing_template
 
-        generate_processing_template(processing_template, template_modules or [], Path.cwd())
+        generate_processing_template(processing_template, template_modules or [], Path.cwd(), force=force)
         return
 
     # Lazy import to minimize startup cost

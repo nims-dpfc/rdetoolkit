@@ -128,21 +128,34 @@ def _render_sample_test(spec: TemplateSpec) -> str:
     )
 
 
-def generate_processing_template(name: str, modules: Sequence[str], output_dir: Path) -> None:
+def generate_processing_template(
+    name: str,
+    modules: Sequence[str],
+    output_dir: Path,
+    *,
+    force: bool = False,
+) -> None:
     """Generate a TODO implementation and sample test for a skeleton.
 
     Args:
         name: Full template id or unambiguous skeleton class name.
         modules: Dotted provider modules imported before registry lookup.
         output_dir: Directory receiving generated files.
+        force: Whether to replace existing generated files.
     """
     load_modules(modules)
     spec = _find_template(name)
-    output_dir.mkdir(parents=True, exist_ok=True)
     processing_path = output_dir / "processing.py"
-    test_dir = output_dir / "tests"
-    test_dir.mkdir(parents=True, exist_ok=True)
-    test_path = test_dir / "test_processing.py"
+    test_path = output_dir / "tests" / "test_processing.py"
+    existing_paths = [path for path in (processing_path, test_path) if path.exists()]
+    if existing_paths and not force:
+        rendered_paths = ", ".join(str(path) for path in existing_paths)
+        _emit_usage_error(
+            f"Refusing to overwrite existing file(s): {rendered_paths}. "
+            "To overwrite existing files, rerun with --force.",
+        )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    test_path.parent.mkdir(parents=True, exist_ok=True)
     processing_path.write_text(_render_processing_module(spec), encoding="utf-8")
     test_path.write_text(_render_sample_test(spec), encoding="utf-8")
     typer.echo(f"Generated {processing_path}")

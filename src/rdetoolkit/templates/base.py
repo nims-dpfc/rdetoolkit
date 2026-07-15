@@ -97,7 +97,7 @@ def _validate_concrete_class(cls: type[Any], skeleton: type[Any]) -> None:
 def _register_implementations(cls: type[Any], skeleton: type[Any]) -> None:
     member_names = set(_declared_slots(skeleton)) | _declared_hooks(skeleton)
     for method_name in member_names:
-        implementation = vars(cls).get(method_name)
+        implementation = vars(cls).get(method_name, getattr(skeleton, method_name, None))
         if not callable(implementation):
             continue
         annotations = dict(getattr(implementation, "__annotations__", {}))
@@ -151,3 +151,8 @@ def flow_from_template(template_cls: type[ProcessingTemplate]) -> Callable[..., 
 def is_template_class(value: Any) -> TypeGuard[type[ProcessingTemplate]]:
     """Return whether a value is a ProcessingTemplate subclass class."""
     return inspect.isclass(value) and issubclass(value, ProcessingTemplate)
+
+
+def is_concrete_template_class(value: Any) -> TypeGuard[type[ProcessingTemplate]]:
+    """Return whether a value is a registered depth-2 template class."""
+    return is_template_class(value) and value in registry.list_concrete_templates()

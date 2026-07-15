@@ -65,3 +65,16 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 - Added dry-run-first `migrate apply`, external-only output, explicit TODO
   markers for unresolved constructs, and a five-template corpus demonstrating
   the ADR-021 80% executable-conversion condition.
+
+### Fixed — Phase F review remediation
+
+- Made rich-rendered `init --help` assertions robust to ANSI styling and line
+  wrapping in color-enabled CI environments.
+- Prevented `init --processing-template` from overwriting generated files
+  unless the user explicitly supplies `--force`.
+- Restricted template execution to registered depth-2 concrete classes and
+  registered inherited default hooks under each concrete class's node id.
+- Derived plugin node/template provenance from loaded provider objects so
+  discovery remains correct after pre-import.
+- Read `migrate apply` inputs with their PEP 263 declared encoding and report
+  malformed files without aborting sibling conversions.

@@ -385,3 +385,21 @@ class TestRunFlowTemplateClassAcceptance:
         assert report["status"] == "success"
         assert report["flow_id"].endswith("ValidTemplateTarget"), report["flow_id"]
         assert "_Ep014Skeleton" not in report["flow_id"]
+
+    def test_depth1_skeleton_target_is_rejected__tc_cli_run_ep_015(
+        self,
+        cli_runner: CliRunner,
+    ) -> None:
+        # Given: a CLI reference to the registered depth-1 fixture skeleton
+        flow_ref = f"{FIXTURE_MODULE}:_Ep014Skeleton"
+
+        # When: run --flow resolves that class under the existing error conversion
+        result = cli_runner.invoke(app, ["run", "--flow", flow_ref])
+
+        # Then: it fails and retains the remediation-bearing TypeError
+        assert result.exit_code == 1
+        assert isinstance(result.exception, TypeError)
+        message = str(result.exception).lower()
+        assert "skeleton" in message
+        assert "subclass" in message
+        assert "slot" in message

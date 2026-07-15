@@ -82,9 +82,19 @@ class Runner:
         Returns:
             Run report produced by ``iterate`` and finalized by this Runner.
         """
-        from rdetoolkit.templates.base import flow_from_template, is_template_class  # noqa: PLC0415
+        from rdetoolkit.templates.base import (  # noqa: PLC0415
+            flow_from_template,
+            is_concrete_template_class,
+            is_template_class,
+        )
 
         if is_template_class(flow_fn):
+            if not is_concrete_template_class(flow_fn):
+                msg = (
+                    "A ProcessingTemplate skeleton cannot be executed. "
+                    "Create a subclass that implements every required slot and pass that concrete class."
+                )
+                raise TypeError(msg)
             flow_fn = flow_from_template(flow_fn)
         elif isinstance(flow_fn, type):
             msg = "Runner flow class target is not a ProcessingTemplate subclass"

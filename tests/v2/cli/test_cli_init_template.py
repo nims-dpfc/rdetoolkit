@@ -27,10 +27,20 @@ Binding API-shape pins asserted by this file (precision standard):
   PRE-F2 HEAD (``1a15f56``) by the tdd-enforcer session that wrote this
   file -- never hand-written (Known Trap #8). The frozen snapshot lives at
   ``tests/v2/cli/fixtures/golden_init_bare/``.
+
+FIX-2 EP/BV table:
+- TC-CLI-INIT-TPL-OVERWRITE-001: existing ``processing.py`` is rejected
+  before any sample test is written.
+- TC-CLI-INIT-TPL-OVERWRITE-002: existing ``tests/test_processing.py`` is
+  rejected before any processing module is written.
+- TC-CLI-INIT-TPL-OVERWRITE-003: when both outputs exist, neither is changed.
+- TC-CLI-INIT-TPL-OVERWRITE-004: ``--force`` explicitly replaces both outputs.
+- TC-CLI-INIT-TPL-OVERWRITE-005: ``--force`` is discoverable in init help.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -44,6 +54,7 @@ GOLDEN_TREE = GOLDEN_DIR / "tree"
 GOLDEN_OUTPUT_TEMPLATE = (GOLDEN_DIR / "output_template.txt").read_text(encoding="utf-8")
 
 _IGNORED_FILENAMES = {".gitkeep"}
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 @pytest.fixture
@@ -67,6 +78,11 @@ def _collect_files(root: Path) -> dict[str, str]:
         for p in root.rglob("*")
         if p.is_file() and p.name not in _IGNORED_FILENAMES
     }
+
+
+def _normalize_help_output(output: str) -> str:
+    without_ansi = _ANSI_ESCAPE_RE.sub("", output)
+    return re.sub(r"\s+", "", without_ansi)
 
 
 class TestBareInitMatchesPreF2Golden:
@@ -106,10 +122,13 @@ class TestV1TemplateOptionUntouched:
     --processing-template <name> must coexist without collision)."""
 
     def test_v1_template_path_option_still_present_in_help(self, cli_runner: CliRunner) -> None:
-        result = cli_runner.invoke(app, ["init", "--help"])
+        # Given: deterministic terminal settings for the init help renderer
+        # When: requesting help that includes the pre-existing v1 option
+        result = cli_runner.invoke(app, ["init", "--help"], env={"NO_COLOR": "1", "COLUMNS": "200"})
 
+        # Then: ANSI styling and wrapping cannot hide the unchanged option name
         assert result.exit_code == 0
-        assert "--template" in result.output
+        assert "--template" in _normalize_help_output(result.output)
 
     def test_v1_template_option_still_enforces_path_existence(self, cli_runner: CliRunner, isolated_root: Path) -> None:
         result = cli_runner.invoke(app, ["init", "--template", str(isolated_root / "does_not_exist")])
@@ -121,10 +140,22 @@ class TestV1TemplateOptionUntouched:
         assert result.exit_code == 2
 
     def test_processing_template_option_appears_in_help(self, cli_runner: CliRunner) -> None:
-        result = cli_runner.invoke(app, ["init", "--help"])
+        # Given: deterministic terminal settings for the init help renderer
+        # When: requesting help that includes the v2 processing-template option
+        result = cli_runner.invoke(app, ["init", "--help"], env={"NO_COLOR": "1", "COLUMNS": "200"})
 
+        # Then: ANSI styling and wrapping cannot hide the complete option name
         assert result.exit_code == 0
-        assert "--processing-template" in result.output
+        assert "--processing-template" in _normalize_help_output(result.output)
+
+    def test_force_option_appears_in_help__tc_cli_init_tpl_overwrite_005(self, cli_runner: CliRunner) -> None:
+        # Given: deterministic terminal settings for the init help renderer
+        # When: requesting help for processing-template generation controls
+        result = cli_runner.invoke(app, ["init", "--help"], env={"NO_COLOR": "1", "COLUMNS": "200"})
+
+        # Then: explicit overwrite consent is discoverable
+        assert result.exit_code == 0
+        assert "--force" in _normalize_help_output(result.output)
 
 
 class TestInitProcessingTemplateGeneratesSkeleton:
@@ -169,3 +200,98 @@ class TestInitProcessingTemplateGeneratesSkeleton:
         )
 
         assert result.exit_code == 3
+
+
+class TestInitProcessingTemplateOverwriteProtection:
+    """FIX-2 overwrite preflight and explicit-consent cases."""
+
+    def test_existing_processing_module_is_rejected_before_sample_write__tc_cli_init_tpl_overwrite_001(
+        self,
+        cli_runner: CliRunner,
+        isolated_root: Path,
+    ) -> None:
+        # Given: a user-owned processing module and no sample test
+        processing_path = isolated_root / "processing.py"
+        processing_path.write_text("USER PROCESSING\n", encoding="utf-8")
+
+        # When: generating without explicit overwrite consent
+        result = cli_runner.invoke(
+            app,
+            ["init", "--processing-template", "DemoSkeletonTemplate", "--module", FIXTURE_MODULE],
+        )
+
+        # Then: generation is rejected without changing or partially creating files
+        assert result.exit_code == 3
+        assert "--force" in result.stderr
+        assert "overwrite" in result.stderr.lower()
+        assert processing_path.read_text(encoding="utf-8") == "USER PROCESSING\n"
+        assert not (isolated_root / "tests" / "test_processing.py").exists()
+
+    def test_existing_sample_test_is_rejected_before_processing_write__tc_cli_init_tpl_overwrite_002(
+        self,
+        cli_runner: CliRunner,
+        isolated_root: Path,
+    ) -> None:
+        # Given: a user-owned sample test and no processing module
+        test_path = isolated_root / "tests" / "test_processing.py"
+        test_path.parent.mkdir()
+        test_path.write_text("USER TEST\n", encoding="utf-8")
+
+        # When: generating without explicit overwrite consent
+        result = cli_runner.invoke(
+            app,
+            ["init", "--processing-template", "DemoSkeletonTemplate", "--module", FIXTURE_MODULE],
+        )
+
+        # Then: generation is rejected without changing or partially creating files
+        assert result.exit_code == 3
+        assert "--force" in result.stderr
+        assert "overwrite" in result.stderr.lower()
+        assert test_path.read_text(encoding="utf-8") == "USER TEST\n"
+        assert not (isolated_root / "processing.py").exists()
+
+    def test_existing_outputs_are_both_unchanged__tc_cli_init_tpl_overwrite_003(
+        self,
+        cli_runner: CliRunner,
+        isolated_root: Path,
+    ) -> None:
+        # Given: both generated paths already contain user-owned content
+        processing_path = isolated_root / "processing.py"
+        test_path = isolated_root / "tests" / "test_processing.py"
+        test_path.parent.mkdir()
+        processing_path.write_text("USER PROCESSING\n", encoding="utf-8")
+        test_path.write_text("USER TEST\n", encoding="utf-8")
+
+        # When: generation is requested without --force
+        result = cli_runner.invoke(
+            app,
+            ["init", "--processing-template", "DemoSkeletonTemplate", "--module", FIXTURE_MODULE],
+        )
+
+        # Then: the preflight rejects before either write begins
+        assert result.exit_code == 3
+        assert processing_path.read_text(encoding="utf-8") == "USER PROCESSING\n"
+        assert test_path.read_text(encoding="utf-8") == "USER TEST\n"
+
+    def test_force_replaces_both_existing_outputs__tc_cli_init_tpl_overwrite_004(
+        self,
+        cli_runner: CliRunner,
+        isolated_root: Path,
+    ) -> None:
+        # Given: both generated paths already contain user-owned content
+        processing_path = isolated_root / "processing.py"
+        test_path = isolated_root / "tests" / "test_processing.py"
+        test_path.parent.mkdir()
+        processing_path.write_text("USER PROCESSING\n", encoding="utf-8")
+        test_path.write_text("USER TEST\n", encoding="utf-8")
+
+        # When: generation is requested with explicit overwrite consent
+        result = cli_runner.invoke(
+            app,
+            ["init", "--processing-template", "DemoSkeletonTemplate", "--module", FIXTURE_MODULE, "--force"],
+        )
+
+        # Then: both outputs are regenerated together
+        assert result.exit_code == 0, result.output
+        assert processing_path.read_text(encoding="utf-8") != "USER PROCESSING\n"
+        assert test_path.read_text(encoding="utf-8") != "USER TEST\n"

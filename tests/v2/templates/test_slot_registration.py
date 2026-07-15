@@ -98,7 +98,7 @@ class TestAutoRegistrationOnDepth2Definition:
         assert expected_read_id in ids
         assert expected_transform_id in ids
 
-    def test_hook_left_at_inherited_default_is_not_separately_registered(self) -> None:
+    def test_hook_left_at_inherited_default_is_registered_for_concrete_class(self) -> None:
         # Given: a skeleton with an optional hook, and TWO sibling depth-2
         # subclasses -- one overrides the hook, one leaves it at default.
         ProcessingTemplate, slot = _import_templates()
@@ -129,14 +129,13 @@ class TestAutoRegistrationOnDepth2Definition:
                 return None
             # `transform` intentionally NOT overridden -> inherited default.
 
-        # When / Then: only the overriding sibling contributes a
-        # `transform` registration; the non-overriding sibling contributes
-        # none under its own id.
+        # When / Then: each sibling contributes its own concrete-qualified
+        # `transform` registration, even when the implementation is inherited.
         ids = _registered_node_ids()
         overriding_id = f"{_UserOverridesHook.__module__}.{_UserOverridesHook.__qualname__}.transform"
         non_overriding_id = f"{_UserDefaultHook.__module__}.{_UserDefaultHook.__qualname__}.transform"
         assert overriding_id in ids
-        assert non_overriding_id not in ids
+        assert non_overriding_id in ids
 
 
 class TestSkeletonDefinitionDoesNotAutoRegisterSlots:
@@ -189,8 +188,7 @@ class TestCallLogIntegration:
             def read(self, paths: InputPaths) -> None:
                 return None
 
-            def transform(self, paths: InputPaths) -> InputPaths:
-                return paths
+            # transform intentionally inherits the skeleton default.
 
         # When: the template is run through the public testing helper,
         # which itself goes through Runner.run (no template-specific path).
@@ -202,7 +200,7 @@ class TestCallLogIntegration:
 
         report = run_flow(_RunnableUser, fixture_dir)
 
-        # Then: the run succeeds and both the slot and the overridden hook
+        # Then: the run succeeds and both the slot and the inherited hook
         # appear as node_calls in the produced RunReport, keyed by the
         # SAME id shape used for registry lookup.
         assert report.status == "success", report.error

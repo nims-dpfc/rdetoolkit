@@ -13,6 +13,8 @@ API                         Partition                 Expected                  
 plugin public surface       forbidden hooks           no hook registration API                TC-PLUGIN-EP-005
 plugin CLI                  valid plugin               all three discovery commands expose it TC-PLUGIN-EP-006
 plugin CLI                  broken plugin              exit zero and warn                     TC-PLUGIN-EP-007
+``discover_plugins``        provider pre-imported      provenance remains non-empty            TC-PLUGIN-EP-008
+plugin CLI                  module loaded before scan  plugin node remains listed              TC-PLUGIN-EP-009
 ==========================  ========================  =====================================  ====================
 
 BV table
@@ -101,7 +103,7 @@ class TestPluginDiscovery:
         # When: plugin discovery loads the entry point
         plugins = discover_plugins()
 
-        # Then: import-time registry deltas and declarative handlers retain provenance
+        # Then: provider introspection and declarative handlers retain provenance
         assert len(plugins) == 1
         plugin = plugins[0]
         assert plugin.name == "fixture-plugin"
@@ -109,6 +111,22 @@ class TestPluginDiscovery:
         assert len(plugin.template_ids) == 1
         assert plugin.template_ids[0].endswith("FixtureTemplate")
         assert plugin.format_handlers[0].extensions == (".fixture", ".fx")
+
+    def test_preimported_provider_retains_provenance__tc_plugin_ep_008(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Given: the provider has already been imported and registered before discovery
+        importlib.import_module(PLUGIN_MODULE)
+        _patch_entries(monkeypatch, _entry_point())
+        from rdetoolkit.plugin import discover_plugins
+
+        # When: discovery loads the already-cached module
+        plugin = discover_plugins()[0]
+
+        # Then: provenance comes from the provider object rather than registry deltas
+        assert plugin.node_ids == ("fixture.plugin.read",)
+        assert any(template_id.endswith("FixtureTemplate") for template_id in plugin.template_ids)
 
     def test_discovery_is_idempotent__tc_plugin_ep_002(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """TC-PLUGIN-EP-002: repeated discovery returns the same provenance."""
@@ -246,3 +264,23 @@ class TestPluginCli:
         assert result.exit_code == 0
         assert "broken-plugin" in result.output
         assert "Remediation:" in result.output
+
+    def test_nodes_list_plugin_after_module_preload__tc_plugin_ep_009(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Given: the CLI will preload the same provider module before plugin discovery
+        _patch_entries(monkeypatch, _entry_point())
+
+        # When: exercising the review-reported load_modules -> discover_plugins order
+        result = CliRunner().invoke(
+            app,
+            ["nodes", "list", "--plugin", "--module", PLUGIN_MODULE, "--json"],
+        )
+
+        # Then: the provider node remains attributed and visible
+        assert result.exit_code == 0, result.output
+        entries = json.loads(result.output)
+        assert [(entry["id"], entry["plugin"]) for entry in entries] == [
+            ("fixture.plugin.read", "fixture-plugin"),
+        ]

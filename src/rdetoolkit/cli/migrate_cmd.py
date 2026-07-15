@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import shutil
+import tokenize
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Never
@@ -126,7 +127,16 @@ def _write_conversion(
 
 
 def _convert_source(path: Path) -> str:
-    source = path.read_text(encoding="utf-8")
+    try:
+        with tokenize.open(path) as source_file:
+            source = source_file.read()
+    except (OSError, SyntaxError, UnicodeError) as exc:
+        typer.echo(
+            f"Unable to decode source {path}: {exc}. "
+            "Remediation: correct the encoding cookie or file bytes, then rerun migrate apply.",
+            err=True,
+        )
+        return _todo_source("", f"source encoding could not be decoded: {exc}")
     try:
         tree = ast.parse(source, filename=str(path))
     except SyntaxError as exc:

@@ -155,6 +155,30 @@ class TestWorkflowsRunAcceptsTemplateSubclass:
         assert isinstance(captured["invoice"], InvoiceData)
 
 
+class TestWorkflowsRunRejectsSkeleton:
+    """FIX-3 EP/BV: only registered depth-2 concrete templates execute."""
+
+    def test_depth1_skeleton_raises_type_error_with_remediation__tc_tpl_run_005(self) -> None:
+        # Given: a registered depth-1 skeleton rather than a concrete user class
+        ProcessingTemplate, slot = _import_templates()
+
+        class SkeletonOnly(ProcessingTemplate):
+            @slot
+            def read(self) -> None: ...
+
+        # When: the Python API is asked to execute the skeleton
+        import rdetoolkit.workflows as workflows  # noqa: PLC0415
+
+        with pytest.raises(TypeError) as exc_info:
+            workflows.run(flow=SkeletonOnly)
+
+        # Then: rejection explains how to provide a runnable concrete class
+        message = str(exc_info.value).lower()
+        assert "skeleton" in message
+        assert "subclass" in message
+        assert "slot" in message
+
+
 class TestRunnerRunAcceptsTemplateSubclassDirectly:
     """TC-TPL-RUN-002: ``Runner(...).run(TemplateSubclass, ...)`` succeeds
     one layer below ``workflows.run`` -- proving the normalization lives in

@@ -22,6 +22,7 @@ def init(
     template: pathlib.Optional[Path] = None,
     processing_template: Optional[str] = None,
     template_modules: Optional[list[str]] = None,
+    force: bool = False,
     entry_point: pathlib.Optional[Path] = None,
     modules: pathlib.Optional[Path] = None,
     tasksupport: pathlib.Optional[Path] = None,
