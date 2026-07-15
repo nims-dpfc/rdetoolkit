@@ -15,6 +15,7 @@ from rdetoolkit.rdelogger import get_logger as get_logger
 from rdetoolkit.result import Result as Result
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.types import RdeConfig
+from rdetoolkit.templates import ProcessingTemplate
 
 def check_files_result(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config | None = None) -> Result[tuple[RawFiles, Path | None, Path | None], StructuredError]: ...
 def check_files(srcpaths: RdeInputDirPaths, *, mode: str | None, config: Config | None = None) -> tuple[RawFiles, Path | None, Path | None]: ...
@@ -23,7 +24,7 @@ def _select_smarttable_rowfile(raw_files: tuple[Path, ...]) -> Path | None: ...
 @overload
 def run(
     *,
-    flow: Callable[..., Any],
+    flow: Callable[..., Any] | type[ProcessingTemplate],
     custom_dataset_function: None = None,
     config: RdeConfig | Mapping[str, Any] | None = None,
 ) -> RunReport: ...

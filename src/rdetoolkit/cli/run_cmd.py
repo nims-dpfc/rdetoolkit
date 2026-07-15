@@ -49,7 +49,11 @@ def resolve_flow(flow_ref: str) -> Callable[..., Any]:
     except (ImportError, AttributeError) as exc:
         usage_error(f"Unable to resolve --flow {flow_ref}: {exc}")
     if inspect.isclass(value):
-        usage_error("Template class targets are not supported until Phase F")
+        from rdetoolkit.templates.base import is_template_class
+
+        if not is_template_class(value):
+            usage_error("--flow class target is not a ProcessingTemplate subclass")
+        return cast(Callable[..., Any], value)
     if not callable(value):
         usage_error(f"--flow target is not callable: {flow_ref}")
     return cast(Callable[..., Any], value)

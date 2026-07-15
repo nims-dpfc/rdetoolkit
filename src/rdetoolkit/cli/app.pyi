@@ -9,6 +9,8 @@ import typer
 app: typer.Typer
 nodes_app: typer.Typer
 flows_app: typer.Typer
+templates_app: typer.Typer
+formats_app: typer.Typer
 graph_app: typer.Typer
 report_app: typer.Typer
 repro_app: typer.Typer
@@ -18,6 +20,9 @@ def validate_json_file(value: pathlib.Path) -> pathlib.Path: ...
 def parse_column(col: str) -> Union[int, str]: ...
 def init(
     template: pathlib.Optional[Path] = None,
+    processing_template: Optional[str] = None,
+    template_modules: Optional[list[str]] = None,
+    force: bool = False,
     entry_point: pathlib.Optional[Path] = None,
     modules: pathlib.Optional[Path] = None,
     tasksupport: pathlib.Optional[Path] = None,

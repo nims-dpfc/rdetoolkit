@@ -1,40 +1,23 @@
-"""Type stubs for rdetoolkit.protocols.protocols module."""
+from pathlib import Path
 
-from typing import Any
+import pandas as pd
+from typing_extensions import Protocol
 
-from typing_extensions import Protocol, runtime_checkable
+from rdetoolkit.types import InputPaths, InvoiceData, Metadata, OutputContext
 
-from rdetoolkit.result import Result
-
-@runtime_checkable
 class FileReader(Protocol):
-    """Protocol for file reading implementations."""
+    def read(self, paths: InputPaths) -> tuple[Metadata, pd.DataFrame]: ...
 
-    def read(self, path: str) -> bytes: ...
-
-@runtime_checkable
 class MetadataExtractor(Protocol):
-    """Protocol for metadata extraction from binary data."""
+    def extract(self, df: pd.DataFrame, invoice: InvoiceData) -> Metadata: ...
 
-    def extract(self, data: bytes) -> dict[str, object]: ...
+class DataProcessor(Protocol):
+    def process(self, df: pd.DataFrame, meta: Metadata) -> pd.DataFrame: ...
 
-@runtime_checkable
-class DataValidator(Protocol):
-    """Protocol for data validation."""
+class ResultWriter(Protocol):
+    def write(self, df: pd.DataFrame, meta: Metadata, out: OutputContext) -> None: ...
 
-    def validate(self, data: dict[str, object]) -> bool: ...
-
-@runtime_checkable
-class NodeRunner(Protocol):
-    """Protocol for node execution in DAG workflows."""
-
-    def run(self, context: Any) -> Result[Any, Exception]: ...
-
-@runtime_checkable
-class FormatHandler(Protocol):
-    """Protocol for file format detection and handling."""
-
-    def can_handle(self, path: str) -> bool: ...
-    def read(self, path: str) -> bytes: ...
+class Visualizer(Protocol):
+    def visualize(self, df: pd.DataFrame, out: OutputContext) -> list[Path]: ...
 
 __all__: list[str]

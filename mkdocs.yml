@@ -43,6 +43,8 @@ plugins:
                 - クイックスタート: quick-start.ja.md
             - ユーザーガイド:
                 - ガイド概要: user-guide/index.ja.md
+                - v2 チュートリアル: tutorial_v2.md
+                - v1 から v2 への移行: migration_v1_to_v2.md
                 - 設定ガイド: user-guide/config.ja.md
                 - 構造化処理ガイド: user-guide/structured-processing.ja.md
                 - 構造化処理開発:
@@ -92,6 +94,7 @@ plugins:
                     - 検証: rdetoolkit/validation.md
                     - 例外: rdetoolkit/exceptions.md
                     - エラーハンドリング: rdetoolkit/errors.md
+                    - エラーカタログ: rdetoolkit/error_catalog.md
                     - ファイル操作: rdetoolkit/fileops.md
                 - 処理パイプライン:
                     - 概要: rdetoolkit/processing/index.md
@@ -154,6 +157,8 @@ plugins:
                 - Quick Start: quick-start.en.md
             - User Guide:
                 - Guide Overview: user-guide/index.en.md
+                - v2 Tutorial: tutorial_v2.md
+                - Migrating from v1 to v2: migration_v1_to_v2.md
                 - Configuration Guide: user-guide/config.en.md
                 - Structuring Processing Guide: user-guide/structured-processing.en.md
                 - Structuring Processing:
@@ -203,6 +208,7 @@ plugins:
                     - Validation: rdetoolkit/validation.md
                     - Exceptions: rdetoolkit/exceptions.md
                     - Error Handling: rdetoolkit/errors.md
+                    - Error Catalog: rdetoolkit/error_catalog.md
                     - File Operations: rdetoolkit/fileops.md
                 - Processing Pipeline:
                     - Overview: rdetoolkit/processing/index.md
@@ -266,6 +272,8 @@ plugins:
             merge_init_into_class: true
             show_root_heading: true
             docstring_style: google
+            docstring_options:
+              returns_named_value: false
             show_if_no_docstring: true
             signature_crossrefs: true
 

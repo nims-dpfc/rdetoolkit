@@ -160,6 +160,18 @@ def init(
             resolve_path=True,
         ),
     ] = None,
+    processing_template: Annotated[
+        str | None,
+        typer.Option("--processing-template", help="Registered ProcessingTemplate skeleton name."),
+    ] = None,
+    template_modules: Annotated[
+        list[str] | None,
+        typer.Option("--module", help="Import a template provider module; repeatable."),
+    ] = None,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Overwrite existing processing-template output files."),
+    ] = False,
     entry_point: Annotated[
         Path | None,
         typer.Option(
@@ -217,6 +229,12 @@ def init(
     ] = None,
 ) -> None:
     """Output files needed to build RDE structured programs."""
+    if processing_template is not None:
+        from rdetoolkit.cli.templates_cmd import generate_processing_template
+
+        generate_processing_template(processing_template, template_modules or [], Path.cwd(), force=force)
+        return
+
     # Lazy import to minimize startup cost
     from rdetoolkit.cmd.command import InitCommand, InitTemplateConfig
 
@@ -745,17 +763,30 @@ def _register_validate_commands() -> typer.Typer:
 validate_app = _register_validate_commands()
 
 
-def _register_v2_inspection_commands() -> tuple[typer.Typer, typer.Typer]:
+def _register_v2_inspection_commands() -> tuple[typer.Typer, typer.Typer, typer.Typer]:
     """Register v2 node and flow inspection subcommands."""
     from rdetoolkit.cli.flows_cmd import app as flows_app_local
     from rdetoolkit.cli.nodes_cmd import app as nodes_app_local
+    from rdetoolkit.cli.templates_cmd import app as templates_app_local
 
     app.add_typer(nodes_app_local, name="nodes")
     app.add_typer(flows_app_local, name="flows")
-    return nodes_app_local, flows_app_local
+    app.add_typer(templates_app_local, name="templates")
+    return nodes_app_local, flows_app_local, templates_app_local
 
 
-nodes_app, flows_app = _register_v2_inspection_commands()
+nodes_app, flows_app, templates_app = _register_v2_inspection_commands()
+
+
+def _register_v2_format_commands() -> typer.Typer:
+    """Register plugin format inspection subcommands."""
+    from rdetoolkit.cli.formats_cmd import app as formats_app_local
+
+    app.add_typer(formats_app_local, name="formats")
+    return formats_app_local
+
+
+formats_app = _register_v2_format_commands()
 
 
 def _register_v2_reporting_commands() -> tuple[typer.Typer, typer.Typer, typer.Typer, typer.Typer]:

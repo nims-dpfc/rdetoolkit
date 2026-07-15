@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from rdetoolkit.models.result import WorkflowExecutionStatus
     from rdetoolkit.report.run_report import RunReport
     from rdetoolkit.result import Result
+    from rdetoolkit.templates import ProcessingTemplate
 
 
 from rdetoolkit.exceptions import StructuredError
@@ -402,7 +403,7 @@ def _process_mode(  # noqa: C901 PLR0912
 
 def run(  # pragma: no cover  # noqa: PLR0915
     *,
-    flow: Callable[..., Any] | None = None,
+    flow: Callable[..., Any] | type[ProcessingTemplate] | None = None,
     custom_dataset_function: DatasetCallback | None = None,
     config: Any = None,
 ) -> str | RunReport:

@@ -646,6 +646,10 @@ WARNING_CATALOG: dict[int, WarningDef] = {
         name="ModeOverriddenByFileDetection",
         message_template="Configured mode was overridden by input file detection: {mode}",
     ),
+    1101: WarningDef(
+        name="TemplateSelfStateUsage",
+        message_template="Template slot or hook uses hidden self state: {qualified_name}.{attribute_name}",
+    ),
 }
 
 E_CYCLE = "E_CYCLE"

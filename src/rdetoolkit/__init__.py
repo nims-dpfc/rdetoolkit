@@ -31,6 +31,7 @@ _LAZY_ATTRS: dict[str, tuple[str, str]] = {
     # v2 public API (Design v2.1 §3.1): from rdetoolkit import node, flow
     "node": ("rdetoolkit.core.node", "node"),
     "flow": ("rdetoolkit.core.flow", "flow"),
+    "as_node": ("rdetoolkit.nodes", "as_node"),
 }
 
 _LAZY_MODULES: dict[str, str] = {
@@ -86,6 +87,7 @@ __all__ = [
     "impl",
     "interfaces",
     "models",
+    "as_node",
 ]
 
 
