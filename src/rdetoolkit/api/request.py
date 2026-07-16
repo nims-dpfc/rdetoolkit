@@ -74,6 +74,7 @@ def build_run_request(
 
     Raises:
         RdeConfigError: If both public entry points are supplied.
+        TypeError: If a supplied entry point is not callable.
     """
     if flow is not None and custom_dataset_function is not None:
         error_def = ERROR_CATALOG[1001]
@@ -84,6 +85,19 @@ def build_run_request(
             name=error_def.name,
             message=message,
         )
+
+    if flow is not None and not callable(flow):
+        msg = (
+            "flow must be callable or None. Remediation: pass a callable flow "
+            "such as a function decorated with @flow."
+        )
+        raise TypeError(msg)
+    if custom_dataset_function is not None and not callable(custom_dataset_function):
+        msg = (
+            "custom_dataset_function must be callable or None. Remediation: pass "
+            "the dataset callback function itself, not its return value."
+        )
+        raise TypeError(msg)
 
     target: ExecutionTarget = (
         FlowTarget(function=flow)

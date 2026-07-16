@@ -16,6 +16,14 @@ EP table:
         relative fixture path instead of being ignored by snapshot checking.
     TC-GR-005 (abnormal): ascending and descending rdeformat file discovery
         normalize order-dependent status targets to the same stable value.
+    TC-GR-006 (abnormal): snapshot regeneration rejects code-tree dirtiness
+        with the required two-commit remediation.
+    TC-GR-007 (normal): snapshot-only dirtiness remains writable so one
+        interrupted regeneration can be rerun safely.
+    TC-GR-008 (abnormal): ``--check`` rejects dirty or unrecorded frozen
+        provenance instead of treating it as a stale-revision warning.
+    TC-GR-009 (normal): every frozen snapshot shares one clean non-empty
+        writer revision.
 
 BV table:
     TC-G1-004 (empty): normalization preserves empty containers and ``None``.
@@ -28,15 +36,23 @@ BV table:
         XLSX validation uses values because package metadata is nondeterministic.
     TC-GR-005 (two orders): opposite first-file selections keep each tile prefix
         and replace only the nondeterministic subdirectory component.
+    TC-GR-007 (only generated paths): the maximum allowed dirty-tree boundary
+        contains paths exclusively below ``expected/``.
+    TC-GR-008 (invalid markers): dirty, unrecorded, and empty revisions are
+        fatal provenance values and make the CLI process exit nonzero.
+    TC-GR-009 (16 snapshots): the complete inventory has exactly one clean SHA.
 """
 
 from __future__ import annotations
 
 import json
 import shutil
+import subprocess
+import sys
 import zipfile
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -257,7 +273,7 @@ def test_frozen_v1_scenarios_cover_matrix_and_excel_zero_boundary__tc_g1_010() -
     assert relative == expected
     assert all(path.is_file() for path in snapshots)
 
-    # And: each value records the generator provenance and observed v1 result.
+    # And: each value records clean generator provenance and observed v1 result.
     # source.commit is the revision that WROTE the snapshot (recorded at
     # regeneration time), so it must be one non-empty value shared by every
     # snapshot (single-regeneration invariant) — it intentionally does NOT
@@ -269,6 +285,7 @@ def test_frozen_v1_scenarios_cover_matrix_and_excel_zero_boundary__tc_g1_010() -
         assert payload["source"]["tag"] == _generate.SOURCE_TAG
         commit = payload["source"]["commit"]
         assert isinstance(commit, str) and commit and commit != "<unrecorded>"
+        assert "-dirty" not in commit
         recorded_commits.add(commit)
         assert payload["observed"]["exit_code"] in {0, 1}
         assert "output_tree" in payload["observed"]
@@ -346,8 +363,151 @@ def test_source_revision_warning_is_explicit_and_non_failing__tc_gr_003(
     # Then: the warning names both revisions and embeds the regeneration remedy
     assert warnings == [
         "warning: frozen source.commit old-revision differs from current revision "
-        "new-revision; remediation: regenerate all contract snapshots with _generate.py"
+        "new-revision; remediation: regenerate all contract snapshots with _generate.py",
     ]
+
+
+def test_write_hygiene_rejects_non_snapshot_dirtiness__tc_gr_006(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-GR-006: regeneration refuses code changes before observing v1."""
+    # Given: a dirty code path alongside a snapshot output path
+    monkeypatch.setattr(
+        _generate,
+        "_git_dirty_paths",
+        lambda: (
+            Path("tests/v2/contract/fixtures/_generate.py"),
+            Path("tests/v2/contract/fixtures/expected/v1/invoice/ok.json"),
+        ),
+    )
+
+    # When / Then: write hygiene fails with the binding two-commit ritual
+    with pytest.raises(RuntimeError, match="commit code changes first") as exc_info:
+        _generate._require_write_tree_hygiene()
+    assert (
+        "regenerate on the clean tree, then commit the snapshots"
+        in str(exc_info.value)
+    )
+
+
+def test_write_hygiene_allows_only_snapshot_dirtiness__tc_gr_007(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-GR-007: an interrupted snapshot-only rewrite can be rerun."""
+    # Given: every dirty path is a generated expected snapshot
+    monkeypatch.setattr(
+        _generate,
+        "_git_dirty_paths",
+        lambda: (
+            Path("tests/v2/contract/fixtures/expected/v1/invoice/ok.json"),
+            Path("tests/v2/contract/fixtures/expected/v1/rdeformat/valerr.json"),
+        ),
+    )
+
+    # When / Then: the narrow generated-output exception is accepted
+    _generate._require_write_tree_hygiene()
+
+
+@pytest.mark.parametrize(
+    "commit",
+    [
+        pytest.param("b7db084-dirty", id="dirty"),
+        pytest.param("<unrecorded>", id="unrecorded"),
+        pytest.param("", id="empty"),
+    ],
+)
+def test_source_revision_errors_reject_invalid_frozen_provenance__tc_gr_008(
+    tmp_path: Path,
+    commit: str,
+) -> None:
+    """TC-GR-008: dirty and unrecorded frozen provenance fail ``--check``."""
+    # Given: one frozen snapshot containing an unauditable writer revision
+    snapshot = tmp_path / "invoice" / "ok.json"
+    snapshot.parent.mkdir(parents=True)
+    snapshot.write_text(json.dumps({"source": {"commit": commit}}), encoding="utf-8")
+
+    # When: validating frozen provenance for check mode
+    errors = _generate.source_revision_errors(root=tmp_path)
+
+    # Then: the value is fatal and the message embeds the two-commit ritual
+    assert len(errors) == 1
+    assert commit in errors[0]
+    assert "commit code changes first" in errors[0]
+    assert "regenerate on the clean tree, then commit the snapshots" in errors[0]
+
+
+def test_check_mode_returns_nonzero_for_invalid_frozen_provenance__tc_gr_008(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TC-GR-008: the CLI check gate exits nonzero on dirty provenance."""
+    # Given: check mode and a fatal frozen-provenance validation result
+    monkeypatch.setattr(
+        _generate,
+        "_parse_args",
+        lambda: SimpleNamespace(check=True, oracle_worker=None),
+    )
+    monkeypatch.setattr(
+        _generate,
+        "source_revision_errors",
+        lambda: ["fatal provenance; commit code changes first"],
+    )
+
+    # When: running the generator's check-mode entry point
+    exit_code = _generate.main()
+
+    # Then: the gate fails before accepting the frozen snapshots
+    assert exit_code == 1
+    assert "fatal provenance; commit code changes first" in capsys.readouterr().err
+
+
+def test_check_script_propagates_fatal_provenance_exit_code__tc_gr_008() -> None:
+    """TC-GR-008: the executable check command exits nonzero for dirty snapshots."""
+    # Given: the current frozen inventory with its known dirty writer provenance
+    # When: invoking the generator through its documented CLI check command
+    completed = subprocess.run(  # noqa: S603
+        [sys.executable, str(_generate.__file__), "--check"],
+        cwd=_generate.REPOSITORY_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    # Then: fatal provenance reaches the process exit status with remediation
+    assert completed.returncode == 1
+    assert "commit code changes first" in completed.stderr
+
+
+def test_write_mode_checks_hygiene_before_rebuilding_inputs__tc_gr_006(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-GR-006: dirty write mode refuses before mutating static inputs."""
+    # Given: write mode, a dirty-tree refusal, and an observable input builder
+    input_build_started = False
+    monkeypatch.setattr(
+        _generate,
+        "_parse_args",
+        lambda: SimpleNamespace(check=False, oracle_worker=None),
+    )
+
+    def _reject_dirty_tree() -> None:
+        msg = "commit code changes first"
+        raise RuntimeError(msg)
+
+    def _record_input_build() -> dict[str, object]:
+        nonlocal input_build_started
+        input_build_started = True
+        return {}
+
+    monkeypatch.setattr(_generate, "_require_write_tree_hygiene", _reject_dirty_tree)
+    monkeypatch.setattr(_generate, "build_static_inputs", _record_input_build)
+
+    # When: starting a write-mode generation attempt
+    with pytest.raises(RuntimeError, match="commit code changes first"):
+        _generate.main()
+
+    # Then: refusal occurs before any static input is rebuilt
+    assert input_build_started is False
 
 
 def test_static_input_check_detects_deterministic_manifest_drift__tc_gr_004(

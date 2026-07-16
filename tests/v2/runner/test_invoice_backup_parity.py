@@ -14,6 +14,7 @@ Equivalence partitions (EP):
 | ``Runner.iterate`` | cwd equals root | legacy caller placement | backup content equals source | TC-GR-BACKUP-006 |
 | ``Runner.iterate`` | cwd differs from root | public root independence | backup content equals source | TC-GR-BACKUP-006 |
 | ``Runner.iterate`` | excel/rdeformat/multidatatile | three v1 backup modes | backup content equals source | TC-GR-BACKUP-006 |
+| flat invoice helper | explicit invoice path | mode-independent path copy | TC-GR-BACKUP-007 |
 
 Boundary values (BV):
 
@@ -21,6 +22,7 @@ Boundary values (BV):
 | --- | --- | --- | --- | --- |
 | ``Runner.iterate`` | one tile | minimum run that prepares an invoice source | mode contract holds | TC-G0-BACKUP-001..005 |
 | ``Runner.iterate`` | 2 layouts x 2 cwd relations x 3 modes | complete backup path boundary | all 12 cells preserve content | TC-GR-BACKUP-006 |
+| flat invoice helper | no mode argument | narrow helper signature | TC-GR-BACKUP-007 |
 
 NOTE (2026-07-15): reconstructed from the surviving pytest ``.pyc`` after the
 original working tree was wiped before commit (see session_g0.md). Semantics,
@@ -36,6 +38,7 @@ import pytest
 
 from rdetoolkit.runner.execute import ExecutionResult
 from rdetoolkit.runner.lifecycle import Runner
+from rdetoolkit.runner.lifecycle import _flat_layout_invoice_source
 from rdetoolkit.runner.mode_resolver import ModeKind
 from rdetoolkit.types import InputPaths, IterationInfo, RdeConfig
 
@@ -53,6 +56,24 @@ _LAYOUT_CWD_MODE_CASES = [
     for cwd_relation in ("same", "different")
     for mode in (ModeKind.excelinvoice, ModeKind.rdeformat, ModeKind.multidatatile)
 ]
+
+
+def test_flat_layout_invoice_source_has_mode_independent_signature__tc_gr_backup_007(
+    tmp_path: Path,
+) -> None:
+    """TC-GR-BACKUP-007: The flat helper needs only its explicit invoice path."""
+    # Given: a flat-layout source invoice
+    invoice_org = tmp_path / "invoice" / "invoice.json"
+    invoice_org.parent.mkdir(parents=True)
+    source = {"datasetId": "flat", "basic": {"dataName": "mode-independent"}}
+    invoice_org.write_text(json.dumps(source), encoding="utf-8")
+
+    # When: backing it up without an unused mode argument
+    backup_path = _flat_layout_invoice_source(invoice_org=invoice_org)
+
+    # Then: the explicit path rule preserves the source content
+    assert backup_path == tmp_path / "temp" / "invoice_org.json"
+    assert json.loads(backup_path.read_text(encoding="utf-8")) == source
 
 
 @pytest.mark.parametrize(("mode", "expects_backup"), _CASES)

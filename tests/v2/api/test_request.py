@@ -10,6 +10,8 @@ EP table:
 | ``build_run_request`` | config/root/options supplied | values retained | TC-EP-G2-104 |
 | request dataclasses | field mutation | ``FrozenInstanceError`` | TC-EP-G2-105 |
 | request dataclasses | undeclared attribute | ``TypeError`` from frozen slots | TC-EP-G2-106 |
+| ``build_run_request`` | non-callable flow | remediation-rich ``TypeError`` | TC-EP-GR2-107 |
+| ``build_run_request`` | non-callable callback | remediation-rich ``TypeError`` | TC-EP-GR2-108 |
 
 BV table:
 
@@ -17,6 +19,7 @@ BV table:
 |---|---|---|---|
 | ``build_run_request`` | neither entry point supplied | legacy target containing ``None`` | TC-BV-G2-101 |
 | ``build_run_request`` | root omitted | current working directory captured | TC-BV-G2-102 |
+| ``build_run_request`` | explicit relative root | value preserved for Phase H | TC-BV-GR2-103 |
 """
 
 from dataclasses import FrozenInstanceError
@@ -174,3 +177,48 @@ def test_omitted_root_captures_current_directory__tc_bv_g2_102(
 
     # Then: the request captures that directory as an absolute path
     assert request.root == tmp_path
+
+
+@pytest.mark.parametrize(
+    ("flow", "callback", "parameter_name"),
+    [
+        pytest.param(object(), None, "flow", id="flow"),
+        pytest.param(None, object(), "custom_dataset_function", id="callback"),
+    ],
+)
+def test_non_callable_entry_point_raises_type_error_with_remediation__tc_ep_gr2_107_108(
+    flow: Any,
+    callback: Any,
+    parameter_name: str,
+) -> None:
+    """TC-EP-GR2-107/108: Invalid execution targets fail at the API boundary."""
+    # Given: exactly one selected entry point whose value is not callable
+    # When / Then: normalization rejects it with actionable remediation
+    with pytest.raises(TypeError) as exc_info:
+        build_run_request(
+            flow=flow,
+            custom_dataset_function=callback,
+            config=None,
+        )
+    message = str(exc_info.value)
+    assert parameter_name in message
+    assert "callable" in message
+    assert "Remediation:" in message
+
+
+def test_explicit_relative_root_is_preserved__tc_bv_gr2_103() -> None:
+    """TC-BV-GR2-103: Relative-root normalization is deferred to Phase H wiring."""
+    # Given: an explicit relative root at the request-normalization boundary
+    relative_root = Path("relative")
+
+    # When: building a valid flow request
+    request = build_run_request(
+        flow=_flow,
+        custom_dataset_function=None,
+        config=None,
+        root=relative_root,
+    )
+
+    # Then: Phase G preserves the caller-provided value without resolving it
+    assert request.root is relative_root
+    assert request.root == Path("relative")

@@ -14,8 +14,8 @@ BV table:
     TC-UM-MDT-FLOW-SIGTERM: representative termination flush contract xfail.
 
 All expected callback values are static JSON produced by ``_generate.py`` at
-commit 8db74fa. The tests execute v1 only as the SUT; they never create an
-expected value at test time.
+the ``source.commit`` recorded in each snapshot. The tests execute v1 only as
+the SUT; they never create an expected value at test time.
 """
 
 from __future__ import annotations
@@ -81,7 +81,7 @@ def _expected_invoice_sequence(invoices: dict[str, object]) -> list[object]:
 )
 def test_callback_entry_matches_frozen_v1_contract(mode: str, outcome: str) -> None:
     """Callback matrix cells compare the v1 SUT with static generated expectations."""
-    # Given: the immutable snapshot generated from v1 at source commit 8db74fa
+    # Given: the immutable snapshot generated from v1 at its recorded source.commit
     expected = _frozen(mode, outcome)["observed"]
 
     # When: executing the same v1 path as the subject under test in isolation

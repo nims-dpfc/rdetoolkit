@@ -489,13 +489,12 @@ def _run_invoice_source(
         candidates = (*rawfiles, *input_candidates)
         excel_path = _first_matching(candidates, suffixes=(".xlsx", ".xlsm", ".xls"))
     if data_root == root:
-        return _flat_layout_invoice_source(mode, invoice_org=invoice_org)
+        return _flat_layout_invoice_source(invoice_org=invoice_org)
     with chdir(root):
         return backup_invoice_json_files(excel_path, _legacy_backup_mode(mode))
 
 
 def _flat_layout_invoice_source(
-    mode: ModeKind,
     *,
     invoice_org: Path,
 ) -> Path:

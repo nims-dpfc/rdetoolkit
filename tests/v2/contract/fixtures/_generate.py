@@ -1,6 +1,6 @@
 """Build Phase G contract fixtures from the v1 runtime oracle.
 
-Source tag: v2.0.0a1; source commit: 8db74fa.
+Source tag: v2.0.0a1; writer revision: each snapshot's ``source.commit``.
 Generated on: 2026-07-15. Re-run this script; never hand-edit snapshots.
 
 The generator owns both static input construction and expected-output
@@ -81,16 +81,20 @@ _VERSION_PATTERN = re.compile(r"(?m)^rdetoolkit==[^\s]+$")
 # deterministic tile prefix and replaces only the order-dependent remainder.
 _TILE_TARGET_PATTERN = re.compile(r"^(data/temp/\d{4})/.+$")
 _TILE_TARGET_PLACEHOLDER = r"\1/<TILE_SUBDIR>"
+_EXPECTED_RELATIVE_ROOT = EXPECTED_ROOT.relative_to(REPOSITORY_ROOT)
+_PROVENANCE_REMEDIATION = (
+    "commit code changes first, regenerate on the clean tree, then commit the snapshots"
+)
 
 
 def _git_revision() -> str:
-    """Return the exact source revision used by this generator process."""
+    """Return the 12-character commit revision used by this generator process."""
     git = shutil.which("git")
     if git is None:
         msg = "git is required to record contract fixture provenance"
         raise RuntimeError(msg)
     completed = subprocess.run(  # noqa: S603
-        [git, "describe", "--always", "--dirty"],
+        [git, "rev-parse", "--short=12", "HEAD"],
         cwd=REPOSITORY_ROOT,
         check=True,
         capture_output=True,
@@ -99,6 +103,43 @@ def _git_revision() -> str:
     return completed.stdout.strip()
 
 
+def _git_dirty_paths() -> tuple[Path, ...]:
+    """Return repository-relative paths reported by Git porcelain status."""
+    git = shutil.which("git")
+    if git is None:
+        msg = "git is required to validate contract fixture provenance"
+        raise RuntimeError(msg)
+    completed = subprocess.run(  # noqa: S603
+        [git, "status", "--porcelain"],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    paths: list[Path] = []
+    for line in completed.stdout.splitlines():
+        raw_path = line[3:]
+        if " -> " in raw_path:
+            raw_path = raw_path.rsplit(" -> ", maxsplit=1)[1]
+        paths.append(Path(raw_path))
+    return tuple(paths)
+
+
+def _require_write_tree_hygiene() -> None:
+    """Refuse regeneration when dirtiness extends beyond expected snapshots."""
+    dirty_paths = _git_dirty_paths()
+    disallowed = [
+        path
+        for path in dirty_paths
+        if path != _EXPECTED_RELATIVE_ROOT and _EXPECTED_RELATIVE_ROOT not in path.parents
+    ]
+    if disallowed:
+        rendered = ", ".join(path.as_posix() for path in disallowed)
+        msg = (
+            f"contract snapshot regeneration requires a clean code tree; dirty paths: "
+            f"{rendered}. Remediation: {_PROVENANCE_REMEDIATION}"
+        )
+        raise RuntimeError(msg)
 
 
 def _normalize_string(value: str, roots: Sequence[Path]) -> str:
@@ -484,18 +525,35 @@ def source_revision_warnings(
 ) -> list[str]:
     """Return non-failing warnings for stale frozen source provenance."""
     current = current_commit or _git_revision()
-    recorded = {
-        str(json.loads(path.read_text(encoding="utf-8")).get("source", {}).get("commit"))
-        for path in root.rglob("*.json")
-    }
-    recorded.discard("None")
+    recorded = _recorded_source_commits(root)
     return [
         (
             f"warning: frozen source.commit {commit} differs from current revision {current}; "
             "remediation: regenerate all contract snapshots with _generate.py"
         )
         for commit in sorted(recorded)
-        if commit != current
+        if commit not in {current, "<unrecorded>"} and "-dirty" not in commit
+    ]
+
+
+def _recorded_source_commits(root: Path) -> set[str]:
+    """Return source commits, mapping missing or null values to unrecorded."""
+    recorded: set[str] = set()
+    for path in root.rglob("*.json"):
+        commit = json.loads(path.read_text(encoding="utf-8")).get("source", {}).get("commit")
+        recorded.add(commit if isinstance(commit, str) else "<unrecorded>")
+    return recorded
+
+
+def source_revision_errors(*, root: Path = EXPECTED_ROOT) -> list[str]:
+    """Return fatal errors for unauditable frozen source provenance."""
+    return [
+        (
+            f"frozen source.commit {commit!r} is unauditable. "
+            f"Remediation: {_PROVENANCE_REMEDIATION}"
+        )
+        for commit in sorted(_recorded_source_commits(root))
+        if not commit or commit == "<unrecorded>" or "-dirty" in commit
     ]
 
 
@@ -756,6 +814,8 @@ def freeze_expected_outputs(*, check: bool) -> list[str]:
     staleness is surfaced by the non-failing ``source_revision_warnings``
     instead. Only a real regeneration (check=False) stamps a new revision.
     """
+    if not check:
+        _require_write_tree_hygiene()
     stamped_commit = None if check else _git_revision()
     mismatches: list[str] = []
     for path in expected_snapshot_paths():
@@ -802,6 +862,10 @@ def main() -> int:
         mode, outcome, root = args.oracle_worker
         return _run_oracle_worker(mode, outcome, Path(root))
     if args.check:
+        provenance_errors = source_revision_errors()
+        if provenance_errors:
+            print("\n".join(provenance_errors), file=sys.stderr)  # noqa: T201
+            return 1
         for warning in source_revision_warnings():
             print(warning, file=sys.stderr)  # noqa: T201
         input_mismatches, xlsx_note = check_static_input_drift()
@@ -812,6 +876,7 @@ def main() -> int:
             return 1
         print("all normalized v1 snapshots match frozen expectations")  # noqa: T201
         return 0
+    _require_write_tree_hygiene()
     manifest = build_static_inputs()
     freeze_expected_outputs(check=False)
     message = f"built inputs and froze v1 outputs for {', '.join(sorted(manifest))}"
@@ -820,4 +885,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
