@@ -78,3 +78,12 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   discovery remains correct after pre-import.
 - Read `migrate apply` inputs with their PEP 263 declared encoding and report
   malformed files without aborting sibling conversions.
+
+### Added — Phase G unified-runner contracts
+
+- Added the seven v1 artifact-behavior settings to strict `RdeConfig` with
+  v1-identical defaults, including a dedicated `smarttable` section.
+- Added immutable `FlowTarget`, `LegacyCallbackTarget`, and `RunRequest`
+  boundary types plus entry-point normalization using catalog error 1001.
+- Fixed the Phase H contracts for legacy config normalization and explicit
+  `RunReport.to_legacy_statuses()` conversion against frozen v1 fixtures.
