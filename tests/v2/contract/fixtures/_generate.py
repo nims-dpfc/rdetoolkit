@@ -852,6 +852,15 @@ def _parse_args() -> argparse.Namespace:
         help="regenerate normalized expectations in isolation and compare only",
     )
     parser.add_argument("--oracle-worker", nargs=3, metavar=("MODE", "OUTCOME", "ROOT"), help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--provenance-root",
+        type=Path,
+        default=None,
+        help=(
+            "test support: run ONLY the provenance hygiene gate against this "
+            "expected-snapshot root and exit (no observation, no drift check)"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -861,6 +870,13 @@ def main() -> int:
     if args.oracle_worker is not None:
         mode, outcome, root = args.oracle_worker
         return _run_oracle_worker(mode, outcome, Path(root))
+    if args.provenance_root is not None:
+        provenance_errors = source_revision_errors(root=args.provenance_root)
+        if provenance_errors:
+            print("\n".join(provenance_errors), file=sys.stderr)  # noqa: T201
+            return 1
+        print("provenance ok")  # noqa: T201
+        return 0
     if args.check:
         provenance_errors = source_revision_errors()
         if provenance_errors:

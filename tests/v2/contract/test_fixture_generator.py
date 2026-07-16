@@ -445,7 +445,7 @@ def test_check_mode_returns_nonzero_for_invalid_frozen_provenance__tc_gr_008(
     monkeypatch.setattr(
         _generate,
         "_parse_args",
-        lambda: SimpleNamespace(check=True, oracle_worker=None),
+        lambda: SimpleNamespace(provenance_root=None, check=True, oracle_worker=None),
     )
     monkeypatch.setattr(
         _generate,
@@ -461,12 +461,25 @@ def test_check_mode_returns_nonzero_for_invalid_frozen_provenance__tc_gr_008(
     assert "fatal provenance; commit code changes first" in capsys.readouterr().err
 
 
-def test_check_script_propagates_fatal_provenance_exit_code__tc_gr_008() -> None:
-    """TC-GR-008: the executable check command exits nonzero for dirty snapshots."""
-    # Given: the current frozen inventory with its known dirty writer provenance
-    # When: invoking the generator through its documented CLI check command
+def test_check_script_propagates_fatal_provenance_exit_code__tc_gr_008(
+    tmp_path: Path,
+) -> None:
+    """TC-GR-008: the executable CLI exits nonzero for dirty snapshot provenance.
+
+    Uses a synthetic dirty snapshot under an isolated ``--provenance-root`` so
+    the assertion never depends on the (normally clean) committed inventory.
+    """
+    # Given: an isolated expected-root holding one dirty-provenance snapshot
+    snapshot = tmp_path / "invoice" / "ok.json"
+    snapshot.parent.mkdir(parents=True)
+    snapshot.write_text(
+        json.dumps({"source": {"tag": _generate.SOURCE_TAG, "commit": "deadbeef-dirty"}}),
+        encoding="utf-8",
+    )
+
+    # When: invoking the generator CLI's provenance gate against that root
     completed = subprocess.run(  # noqa: S603
-        [sys.executable, str(_generate.__file__), "--check"],
+        [sys.executable, str(_generate.__file__), "--provenance-root", str(tmp_path)],
         cwd=_generate.REPOSITORY_ROOT,
         check=False,
         capture_output=True,
@@ -487,7 +500,7 @@ def test_write_mode_checks_hygiene_before_rebuilding_inputs__tc_gr_006(
     monkeypatch.setattr(
         _generate,
         "_parse_args",
-        lambda: SimpleNamespace(check=False, oracle_worker=None),
+        lambda: SimpleNamespace(provenance_root=None, check=False, oracle_worker=None),
     )
 
     def _reject_dirty_tree() -> None:
