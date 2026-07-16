@@ -424,6 +424,11 @@ def _materialize_oracle_case(mode: str, root: Path, *, zero_rows: bool = False) 
         return
 
     shutil.copytree(INPUT_ROOT / mode / "data", root / "data")
+    # git cannot track empty directories, so a fresh checkout loses the empty
+    # data/unpacked/ that build_static_inputs creates on disk. Recreate it here
+    # so the staged tree (and therefore the observed output tree) is identical
+    # on local working copies and CI checkouts alike.
+    (root / "data" / "unpacked").mkdir(exist_ok=True)
     if mode == "excelinvoice":
         _select_excelinvoice_case(root, zero_rows=zero_rows)
 
