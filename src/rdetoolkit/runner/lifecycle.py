@@ -484,12 +484,12 @@ def _run_invoice_source(
     data_root = _data_root(root)
     invoice_org = data_root / "invoice" / "invoice.json"
     excel_path: Path | None = None
-    if mode is ModeKind.excelinvoice:
+    if mode is ModeKind.excelinvoice and data_root != root:
         input_candidates = tuple(inputdata_path.iterdir()) if inputdata_path.exists() else ()
         candidates = (*rawfiles, *input_candidates)
         excel_path = _first_matching(candidates, suffixes=(".xlsx", ".xlsm", ".xls"))
     if data_root == root:
-        return _flat_layout_invoice_source(mode, invoice_org=invoice_org, excel_path=excel_path)
+        return _flat_layout_invoice_source(mode, invoice_org=invoice_org)
     with chdir(root):
         return backup_invoice_json_files(excel_path, _legacy_backup_mode(mode))
 
@@ -498,14 +498,8 @@ def _flat_layout_invoice_source(
     mode: ModeKind,
     *,
     invoice_org: Path,
-    excel_path: Path | None,
 ) -> Path:
     """Preserve the test/public flat-root layout unsupported by the v1 helper."""
-    if mode is ModeKind.excelinvoice:
-        try:
-            return backup_invoice_json_files(excel_path, _legacy_backup_mode(mode))
-        except FileNotFoundError:
-            return invoice_org
     if not invoice_org.exists():
         return invoice_org
     backup_path = invoice_org.parent.parent / "temp" / "invoice_org.json"

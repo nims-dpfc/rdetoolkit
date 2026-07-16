@@ -39,7 +39,6 @@ from tests.fixtures.excelinvoice import (  # noqa: E402
 )
 
 SOURCE_TAG = "v2.0.0a1"
-SOURCE_COMMIT = "8db74fa"
 GENERATED_ON = "2026-07-15"
 
 FIXTURE_ROOT = Path(__file__).resolve().parent
@@ -69,6 +68,38 @@ _KEY_PLACEHOLDERS = {
     "dateSubmitted": "<DATE>",
 }
 _VERSION_PATTERN = re.compile(r"(?m)^rdetoolkit==[^\s]+$")
+
+# v1 genuinely records an order-dependent ``target``: the pipeline sets
+# ``WorkflowExecutionStatus.target = ProcessingContext.basedir`` which is
+# ``rawfiles[0].parent`` (src/rdetoolkit/processing/context.py), and in
+# rdeformat mode the rawfiles tuple order comes from ``Path.glob("**/*")``
+# inside ``RDEFormatChecker._unpacked`` (src/rdetoolkit/impl/input_controller.py)
+# -- raw os.scandir filesystem order, which differs across machines.
+# Within one tile the first raw file may live in raw/, meta/, or structured/,
+# so the tile-subdirectory component of ``target`` is not a stable contract.
+# v1 source is read-only for these fixtures, so normalization keeps the
+# deterministic tile prefix and replaces only the order-dependent remainder.
+_TILE_TARGET_PATTERN = re.compile(r"^(data/temp/\d{4})/.+$")
+_TILE_TARGET_PLACEHOLDER = r"\1/<TILE_SUBDIR>"
+
+
+def _git_revision() -> str:
+    """Return the exact source revision used by this generator process."""
+    git = shutil.which("git")
+    if git is None:
+        msg = "git is required to record contract fixture provenance"
+        raise RuntimeError(msg)
+    completed = subprocess.run(  # noqa: S603
+        [git, "describe", "--always", "--dirty"],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
+SOURCE_COMMIT = _git_revision()
 
 
 def _normalize_string(value: str, roots: Sequence[Path]) -> str:
@@ -104,10 +135,11 @@ def normalize_snapshot(
         }
     if isinstance(value, (list, tuple)):
         return [normalize_snapshot(item, roots=roots) for item in value]
-    if isinstance(value, Path):
-        return _normalize_string(str(value), roots)
-    if isinstance(value, str):
-        return _normalize_string(value, roots)
+    if isinstance(value, (str, Path)):
+        normalized = _normalize_string(str(value), roots)
+        if _key == "target":
+            normalized = _TILE_TARGET_PATTERN.sub(_TILE_TARGET_PLACEHOLDER, normalized)
+        return normalized
     return value
 
 
@@ -405,6 +437,69 @@ def build_static_inputs(destination: Path = INPUT_ROOT) -> dict[str, dict[str, A
     return manifest
 
 
+_XLSX_DRIFT_NOTE = (
+    "xlsx drift check: compared workbook cell values; byte comparison skipped "
+    "because openpyxl metadata is nondeterministic"
+)
+
+
+def _relative_files(root: Path) -> dict[Path, Path]:
+    return {path.relative_to(root): path for path in root.rglob("*") if path.is_file()}
+
+
+def _workbook_values_equal(left: Path, right: Path) -> bool:
+    left_book = pd.read_excel(left, sheet_name=None, header=None)
+    right_book = pd.read_excel(right, sheet_name=None, header=None)
+    if left_book.keys() != right_book.keys():
+        return False
+    return all(left_book[sheet].equals(right_book[sheet]) for sheet in left_book)
+
+
+def check_static_input_drift(committed_root: Path = INPUT_ROOT) -> tuple[list[str], str]:
+    """Rebuild static inputs and report committed fixture drift."""
+    with tempfile.TemporaryDirectory(prefix="rdetoolkit-g-review-inputs-") as temporary:
+        generated_root = Path(temporary) / "inputs"
+        build_static_inputs(generated_root)
+        committed = _relative_files(committed_root)
+        generated = _relative_files(generated_root)
+        mismatches: list[str] = []
+        for relative in sorted(committed.keys() | generated.keys()):
+            committed_path = committed.get(relative)
+            generated_path = generated.get(relative)
+            if committed_path is None or generated_path is None:
+                mismatches.append(f"input inventory differs: {relative.as_posix()}")
+                continue
+            if relative.suffix.lower() == ".xlsx":
+                if not _workbook_values_equal(committed_path, generated_path):
+                    mismatches.append(f"xlsx input values differ: {relative.as_posix()}")
+                continue
+            if committed_path.read_bytes() != generated_path.read_bytes():
+                mismatches.append(f"deterministic input differs: {relative.as_posix()}")
+        return mismatches, _XLSX_DRIFT_NOTE
+
+
+def source_revision_warnings(
+    *,
+    root: Path = EXPECTED_ROOT,
+    current_commit: str | None = None,
+) -> list[str]:
+    """Return non-failing warnings for stale frozen source provenance."""
+    current = current_commit or SOURCE_COMMIT
+    recorded = {
+        str(json.loads(path.read_text(encoding="utf-8")).get("source", {}).get("commit"))
+        for path in root.rglob("*.json")
+    }
+    recorded.discard("None")
+    return [
+        (
+            f"warning: frozen source.commit {commit} differs from current revision {current}; "
+            "remediation: regenerate all contract snapshots with _generate.py"
+        )
+        for commit in sorted(recorded)
+        if commit != current
+    ]
+
+
 def expected_snapshot_paths(root: Path = EXPECTED_ROOT) -> list[Path]:
     """Return the complete frozen v1 snapshot inventory."""
     modes = ("invoice", "excelinvoice", "multidatatile", "rdeformat", "smarttable")
@@ -550,14 +645,18 @@ def _read_legacy_return(value: str | None) -> Any:
 def _collect_oracle_observation(root: Path, result: str | None, exit_code: int) -> dict[str, Any]:
     data_root = root / "data"
     job_failed = data_root / "job.failed"
+    invoice_backup_path = data_root / "temp" / "invoice_org.json"
     callback_marker = root / ".callback_calls"
     callback_count = (
         len(callback_marker.read_text(encoding="utf-8").splitlines())
         if callback_marker.exists() else 0
     )
-    job_failed_error_code = (
-        job_failed.read_text(encoding="utf-8").splitlines()[0]
-        if job_failed.exists() else None
+    job_failed_text = job_failed.read_text(encoding="utf-8") if job_failed.exists() else None
+    job_failed_error_code = job_failed_text.splitlines()[0] if job_failed_text is not None else None
+    invoice_backup = (
+        json.loads(invoice_backup_path.read_text(encoding="utf-8"))
+        if invoice_backup_path.exists()
+        else None
     )
     return {
         "exit_code": exit_code,
@@ -567,7 +666,9 @@ def _collect_oracle_observation(root: Path, result: str | None, exit_code: int) 
         "invoices": _invoice_outputs(data_root),
         "raw_sha256": _raw_hashes(data_root),
         "job_failed_error_code": job_failed_error_code,
-        "invoice_backup_exists": (data_root / "temp" / "invoice_org.json").exists(),
+        "job_failed_text": job_failed_text,
+        "invoice_backup_exists": invoice_backup_path.exists(),
+        "invoice_backup": invoice_backup,
     }
 
 
@@ -688,7 +789,11 @@ def main() -> int:
         mode, outcome, root = args.oracle_worker
         return _run_oracle_worker(mode, outcome, Path(root))
     if args.check:
-        mismatches = freeze_expected_outputs(check=True)
+        for warning in source_revision_warnings():
+            print(warning, file=sys.stderr)  # noqa: T201
+        input_mismatches, xlsx_note = check_static_input_drift()
+        print(xlsx_note)  # noqa: T201
+        mismatches = [*input_mismatches, *freeze_expected_outputs(check=True)]
         if mismatches:
             print("\n".join(mismatches), file=sys.stderr)  # noqa: T201
             return 1

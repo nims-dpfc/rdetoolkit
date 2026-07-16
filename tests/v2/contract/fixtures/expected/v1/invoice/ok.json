@@ -7,6 +7,7 @@
   "observed": {
     "callback_count": 1,
     "exit_code": 0,
+    "invoice_backup": null,
     "invoice_backup_exists": false,
     "invoices": {
       "data/invoice/invoice.json": {
@@ -19,6 +20,7 @@
       }
     },
     "job_failed_error_code": null,
+    "job_failed_text": null,
     "legacy_return": {
       "statuses": [
         {
@@ -67,7 +69,7 @@
     }
   },
   "source": {
-    "commit": "8db74fa",
+    "commit": "b7db084-dirty",
     "tag": "v2.0.0a1"
   }
 }

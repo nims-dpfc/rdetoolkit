@@ -7,6 +7,14 @@
   "observed": {
     "callback_count": 2,
     "exit_code": 0,
+    "invoice_backup": {
+      "basic": {
+        "dataName": "seed",
+        "dataOwnerId": "00000000000000000000000000000000000000000000000000000000",
+        "dateSubmitted": "<DATE>"
+      },
+      "datasetId": "seed-dataset"
+    },
     "invoice_backup_exists": true,
     "invoices": {
       "data/divided/0001/invoice/invoice.json": {
@@ -27,6 +35,7 @@
       }
     },
     "job_failed_error_code": null,
+    "job_failed_text": null,
     "legacy_return": {
       "statuses": [
         {
@@ -36,7 +45,7 @@
           "run_id": "<RUN_ID>",
           "stacktrace": "<TRACEBACK>",
           "status": "success",
-          "target": "data/temp/0000/structured",
+          "target": "data/temp/0000/<TILE_SUBDIR>",
           "title": "seed"
         },
         {
@@ -46,7 +55,7 @@
           "run_id": "<RUN_ID>",
           "stacktrace": "<TRACEBACK>",
           "status": "success",
-          "target": "data/temp/0001/meta",
+          "target": "data/temp/0001/<TILE_SUBDIR>",
           "title": "seed"
         }
       ]
@@ -115,7 +124,7 @@
     }
   },
   "source": {
-    "commit": "8db74fa",
+    "commit": "b7db084-dirty",
     "tag": "v2.0.0a1"
   }
 }

@@ -7,6 +7,10 @@
   "observed": {
     "callback_count": 0,
     "exit_code": 1,
+    "invoice_backup": {
+      "basic": null,
+      "datasetId": "seed-dataset"
+    },
     "invoice_backup_exists": true,
     "invoices": {
       "data/invoice/invoice.json": {
@@ -15,6 +19,7 @@
       }
     },
     "job_failed_error_code": "ErrorCode=1",
+    "job_failed_text": "ErrorCode=1\nErrorMessage=Failed to generate invoice file for data 0\n",
     "legacy_return": null,
     "output_tree": {
       "directories": [
@@ -50,7 +55,7 @@
     "raw_sha256": {}
   },
   "source": {
-    "commit": "8db74fa",
+    "commit": "b7db084-dirty",
     "tag": "v2.0.0a1"
   }
 }

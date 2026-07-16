@@ -6,19 +6,40 @@ EP table:
     TC-G1-002 (normal): canonical JSON output is byte-identical across writes.
     TC-G1-003 (abnormal): ``--check`` reports a missing frozen snapshot instead
         of silently creating an expected value.
+    TC-GR-001 (abnormal): an empty-directory-free checkout still stages every
+        output-tree directory required by the frozen contract.
+    TC-GR-002 (normal): oracle observations freeze parsed backup content and
+        complete normalized ``job.failed`` text without dropping legacy fields.
+    TC-GR-003 (abnormal): ``--check`` warns when frozen and executing source
+        revisions differ without turning the warning into snapshot failure.
+    TC-GR-004 (abnormal): deterministic generated-input drift is reported by
+        relative fixture path instead of being ignored by snapshot checking.
+    TC-GR-005 (abnormal): ascending and descending rdeformat file discovery
+        normalize order-dependent status targets to the same stable value.
 
 BV table:
     TC-G1-004 (empty): normalization preserves empty containers and ``None``.
+    TC-GR-001 (empty directory): missing ``data/unpacked`` is recreated during
+        oracle-case materialization.
+    TC-GR-002 (multiline): the first error line and trailing traceback/message
+        lines are all retained in the frozen observation.
+    TC-GR-003 (one revision): a single stale recorded commit emits one warning.
+    TC-GR-004 (one byte): a one-byte deterministic manifest change is detected;
+        XLSX validation uses values because package metadata is nondeterministic.
+    TC-GR-005 (two orders): opposite first-file selections keep each tile prefix
+        and replace only the nondeterministic subdirectory component.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 import zipfile
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from rdetoolkit.invoicefile import SmartTableFile
 from tests.v2.contract.fixtures import _generate
@@ -245,3 +266,121 @@ def test_frozen_v1_scenarios_cover_matrix_and_excel_zero_boundary__tc_g1_010() -
         }
         assert payload["observed"]["exit_code"] in {0, 1}
         assert "output_tree" in payload["observed"]
+
+
+def test_materialize_oracle_case_recreates_unpacked_after_fresh_checkout__tc_gr_001(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-GR-001: staging recreates contract directories Git cannot preserve."""
+    # Given: a copied input tree with all empty directories removed like Git checkout
+    checkout_inputs = tmp_path / "checkout-inputs"
+    shutil.copytree(_generate.INPUT_ROOT, checkout_inputs)
+    for path in sorted(checkout_inputs.rglob("*"), reverse=True):
+        if path.is_dir() and not any(path.iterdir()):
+            path.rmdir()
+    assert not (checkout_inputs / "multidatatile" / "data" / "unpacked").exists()
+    monkeypatch.setattr(_generate, "INPUT_ROOT", checkout_inputs)
+
+    # When: materializing a v1 oracle case from that Git-representable input
+    staged_root = tmp_path / "staged"
+    _generate._materialize_oracle_case("multidatatile", staged_root)
+
+    # Then: the staged output tree contains the required empty directory
+    assert (staged_root / "data" / "unpacked").is_dir()
+
+
+def test_oracle_observation_freezes_backup_and_full_normalized_job_failed__tc_gr_002(
+    tmp_path: Path,
+) -> None:
+    """TC-GR-002: observations retain backup JSON and every job.failed line."""
+    # Given: an oracle tree with a backup and multiline failure containing its root
+    data_root = tmp_path / "data"
+    backup = data_root / "temp" / "invoice_org.json"
+    backup.parent.mkdir(parents=True)
+    backup_value = {"datasetId": "source", "basic": {"dataName": "original"}}
+    backup.write_text(json.dumps(backup_value), encoding="utf-8")
+    job_failed = data_root / "job.failed"
+    job_failed.write_text(
+        f"ErrorCode=999\nErrorMessage=failed at {tmp_path}/input.txt\nTraceback: detail\n",
+        encoding="utf-8",
+    )
+
+    # When: collecting and normalizing the complete oracle observation
+    observed = _generate._collect_oracle_observation(tmp_path, None, 1)
+    normalized = _generate.normalize_snapshot(observed, roots=(tmp_path,))
+
+    # Then: new full-content fields and the legacy compatibility fields coexist
+    assert normalized["invoice_backup"] == backup_value
+    assert normalized["invoice_backup_exists"] is True
+    assert normalized["job_failed_error_code"] == "ErrorCode=999"
+    assert normalized["job_failed_text"] == (
+        "ErrorCode=999\nErrorMessage=failed at <RUN_ROOT>/input.txt\nTraceback: detail\n"
+    )
+
+
+def test_source_revision_warning_is_explicit_and_non_failing__tc_gr_003(
+    tmp_path: Path,
+) -> None:
+    """TC-GR-003: stale snapshot provenance produces remediation-rich warning."""
+    # Given: one frozen snapshot recorded from a different source revision
+    snapshot = tmp_path / "invoice" / "ok.json"
+    snapshot.parent.mkdir(parents=True)
+    snapshot.write_text(json.dumps({"source": {"commit": "old-revision"}}), encoding="utf-8")
+
+    # When: checking provenance against the executing revision
+    warnings = _generate.source_revision_warnings(
+        root=tmp_path,
+        current_commit="new-revision",
+    )
+
+    # Then: the warning names both revisions and embeds the regeneration remedy
+    assert warnings == [
+        "warning: frozen source.commit old-revision differs from current revision "
+        "new-revision; remediation: regenerate all contract snapshots with _generate.py"
+    ]
+
+
+def test_static_input_check_detects_deterministic_manifest_drift__tc_gr_004(
+    tmp_path: Path,
+) -> None:
+    """TC-GR-004: one deterministic input byte change is reported by --check."""
+    # Given: a committed-input copy with one deterministic manifest byte changed
+    committed = tmp_path / "committed-inputs"
+    shutil.copytree(_generate.INPUT_ROOT, committed)
+    (committed / "manifest.json").write_text("{}\n", encoding="utf-8")
+
+    # When: rebuilding inputs and comparing deterministic bytes/XLSX values
+    mismatches, xlsx_note = _generate.check_static_input_drift(committed)
+
+    # Then: deterministic drift fails explicitly while XLSX policy is documented
+    assert any("manifest.json" in mismatch for mismatch in mismatches)
+    assert xlsx_note == (
+        "xlsx drift check: compared workbook cell values; byte comparison skipped "
+        "because openpyxl metadata is nondeterministic"
+    )
+
+
+def test_rdeformat_targets_match_for_ascending_and_descending_discovery__tc_gr_005() -> None:
+    """TC-GR-005: opposite scandir orders produce identical normalized targets."""
+    # Given: rdeformat statuses produced by opposite first-file discovery orders
+    ascending = [
+        {"target": "data/temp/0000/raw"},
+        {"target": "data/temp/0001/meta"},
+    ]
+    descending = [
+        {"target": "data/temp/0000/structured"},
+        {"target": "data/temp/0001/raw"},
+    ]
+
+    # When: normalizing both v1 observations through the contract generator
+    ascending_normalized = _generate.normalize_snapshot(ascending)
+    descending_normalized = _generate.normalize_snapshot(descending)
+
+    # Then: deterministic tile prefixes remain and order-dependent suffixes agree
+    expected = [
+        {"target": "data/temp/0000/<TILE_SUBDIR>"},
+        {"target": "data/temp/0001/<TILE_SUBDIR>"},
+    ]
+    assert ascending_normalized == expected
+    assert descending_normalized == expected

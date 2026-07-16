@@ -1,0 +1,12 @@
+{
+  "iteration_index": 0,
+  "status": "failed",
+  "call_records": [],
+  "outputs": [],
+  "error": {
+    "code": 3001,
+    "name": "NodeExecutionFailed",
+    "message": "invoice preparation failed",
+    "remediation": "Inspect the chained original exception (__cause__) and the call-log entry for the failing call; fix the node implementation or its inputs. Nodes are plain functions - reproduce directly with pytest."
+  }
+}
