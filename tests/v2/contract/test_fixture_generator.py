@@ -257,15 +257,24 @@ def test_frozen_v1_scenarios_cover_matrix_and_excel_zero_boundary__tc_g1_010() -
     assert relative == expected
     assert all(path.is_file() for path in snapshots)
 
-    # And: each value records the generator provenance and observed v1 result
+    # And: each value records the generator provenance and observed v1 result.
+    # source.commit is the revision that WROTE the snapshot (recorded at
+    # regeneration time), so it must be one non-empty value shared by every
+    # snapshot (single-regeneration invariant) — it intentionally does NOT
+    # have to match the currently checked-out revision; staleness is a
+    # non-failing warning surfaced by _generate.source_revision_warnings.
+    recorded_commits: set[str] = set()
     for path in snapshots:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        assert payload["source"] == {
-            "commit": _generate.SOURCE_COMMIT,
-            "tag": _generate.SOURCE_TAG,
-        }
+        assert payload["source"]["tag"] == _generate.SOURCE_TAG
+        commit = payload["source"]["commit"]
+        assert isinstance(commit, str) and commit and commit != "<unrecorded>"
+        recorded_commits.add(commit)
         assert payload["observed"]["exit_code"] in {0, 1}
         assert "output_tree" in payload["observed"]
+    assert len(recorded_commits) == 1, (
+        f"snapshots must come from one regeneration run, got {sorted(recorded_commits)}"
+    )
 
 
 def test_materialize_oracle_case_recreates_unpacked_after_fresh_checkout__tc_gr_001(

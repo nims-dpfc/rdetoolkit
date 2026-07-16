@@ -99,7 +99,6 @@ def _git_revision() -> str:
     return completed.stdout.strip()
 
 
-SOURCE_COMMIT = _git_revision()
 
 
 def _normalize_string(value: str, roots: Sequence[Path]) -> str:
@@ -484,7 +483,7 @@ def source_revision_warnings(
     current_commit: str | None = None,
 ) -> list[str]:
     """Return non-failing warnings for stale frozen source provenance."""
-    current = current_commit or SOURCE_COMMIT
+    current = current_commit or _git_revision()
     recorded = {
         str(json.loads(path.read_text(encoding="utf-8")).get("source", {}).get("commit"))
         for path in root.rglob("*.json")
@@ -749,12 +748,26 @@ def _snapshot_case_from_path(path: Path) -> tuple[str, str, bool]:
 
 
 def freeze_expected_outputs(*, check: bool) -> list[str]:
-    """Observe every v1 scenario and write or compare normalized snapshots."""
+    """Observe every v1 scenario and write or compare normalized snapshots.
+
+    Provenance semantics: ``source.commit`` records the revision that WROTE a
+    snapshot. In check mode the frozen provenance is carried forward so that
+    a later commit does not turn every snapshot into a false mismatch —
+    staleness is surfaced by the non-failing ``source_revision_warnings``
+    instead. Only a real regeneration (check=False) stamps a new revision.
+    """
+    stamped_commit = None if check else _git_revision()
     mismatches: list[str] = []
     for path in expected_snapshot_paths():
         mode, outcome, zero_rows = _snapshot_case_from_path(path)
+        if check and path.exists():
+            frozen_source = json.loads(path.read_text(encoding="utf-8")).get(
+                "source", {"tag": SOURCE_TAG, "commit": "<unrecorded>"},
+            )
+        else:
+            frozen_source = {"tag": SOURCE_TAG, "commit": stamped_commit}
         payload = {
-            "source": {"tag": SOURCE_TAG, "commit": SOURCE_COMMIT},
+            "source": frozen_source,
             "case": {
                 "mode": mode,
                 "outcome": "zero_rows" if zero_rows else outcome,
