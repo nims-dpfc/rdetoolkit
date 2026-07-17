@@ -1,0 +1,61 @@
+{
+  "case": {
+    "entry": "custom_dataset_function",
+    "mode": "excelinvoice",
+    "outcome": "valerr"
+  },
+  "observed": {
+    "callback_count": 0,
+    "exit_code": 1,
+    "invoice_backup": {
+      "basic": null,
+      "datasetId": "seed-dataset"
+    },
+    "invoice_backup_exists": true,
+    "invoices": {
+      "data/invoice/invoice.json": {
+        "basic": null,
+        "datasetId": "seed-dataset"
+      }
+    },
+    "job_failed_error_code": "ErrorCode=1",
+    "job_failed_text": "ErrorCode=1\nErrorMessage=Failed to generate invoice file for data 0\n",
+    "legacy_return": null,
+    "output_tree": {
+      "directories": [
+        "data/attachment/",
+        "data/inputdata/",
+        "data/invoice/",
+        "data/invoice_patch/",
+        "data/logs/",
+        "data/main_image/",
+        "data/meta/",
+        "data/nonshared_raw/",
+        "data/other_image/",
+        "data/raw/",
+        "data/structured/",
+        "data/tasksupport/",
+        "data/temp/",
+        "data/thumbnail/",
+        "data/unpacked/"
+      ],
+      "files": [
+        "data/inputdata/contract_excel_invoice.xlsx",
+        "data/inputdata/excelinvoice_files.zip",
+        "data/invoice/invoice.json",
+        "data/job.failed",
+        "data/logs/rdesys_<LOG_TIMESTAMP>.log",
+        "data/tasksupport/invoice.schema.json",
+        "data/tasksupport/metadata-def.json",
+        "data/temp/invoice_org.json",
+        "data/temp/test_child1.txt",
+        "data/temp/test_child2.txt"
+      ]
+    },
+    "raw_sha256": {}
+  },
+  "source": {
+    "commit": "4567d981e26d",
+    "tag": "v2.0.0a1"
+  }
+}

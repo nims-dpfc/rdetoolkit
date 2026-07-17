@@ -66,6 +66,12 @@ class IterationInfo:
 class V2SystemSettings(BaseModel):
     model_config: ConfigDict
     extended_mode: str = ...
+    save_raw: bool = ...
+    save_nonshared_raw: bool = ...
+    save_thumbnail_image: bool = ...
+    magic_variable: bool = ...
+    save_invoice_to_structured: bool = ...
+    feature_description: bool = ...
 
 class V2ExecutionSettings(BaseModel):
     model_config: ConfigDict
@@ -77,6 +83,10 @@ class V2RecordingSettings(BaseModel):
     repr_head: Literal["on", "off"]
     repr_head_len: int
 
+class V2SmartTableSettings(BaseModel):
+    model_config: ConfigDict
+    save_table_file: bool = ...
+
 
 class RdeConfig(BaseModel):
     model_config: ConfigDict
@@ -84,6 +94,7 @@ class RdeConfig(BaseModel):
     execution: V2ExecutionSettings = Field(default_factory=V2ExecutionSettings)
     provenance: V2RecordingSettings = Field(default_factory=V2RecordingSettings)
     custom: dict[str, Any] = Field(default_factory=dict)
+    smarttable: V2SmartTableSettings = Field(default_factory=V2SmartTableSettings)
 
 def _require_simple_filename(filename: str) -> None: ...
 def _build_output_context(

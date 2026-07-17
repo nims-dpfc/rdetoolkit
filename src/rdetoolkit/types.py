@@ -293,6 +293,12 @@ class V2SystemSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     extended_mode: str = "invoice"
+    save_raw: bool = False
+    save_nonshared_raw: bool = True
+    save_thumbnail_image: bool = False
+    magic_variable: bool = False
+    save_invoice_to_structured: bool = False
+    feature_description: bool = True
 
 
 class V2ExecutionSettings(BaseModel):
@@ -317,6 +323,14 @@ class V2RecordingSettings(BaseModel):
     repr_head_len: int = 80
 
 
+class V2SmartTableSettings(BaseModel):
+    """Strict v2 SmartTable artifact settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    save_table_file: bool = False
+
+
 class RdeConfig(BaseModel):
     """Strict v2 Runner configuration.
 
@@ -329,6 +343,7 @@ class RdeConfig(BaseModel):
     execution: V2ExecutionSettings = Field(default_factory=V2ExecutionSettings)
     provenance: V2RecordingSettings = Field(default_factory=V2RecordingSettings)
     custom: dict[str, Any] = Field(default_factory=dict)
+    smarttable: V2SmartTableSettings = Field(default_factory=V2SmartTableSettings)
 
 
 def _build_output_context(

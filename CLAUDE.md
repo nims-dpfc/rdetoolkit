@@ -7,7 +7,7 @@ This file provides Claude Code-specific guidance when working with code in this 
 > **[AGENTS.md](./AGENTS.md)**. This file focuses on Claude Code-specific guidance,
 > architecture, agent usage patterns, and Codex delegation (including `/goal`).
 
-> **⚠️ Canonical design**: `local/develop/v2/Design.md` (**v2.1, 2026-07-04** — eager
+> **⚠️ Canonical design**: `local/develop/v2/Design.md` (**v2.2, 2026-07-15** — eager
 > execution + call-log recording; R1–R10 revisions, ADR-020/021/022). `Plan.md`,
 > the 2026-02 note, and v2.0 (retired to Design_v2.0_20260622.md) are superseded.
 > **Never implement Trace proxies, Build/Compile phases, or pre-execution DAGs** —
@@ -58,7 +58,14 @@ Key invariants (Design §1):
    renders a Call Sequence, not a dataflow DAG.
 4. The Runner owns all RDE ceremony incl. the `job.failed` contract and directory
    contract (golden-tested against v1).
-5. v1 code path (`run(custom_dataset_function=...)`) is untouched — no bridge.
+5. **(revised 2026-07-15, ADR-023)** the v1 *contract* is inviolable — entry
+   point `run(custom_dataset_function=...)`, artifact contracts (directory
+   tree, invoice, job.failed, exit codes), and Tier-1 public API (rde2types,
+   rde2util, invoicefile, errors/exceptions) are guaranteed by frozen contract
+   fixtures. The v1 *implementation* (workflows loop / modeproc dispatch /
+   pipeline) is being unified into the single Runner across Phase G–K
+   (`local/develop/v2/merge_v1/Plan.md`); old orchestration is deleted before
+   v2.0 GA. Bridges (triple implementation) remain forbidden.
 
 ### Rust Core Modules
 
@@ -477,9 +484,9 @@ provenance:
 execution:
   type_check: off              # off (default) | warn | strict
   on_iteration_error: continue # fail_fast | continue (default)
-plugin:
-  preferred_handler:
-    ".ras": "rdetoolkit_xrd.readers:RigakuReader"
+# NOTE: a former `plugin.preferred_handler` example was removed 2026-07-15 —
+# it never existed in Design.md v2.1+ (plugin config wiring is out of scope;
+# discovery/display only, see session_f3.md Conflict #2).
 # v1 sections preserved unchanged
 system:
   extended_mode: null

@@ -78,3 +78,27 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   discovery remains correct after pre-import.
 - Read `migrate apply` inputs with their PEP 263 declared encoding and report
   malformed files without aborting sibling conversions.
+
+### Added — Phase G unified-runner contracts
+
+- Added the seven v1 artifact-behavior settings to strict `RdeConfig` with
+  v1-identical defaults, including a dedicated `smarttable` section.
+- Added immutable `FlowTarget`, `LegacyCallbackTarget`, and `RunRequest`
+  boundary types plus entry-point normalization using catalog error 1001.
+- Fixed the Phase H contracts for legacy config normalization and explicit
+  `RunReport.to_legacy_statuses()` conversion against frozen v1 fixtures.
+
+### Fixed — Phase G contract review remediation
+
+- Made flat-layout ExcelInvoice backup root-relative and independent of the
+  process working directory, with the same parsed JSON content as its source.
+- Recreated Git-unrepresentable empty staging directories during oracle-case
+  materialization and covered fresh-checkout behavior with a regression test.
+- Strengthened all 16 frozen v1 observations with parsed invoice-backup content
+  and complete normalized `job.failed` text.
+- Normalized the order-dependent RDEFormat status-target subdirectory while
+  retaining each deterministic `data/temp/NNNN` tile prefix.
+- Recorded the executing `git describe --always --dirty` revision in generated
+  snapshots and added non-failing provenance warnings plus deterministic input
+  drift checks; XLSX drift is compared semantically because workbook metadata
+  bytes are nondeterministic.

@@ -206,3 +206,6 @@ src/rdetoolkit/core.cpython-*.so
 
 # Machine-generated codex/agmsg hook config (absolute local paths)
 .codex/
+
+# test-suite cwd leak artifacts (see merge_v1 debt: data/ pollution)
+data/logs/

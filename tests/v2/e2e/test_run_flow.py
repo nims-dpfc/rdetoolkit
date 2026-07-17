@@ -30,10 +30,10 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -41,6 +41,7 @@ import pytest
 from rdetoolkit.core.flow import flow
 from rdetoolkit.core.node import node
 from rdetoolkit.models.config import Config, MultiDataTileSettings, SystemSettings
+from rdetoolkit.models.rde2types import RdeOutputResourcePath
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.lifecycle import Runner
 from rdetoolkit.runner.mode_resolver import ModeKind
@@ -60,6 +61,15 @@ _OUTPUT_DIRNAMES = (
     "raw",
     "invoice",
     "logs",
+)
+
+_SMARTTABLE_CONTRACT_DATA = (
+    Path(__file__).resolve().parents[1]
+    / "contract"
+    / "fixtures"
+    / "inputs"
+    / "smarttable"
+    / "data"
 )
 
 
@@ -97,36 +107,6 @@ _SEED_INVOICE_JSON: dict = {
         "dataName": "seed",
     },
 }
-
-# SmartTableInvoiceInitializer._set_sample_owner_id (processing/processors/
-# invoice.py) unconditionally mirrors basic.dataOwnerId into sample.ownerId
-# whenever dataOwnerId is set -- which it always is (system-required). So
-# ONLY the smarttable content-parity test needs a schema whose "sample"
-# field is both allowed (required_fields_only check) and a valid
-# InvoiceSchemaJson shape (properties.sample.label/properties required if
-# "sample" is declared required) -- kept separate from the shared fixture so
-# the other 5 e2e tests stay minimal.
-_SMARTTABLE_INVOICE_SCHEMA_JSON: dict = {
-    "required": ["sample"],
-    "properties": {
-        "sample": {
-            "type": "object",
-            "label": {"ja": "サンプル", "en": "Sample"},
-            "properties": {},
-        },
-    },
-}
-
-# v1's SYSTEM basic_info schema (invoice_basic_and_sample.schema_.json,
-# always enforced regardless of the caller-supplied invoice.schema.json)
-# requires "sample" to match one of sampleWhenAdding/sampleWhenRef/... if
-# "sample" is present at all -- and it always will be, per the note above.
-# sampleWhenRef is the lightest branch: only a UUID-shaped sampleId.
-_SMARTTABLE_SEED_INVOICE_JSON: dict = {
-    **_SEED_INVOICE_JSON,
-    "sample": {"sampleId": "00000000-0000-0000-0000-000000000001"},
-}
-
 
 def _build_data_fixture(
     root: Path,
@@ -427,30 +407,6 @@ class TestExcelinvoiceContentParity:
         assert (v2_root / "data" / "temp" / "invoice_org.json").read_text(encoding="utf-8") == original_invoice
 
 
-def _patched_smarttable_rows(rows: list[tuple[Path, tuple[Path, ...]]]):
-    """Mock ``SmartTableFile``'s row-splitting so both v1 and v2 exercise the
-    real remainder of their respective pipelines against the same rows.
-
-    Mirrors ``tests/v2/runner/test_iterator.py``'s ``_patched_smarttable_rows``
-    (replicated inline, not imported); that helper documents the same mock
-    boundary against ``tests/test_smarttable_checker.py`` (v1, read-only
-    reference). Patching ``SmartTableFile`` (not the checker/detector) keeps
-    mode *detection* and invoice *construction* real for both v1 and v2 --
-    only the CSV-row-splitting step is stubbed, since building a fully valid
-    SmartTable source workbook is an orthogonal concern already mocked at
-    this exact boundary elsewhere in this test suite.
-    """
-    ctx = patch("rdetoolkit.impl.input_controller.SmartTableFile")
-
-    def _configure(mock_cls: Mock) -> Mock:
-        mock_instance = Mock()
-        mock_cls.return_value = mock_instance
-        mock_instance.generate_row_csvs_with_file_mapping.return_value = rows
-        return mock_instance
-
-    return ctx, _configure
-
-
 class TestSmarttableContentParity:
     """TC-E2E-007: smarttable per-tile invoice.json CONTENT matches a real
     v1 smarttable-mode run (decisions_pre_D2.md Ruling 1, D2.7(e)).
@@ -459,43 +415,54 @@ class TestSmarttableContentParity:
     def test_per_tile_invoice_json_content_matches_v1__tc_e2e_007(
         self,
         tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        # Given: the committed spec-complete workbook and zip-backed mappings
         v1_root = tmp_path / "v1"
-        _build_data_fixture(
-            v1_root,
-            input_files={"smarttable_test.csv": "placeholder"},
-            invoice_schema=_SMARTTABLE_INVOICE_SCHEMA_JSON,
-            invoice_json=_SMARTTABLE_SEED_INVOICE_JSON,
-        )
-        row_csv_v1 = v1_root / "data" / "inputdata" / "fsmarttable_row_0.csv"
-        row_csv_v1.write_text("basic/dataName\nsmarttable_value_0\n", encoding="utf-8")
+        shutil.copytree(_SMARTTABLE_CONTRACT_DATA, v1_root / "data")
+        v1_rawfiles: list[set[str]] = []
 
-        ctx1, configure1 = _patched_smarttable_rows([(row_csv_v1, ())])
-        with ctx1 as mock_cls:
-            configure1(mock_cls)
-            with _chdir(v1_root):
-                v1_run(custom_dataset_function=_no_op_v1_fn, config=_v1_config())
+        def _capture_v1(
+            srcpaths: object,
+            resource_paths: RdeOutputResourcePath,
+        ) -> None:
+            del srcpaths
+            v1_rawfiles.append({path.name for path in resource_paths.rawfiles})
+
+        # When: v1 executes the real SmartTable splitter and invoice pipeline
+        with _chdir(v1_root):
+            v1_run(custom_dataset_function=_capture_v1, config=_v1_config())
 
         v2_root = tmp_path / "v2"
-        _build_data_fixture(
-            v2_root,
-            input_files={"smarttable_test.csv": "placeholder"},
-            invoice_schema=_SMARTTABLE_INVOICE_SCHEMA_JSON,
-            invoice_json=_SMARTTABLE_SEED_INVOICE_JSON,
+        shutil.copytree(_SMARTTABLE_CONTRACT_DATA, v2_root / "data")
+        v2_rawfiles: list[set[str]] = []
+
+        @flow
+        def _capture_v2(paths: InputPaths) -> None:
+            v2_rawfiles.append({path.name for path in paths.rawfiles})
+
+        # And: v2 auto-detects and executes the same real workbook
+        with _chdir(v2_root):
+            runner = _make_v2_runner(v2_root)
+            runner.run_id = "e2e-smarttable-content"
+            report = runner.run(_capture_v2)
+
+        # Then: all three row invoices retain v1/v2 content parity
+        invoice_relatives = (
+            Path("data/invoice/invoice.json"),
+            Path("data/divided/0001/invoice/invoice.json"),
+            Path("data/divided/0002/invoice/invoice.json"),
         )
-        row_csv_v2 = v2_root / "data" / "inputdata" / "fsmarttable_row_0.csv"
-        row_csv_v2.write_text("basic/dataName\nsmarttable_value_0\n", encoding="utf-8")
+        expected_names = ("smarttable_value_2", "smarttable_value_0", "smarttable_value_1")
+        for relative, expected_name in zip(invoice_relatives, expected_names, strict=True):
+            v1_invoice = json.loads((v1_root / relative).read_text(encoding="utf-8"))
+            v2_invoice = json.loads((v2_root / relative).read_text(encoding="utf-8"))
+            assert v1_invoice["basic"]["dataName"] == v2_invoice["basic"]["dataName"] == expected_name
 
-        ctx2, configure2 = _patched_smarttable_rows([(row_csv_v2, ())])
-        pipeline = _noop_pipeline("e2e007")
-        with ctx2 as mock_cls:
-            configure2(mock_cls)
-            with _chdir(v2_root):
-                runner = _make_v2_runner(v2_root)
-                runner.run_id = "e2e-smarttable-content"
-                runner.iterate(pipeline, ModeKind.smarttable, RdeConfig())
-
-        v1_invoice = json.loads((v1_root / "data" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
-        v2_invoice = json.loads((v2_root / "data" / "invoice" / "invoice.json").read_text(encoding="utf-8"))
-        assert v1_invoice["basic"]["dataName"] == v2_invoice["basic"]["dataName"] == "smarttable_value_0"
+        # And: row splitting plus zip-backed file mapping ran in both paths
+        assert report.mode == "smarttable"
+        assert len(report.iterations) == 3
+        assert len(v1_rawfiles) == len(v2_rawfiles) == 3
+        assert any("row0.txt" in files for files in v1_rawfiles)
+        assert any("行1.txt" in files for files in v1_rawfiles)
+        assert any("row0.txt" in files for files in v2_rawfiles)
+        assert any("行1.txt" in files for files in v2_rawfiles)

@@ -10,6 +10,7 @@ Design authority: local/develop/v2/Design.md §6.1
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -477,37 +478,41 @@ class TestIterationPreparationEvents:
 
 
 class TestExcelinvoiceSourceBackup:
-    """Review-response delegation guard for the immutable Excel source."""
+    """Review-response path guard for the immutable Excel source."""
 
-    def test_run_invoice_source_delegates_to_v1_backup__tc_d2r_f9(
+    def test_run_invoice_source_copies_flat_invoice_without_workbook__tc_d2r_f9(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """TC-D2R-F9: Excel mode obtains its source from the v1 backup helper."""
+        """TC-D2R-F9: flat Excel mode backs up by root-relative paths."""
         from rdetoolkit.runner.lifecycle import _run_invoice_source
         from rdetoolkit.runner.mode_resolver import ModeKind
 
-        # Given: one Excel input and an observable v1 backup delegation
-        excel_path = tmp_path / "inputdata" / "invoice.xlsx"
-        excel_path.parent.mkdir()
-        excel_path.write_text("placeholder", encoding="utf-8")
-        expected = tmp_path / "data" / "temp" / "invoice_org.json"
-        calls: list[tuple[Path | None, str | None]] = []
+        # Given: a flat source invoice without an Excel workbook
+        inputdata = tmp_path / "inputdata"
+        invoice_dir = tmp_path / "invoice"
+        inputdata.mkdir()
+        invoice_dir.mkdir()
+        source = {"datasetId": "flat-source", "basic": {"dataName": "original"}}
+        (invoice_dir / "invoice.json").write_text(json.dumps(source), encoding="utf-8")
+        expected = tmp_path / "temp" / "invoice_org.json"
 
-        def _backup(excel_invoice_file: Path | None, mode: str | None) -> Path:
-            calls.append((excel_invoice_file, mode))
-            return expected
+        def _unexpected_legacy_backup(*args: object, **kwargs: object) -> Path:
+            raise AssertionError("flat Excel backup must not use the cwd-dependent v1 helper")
 
-        monkeypatch.setattr("rdetoolkit.runner.lifecycle.backup_invoice_json_files", _backup)
+        monkeypatch.setattr("rdetoolkit.runner.lifecycle.backup_invoice_json_files", _unexpected_legacy_backup)
 
-        # When: preparing the run-level Excel invoice source
+        # When: preparing the run-level Excel invoice source from another cwd
+        caller = tmp_path / "caller"
+        caller.mkdir()
+        monkeypatch.chdir(caller)
         actual = _run_invoice_source(
             ModeKind.excelinvoice,
             root=tmp_path,
-            inputdata_path=excel_path.parent,
+            inputdata_path=inputdata,
         )
 
-        # Then: Runner uses the exact source returned by the v1 convention
+        # Then: Runner creates and returns the explicit backup with exact content
         assert actual == expected
-        assert calls == [(excel_path, None)]
+        assert json.loads(actual.read_text(encoding="utf-8")) == source

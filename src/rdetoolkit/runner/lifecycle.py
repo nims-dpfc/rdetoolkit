@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import hashlib
+import shutil
 import signal
 import sys
 import time
 import uuid
 from collections.abc import Callable
+from contextlib import chdir
 from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any
@@ -18,6 +20,7 @@ if TYPE_CHECKING:
 from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
 from rdetoolkit.invoicefile import backup_invoice_json_files
+from rdetoolkit.processing.processors.invoice import SmartTableInvoiceInitializer
 from rdetoolkit.report.events import Event, EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.finalize import finalize as _finalize_run
@@ -82,6 +85,7 @@ class Runner:
         Returns:
             Run report produced by ``iterate`` and finalized by this Runner.
         """
+        SmartTableInvoiceInitializer.clear_base_invoice_cache()
         from rdetoolkit.templates.base import (  # noqa: PLC0415
             flow_from_template,
             is_concrete_template_class,
@@ -219,6 +223,12 @@ class Runner:
         invariant_invoice = _invariant_invoice(mode, root=self.root)
         invoice_org = _data_root(self.root) / "invoice" / "invoice.json"
         invoice_source_prepared = mode is not ModeKind.excelinvoice
+        if mode in {ModeKind.multidatatile, ModeKind.rdeformat}:
+            invoice_org = _run_invoice_source(
+                mode,
+                root=self.root,
+                inputdata_path=self.inputdata_path,
+            )
         for info, paths, out in iterate_tiles(
             mode,
             self.inputdata_path,
@@ -470,14 +480,40 @@ def _run_invoice_source(
     inputdata_path: Path,
     rawfiles: tuple[Path, ...] = (),
 ) -> Path:
-    """Return the run-level source invoice, using the v1 Excel backup once."""
-    invoice_org = _data_root(root) / "invoice" / "invoice.json"
-    if mode is not ModeKind.excelinvoice:
+    """Return the v1-compatible run-level invoice source for a backup mode."""
+    data_root = _data_root(root)
+    invoice_org = data_root / "invoice" / "invoice.json"
+    excel_path: Path | None = None
+    if mode is ModeKind.excelinvoice and data_root != root:
+        input_candidates = tuple(inputdata_path.iterdir()) if inputdata_path.exists() else ()
+        candidates = (*rawfiles, *input_candidates)
+        excel_path = _first_matching(candidates, suffixes=(".xlsx", ".xlsm", ".xls"))
+    if data_root == root:
+        return _flat_layout_invoice_source(invoice_org=invoice_org)
+    with chdir(root):
+        return backup_invoice_json_files(excel_path, _legacy_backup_mode(mode))
+
+
+def _flat_layout_invoice_source(
+    *,
+    invoice_org: Path,
+) -> Path:
+    """Preserve the test/public flat-root layout unsupported by the v1 helper."""
+    if not invoice_org.exists():
         return invoice_org
-    input_candidates = tuple(inputdata_path.iterdir()) if inputdata_path.exists() else ()
-    candidates = (*rawfiles, *input_candidates)
-    excel_path = _first_matching(candidates, suffixes=(".xlsx", ".xlsm", ".xls"))
-    return backup_invoice_json_files(excel_path, None)
+    backup_path = invoice_org.parent.parent / "temp" / "invoice_org.json"
+    backup_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(invoice_org, backup_path)
+    return backup_path
+
+
+def _legacy_backup_mode(mode: ModeKind) -> str | None:
+    """Map a Runner mode to the v1 ``extended_mode`` backup spelling."""
+    if mode is ModeKind.multidatatile:
+        return "MultiDataTile"
+    if mode is ModeKind.rdeformat:
+        return "rdeformat"
+    return None
 
 
 def _first_matching(
