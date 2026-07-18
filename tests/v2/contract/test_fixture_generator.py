@@ -16,10 +16,12 @@ EP table:
         relative fixture path instead of being ignored by snapshot checking.
     TC-GR-005 (abnormal): ascending and descending rdeformat file discovery
         normalize order-dependent status targets to the same stable value.
-    TC-GR-006 (abnormal): snapshot regeneration rejects code-tree dirtiness
-        with the required two-commit remediation.
-    TC-GR-007 (normal): snapshot-only dirtiness remains writable so one
-        interrupted regeneration can be rerun safely.
+    TC-GR-006 (abnormal): the real write CLI rejects code-tree dirtiness
+        before any input or snapshot write, with two-commit remediation.
+    TC-GR-007 (normal): the real write CLI defaults to snapshot freeze only;
+        snapshot-only dirtiness remains writable for an interrupted rerun.
+    TC-H0-GEN-EP-001 (normal): ``--rebuild-inputs`` opts into rebuilding
+        static inputs before snapshot freeze.
     TC-GR-008 (abnormal): ``--check`` rejects dirty or unrecorded frozen
         provenance instead of treating it as a stale-revision warning.
     TC-GR-009 (normal): every frozen snapshot shares one clean non-empty
@@ -38,6 +40,7 @@ BV table:
         and replace only the nondeterministic subdirectory component.
     TC-GR-007 (only generated paths): the maximum allowed dirty-tree boundary
         contains paths exclusively below ``expected/``.
+    TC-H0-GEN-BV-001 (zero flags): write mode performs no input rebuild.
     TC-GR-008 (invalid markers): dirty, unrecorded, and empty revisions are
         fatal provenance values and make the CLI process exit nonzero.
     TC-GR-009 (16 snapshots): the complete inventory has exactly one clean SHA.
@@ -494,33 +497,100 @@ def test_check_script_propagates_fatal_provenance_exit_code__tc_gr_008(
 def test_write_mode_checks_hygiene_before_rebuilding_inputs__tc_gr_006(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """TC-GR-006: dirty write mode refuses before mutating static inputs."""
-    # Given: write mode, a dirty-tree refusal, and an observable input builder
-    input_build_started = False
-    monkeypatch.setattr(
-        _generate,
-        "_parse_args",
-        lambda: SimpleNamespace(provenance_root=None, check=False, oracle_worker=None),
-    )
+    """TC-GR-006: the real dirty write CLI refuses before every write."""
+    # Given: the real zero-argument CLI, a dirty refusal, and observable writers
+    writes: list[str] = []
+    monkeypatch.setattr(sys, "argv", [str(_generate.__file__)])
 
     def _reject_dirty_tree() -> None:
         msg = "commit code changes first"
         raise RuntimeError(msg)
 
     def _record_input_build() -> dict[str, object]:
-        nonlocal input_build_started
-        input_build_started = True
+        writes.append("inputs")
         return {}
+
+    def _record_snapshot_freeze(*, check: bool) -> list[str]:
+        writes.append(f"snapshots-check={check}")
+        return []
 
     monkeypatch.setattr(_generate, "_require_write_tree_hygiene", _reject_dirty_tree)
     monkeypatch.setattr(_generate, "build_static_inputs", _record_input_build)
+    monkeypatch.setattr(_generate, "freeze_expected_outputs", _record_snapshot_freeze)
 
     # When: starting a write-mode generation attempt
     with pytest.raises(RuntimeError, match="commit code changes first"):
         _generate.main()
 
-    # Then: refusal occurs before any static input is rebuilt
-    assert input_build_started is False
+    # Then: refusal occurs before any static input or snapshot is written
+    assert writes == []
+
+
+def test_write_mode_defaults_to_freeze_only__tc_gr_007_h0_gen_bv_001(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-GR-007/BV-001: zero CLI flags freeze snapshots without rebuilding inputs."""
+    # Given: the real zero-argument write CLI with observable operations
+    operations: list[str] = []
+    monkeypatch.setattr(sys, "argv", [str(_generate.__file__)])
+    monkeypatch.setattr(
+        _generate,
+        "_require_write_tree_hygiene",
+        lambda: operations.append("hygiene"),
+    )
+
+    def _unexpected_input_build() -> dict[str, object]:
+        raise AssertionError("zero-argument write mode must not rebuild inputs")
+
+    def _record_snapshot_freeze(*, check: bool) -> list[str]:
+        operations.append(f"freeze-check={check}")
+        return []
+
+    monkeypatch.setattr(_generate, "build_static_inputs", _unexpected_input_build)
+    monkeypatch.setattr(_generate, "freeze_expected_outputs", _record_snapshot_freeze)
+
+    # When: executing the default write CLI path
+    exit_code = _generate.main()
+
+    # Then: hygiene precedes one write-mode snapshot freeze and no input build
+    assert exit_code == 0
+    assert operations == ["hygiene", "freeze-check=False"]
+
+
+def test_rebuild_inputs_flag_opts_in_before_freeze__tc_h0_gen_ep_001(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-H0-GEN-EP-001: --rebuild-inputs rebuilds inputs before freezing."""
+    # Given: the real opt-in CLI path with every operation observable
+    operations: list[str] = []
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [str(_generate.__file__), "--rebuild-inputs"],
+    )
+    monkeypatch.setattr(
+        _generate,
+        "_require_write_tree_hygiene",
+        lambda: operations.append("hygiene"),
+    )
+
+    def _record_input_build() -> dict[str, object]:
+        operations.append("inputs")
+        return {"invoice": {}}
+
+    def _record_snapshot_freeze(*, check: bool) -> list[str]:
+        operations.append(f"freeze-check={check}")
+        return []
+
+    monkeypatch.setattr(_generate, "build_static_inputs", _record_input_build)
+    monkeypatch.setattr(_generate, "freeze_expected_outputs", _record_snapshot_freeze)
+
+    # When: executing write mode with input rebuilding explicitly requested
+    exit_code = _generate.main()
+
+    # Then: one hygiene gate precedes both writes in their required order
+    assert exit_code == 0
+    assert operations == ["hygiene", "inputs", "freeze-check=False"]
 
 
 def test_static_input_check_detects_deterministic_manifest_drift__tc_gr_004(

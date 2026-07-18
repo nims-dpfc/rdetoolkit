@@ -215,7 +215,7 @@ class Runner:
             flow_id=_flow_id(flow_fn),
             mode=mode.value,
             config_digest=_config_digest(config),
-            logs_dir=Path("data") / "logs",
+            logs_dir=self.root / "data" / "logs",
         )
         failed_count = 0
         completed_count = 0
@@ -233,7 +233,7 @@ class Runner:
             mode,
             self.inputdata_path,
             self.unpacked_dir_path,
-            Path("data"),
+            self.root / "data",
         ):
             iteration_status = "failed"
             self.event_sink.emit(Event.iteration_started(run_id=self.run_id, index=info.index))
@@ -337,7 +337,7 @@ class Runner:
             report: Report produced by iteration.
             config: Effective configuration.
         """
-        _finalize_run(report, config)
+        _finalize_run(report, config, root=self.root)
 
 
 def _flow_id(flow_fn: Callable[..., Any]) -> str:

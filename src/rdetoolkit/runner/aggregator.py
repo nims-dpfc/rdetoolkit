@@ -55,31 +55,6 @@ class RunAggregator:
         self._write_iteration(result.iteration_index, payload)
         self.iterations.append(_summary_payload(result))
 
-    def record_failure(self, iteration_index: int, error: dict[str, Any]) -> None:
-        """Record and stream a tile failure captured by the Runner loop.
-
-        Args:
-            iteration_index: Failed tile index.
-            error: Serializable error summary.
-        """
-        payload: dict[str, Any] = {
-            "iteration_index": iteration_index,
-            "status": "failed",
-            "call_records": [],
-            "outputs": [],
-            "error": error,
-        }
-        self._write_iteration(iteration_index, payload)
-        self.iterations.append(
-            {
-                "index": iteration_index,
-                "datatile_id": str(iteration_index),
-                "status": "failed",
-                "node_calls": [],
-                "error": error,
-            },
-        )
-
     def build_report(
         self,
         *,

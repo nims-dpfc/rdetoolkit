@@ -1,4 +1,4 @@
-"""Tests for rdetoolkit v2 RunAggregator (Session D2, TC-AGG-001..006).
+"""Tests for rdetoolkit v2 RunAggregator (Session D2, TC-AGG-001..005).
 
 Written before implementation (TDD Red phase).
 Target: make all tests pass in codex-worker Green phase.
@@ -24,11 +24,6 @@ concrete class shape to this session):
             immediately; only a lightweight summary dict is kept in
             .iterations (D2.5).'''
 
-        def record_failure(self, iteration_index: int, error: dict[str, Any]) -> None:
-            '''Record a tile that raised before producing an ExecutionResult
-            (the loop-level catch path, session_d2.md Conflict #6). Streams
-            the same way as record().'''
-
         iterations: list[dict[str, Any]]  # summaries only, in record() order
 
         def build_report(
@@ -37,7 +32,7 @@ concrete class shape to this session):
             error: dict[str, Any] | None = None,
         ) -> RunReport: ...
 
-Streaming contract (D2.5): record()/record_failure() write
+Streaming contract (D2.5): record() writes
 logs_dir/"iterations"/f"iteration_{n}.json" before returning -- never
 batched until build_report() is called, and never waiting for later tiles.
 
@@ -241,29 +236,3 @@ class TestRunAggregatorOutputsPassthrough:
 
         payload = json.loads((tmp_path / "data" / "logs" / "iterations" / "iteration_0.json").read_text(encoding="utf-8"))
         assert len(payload["outputs"]) == 3, "the streamed primary result must preserve ExecutionResult.outputs without terminal-node inference (Conflict #1, ADR-022)"
-
-
-class TestRunAggregatorRecordFailure:
-    """TC-AGG-006: record_failure() -- the loop-level catch path (Conflict
-    #6) records a tile that raised before producing an ExecutionResult.
-    """
-
-    def test_record_failure_appears_in_iterations_as_failed__tc_agg_006(self, tmp_path: Path) -> None:
-        from rdetoolkit.runner.aggregator import RunAggregator  # noqa: PLC0415
-
-        logs_dir = tmp_path / "data" / "logs"
-        aggregator = RunAggregator(
-            run_id="run-fail",
-            flow_id="f",
-            mode="invoice",
-            config_digest="sha256:aaa",
-            logs_dir=logs_dir,
-        )
-        aggregator.record_failure(0, {"code": 3001, "message": "tile 0 boom"})
-
-        assert len(aggregator.iterations) == 1
-        entry = aggregator.iterations[0]
-        assert entry["status"] == "failed"
-        assert entry["index"] == 0
-        assert set(entry) == {"index", "datatile_id", "status", "node_calls", "error"}
-        assert (logs_dir / "iterations" / "iteration_0.json").exists(), "record_failure() must stream too"

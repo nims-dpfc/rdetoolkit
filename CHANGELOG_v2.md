@@ -102,3 +102,8 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   snapshots and added non-failing provenance warnings plus deterministic input
   drift checks; XLSX drift is compared semantically because workbook metadata
   bytes are nondeterministic.
+
+### Changed — Phase H cleanup
+
+- Removed the unused `RunAggregator.record_failure()` method; Runner failure
+  paths already record canonical failed `ExecutionResult` instances.

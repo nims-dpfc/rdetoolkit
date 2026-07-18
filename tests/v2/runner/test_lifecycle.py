@@ -441,6 +441,7 @@ class TestIterationPreparationEvents:
         from rdetoolkit.types import InputPaths, IterationInfo, RdeConfig
 
         # Given: one excelinvoice tile whose invoice preparation fails
+        monkeypatch.chdir(tmp_path)
         sink = MemoryEventSink()
         sink.open("tc-d2r-f6")
         info = IterationInfo(index=0, total=1, mode="excelinvoice")
