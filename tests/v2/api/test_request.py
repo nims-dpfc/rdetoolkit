@@ -12,6 +12,8 @@ EP table:
 | request dataclasses | undeclared attribute | ``TypeError`` from frozen slots | TC-EP-G2-106 |
 | ``build_run_request`` | non-callable flow | remediation-rich ``TypeError`` | TC-EP-GR2-107 |
 | ``build_run_request`` | non-callable callback | remediation-rich ``TypeError`` | TC-EP-GR2-108 |
+| ``build_run_request`` | concrete Template class | converted flow target | TC-EP-H1-101 |
+| ``build_run_request`` | Template skeleton | actionable ``TypeError`` | TC-EP-H1-102 |
 
 BV table:
 
@@ -222,3 +224,38 @@ def test_explicit_relative_root_is_preserved__tc_bv_gr2_103() -> None:
     # Then: Phase G preserves the caller-provided value without resolving it
     assert request.root is relative_root
     assert request.root == Path("relative")
+
+
+def test_concrete_template_is_converted_to_flow_target__tc_ep_h1_101() -> None:
+    """TC-EP-H1-101: Request normalization converts a concrete Template class."""
+    from tests.v2.templates.fixtures.xrd_like_template import DemoConcreteProcessing
+
+    # Given: a registered concrete ProcessingTemplate subclass
+    # When: normalizing it at the public request boundary
+    request = build_run_request(
+        flow=DemoConcreteProcessing,
+        custom_dataset_function=None,
+        config=None,
+    )
+
+    # Then: the target is the eager callable derived from the Template
+    assert isinstance(request.target, FlowTarget)
+    assert request.target.function is not DemoConcreteProcessing
+    assert request.target.function.__qualname__ == DemoConcreteProcessing.__qualname__
+
+
+def test_template_skeleton_is_rejected_at_request_boundary__tc_ep_h1_102() -> None:
+    """TC-EP-H1-102: Request normalization rejects a non-runnable skeleton."""
+    from tests.v2.templates.fixtures.xrd_like_template import DemoSkeletonTemplate
+
+    # Given: a registered depth-one Template skeleton
+    # When / Then: normalization rejects it with actionable guidance
+    with pytest.raises(TypeError) as exc_info:
+        build_run_request(
+            flow=DemoSkeletonTemplate,
+            custom_dataset_function=None,
+            config=None,
+        )
+    message = str(exc_info.value).lower()
+    assert "skeleton" in message
+    assert "subclass" in message

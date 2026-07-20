@@ -8,15 +8,14 @@ import signal
 import sys
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import chdir
 from pathlib import Path
 from types import FrameType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from rdetoolkit.templates import ProcessingTemplate
-
+from rdetoolkit.api.request import FlowTarget, RunRequest, build_run_request
+from rdetoolkit.config.normalize import ConfigNormalizer
 from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
 from rdetoolkit.invoicefile import backup_invoice_json_files
@@ -75,34 +74,35 @@ class Runner:
         self._run_id_factory = run_id_factory or (lambda: uuid.uuid4().hex)
         self.run_id = ""
 
-    def run(self, flow_fn: Callable[..., Any] | type[ProcessingTemplate], **overrides: Any) -> RunReport:
+    def run(self, request: RunRequest | Callable[..., Any], **overrides: Any) -> RunReport:
         """Execute the six Runner lifecycle steps in Design §6.1 order.
 
         Args:
-            flow_fn: Flow function placeholder for later phases.
+            request: Normalized request or deprecated direct flow callable.
             **overrides: Config values merged over file configuration.
 
         Returns:
             Run report produced by ``iterate`` and finalized by this Runner.
         """
         SmartTableInvoiceInitializer.clear_base_invoice_cache()
-        from rdetoolkit.templates.base import (  # noqa: PLC0415
-            flow_from_template,
-            is_concrete_template_class,
-            is_template_class,
+        run_request = (
+            request
+            if isinstance(request, RunRequest)
+            else build_run_request(
+                flow=request,
+                custom_dataset_function=None,
+                config=overrides or None,
+                root=self.root,
+            )
         )
-
-        if is_template_class(flow_fn):
-            if not is_concrete_template_class(flow_fn):
-                msg = (
-                    "A ProcessingTemplate skeleton cannot be executed. "
-                    "Create a subclass that implements every required slot and pass that concrete class."
-                )
-                raise TypeError(msg)
-            flow_fn = flow_from_template(flow_fn)
-        elif isinstance(flow_fn, type):
-            msg = "Runner flow class target is not a ProcessingTemplate subclass"
+        if isinstance(request, RunRequest) and overrides:
+            msg = "Config overrides must be carried by RunRequest.config_source"
             raise TypeError(msg)
+        if not isinstance(run_request.target, FlowTarget):
+            msg = "LegacyCallbackTarget execution is implemented in Phase J"
+            raise TypeError(msg)
+        flow_fn = run_request.target.function
+        self._apply_request_root(run_request.root)
 
         previous_sigterm: Any = None
         sigterm_installed = False
@@ -122,7 +122,7 @@ class Runner:
 
             try:
                 self.event_sink.emit(Event.run_started(run_id=self.run_id))
-                config = self.load_config(overrides)
+                config = self.load_config(run_request.config_source)
                 mode = self.resolve_mode(config)
                 self.pre_validate(config)
                 report = self.iterate(flow_fn, mode, config)
@@ -154,16 +154,31 @@ class Runner:
             if sigterm_installed:
                 signal.signal(signal.SIGTERM, previous_sigterm)
 
-    def load_config(self, overrides: dict[str, Any] | None = None) -> RdeConfig:
+    def load_config(self, source: object | None = None) -> RdeConfig:
         """Load the effective v2 Runner config.
 
         Args:
-            overrides: Values merged over file configuration.
+            source: Explicit v2 config source or mapping overrides.
 
         Returns:
             Effective configuration.
         """
-        return load_config_from_root(self.root, overrides=overrides)
+        if source is None:
+            return load_config_from_root(self.root)
+        if isinstance(source, RdeConfig):
+            return load_config_from_root(self.root, overrides=source.model_dump())
+        if isinstance(source, Mapping):
+            return load_config_from_root(self.root, overrides=source)
+        return ConfigNormalizer().normalize(source, root=self.root, origin="v2")
+
+    def _apply_request_root(self, root: Path) -> None:
+        """Make an explicit request root authoritative for default Runner paths."""
+        previous_root = self.root
+        if self.inputdata_path == previous_root / "inputdata":
+            self.inputdata_path = root / "inputdata"
+        if self.unpacked_dir_path == previous_root / "unpacked":
+            self.unpacked_dir_path = root / "unpacked"
+        self.root = root
 
     def resolve_mode(self, config: RdeConfig) -> ModeKind:
         """Resolve the effective mode for this run.

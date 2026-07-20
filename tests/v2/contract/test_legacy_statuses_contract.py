@@ -9,8 +9,8 @@ EP table:
 | multidatatile | ``v1/multidatatile/ok.json`` | exact legacy-return JSON | TC-EP-G2-303 |
 | smarttable | ``v1/smarttable/ok.json`` | exact legacy-return JSON | TC-EP-G2-304 |
 | rdeformat | ``v1/rdeformat/ok.json`` | exact legacy-return JSON | TC-EP-G2-305 |
-| each mode | ``usererr.json`` | exact return or failed-run design skip | TC-EP-GR2-306..310 |
-| each mode | ``valerr.json`` | exact return or failed-run design skip | TC-EP-GR2-311..315 |
+| each mode | ``usererr.json`` | total failed-run conversion | TC-EP-GR2-306..310 |
+| each mode | ``valerr.json`` | total failed-run conversion | TC-EP-GR2-311..315 |
 
 BV table:
 
@@ -18,7 +18,7 @@ BV table:
 |---|---|---|
 | one status | full single-item ``statuses`` list | invoice cell |
 | multiple statuses | order and every field preserved | other four cells |
-| null error return | Phase H failed-run semantics are explicitly skipped | ten error seats |
+| null v1 error return | v2 defines one structural failed status | ten error seats |
 """
 
 import json
@@ -31,10 +31,6 @@ import pytest
 _EXPECTED_ROOT = Path(__file__).parent / "fixtures" / "expected" / "v1"
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Phase H: RunReport.to_legacy_statuses() is not implemented yet",
-)
 @pytest.mark.parametrize(
     "mode,test_id",
     [
@@ -78,10 +74,6 @@ def test_to_legacy_statuses_matches_frozen_v1_ok_payload(
     assert json.loads(actual_json) == expected
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Phase H: RunReport.to_legacy_statuses() is not implemented yet",
-)
 @pytest.mark.parametrize(
     ("mode", "outcome", "test_id"),
     [
@@ -103,10 +95,26 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
     fixture: dict[str, Any] = json.loads(
         (_EXPECTED_ROOT / mode / f"{outcome}.json").read_text(encoding="utf-8"),
     )
-    expected = fixture["observed"]["legacy_return"]
-    if expected is None:
-        pytest.skip("Phase H design: failed-run legacy conversion semantics")
+    observed = fixture["observed"]
+    expected = observed["legacy_return"]
     from rdetoolkit.report.run_report import RunReport
+
+    if expected is None:
+        ok_fixture: dict[str, Any] = json.loads(
+            (_EXPECTED_ROOT / mode / "ok.json").read_text(encoding="utf-8"),
+        )
+        reference_status = ok_fixture["observed"]["legacy_return"]["statuses"][0]
+        job_failed_text = observed["job_failed_text"]
+        code_line, message_text = job_failed_text.split("\n", maxsplit=1)
+        status = {
+            **reference_status,
+            "error_code": int(code_line.removeprefix("ErrorCode=")),
+            "error_message": message_text.removeprefix("ErrorMessage=").rstrip("\n"),
+            "status": "failed",
+        }
+        iterations = [status]
+    else:
+        iterations = expected["statuses"]
 
     report = RunReport(
         run_id="<RUN_ID>",
@@ -116,14 +124,23 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
         started_at="<DATE>",
         duration_ms=0.0,
         config_digest="sha256:<NORMALIZED>",
-        iterations=expected["statuses"],
+        iterations=iterations,
         warnings=[],
     )
 
     # When: converting the future unified failed report to the legacy shape
     actual_json = report.to_legacy_statuses()
 
-    # Then: every non-null frozen field and value matches exactly
+    # Then: non-null v1 returns match exactly, while formerly unobservable
+    # failed returns preserve the frozen field shape and job.failed values
     assert test_id.startswith("TC-EP-GR2-3")
     assert isinstance(actual_json, str)
-    assert json.loads(actual_json) == expected
+    actual = json.loads(actual_json)
+    if expected is not None:
+        assert actual == expected
+        return
+    actual_statuses = actual["statuses"]
+    assert len(actual_statuses) == len(report.iterations)
+    assert set(actual_statuses[0]) == set(reference_status)
+    assert actual_statuses[0]["error_code"] == status["error_code"]
+    assert actual_statuses[0]["error_message"] == status["error_message"]

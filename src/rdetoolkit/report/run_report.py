@@ -71,6 +71,18 @@ class RunReport:
         """
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent)
 
+    def to_legacy_statuses(self) -> str:
+        """Convert iteration results to the v1 workflow-status JSON shape.
+
+        This compatibility helper is a total function. For failed runs where
+        v1 exited before returning a value, the returned status list is the v2
+        definition of the previously unobservable representation.
+
+        Returns:
+            JSON string containing the report iterations under ``statuses``.
+        """
+        return json.dumps({"statuses": self.iterations}, ensure_ascii=False)
+
     @classmethod
     def from_json(cls, json_str: str) -> RunReport:
         """Deserialize a report from JSON.

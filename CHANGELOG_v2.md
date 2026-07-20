@@ -107,3 +107,13 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 
 - Removed the unused `RunAggregator.record_failure()` method; Runner failure
   paths already record canonical failed `ExecutionResult` instances.
+
+### Added — Phase H request and configuration normalization
+
+- Relocated the unchanged v1 `rdetoolkit.config` module into a compatible
+  package and added strict v1/v2 `ConfigNormalizer` conversion.
+- Added the total `RunReport.to_legacy_statuses()` compatibility conversion,
+  including a defined status representation for failed runs where v1 exited
+  without returning a value.
+- Routed v2 flow execution through `RunRequest`, moved ProcessingTemplate
+  conversion to request normalization, and kept the v1 callback branch intact.
