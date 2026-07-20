@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 from rdetoolkit.errors import ERROR_CATALOG, write_job_errorlog_file
@@ -11,6 +12,28 @@ from rdetoolkit.types import RdeConfig
 
 
 _DEFAULT_FAILURE_CODE = 3001
+
+
+class RunFinalizer:
+    """Persist the final report through the single Runner-owned finalization path."""
+
+    def __init__(self, *, root: Path | Callable[[], Path]) -> None:
+        """Create a finalizer.
+
+        Args:
+            root: Run root or a provider for the Runner's current request root.
+        """
+        self._root = root
+
+    def finalize(self, report: RunReport, config: RdeConfig) -> None:
+        """Persist final artifacts for one completed lifecycle.
+
+        Args:
+            report: Primary run report.
+            config: Effective canonical configuration.
+        """
+        root = self._root() if callable(self._root) else self._root
+        finalize(report, config, root=root)
 
 
 def finalize(report: RunReport, config: RdeConfig, *, root: Path) -> None:

@@ -3,51 +3,39 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 import signal
 import sys
 import time
 import uuid
 from collections.abc import Callable, Mapping
-from contextlib import chdir
 from pathlib import Path
 from types import FrameType
 from typing import Any
 
 from rdetoolkit.api.request import FlowTarget, RunRequest, build_run_request
 from rdetoolkit.config.normalize import ConfigNormalizer
+from rdetoolkit.domain.validation import invoice_validate, metadata_validate
 from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
-from rdetoolkit.invoicefile import backup_invoice_json_files
 from rdetoolkit.processing.processors.invoice import SmartTableInvoiceInitializer
 from rdetoolkit.report.events import Event, EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
-from rdetoolkit.runner.finalize import finalize as _finalize_run
 from rdetoolkit.runner.aggregator import RunAggregator
 from rdetoolkit.runner.config_loader import load_config as load_config_from_root
-from rdetoolkit.runner.execute import ExecutionResult, TileExecutionError
-from rdetoolkit.runner.execute import run_tile
-from rdetoolkit.runner.iterator import iterate_tiles
+from rdetoolkit.runner.executor import TileExecutor
+from rdetoolkit.runner.finalize import RunFinalizer
 from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode as resolve_mode_from_paths
-from rdetoolkit.core.context import RunContext
-from rdetoolkit.domain.invoice import (
-    build_excelinvoice_tile_invoice,
-    build_smarttable_tile_invoice,
-    load_invoice,
-)
+from rdetoolkit.runner.paths import resolve_tile_paths
+from rdetoolkit.runner.planner import RunPlanner
 from rdetoolkit.types import RdeConfig
 
 
 _RUN_INTERRUPTED_CODE = 3004
+_REQUIRED_ARTIFACT_MISSING_CODE = 4003
 
 
 class Runner:
-    """Execute the v2 Runner lifecycle without flow dispatch.
-
-    Phase B1 owns the six-step lifecycle skeleton. Actual flow execution and
-    dependency injection are later phases, so ``iterate`` is intentionally a
-    replaceable stub.
-    """
+    """Own lifecycle order, cancellation, events, and run-level failure state."""
 
     def __init__(
         self,
@@ -57,6 +45,9 @@ class Runner:
         unpacked_dir_path: Path | None = None,
         event_sink: EventSink | None = None,
         run_id_factory: Callable[[], str] | None = None,
+        planner: RunPlanner | None = None,
+        executor: TileExecutor | None = None,
+        finalizer: RunFinalizer | None = None,
     ) -> None:
         """Create a Runner.
 
@@ -66,6 +57,9 @@ class Runner:
             unpacked_dir_path: Legacy unpack directory for input checkers.
             event_sink: Event sink owned by this run.
             run_id_factory: Optional factory for deterministic tests.
+            planner: Optional request-to-plan collaborator.
+            executor: Optional common tile executor.
+            finalizer: Optional report persistence collaborator.
         """
         self.root = root or Path.cwd()
         self.inputdata_path = inputdata_path or self.root / "inputdata"
@@ -73,9 +67,22 @@ class Runner:
         self.event_sink = event_sink or MemoryEventSink()
         self._run_id_factory = run_id_factory or (lambda: uuid.uuid4().hex)
         self.run_id = ""
+        self._validation_data_root: Path | None = None
+        self._planner = planner or RunPlanner(
+            inputdata_path=lambda: self.inputdata_path,
+            unpacked_dir_path=lambda: self.unpacked_dir_path,
+            run_id_factory=lambda: self.run_id,
+        )
+        self._executor = executor or TileExecutor(event_sink=self.event_sink)
+        self._finalizer = finalizer or RunFinalizer(root=lambda: self.root)
 
     def run(self, request: RunRequest | Callable[..., Any], **overrides: Any) -> RunReport:
         """Execute the six Runner lifecycle steps in Design §6.1 order.
+
+        Runner may know only ``RunRequest``, ``ExecutionPlan``, ``TilePlan``,
+        ``RunReport``, ``RdeConfig``, ``ModeKind``, ``EventSink``, and invoker
+        collaborators. Mode-specific parsing and invoice construction belong
+        behind the planner/executor boundary (merge-v1 Design §6/§7).
 
         Args:
             request: Normalized request or deprecated direct flow callable.
@@ -198,15 +205,23 @@ class Runner:
         )
 
     def pre_validate(self, config: RdeConfig) -> None:
-        """Run pre-flow domain validation hooks.
-
-        B1 wires the method and preserves the validation error contract. Concrete
-        invoice and metadata paths are supplied by later path-resolution phases.
+        """Validate source structure and invoice schema before flow execution.
 
         Args:
             config: Effective configuration.
         """
         _ = config
+        data_root = _data_root(self.root)
+        self._validation_data_root = data_root
+        invoice_path = data_root / "invoice" / "invoice.json"
+        schema_path = data_root / "tasksupport" / "invoice.schema.json"
+        for path in (invoice_path, schema_path):
+            if not path.exists():
+                raise _validation_error(4003, f"Required input artifact does not exist: {path}")
+        try:
+            invoice_validate(invoice_path, schema_path)
+        except Exception as exc:  # noqa: BLE001
+            raise _wrap_domain_validation_error(exc) from exc
 
     def iterate(
         self,
@@ -225,6 +240,12 @@ class Runner:
             Minimal successful run report.
         """
         started = time.time()
+        request = RunRequest(
+            root=self.root,
+            target=FlowTarget(function=flow_fn),
+            config_source=config,
+        )
+        plan = self._planner.create(request, config=config, mode=mode)
         aggregator = RunAggregator(
             run_id=self.run_id,
             flow_id=_flow_id(flow_fn),
@@ -235,77 +256,27 @@ class Runner:
         failed_count = 0
         completed_count = 0
         terminal_error: dict[str, Any] | None = None
-        invariant_invoice = _invariant_invoice(mode, root=self.root)
-        invoice_org = _data_root(self.root) / "invoice" / "invoice.json"
-        invoice_source_prepared = mode is not ModeKind.excelinvoice
-        if mode in {ModeKind.multidatatile, ModeKind.rdeformat}:
-            invoice_org = _run_invoice_source(
-                mode,
-                root=self.root,
-                inputdata_path=self.inputdata_path,
-            )
-        for info, paths, out in iterate_tiles(
-            mode,
-            self.inputdata_path,
-            self.unpacked_dir_path,
-            self.root / "data",
-        ):
+        for tile in plan.tiles:
+            info = tile.iteration
             iteration_status = "failed"
             self.event_sink.emit(Event.iteration_started(run_id=self.run_id, index=info.index))
             try:
-                if not invoice_source_prepared:
-                    invoice_org = _run_invoice_source(
-                        mode,
-                        root=self.root,
-                        inputdata_path=self.inputdata_path,
-                        rawfiles=paths.rawfiles,
-                    )
-                    invoice_source_prepared = True
-                result = run_tile(
-                    flow_fn,
-                    RunContext(
-                        paths=paths,
-                        out=out,
-                        config=config,
-                        invoice=_tile_invoice(
-                            mode,
-                            root=self.root,
-                            paths=paths,
-                            invoice_dir=out.invoice,
-                            iteration_index=info.index,
-                            invariant_invoice=invariant_invoice,
-                            invoice_org=invoice_org,
-                        ),
-                        iteration=info,
-                    ),
-                    event_sink=self.event_sink,
-                    run_id=self.run_id,
-                    config=config,
-                    emit_iteration_events=False,
-                )
-                iteration_status = "completed"
+                result = self._executor.execute(plan, tile)
+                iteration_status = result.status
+                if result.status == "failed":
+                    failed_count += 1
+                    terminal_error = result.error
+                    aggregator.record(result)
+                    if plan.error_policy == "fail_fast":
+                        break
+                    continue
+                completed_count += 1
+                aggregator.record(result)
             except Exception as exc:  # noqa: BLE001
                 if _is_run_interrupted(exc):
                     raise
                 failed_count += 1
-                failed_result = (
-                    exc.result
-                    if isinstance(exc, TileExecutionError)
-                    else ExecutionResult(
-                        iteration_index=info.index,
-                        status="failed",
-                        call_records=(),
-                        outputs=(),
-                        error=_exception_error(exc),
-                        datatile_id=_datatile_id(paths.rawfiles, info.index),
-                    )
-                )
-                error = failed_result.error or _exception_error(exc)
-                terminal_error = error
-                aggregator.record(failed_result)
-                if config.execution.on_iteration_error == "fail_fast":
-                    break
-                continue
+                raise
             finally:
                 self.event_sink.emit(
                     Event(
@@ -314,12 +285,10 @@ class Runner:
                         payload={"iteration_index": info.index, "status": iteration_status},
                     ),
                 )
-            completed_count += 1
-            aggregator.record(result)
         status = _run_status(
             completed_count=completed_count,
             failed_count=failed_count,
-            fail_fast=config.execution.on_iteration_error == "fail_fast",
+            fail_fast=plan.error_policy == "fail_fast",
         )
         warnings = _failure_warnings(failed_count) if failed_count else []
         if failed_count:
@@ -333,13 +302,30 @@ class Runner:
         )
 
     def post_validate(self, config: RdeConfig, report: RunReport) -> None:
-        """Run post-flow domain validation hooks.
+        """Validate final artifacts for completed iterations only.
 
         Args:
             config: Effective configuration.
             report: Report produced by iteration.
         """
-        _ = (config, report)
+        _ = config
+        validation_root = self._validation_data_root or _data_root(self.root)
+        schema_path = validation_root / "tasksupport" / "invoice.schema.json"
+        output_root = self.root / "data"
+        for iteration in report.iterations:
+            if iteration.get("status") != "completed":
+                continue
+            index = iteration.get("index")
+            if not isinstance(index, int):
+                raise _validation_error(4003, f"Completed iteration has invalid index: {index!r}")
+            paths = resolve_tile_paths(output_root, index)
+            try:
+                invoice_validate(paths.invoice / "invoice.json", schema_path)
+                metadata_path = paths.meta / "metadata.json"
+                if metadata_path.exists():
+                    metadata_validate(metadata_path)
+            except Exception as exc:  # noqa: BLE001
+                raise _wrap_domain_validation_error(exc) from exc
 
     def finalize(self, report: RunReport, config: RdeConfig) -> None:
         """Finalize the report and job failure contract (Design §6.1 step 6, §6.3).
@@ -352,7 +338,7 @@ class Runner:
             report: Report produced by iteration.
             config: Effective configuration.
         """
-        _finalize_run(report, config, root=self.root)
+        self._finalizer.finalize(report, config)
 
 
 def _flow_id(flow_fn: Callable[..., Any]) -> str:
@@ -424,11 +410,6 @@ def _run_status(*, completed_count: int, failed_count: int, fail_fast: bool = Fa
     return "partial"
 
 
-def _datatile_id(rawfiles: tuple[Path, ...], iteration_index: int) -> str:
-    """Return the first raw-file stem, falling back to the decimal tile index."""
-    return rawfiles[0].stem if rawfiles else str(iteration_index)
-
-
 def _failure_warnings(failed_count: int) -> list[dict[str, Any]]:
     return [
         {
@@ -437,117 +418,6 @@ def _failure_warnings(failed_count: int) -> list[dict[str, Any]]:
             "failed_count": failed_count,
         },
     ]
-
-
-def _invariant_invoice(mode: ModeKind, *, root: Path) -> Any:
-    data_root = _data_root(root)
-    invoice_path = data_root / "invoice" / "invoice.json"
-    if mode is ModeKind.invoice:
-        inputdata_path = data_root / "inputdata"
-        if not invoice_path.exists() and inputdata_path.exists() and not any(inputdata_path.iterdir()):
-            return None
-        return load_invoice(invoice_path)
-    if mode in {ModeKind.multidatatile, ModeKind.rdeformat} and invoice_path.exists():
-        return load_invoice(invoice_path)
-    return None
-
-
-def _tile_invoice(
-    mode: ModeKind,
-    *,
-    root: Path,
-    paths: Any,
-    invoice_dir: Path,
-    iteration_index: int,
-    invariant_invoice: Any,
-    invoice_org: Path,
-) -> Any:
-    if invariant_invoice is not None:
-        return invariant_invoice
-    data_root = _data_root(root)
-    invoice_schema_path = data_root / "tasksupport" / "invoice.schema.json"
-    dist_path = invoice_dir / "invoice.json"
-    if mode is ModeKind.excelinvoice:
-        inputdata_path = data_root / "inputdata"
-        excel_candidates = (*paths.rawfiles, *tuple(inputdata_path.iterdir() if inputdata_path.exists() else ()))
-        return build_excelinvoice_tile_invoice(
-            excel_path=_first_matching(excel_candidates, suffixes=(".xlsx", ".xlsm", ".xls")),
-            invoice_org=invoice_org,
-            invoice_schema_path=invoice_schema_path,
-            dist_path=dist_path,
-            idx=iteration_index,
-        )
-    if mode is ModeKind.smarttable:
-        return build_smarttable_tile_invoice(
-            smarttable_rowfile=_first_matching(paths.rawfiles, prefixes=("fsmarttable_",), suffixes=(".csv",)),
-            invoice_org=invoice_org,
-            invoice_schema_path=invoice_schema_path,
-            dist_path=dist_path,
-            rawfiles=paths.rawfiles,
-        )
-    return None
-
-
-def _run_invoice_source(
-    mode: ModeKind,
-    *,
-    root: Path,
-    inputdata_path: Path,
-    rawfiles: tuple[Path, ...] = (),
-) -> Path:
-    """Return the v1-compatible run-level invoice source for a backup mode."""
-    data_root = _data_root(root)
-    invoice_org = data_root / "invoice" / "invoice.json"
-    excel_path: Path | None = None
-    if mode is ModeKind.excelinvoice and data_root != root:
-        input_candidates = tuple(inputdata_path.iterdir()) if inputdata_path.exists() else ()
-        candidates = (*rawfiles, *input_candidates)
-        excel_path = _first_matching(candidates, suffixes=(".xlsx", ".xlsm", ".xls"))
-    if data_root == root:
-        return _flat_layout_invoice_source(invoice_org=invoice_org)
-    with chdir(root):
-        return backup_invoice_json_files(excel_path, _legacy_backup_mode(mode))
-
-
-def _flat_layout_invoice_source(
-    *,
-    invoice_org: Path,
-) -> Path:
-    """Preserve the test/public flat-root layout unsupported by the v1 helper."""
-    if not invoice_org.exists():
-        return invoice_org
-    backup_path = invoice_org.parent.parent / "temp" / "invoice_org.json"
-    backup_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(invoice_org, backup_path)
-    return backup_path
-
-
-def _legacy_backup_mode(mode: ModeKind) -> str | None:
-    """Map a Runner mode to the v1 ``extended_mode`` backup spelling."""
-    if mode is ModeKind.multidatatile:
-        return "MultiDataTile"
-    if mode is ModeKind.rdeformat:
-        return "rdeformat"
-    return None
-
-
-def _first_matching(
-    paths: tuple[Path, ...],
-    *,
-    prefixes: tuple[str, ...] = (),
-    suffixes: tuple[str, ...],
-) -> Path:
-    for path in paths:
-        if path.suffix.lower() not in suffixes:
-            continue
-        if prefixes and not path.name.startswith(prefixes):
-            continue
-        return path
-    for path in paths:
-        if path.suffix.lower() in suffixes:
-            return path
-    msg = f"No input file matched suffixes {suffixes}"
-    raise FileNotFoundError(msg)
 
 
 def _data_root(root: Path) -> Path:
@@ -560,10 +430,16 @@ def _data_root(root: Path) -> Path:
 def _validation_error(code: int, reason: str) -> RdeValidationError:
     error_def = ERROR_CATALOG[code]
     error_cls: Any = RdeValidationError
+    message = (
+        error_def.message_template.format(path=reason)
+        if code == _REQUIRED_ARTIFACT_MISSING_CODE
+        else error_def.message_template.format(reason=reason)
+    )
+    message = f"{message} Remediation: {error_def.remediation}"
     return error_cls(
         code=code,
         name=error_def.name,
-        message=error_def.message_template.format(reason=reason),
+        message=message,
     )
 
 

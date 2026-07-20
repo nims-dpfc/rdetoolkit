@@ -46,12 +46,35 @@ def _successful_report() -> RunReport:
 
 
 def _runner_without_io(tmp_path: Path) -> Runner:
+    _write_validation_fixture(tmp_path)
     runner = Runner(root=tmp_path, event_sink=MemoryEventSink(), run_id_factory=lambda: "unit-run")
     runner.load_config = lambda overrides=None: RdeConfig()  # type: ignore[method-assign]
     runner.resolve_mode = lambda config: ModeKind.multidatatile  # type: ignore[method-assign]
     runner.iterate = lambda flow_fn, mode, config: _successful_report()  # type: ignore[method-assign]
     runner.finalize = lambda report, config: None  # type: ignore[method-assign]
     return runner
+
+
+def _write_validation_fixture(root: Path) -> None:
+    (root / "invoice").mkdir(parents=True, exist_ok=True)
+    (root / "tasksupport").mkdir(parents=True, exist_ok=True)
+    (root / "invoice" / "invoice.json").write_text(
+        json.dumps(
+            {
+                "datasetId": "sigterm-fixture",
+                "basic": {
+                    "dateSubmitted": "2026-07-20",
+                    "dataOwnerId": "0" * 56,
+                    "dataName": "sigterm-fixture",
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    (root / "tasksupport" / "invoice.schema.json").write_text(
+        json.dumps({"properties": {}}),
+        encoding="utf-8",
+    )
 
 
 class TestSigtermIntegration:
@@ -62,6 +85,7 @@ class TestSigtermIntegration:
             """
             import time
             import sysconfig
+            import json
             from pathlib import Path
 
             import rdetoolkit
@@ -79,6 +103,20 @@ class TestSigtermIntegration:
             (inputdata / "a.txt").write_text("a", encoding="utf-8")
             (inputdata / "b.txt").write_text("b", encoding="utf-8")
             (root / "unpacked").mkdir()
+            (root / "invoice").mkdir()
+            (root / "tasksupport").mkdir()
+            (root / "invoice" / "invoice.json").write_text(json.dumps({
+                "datasetId": "sigterm-fixture",
+                "basic": {
+                    "dateSubmitted": "2026-07-20",
+                    "dataOwnerId": "0" * 56,
+                    "dataName": "sigterm-fixture",
+                },
+            }), encoding="utf-8")
+            (root / "tasksupport" / "invoice.schema.json").write_text(
+                json.dumps({"properties": {}}),
+                encoding="utf-8",
+            )
             sentinel = root / "tile-1-complete"
 
             class MultiTileRunner(Runner):

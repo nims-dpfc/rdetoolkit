@@ -32,6 +32,7 @@ is the expected and correct Red-phase failure mode for this session.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from rdetoolkit.core.flow import flow
@@ -54,7 +55,30 @@ def _build_multidatatile_root(tmp_path: Path, file_count: int) -> Path:
     (root / "unpacked").mkdir()
     (root / "invoice").mkdir()
     (root / "tasksupport").mkdir()
+    _write_validation_fixture(root)
     return root
+
+
+def _write_validation_fixture(root: Path) -> None:
+    (root / "invoice").mkdir(exist_ok=True)
+    (root / "tasksupport").mkdir(exist_ok=True)
+    (root / "invoice" / "invoice.json").write_text(
+        json.dumps(
+            {
+                "datasetId": "policy-fixture",
+                "basic": {
+                    "dateSubmitted": "2026-07-20",
+                    "dataOwnerId": "0" * 56,
+                    "dataName": "policy-fixture",
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    (root / "tasksupport" / "invoice.schema.json").write_text(
+        json.dumps({"properties": {}}),
+        encoding="utf-8",
+    )
 
 
 def _make_runner(root: Path) -> Runner:
@@ -248,6 +272,7 @@ class TestFailFastNonZeroIndexRegression:
         (inputdata / "a.txt").write_text("a", encoding="utf-8")
         (inputdata / "b.txt").write_text("b", encoding="utf-8")
         (inputdata / "c.txt").write_text("c", encoding="utf-8")
+        _write_validation_fixture(tmp_path / "data")
 
         calls: list[int] = []
 

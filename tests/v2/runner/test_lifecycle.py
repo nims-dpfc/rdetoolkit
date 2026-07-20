@@ -417,8 +417,8 @@ class TestLifecycleInitializationFailure:
         assert isinstance(report, RunReport)
         assert report.status == "failed"
         assert report.error is not None
-        assert report.error["code"] == 1002
-        assert report.error["name"] == "ConfigLoadFailed"
+        assert report.error["code"] == 4003
+        assert report.error["name"] == "RequiredArtifactMissing"
         assert report.error["remediation"]
         assert "Remediation:" in report.error["message"]
         assert (tmp_path / "data" / "job.failed").exists()
@@ -458,7 +458,7 @@ class TestIterationPreparationEvents:
         runner = Runner(root=tmp_path, event_sink=sink)
         runner.run_id = "tc-d2r-f6"
         monkeypatch.setattr(
-            "rdetoolkit.runner.lifecycle.iterate_tiles",
+            "rdetoolkit.runner.planner.iterate_tiles",
             lambda *args, **kwargs: iter(((info, paths, out),)),
         )
 
@@ -466,7 +466,7 @@ class TestIterationPreparationEvents:
             msg = "invoice preparation failed"
             raise ValueError(msg)
 
-        monkeypatch.setattr("rdetoolkit.runner.lifecycle._tile_invoice", _fail_preparation)
+        monkeypatch.setattr("rdetoolkit.runner.planner._tile_invoice", _fail_preparation)
 
         # When: iterating the tile
         report = runner.iterate(lambda: None, ModeKind.excelinvoice, RdeConfig())
@@ -487,7 +487,7 @@ class TestExcelinvoiceSourceBackup:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """TC-D2R-F9: flat Excel mode backs up by root-relative paths."""
-        from rdetoolkit.runner.lifecycle import _run_invoice_source
+        from rdetoolkit.runner.planner import _run_invoice_source
         from rdetoolkit.runner.mode_resolver import ModeKind
 
         # Given: a flat source invoice without an Excel workbook
@@ -502,7 +502,7 @@ class TestExcelinvoiceSourceBackup:
         def _unexpected_legacy_backup(*args: object, **kwargs: object) -> Path:
             raise AssertionError("flat Excel backup must not use the cwd-dependent v1 helper")
 
-        monkeypatch.setattr("rdetoolkit.runner.lifecycle.backup_invoice_json_files", _unexpected_legacy_backup)
+        monkeypatch.setattr("rdetoolkit.runner.planner.backup_invoice_json_files", _unexpected_legacy_backup)
 
         # When: preparing the run-level Excel invoice source from another cwd
         caller = tmp_path / "caller"

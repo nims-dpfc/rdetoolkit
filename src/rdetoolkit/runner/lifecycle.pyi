@@ -5,7 +5,10 @@ from typing import Any
 from rdetoolkit.api.request import RunRequest
 from rdetoolkit.report.events import EventSink
 from rdetoolkit.report.run_report import RunReport
+from rdetoolkit.runner.executor import TileExecutor
+from rdetoolkit.runner.finalize import RunFinalizer
 from rdetoolkit.runner.mode_resolver import ModeKind
+from rdetoolkit.runner.planner import RunPlanner
 from rdetoolkit.types import RdeConfig
 
 class Runner:
@@ -22,6 +25,9 @@ class Runner:
         unpacked_dir_path: Path | None = None,
         event_sink: EventSink | None = None,
         run_id_factory: Callable[[], str] | None = None,
+        planner: RunPlanner | None = None,
+        executor: TileExecutor | None = None,
+        finalizer: RunFinalizer | None = None,
     ) -> None: ...
     def run(self, request: RunRequest | Callable[..., Any], **overrides: Any) -> RunReport: ...
     def load_config(self, source: object | None = None) -> RdeConfig: ...
