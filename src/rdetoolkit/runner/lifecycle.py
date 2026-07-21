@@ -14,10 +14,10 @@ from typing import Any
 
 from rdetoolkit.api.request import FlowTarget, RunRequest, build_run_request
 from rdetoolkit.config.normalize import ConfigNormalizer
+from rdetoolkit.domain.invoice_service import InvoiceService
 from rdetoolkit.domain.validation import invoice_validate, metadata_validate
 from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
-from rdetoolkit.processing.processors.invoice import SmartTableInvoiceInitializer
 from rdetoolkit.report.events import Event, EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.aggregator import RunAggregator
@@ -48,6 +48,7 @@ class Runner:
         planner: RunPlanner | None = None,
         executor: TileExecutor | None = None,
         finalizer: RunFinalizer | None = None,
+        invoice_service: InvoiceService | None = None,
     ) -> None:
         """Create a Runner.
 
@@ -60,18 +61,21 @@ class Runner:
             planner: Optional request-to-plan collaborator.
             executor: Optional common tile executor.
             finalizer: Optional report persistence collaborator.
+            invoice_service: Run-owned path-based invoice operations.
         """
         self.root = root or Path.cwd()
         self.inputdata_path = inputdata_path or self.root / "inputdata"
         self.unpacked_dir_path = unpacked_dir_path or self.root / "unpacked"
         self.event_sink = event_sink or MemoryEventSink()
         self._run_id_factory = run_id_factory or (lambda: uuid.uuid4().hex)
+        self._invoice_service = invoice_service or InvoiceService()
         self.run_id = ""
         self._validation_data_root: Path | None = None
         self._planner = planner or RunPlanner(
             inputdata_path=lambda: self.inputdata_path,
             unpacked_dir_path=lambda: self.unpacked_dir_path,
             run_id_factory=lambda: self.run_id,
+            invoice_service=self._invoice_service,
         )
         self._executor = executor or TileExecutor(event_sink=self.event_sink)
         self._finalizer = finalizer or RunFinalizer(root=lambda: self.root)
@@ -91,7 +95,6 @@ class Runner:
         Returns:
             Run report produced by ``iterate`` and finalized by this Runner.
         """
-        SmartTableInvoiceInitializer.clear_base_invoice_cache()
         run_request = (
             request
             if isinstance(request, RunRequest)
@@ -110,6 +113,7 @@ class Runner:
             raise TypeError(msg)
         flow_fn = run_request.target.function
         self._apply_request_root(run_request.root)
+        self._invoice_service.begin_run(self.root)
 
         previous_sigterm: Any = None
         sigterm_installed = False

@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 from rdetoolkit.api.request import RunRequest
+from rdetoolkit.domain.invoice_service import InvoiceService
 from rdetoolkit.report.events import EventSink
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.executor import TileExecutor
@@ -28,6 +29,7 @@ class Runner:
         planner: RunPlanner | None = None,
         executor: TileExecutor | None = None,
         finalizer: RunFinalizer | None = None,
+        invoice_service: InvoiceService | None = None,
     ) -> None: ...
     def run(self, request: RunRequest | Callable[..., Any], **overrides: Any) -> RunReport: ...
     def load_config(self, source: object | None = None) -> RdeConfig: ...

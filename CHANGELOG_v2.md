@@ -141,3 +141,19 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   without returning a value.
 - Routed v2 flow execution through `RunRequest`, moved ProcessingTemplate
   conversion to request normalization, and kept the v1 callback branch intact.
+
+### Added — Phase H common domain services and concurrent Runner support
+
+- Added path-based `InvoiceService`, `RawArtifactService`,
+  `ImageArtifactService`, `OutputLayoutResolver`, `InputValidator`, and
+  deterministic `IterationFactory` services, consuming all seven canonical v1
+  artifact settings without routing through legacy mode processors.
+- Replaced cwd-relative invoice backup with one explicit-root implementation
+  and replaced process-wide SmartTable cache clearing with targeted per-root
+  invalidation owned by the Runner's invoice service.
+- Added two-thread, distinct-root acceptance coverage across all five modes;
+  output snapshots, invoice content, and primary RunReport fields match an
+  isolated execution.
+- Deferred live per-tile wiring of `RawArtifactService` and
+  `ImageArtifactService` to Phase I I5/I6 so Phase H does not change existing
+  output trees or frozen contracts.

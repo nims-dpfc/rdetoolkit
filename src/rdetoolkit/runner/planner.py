@@ -2,21 +2,15 @@
 
 from __future__ import annotations
 
-import shutil
 from collections.abc import Callable, Iterable, Iterator
-from contextlib import chdir
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 from typing import Literal
 
 from rdetoolkit.api.request import ExecutionTarget, RunRequest
-from rdetoolkit.domain.invoice import (
-    build_excelinvoice_tile_invoice,
-    build_smarttable_tile_invoice,
-    load_invoice,
-)
-from rdetoolkit.invoicefile import backup_invoice_json_files
+from rdetoolkit.domain.invoice_service import InvoiceService
+from rdetoolkit.invoicefile import backup_invoice_json_files  # noqa: F401
 from rdetoolkit.runner.iterator import iterate_tiles
 from rdetoolkit.runner.mode_resolver import ModeKind
 from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
@@ -64,6 +58,7 @@ class RunPlanner:
         inputdata_path: PathProvider,
         unpacked_dir_path: PathProvider,
         run_id_factory: Callable[[], str],
+        invoice_service: InvoiceService | None = None,
     ) -> None:
         """Create a planner.
 
@@ -71,10 +66,12 @@ class RunPlanner:
             inputdata_path: Current input directory or a lazy path provider.
             unpacked_dir_path: Current unpack directory or a lazy path provider.
             run_id_factory: Provider for the active Runner run identifier.
+            invoice_service: Run-owned path-based invoice operations.
         """
         self._inputdata_path = inputdata_path
         self._unpacked_dir_path = unpacked_dir_path
         self._run_id_factory = run_id_factory
+        self._invoice_service = invoice_service or InvoiceService()
 
     def create(
         self,
@@ -95,6 +92,7 @@ class RunPlanner:
         """
         inputdata_path = _resolve_path(self._inputdata_path)
         unpacked_dir_path = _resolve_path(self._unpacked_dir_path)
+        self._invoice_service.begin_run(request.root)
         return ExecutionPlan(
             run_id=self._run_id_factory(),
             target=request.target,
@@ -107,6 +105,7 @@ class RunPlanner:
                 root=request.root,
                 inputdata_path=inputdata_path,
                 unpacked_dir_path=unpacked_dir_path,
+                invoice_service=self._invoice_service,
             ),
         )
 
@@ -117,12 +116,18 @@ class RunPlanner:
         root: Path,
         inputdata_path: Path,
         unpacked_dir_path: Path,
+        invoice_service: InvoiceService,
     ) -> Iterator[TilePlan]:
-        invariant_invoice = _invariant_invoice(mode, root=root)
+        invariant_invoice = _invariant_invoice(mode, root=root, invoice_service=invoice_service)
         invoice_org = _data_root(root) / "invoice" / "invoice.json"
         source = _InvoiceSourceState(path=invoice_org, prepared=mode is not ModeKind.excelinvoice)
         if mode in {ModeKind.multidatatile, ModeKind.rdeformat}:
-            source.path = _run_invoice_source(mode, root=root, inputdata_path=inputdata_path)
+            source.path = _run_invoice_source(
+                mode,
+                root=root,
+                inputdata_path=inputdata_path,
+                invoice_service=invoice_service,
+            )
         for info, paths, out in iterate_tiles(
             mode,
             inputdata_path,
@@ -144,6 +149,7 @@ class RunPlanner:
                     iteration_index=info.index,
                     invariant_invoice=invariant_invoice,
                     source=source,
+                    invoice_service=invoice_service,
                 ),
             )
 
@@ -158,6 +164,7 @@ def _prepare_tile_invoice(
     iteration_index: int,
     invariant_invoice: InvoiceData | None,
     source: _InvoiceSourceState,
+    invoice_service: InvoiceService,
 ) -> InvoiceData | None:
     if not source.prepared:
         source.path = _run_invoice_source(
@@ -165,6 +172,7 @@ def _prepare_tile_invoice(
             root=root,
             inputdata_path=inputdata_path,
             rawfiles=paths.rawfiles,
+            invoice_service=invoice_service,
         )
         source.prepared = True
     return _tile_invoice(
@@ -175,20 +183,17 @@ def _prepare_tile_invoice(
         iteration_index=iteration_index,
         invariant_invoice=invariant_invoice,
         invoice_org=source.path,
+        invoice_service=invoice_service,
     )
 
 
-def _invariant_invoice(mode: ModeKind, *, root: Path) -> InvoiceData | None:
-    data_root = _data_root(root)
-    invoice_path = data_root / "invoice" / "invoice.json"
-    if mode is ModeKind.invoice:
-        inputdata_path = data_root / "inputdata"
-        if not invoice_path.exists() and inputdata_path.exists() and not any(inputdata_path.iterdir()):
-            return None
-        return load_invoice(invoice_path)
-    if mode in {ModeKind.multidatatile, ModeKind.rdeformat} and invoice_path.exists():
-        return load_invoice(invoice_path)
-    return None
+def _invariant_invoice(
+    mode: ModeKind,
+    *,
+    root: Path,
+    invoice_service: InvoiceService | None = None,
+) -> InvoiceData | None:
+    return (invoice_service or InvoiceService()).invariant_invoice(mode, root=root)
 
 
 def _tile_invoice(
@@ -200,39 +205,17 @@ def _tile_invoice(
     iteration_index: int,
     invariant_invoice: InvoiceData | None,
     invoice_org: Path,
+    invoice_service: InvoiceService | None = None,
 ) -> InvoiceData | None:
     _ = root
-    invoice_schema_path = paths.tasksupport / "invoice.schema.json"
-    dist_path = invoice_dir / "invoice.json"
-    if invariant_invoice is not None:
-        _copy_invoice(invoice_org, dist_path)
-        return invariant_invoice
-    if mode is ModeKind.excelinvoice:
-        inputdata_path = paths.inputdata
-        input_candidates = tuple(sorted(inputdata_path.iterdir())) if inputdata_path.exists() else ()
-        excel_candidates = (*paths.rawfiles, *input_candidates)
-        return build_excelinvoice_tile_invoice(
-            excel_path=_first_matching(excel_candidates, suffixes=(".xlsx", ".xlsm", ".xls")),
-            invoice_org=invoice_org,
-            invoice_schema_path=invoice_schema_path,
-            dist_path=dist_path,
-            idx=iteration_index,
-        )
-    if mode is ModeKind.smarttable:
-        return build_smarttable_tile_invoice(
-            smarttable_rowfile=_first_matching(paths.rawfiles, prefixes=("fsmarttable_",), suffixes=(".csv",)),
-            invoice_org=invoice_org,
-            invoice_schema_path=invoice_schema_path,
-            dist_path=dist_path,
-            rawfiles=paths.rawfiles,
-        )
-    return None
-
-
-def _copy_invoice(source: Path, destination: Path) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    if source.resolve() != destination.resolve():
-        shutil.copy2(source, destination)
+    return (invoice_service or InvoiceService()).prepare_tile(
+        mode,
+        paths=paths,
+        invoice_dir=invoice_dir,
+        iteration_index=iteration_index,
+        invariant_invoice=invariant_invoice,
+        invoice_source=invoice_org,
+    )
 
 
 def _run_invoice_source(
@@ -241,54 +224,24 @@ def _run_invoice_source(
     root: Path,
     inputdata_path: Path,
     rawfiles: tuple[Path, ...] = (),
+    invoice_service: InvoiceService | None = None,
 ) -> Path:
     """Return the v1-compatible run-level invoice source for a backup mode."""
-    data_root = _data_root(root)
-    invoice_org = data_root / "invoice" / "invoice.json"
-    excel_path: Path | None = None
-    if mode is ModeKind.excelinvoice and data_root != root:
-        input_candidates = tuple(sorted(inputdata_path.iterdir())) if inputdata_path.exists() else ()
-        candidates = (*rawfiles, *input_candidates)
-        excel_path = _first_matching(candidates, suffixes=(".xlsx", ".xlsm", ".xls"))
-    if data_root == root:
-        return _flat_layout_invoice_source(invoice_org=invoice_org)
-    with chdir(root):
-        return backup_invoice_json_files(excel_path, _legacy_backup_mode(mode))
+    return (invoice_service or InvoiceService()).backup(
+        mode,
+        root=root,
+        inputdata_path=inputdata_path,
+        rawfiles=rawfiles,
+    )
 
 
 def _flat_layout_invoice_source(*, invoice_org: Path) -> Path:
-    """Preserve the test/public flat-root layout unsupported by the v1 helper."""
-    if not invoice_org.exists():
-        return invoice_org
-    backup_path = invoice_org.parent.parent / "temp" / "invoice_org.json"
-    backup_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(invoice_org, backup_path)
-    return backup_path
-
-
-def _legacy_backup_mode(mode: ModeKind) -> str | None:
-    if mode is ModeKind.multidatatile:
-        return "MultiDataTile"
-    if mode is ModeKind.rdeformat:
-        return "rdeformat"
-    return None
-
-
-def _first_matching(
-    paths: tuple[Path, ...],
-    *,
-    prefixes: tuple[str, ...] = (),
-    suffixes: tuple[str, ...],
-) -> Path:
-    ordered = tuple(sorted(paths))
-    for path in ordered:
-        if path.suffix.lower() in suffixes and (not prefixes or path.name.startswith(prefixes)):
-            return path
-    for path in ordered:
-        if path.suffix.lower() in suffixes:
-            return path
-    msg = f"No input file matched suffixes {suffixes}"
-    raise FileNotFoundError(msg)
+    """Compatibility wrapper for the former flat-layout helper."""
+    return InvoiceService().backup(
+        ModeKind.rdeformat,
+        root=invoice_org.parent.parent,
+        inputdata_path=invoice_org.parent.parent / "inputdata",
+    )
 
 
 def _data_root(root: Path) -> Path:
