@@ -16,8 +16,16 @@ from rdetoolkit.api.request import FlowTarget, RunRequest, build_run_request
 from rdetoolkit.config.normalize import ConfigNormalizer
 from rdetoolkit.domain.invoice_service import InvoiceService
 from rdetoolkit.domain.validation import invoice_validate, metadata_validate
-from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError, RdeError, RdeExecutionError, RdeValidationError
+from rdetoolkit.errors import (
+    ERROR_CATALOG,
+    RdeConfigError,
+    RdeError,
+    RdeExecutionError,
+    RdeInternalError,
+    RdeValidationError,
+)
 from rdetoolkit.exceptions import InvoiceSchemaValidationError, MetadataValidationError
+from rdetoolkit.models.config import Config
 from rdetoolkit.report.events import Event, EventSink, MemoryEventSink
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.aggregator import RunAggregator
@@ -132,30 +140,27 @@ class Runner:
                 pass
 
             try:
-                self.event_sink.emit(Event.run_started(run_id=self.run_id))
-                config = self.load_config(run_request.config_source)
-                mode = self.resolve_mode(config)
-                self.pre_validate(config)
-                report = self.iterate(flow_fn, mode, config)
-                self.post_validate(config, report)
-                self.finalize(report, config)
-                return report
-            except Exception as exc:  # noqa: BLE001
-                effective_config = config or RdeConfig()
-                error = _lifecycle_error(exc)
-                report = RunReport(
-                    run_id=self.run_id,
-                    status="failed",
-                    flow_id=_flow_id(flow_fn),
-                    mode=mode.value if mode is not None else "unknown",
-                    started_at=_iso_timestamp(started),
-                    duration_ms=(time.time() - started) * 1000.0,
-                    config_digest=_config_digest(effective_config),
-                    iterations=[],
-                    warnings=[],
-                    error=_exception_error(error),
-                )
-                self.finalize(report, effective_config)
+                try:
+                    self.event_sink.emit(Event.run_started(run_id=self.run_id))
+                    config = self.load_config(run_request.config_source)
+                    mode = self.resolve_mode(config)
+                    self.pre_validate(config)
+                    report = self.iterate(flow_fn, mode, config)
+                    self.post_validate(config, report)
+                except Exception as exc:  # noqa: BLE001
+                    config = config or RdeConfig()
+                    report = _failed_report(
+                        run_id=self.run_id,
+                        flow_fn=flow_fn,
+                        mode=mode,
+                        started=started,
+                        config=config,
+                        exc=exc,
+                    )
+                try:
+                    self.finalize(report, config)
+                except Exception as exc:  # noqa: BLE001
+                    raise _finalize_error(exc) from exc
                 return report
             finally:
                 if report is not None:
@@ -180,6 +185,8 @@ class Runner:
             return load_config_from_root(self.root, overrides=source.model_dump())
         if isinstance(source, Mapping):
             return load_config_from_root(self.root, overrides=source)
+        if isinstance(source, Config):
+            return ConfigNormalizer().normalize(source, root=self.root, origin="v1")
         return ConfigNormalizer().normalize(source, root=self.root, origin="v2")
 
     def _apply_request_root(self, root: Path) -> None:
@@ -398,6 +405,40 @@ def _lifecycle_error(exc: Exception) -> RdeError:
         name=error_def.name,
         message=message,
     )
+
+
+def _failed_report(
+    *,
+    run_id: str,
+    flow_fn: Callable[..., Any],
+    mode: ModeKind | None,
+    started: float,
+    config: RdeConfig,
+    exc: Exception,
+) -> RunReport:
+    error = _lifecycle_error(exc)
+    return RunReport(
+        run_id=run_id,
+        status="failed",
+        flow_id=_flow_id(flow_fn),
+        mode=mode.value if mode is not None else "unknown",
+        started_at=_iso_timestamp(started),
+        duration_ms=(time.time() - started) * 1000.0,
+        config_digest=_config_digest(config),
+        iterations=[],
+        warnings=[],
+        error=_exception_error(error),
+    )
+
+
+def _finalize_error(exc: Exception) -> RdeError:
+    if isinstance(exc, RdeError):
+        return exc
+    error_def = ERROR_CATALOG[5001]
+    message = error_def.message_template.format(reason=f"finalize I/O failed: {exc}")
+    message = f"{message} Remediation: {error_def.remediation}"
+    error_cls: Any = RdeInternalError
+    return error_cls(code=5001, name=error_def.name, message=message)
 
 
 def _run_status(*, completed_count: int, failed_count: int, fail_fast: bool = False) -> str:

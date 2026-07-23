@@ -10,7 +10,7 @@ subcommand of the ``report`` typer group (Design §10: ``report show
 underlying run's ``status`` (Conflict #5 -- ``report show`` on a
 ``status="failed"`` run is still a successful display, never exit 1); exit 3
 on a missing/malformed path. ``schema_version`` != the current known value
-("1") is a WARNING, not a failure -- the command still displays as much as
+("2") is a WARNING, not a failure -- the command still displays as much as
 it can and exits 0.
 
 Reuses Session E1's ``tests/v2/cli/fixtures/run_flows.py`` (read-only,
@@ -43,7 +43,7 @@ _SEED_INVOICE_JSON: dict = {
 }
 
 _VALID_REPORT_TEMPLATE: dict = {
-    "schema_version": "1",
+    "schema_version": "2",
     "run_id": "report-show-fixture-run",
     "status": "success",
     "flow_id": "pkg.mod:pipeline",

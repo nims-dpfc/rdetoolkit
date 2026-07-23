@@ -107,7 +107,20 @@ class TestRunAggregatorBuildsReport:
         assert len(report.iterations) == 2
         assert {entry["index"] for entry in report.iterations} == {0, 1}
         assert {entry["datatile_id"] for entry in report.iterations} == {"tile_0", "tile_1"}
-        assert all(set(entry) == {"index", "datatile_id", "status", "node_calls", "error"} for entry in report.iterations)
+        assert all(
+            set(entry)
+            == {
+                "index",
+                "datatile_id",
+                "status",
+                "node_calls",
+                "error",
+                "title",
+                "target",
+                "stacktrace",
+            }
+            for entry in report.iterations
+        )
 
 
 class TestRunAggregatorEventSinkIndependence:

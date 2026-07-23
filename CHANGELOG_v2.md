@@ -157,3 +157,42 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 - Deferred live per-tile wiring of `RawArtifactService` and
   `ImageArtifactService` to Phase I I5/I6 so Phase H does not change existing
   output trees or frozen contracts.
+
+### Fixed — Phase H PR #521 blocker remediation
+
+- Made failed-run finalization resolve both project-root and already-flat
+  `data` layouts before writing the absolute `job.failed` path, while retaining
+  the unchanged v1 writer and file format.
+- Replaced identity serialization in `RunReport.to_legacy_statuses()` with a
+  total conversion from primary `RunAggregator` iteration results. Tile
+  results now retain title, target, and stacktrace at the execution boundary.
+- Bumped `RunReport.schema_version` from `"1"` to `"2"` because the serialized
+  iteration schema adds `title`, `target`, and `stacktrace`. Consumers that
+  read only existing primary fields remain compatible; schema-aware consumers
+  must accept version 2. `rdetoolkit report show` now reads the current schema
+  constant instead of hardcoding an older version.
+- Classified explicit v1 `Config` instances with `origin="v1"` and preserved
+  catalogued `RdeConfigError(1002)` failures instead of exposing Pydantic
+  `ValidationError` causes.
+- Separated business-lifecycle failure handling from the exactly-once
+  finalization boundary. Finalization I/O failures now surface as catalogued
+  `RdeInternalError(5001)` and never trigger a second finalize attempt.
+- Enabled branch coverage and added focused rejection, interruption, path,
+  artifact-filter, directory-copy, copy-failure, and disabled-image tests for
+  new Phase H modules.
+
+#### Existing-test UPDATE table
+
+| Test seat | Previous expectation | Strengthened expectation and reason |
+| --- | --- | --- |
+| `test_finalize.py` TC-FIN-006 | v1 writer received only code/message | writer must also receive the resolved absolute root-owned filename (F1) |
+| `test_legacy_statuses_contract.py` TC-EP-G2-301..315 | expected legacy payload was injected into `RunReport.iterations` | independent frozen invoices/output inventory produce real `ExecutionResult` → `RunAggregator` output before exact legacy comparison (F2; removes tautology) |
+| `test_aggregator.py` TC-AGG-001 | five-field iteration summary | summary explicitly retains compatibility title/target/stacktrace (F2 schema 2) |
+| `test_iteration_streaming.py` TC-D2R-F5 | five-field canonical summary | serialized iteration schema 2 includes the three explicit compatibility inputs (F2) |
+| `test_execute.py` TC-EXEC-001 | six-field `ExecutionResult` | execution result explicitly carries title/target/stacktrace while they are available (F2) |
+| `test_run_report.py` TC-EP-001/002 | schema version 1 | schema version 2 is asserted after the serialized iteration change (F2) |
+| `test_run_flow.py` TC-E2E-004 | schema version 1 | end-to-end report asserts schema version 2 (F2) |
+| `test_event_schema.py` TC-EVENT-022 helper/assertion | schema version 1 | schema-aware serialization seat asserts version 2 (F2) |
+| `test_config_loader.py` TC-CFG-005/006 | raw Pydantic `ValidationError` | public `RdeConfigError` with integer code 1002 (F4 contract strengthening) |
+| `test_rdeconfig_v1_keys.py` TC-EP-G2-005 | direct model `ValidationError` | public loader rejects every strict-section unknown key with `RdeConfigError(1002)` (F4) |
+| `test_cli_report.py` TC-CLI-REPORT-EP-003 fixture | version-1 report was current | version-2 report is current and must not emit an unknown-schema warning (F2 consumer compatibility) |

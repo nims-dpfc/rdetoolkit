@@ -8,6 +8,7 @@ from typing import Any
 
 from rdetoolkit.errors import ERROR_CATALOG, write_job_errorlog_file
 from rdetoolkit.report.run_report import RunReport
+from rdetoolkit.runner.paths import resolve_data_root
 from rdetoolkit.types import RdeConfig
 
 
@@ -51,7 +52,9 @@ def finalize(report: RunReport, config: RdeConfig, *, root: Path) -> None:
     _write_run_report(report, root=root)
     if report.status == "failed":
         code, message = _failure_error(report)
-        write_job_errorlog_file(code, message)
+        failure_path = (resolve_data_root(root) / "job.failed").resolve()
+        failure_path.parent.mkdir(parents=True, exist_ok=True)
+        write_job_errorlog_file(code, message, filename=str(failure_path))
 
 
 def _write_run_report(report: RunReport, *, root: Path) -> None:

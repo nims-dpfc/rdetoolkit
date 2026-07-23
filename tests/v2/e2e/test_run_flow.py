@@ -310,7 +310,7 @@ class TestRunReportSchemaConformance:
             report = runner.run(pipeline)
 
         payload = report.to_dict()
-        assert payload["schema_version"] == "1"
+        assert payload["schema_version"] == "2"
         for key in ("run_id", "status", "flow_id", "mode", "started_at", "duration_ms", "config_digest", "iterations", "warnings"):
             assert key in payload
 

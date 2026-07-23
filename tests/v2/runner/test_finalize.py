@@ -26,6 +26,7 @@ BV table:
 | API | Boundary | Expected | Test ID |
 | --- | --- | --- | --- |
 | Runner.finalize | one successful report | exactly one root-relative report | TC-H0-ROOT-BV-001 |
+| Runner.finalize | one failed report and root != cwd | job.failed is written below root | TC-HR-F1-BV-001 |
 
 ``write_job_errorlog_file`` itself is v1 public surface and MUST NOT be
 reimplemented by finalize.py; finalize.py only calls it.
@@ -141,7 +142,11 @@ class TestFinalizeSingleResponsibility:
 
         finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
-        mock_write.assert_called_once_with(_NODE_EXECUTION_FAILED_CODE, "boom")
+        mock_write.assert_called_once_with(
+            _NODE_EXECUTION_FAILED_CODE,
+            "boom",
+            filename=str((_cwd_data_dir / "job.failed").resolve()),
+        )
 
     def test_finalize_does_not_call_write_job_errorlog_file_on_success(
         self, _cwd_data_dir: Path, monkeypatch: pytest.MonkeyPatch,
@@ -238,3 +243,27 @@ class TestReviewFollowUps:
         expected = run_root / "data" / "logs" / "run_report_root-relative.json"
         assert expected.exists()
         assert not (caller / "data" / "logs" / expected.name).exists()
+
+    def test_failed_runner_finalize_uses_root_when_cwd_differs__tc_hr_f1_bv_001(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-HR-F1-BV-001: failed marker belongs to Runner.root, not cwd."""
+        # Given: a failed report, a Runner root, and an unrelated cwd
+        from rdetoolkit.runner.lifecycle import Runner
+
+        run_root = tmp_path / "run-root"
+        caller = tmp_path / "caller"
+        run_root.mkdir()
+        caller.mkdir()
+        monkeypatch.chdir(caller)
+        report = _make_report(status="failed", error={"code": 3001, "message": "boom"})
+
+        # When: the production Runner finalizes the failed report
+        Runner(root=run_root).finalize(report, RdeConfig())
+
+        # Then: only the absolute root-owned marker is created
+        failure_path = run_root / "data" / "job.failed"
+        assert failure_path.read_text(encoding="utf-8") == "ErrorCode=3001\nErrorMessage=boom\n"
+        assert not (caller / "data" / "job.failed").exists()

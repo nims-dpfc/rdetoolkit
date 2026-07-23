@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -47,6 +49,7 @@ class TileExecutor:
         Returns:
             Completed or failed primary execution result.
         """
+        invoice = tile.invoice
         try:
             invoice = tile.prepare_invoice() if tile.prepare_invoice is not None else tile.invoice
             context = RunContext(
@@ -56,25 +59,41 @@ class TileExecutor:
                 invoice=invoice,
                 iteration=tile.iteration,
             )
-            return self._flow_invoker.invoke(
-                plan.target,
-                context,
-                event_sink=self._event_sink,
-                run_id=plan.run_id,
-                config=plan.config,
+            return _with_legacy_metadata(
+                self._flow_invoker.invoke(
+                    plan.target,
+                    context,
+                    event_sink=self._event_sink,
+                    run_id=plan.run_id,
+                    config=plan.config,
+                ),
+                invoice=invoice,
+                rawfiles=tile.paths.rawfiles,
+                root=plan.root,
             )
         except Exception as exc:  # noqa: BLE001
             if _is_run_interrupted(exc):
                 raise
             if isinstance(exc, TileExecutionError):
-                return exc.result
-            return ExecutionResult(
+                return _with_legacy_metadata(
+                    exc.result,
+                    invoice=invoice,
+                    rawfiles=tile.paths.rawfiles,
+                    root=plan.root,
+                )
+            result = ExecutionResult(
                 iteration_index=tile.iteration.index,
                 status="failed",
                 call_records=(),
                 outputs=(),
                 error=_execution_error(exc),
                 datatile_id=_datatile_id(tile.paths.rawfiles, tile.iteration.index),
+            )
+            return _with_legacy_metadata(
+                result,
+                invoice=invoice,
+                rawfiles=tile.paths.rawfiles,
+                root=plan.root,
             )
 
 
@@ -95,3 +114,29 @@ def _execution_error(exc: Exception) -> dict[str, Any]:
 
 def _datatile_id(rawfiles: tuple[Path, ...], iteration_index: int) -> str:
     return rawfiles[0].stem if rawfiles else str(iteration_index)
+
+
+def _with_legacy_metadata(
+    result: ExecutionResult,
+    *,
+    invoice: Any,
+    rawfiles: tuple[Path, ...],
+    root: Path,
+) -> ExecutionResult:
+    """Attach compatibility inputs while they are available at the tile boundary."""
+    title = result.datatile_id
+    if invoice is not None:
+        basic = invoice.raw.get("basic")
+        if isinstance(basic, dict) and isinstance(basic.get("dataName"), str):
+            title = basic["dataName"]
+    target = _legacy_target(rawfiles, root=root)
+    return replace(result, title=title, target=target)
+
+
+def _legacy_target(rawfiles: tuple[Path, ...], *, root: Path) -> str | None:
+    if not rawfiles:
+        return None
+    basedir = rawfiles[0].parent
+    with contextlib.suppress(ValueError):
+        basedir = basedir.relative_to(root)
+    return basedir.as_posix()

@@ -120,4 +120,7 @@ def _summary_payload(result: ExecutionResult) -> dict[str, Any]:
             for record in result.call_records
         ],
         "error": result.error,
+        "title": result.title,
+        "target": result.target,
+        "stacktrace": result.stacktrace,
     }

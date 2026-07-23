@@ -4,7 +4,7 @@ EP table:
 
 | RunReport mode | Frozen v1 oracle | Expected | Test ID |
 |---|---|---|---|
-| invoice | ``v1/invoice/ok.json`` | exact legacy-return JSON | TC-EP-G2-301 |
+| invoice | ``v1/invoice/ok.json`` | aggregator output converts to exact legacy JSON | TC-EP-G2-301 |
 | excelinvoice | ``v1/excelinvoice/ok.json`` | exact legacy-return JSON | TC-EP-G2-302 |
 | multidatatile | ``v1/multidatatile/ok.json`` | exact legacy-return JSON | TC-EP-G2-303 |
 | smarttable | ``v1/smarttable/ok.json`` | exact legacy-return JSON | TC-EP-G2-304 |
@@ -31,6 +31,30 @@ import pytest
 _EXPECTED_ROOT = Path(__file__).parent / "fixtures" / "expected" / "v1"
 
 
+def _iteration_titles(observed: dict[str, Any]) -> list[str]:
+    """Derive iteration-ordered titles from independently frozen invoices."""
+    invoices = observed["invoices"]
+
+    def _iteration_index(path: str) -> int:
+        parts = Path(path).parts
+        return int(parts[2]) if parts[:2] == ("data", "divided") else 0
+
+    ordered = sorted(invoices.items(), key=lambda item: _iteration_index(item[0]))
+    return [str(invoice["basic"]["dataName"]) for _, invoice in ordered]
+
+
+def _iteration_targets(mode: str, observed: dict[str, Any], count: int) -> list[str]:
+    """Derive v1 basedirs from the independently frozen output inventory."""
+    files = [Path(path) for path in observed["output_tree"]["files"]]
+    if mode in {"invoice", "multidatatile"}:
+        parent = next(path.parent for path in files if path.parts[:2] == ("data", "inputdata"))
+        return [parent.as_posix()] * count
+    if mode in {"excelinvoice", "smarttable"}:
+        parent = next(path.parent for path in files if path.parts[:2] == ("data", "temp") and len(path.parts) == 3)
+        return [parent.as_posix()] * count
+    return [f"data/temp/{index:04d}/<TILE_SUBDIR>" for index in range(count)]
+
+
 @pytest.mark.parametrize(
     "mode,test_id",
     [
@@ -44,25 +68,44 @@ _EXPECTED_ROOT = Path(__file__).parent / "fixtures" / "expected" / "v1"
 def test_to_legacy_statuses_matches_frozen_v1_ok_payload(
     mode: str,
     test_id: str,
+    tmp_path: Path,
 ) -> None:
     """TC-EP-G2-301..305: Each mode matches its frozen v1 return JSON."""
-    from rdetoolkit.report.run_report import RunReport
+    from rdetoolkit.runner.aggregator import RunAggregator
+    from rdetoolkit.runner.execute import ExecutionResult
 
     # Given: the G1-frozen v1 return and a RunReport for that same scenario
     fixture: dict[str, Any] = json.loads(
         (_EXPECTED_ROOT / mode / "ok.json").read_text(encoding="utf-8"),
     )
+    observed = fixture["observed"]
     expected = fixture["observed"]["legacy_return"]
-    report = RunReport(
+    titles = _iteration_titles(observed)
+    targets = _iteration_targets(mode, observed, len(titles))
+    aggregator = RunAggregator(
         run_id="<RUN_ID>",
-        status="success",
         flow_id="legacy:custom_dataset_function",
         mode=mode,
+        config_digest="sha256:<NORMALIZED>",
+        logs_dir=tmp_path / "logs",
+    )
+    for index, (title, target) in enumerate(zip(titles, targets, strict=True)):
+        aggregator.record(
+            ExecutionResult(
+                iteration_index=index,
+                status="completed",
+                call_records=(),
+                outputs=(),
+                datatile_id=f"tile-{index}",
+                title=title,
+                target=target,
+                stacktrace="<TRACEBACK>",
+            ),
+        )
+    report = aggregator.build_report(
+        status="success",
         started_at="<DATE>",
         duration_ms=0.0,
-        config_digest="sha256:<NORMALIZED>",
-        iterations=expected["statuses"],
-        warnings=[],
     )
 
     # When: requesting the explicit legacy compatibility representation
@@ -89,6 +132,7 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
     mode: str,
     outcome: str,
     test_id: str,
+    tmp_path: Path,
 ) -> None:
     """TC-EP-GR2-306..315: Error seats follow each frozen v1 return contract."""
     # Given: the frozen v1 error result for one mode/outcome seat
@@ -97,35 +141,47 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
     )
     observed = fixture["observed"]
     expected = observed["legacy_return"]
-    from rdetoolkit.report.run_report import RunReport
+    from rdetoolkit.runner.aggregator import RunAggregator
+    from rdetoolkit.runner.execute import ExecutionResult
 
-    if expected is None:
-        ok_fixture: dict[str, Any] = json.loads(
-            (_EXPECTED_ROOT / mode / "ok.json").read_text(encoding="utf-8"),
-        )
-        reference_status = ok_fixture["observed"]["legacy_return"]["statuses"][0]
-        job_failed_text = observed["job_failed_text"]
-        code_line, message_text = job_failed_text.split("\n", maxsplit=1)
-        status = {
-            **reference_status,
-            "error_code": int(code_line.removeprefix("ErrorCode=")),
-            "error_message": message_text.removeprefix("ErrorMessage=").rstrip("\n"),
-            "status": "failed",
-        }
-        iterations = [status]
-    else:
-        iterations = expected["statuses"]
-
-    report = RunReport(
+    ok_fixture: dict[str, Any] = json.loads(
+        (_EXPECTED_ROOT / mode / "ok.json").read_text(encoding="utf-8"),
+    )
+    ok_observed = ok_fixture["observed"]
+    reference_status = ok_observed["legacy_return"]["statuses"][0]
+    title = _iteration_titles(ok_observed)[0]
+    target = _iteration_targets(mode, ok_observed, 1)[0]
+    job_failed_text = observed["job_failed_text"]
+    code_line, message_text = job_failed_text.split("\n", maxsplit=1)
+    error = {
+        "code": int(code_line.removeprefix("ErrorCode=")),
+        "message": message_text.removeprefix("ErrorMessage=").rstrip("\n"),
+    }
+    aggregator = RunAggregator(
         run_id="<RUN_ID>",
-        status="failed",
         flow_id="legacy:custom_dataset_function",
         mode=mode,
+        config_digest="sha256:<NORMALIZED>",
+        logs_dir=tmp_path / "logs",
+    )
+    aggregator.record(
+        ExecutionResult(
+            iteration_index=0,
+            status="failed",
+            call_records=(),
+            outputs=(),
+            error=error,
+            datatile_id="failed-tile",
+            title=title,
+            target=target,
+            stacktrace="<TRACEBACK>",
+        ),
+    )
+    report = aggregator.build_report(
+        status="failed",
         started_at="<DATE>",
         duration_ms=0.0,
-        config_digest="sha256:<NORMALIZED>",
-        iterations=iterations,
-        warnings=[],
+        error=error,
     )
 
     # When: converting the future unified failed report to the legacy shape
@@ -142,5 +198,5 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
     actual_statuses = actual["statuses"]
     assert len(actual_statuses) == len(report.iterations)
     assert set(actual_statuses[0]) == set(reference_status)
-    assert actual_statuses[0]["error_code"] == status["error_code"]
-    assert actual_statuses[0]["error_message"] == status["error_message"]
+    assert actual_statuses[0]["error_code"] == error["code"]
+    assert actual_statuses[0]["error_message"] == error["message"]

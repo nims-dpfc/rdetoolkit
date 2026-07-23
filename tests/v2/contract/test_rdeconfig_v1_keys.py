@@ -8,7 +8,7 @@ EP table:
 | ``RdeConfig`` | all artifact keys supplied | values retained in their sections | TC-EP-G2-002 |
 | ``load_config`` | artifact keys in YAML | values loaded from YAML | TC-EP-G2-003 |
 | ``load_config`` | YAML plus overrides | overrides win | TC-EP-G2-004 |
-| config models | unknown key in any strict section | ``ValidationError`` | TC-EP-G2-005 |
+| ``load_config`` | unknown key in any strict section | ``RdeConfigError(1002)`` | TC-EP-G2-005 |
 
 BV table:
 
@@ -21,8 +21,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pydantic import ValidationError
 
+from rdetoolkit.errors import RdeConfigError
 from rdetoolkit.runner.config_loader import load_config
 from rdetoolkit.types import RdeConfig
 
@@ -126,12 +126,16 @@ def test_artifact_key_overrides_win_over_yaml__tc_ep_g2_004(tmp_path: Path) -> N
 )
 def test_all_config_sections_remain_strict__tc_ep_g2_005(
     invalid_config: dict[str, Any],
+    tmp_path: Path,
 ) -> None:
-    """TC-EP-G2-005: Unknown keys remain forbidden throughout RdeConfig."""
+    """TC-EP-G2-005: Unknown keys surface as catalogued config errors."""
     # Given: an unknown key at the root or in a strict child section
-    # When / Then: model validation rejects the unknown key
-    with pytest.raises(ValidationError):
-        RdeConfig.model_validate(invalid_config)
+    # When: loading it through the public Runner config boundary
+    with pytest.raises(RdeConfigError) as exc_info:
+        load_config(tmp_path, invalid_config)
+
+    # Then: the error retains its catalogued type and integer code
+    assert exc_info.value.code == 1002
 
 
 def test_empty_artifact_sections_preserve_defaults__tc_bv_g2_001() -> None:

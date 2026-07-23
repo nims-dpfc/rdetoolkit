@@ -8,6 +8,7 @@ Equivalence partitions (EP):
 | ``Runner.pre_validate`` | missing source artifact | invalid input structure | failed report and ``job.failed`` use code 4003 before flow execution | TC-EP-H2-002 |
 | ``Runner.post_validate`` | invalid completed invoice | invalid final artifact | failed report and ``job.failed`` use code 4001 | TC-EP-H2-003 |
 | ``Runner.post_validate`` | invalid completed metadata | invalid optional artifact | metadata failure is wrapped with code 4002 | TC-EP-H2-004 |
+| ``Runner.run`` | finalizer raises I/O error | persistence boundary failure | raise RdeInternalError(5001), do not replace success report | TC-EP-HR-F5-001 |
 
 Boundary values (BV):
 
@@ -15,6 +16,7 @@ Boundary values (BV):
 | --- | --- | --- | --- | --- |
 | ``Runner.post_validate`` | one completed and one failed iteration | smallest mixed result | only the completed tile is validated | TC-BV-H2-001 |
 | ``Runner.post_validate`` | metadata absent | v1 optional metadata boundary | metadata validation is skipped | TC-BV-H2-002 |
+| ``Runner.run`` | first finalize call fails | exactly-once boundary | finalizer call count remains one | TC-BV-HR-F5-001 |
 """
 
 from __future__ import annotations
@@ -133,6 +135,15 @@ class _RecordingFinalizer:
         self.calls.append("finalizer")
 
 
+class _FailingFinalizer:
+    def __init__(self) -> None:
+        self.reports: list[RunReport] = []
+
+    def finalize(self, report: RunReport, config: RdeConfig) -> None:
+        self.reports.append(report)
+        raise OSError("disk full")
+
+
 class _RecordingRunner(Runner):
     def __init__(self, *, calls: list[str], **kwargs: Any) -> None:
         self._calls = calls
@@ -213,6 +224,34 @@ def test_fake_planner_runs_full_lifecycle_and_runner_owns_signal__tc_ep_h2_001(
         "finalizer",
     ]
     assert signal_calls == [(signal.SIGTERM, ANY), (signal.SIGTERM, previous)]
+
+
+def test_finalize_io_failure_is_catalogued_and_not_retried__tc_ep_hr_f5_001(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-EP/BV-HR-F5-001: finalization is an exactly-once exception boundary."""
+    # Given: a successful business lifecycle and a finalizer that fails on its first call
+    from rdetoolkit.errors import RdeInternalError
+
+    finalizer = _FailingFinalizer()
+    runner = Runner(root=tmp_path, finalizer=finalizer, run_id_factory=lambda: "h2-finalize-failure")
+    success_report = _report()
+    monkeypatch.setattr(runner, "load_config", lambda source: RdeConfig())
+    monkeypatch.setattr(runner, "resolve_mode", lambda config: ModeKind.invoice)
+    monkeypatch.setattr(runner, "pre_validate", lambda config: None)
+    monkeypatch.setattr(runner, "iterate", lambda flow_fn, mode, config: success_report)
+    monkeypatch.setattr(runner, "post_validate", lambda config, report: None)
+
+    # When: persistence raises an ordinary I/O exception
+    with pytest.raises(RdeInternalError) as exc_info:
+        runner.run(lambda: None)
+
+    # Then: it is catalogued as internal I/O context and never retried with a failed report
+    assert exc_info.value.code == 5001
+    assert "disk full" in exc_info.value.message
+    assert finalizer.reports == [success_report]
+    assert finalizer.reports[0].status == "success"
 
 
 def test_missing_input_artifact_fails_before_flow_with_4003__tc_ep_h2_002(

@@ -89,6 +89,9 @@ class TestExecutionResultShape:
             "outputs",
             "error",
             "datatile_id",
+            "title",
+            "target",
+            "stacktrace",
         }
 
     def test_execution_result_error_defaults_to_none(self) -> None:

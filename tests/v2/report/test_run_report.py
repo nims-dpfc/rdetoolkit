@@ -39,7 +39,7 @@ class TestRunReport:
         # When: constructing a RunReport
         report = _make_report(iterations=iterations, warnings=warnings)
         # Then: all fields are accessible
-        assert report.schema_version == "1"
+        assert report.schema_version == "2"
         assert report.run_id == "run-1"
         assert report.status == "success"
         assert report.flow_id == "pkg.mod:pipeline"
@@ -59,7 +59,7 @@ class TestRunReport:
         # Then: it is valid JSON with schema_version first
         data = json.loads(json_str)
         assert next(iter(data)) == "schema_version"
-        assert data["schema_version"] == "1"
+        assert data["schema_version"] == "2"
         assert data["run_id"] == "run-1"
         assert data["iterations"] == []
 

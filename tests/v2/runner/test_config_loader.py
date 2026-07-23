@@ -86,40 +86,40 @@ class TestLoadConfig:
             f"overrides must take priority; expected 'rdeformat', got {result.system.extended_mode!r}"
         )
 
-    def test_load_config_raises_validation_error_on_lineage_key_in_provenance_section(
+    def test_load_config_raises_catalogued_error_on_lineage_key_in_provenance_section(
         self, tmp_path: Path
     ) -> None:
-        """TC-CFG-005: lineage keys in provenance section raise pydantic.ValidationError.
+        """TC-CFG-005: lineage keys raise RdeConfigError(1002).
 
         Design v2.1 R2/ADR-022: value-lineage settings do not exist in v2.0;
         RdeConfig sections have extra='forbid' and reject them at load time.
         """
-        from pydantic import ValidationError
-
+        from rdetoolkit.errors import RdeConfigError
         from rdetoolkit.runner.config_loader import load_config
 
         rdeconfig_yaml = tmp_path / "rdeconfig.yaml"
         rdeconfig_yaml.write_text("provenance:\n  lineage: on\n")
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(RdeConfigError) as exc_info:
             load_config(tmp_path)
+        assert exc_info.value.code == 1002
 
-    def test_load_config_raises_validation_error_on_unknown_key_in_execution_section(
+    def test_load_config_raises_catalogued_error_on_unknown_key_in_execution_section(
         self, tmp_path: Path
     ) -> None:
-        """TC-CFG-006: Unknown key in execution section raises pydantic.ValidationError.
+        """TC-CFG-006: Unknown execution key raises RdeConfigError(1002).
 
         RdeConfig execution section has extra='forbid' (Design §4.4 / SF#17).
         """
-        from pydantic import ValidationError
-
+        from rdetoolkit.errors import RdeConfigError
         from rdetoolkit.runner.config_loader import load_config
 
         rdeconfig_yaml = tmp_path / "rdeconfig.yaml"
         rdeconfig_yaml.write_text("execution:\n  typo_key: some_value\n")
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(RdeConfigError) as exc_info:
             load_config(tmp_path)
+        assert exc_info.value.code == 1002
 
     def test_load_config_happy_path_returns_correct_rdeconfig_fields(
         self, tmp_path: Path

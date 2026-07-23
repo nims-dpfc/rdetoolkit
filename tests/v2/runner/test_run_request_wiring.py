@@ -6,12 +6,14 @@ EP table:
 |---|---|---|---|
 | ``RunRequest(FlowTarget)`` | valid flow request | target and RdeConfig reach lifecycle | TC-EP-H1-201 |
 | ``RunRequest(LegacyCallbackTarget)`` | Phase J target | rejected | TC-EP-H1-202 |
+| ``Runner.load_config(Config)`` | v1 model | normalize with origin=v1 | TC-EP-HR-F3-001 |
 
 BV table:
 
 | Boundary | Expected | Test ID |
 |---|---|---|
 | empty v2 mapping source | canonical defaults | TC-BV-H1-201 |
+| v1 MultiDataTile policy | legacy field accepted and mapped | TC-BV-HR-F3-001 |
 """
 
 from pathlib import Path
@@ -96,3 +98,23 @@ def test_runner_rejects_legacy_request_until_phase_j__tc_ep_h1_202(
     # When / Then: the flow-only H1 Runner rejects the Phase J target explicitly
     with pytest.raises(TypeError, match="LegacyCallbackTarget.*Phase J"):
         Runner(root=tmp_path).run(request)
+
+
+def test_runner_load_config_classifies_v1_model_origin__tc_ep_hr_f3_001(
+    tmp_path: Path,
+) -> None:
+    """TC-EP/BV-HR-F3-001: v1 Config accepts and maps MultiDataTile fields."""
+    # Given: an explicit v1 Config carrying a legacy-only nested section
+    from rdetoolkit.models.config import Config, MultiDataTileSettings, SystemSettings
+
+    source = Config(
+        system=SystemSettings(extended_mode="MultiDataTile"),
+        multidata_tile=MultiDataTileSettings(ignore_errors=True),
+    )
+
+    # When: normalizing at the Runner request boundary
+    config = Runner(root=tmp_path).load_config(source)
+
+    # Then: v1 policy and mode fields are accepted and mapped canonically
+    assert config.system.extended_mode == "MultiDataTile"
+    assert config.execution.on_iteration_error == "continue"

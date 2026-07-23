@@ -44,6 +44,23 @@ _DIRNAMES = {
 }
 
 
+def resolve_data_root(root: Path) -> Path:
+    """Resolve either a project root or an already-flat ``data`` root.
+
+    Args:
+        root: Runner-owned project or data directory.
+
+    Returns:
+        The directory that directly owns RDE input and output subdirectories.
+    """
+    if root.name == "data":
+        return root
+    candidate = root / "data"
+    if candidate.exists():
+        return candidate
+    return root
+
+
 def resolve_tile_paths(base_dir: Path, idx: int) -> TileOutputPaths:
     """Resolve v1-compatible output directories for one tile.
 

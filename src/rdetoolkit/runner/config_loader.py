@@ -7,10 +7,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
-
 from rdetoolkit.config.normalize import ConfigNormalizer
-from rdetoolkit.errors import RdeConfigError
 from rdetoolkit.types import RdeConfig
 
 
@@ -32,19 +29,14 @@ def load_config(
         Effective v2 configuration.
 
     Raises:
-        pydantic.ValidationError: If a file or override contains unknown or
-            invalid keys for ``RdeConfig`` or its child models.
+        RdeConfigError: If a file or override contains unknown or invalid keys
+            for ``RdeConfig`` or its child models.
     """
     normalizer = ConfigNormalizer()
-    try:
-        config_data = normalizer.normalize(None, root=root, origin="v2").model_dump()
-        if overrides:
-            config_data = _deep_merge(config_data, dict(overrides))
-        return normalizer.normalize(config_data, root=root, origin="v2")
-    except RdeConfigError as exc:
-        if isinstance(exc.__cause__, ValidationError):
-            raise exc.__cause__ from exc
-        raise
+    config_data = normalizer.normalize(None, root=root, origin="v2").model_dump()
+    if overrides:
+        config_data = _deep_merge(config_data, dict(overrides))
+    return normalizer.normalize(config_data, root=root, origin="v2")
 
 def _deep_merge(base: Mapping[str, Any], overlay: Mapping[str, Any]) -> dict[str, Any]:
     result = copy.deepcopy(dict(base))

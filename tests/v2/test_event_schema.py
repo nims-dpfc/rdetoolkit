@@ -30,7 +30,7 @@ def _make_run_report(**overrides: Any):  # type: ignore[return]
     from rdetoolkit.report.run_report import RunReport  # noqa: PLC0415
 
     defaults: dict[str, Any] = {
-        "schema_version": "1",
+        "schema_version": "2",
         "run_id": "test-run-id",
         "status": "success",
         "flow_id": "pkg.mod:pipeline",
@@ -371,7 +371,7 @@ class TestRunReportSchema:
         assert "schema_version" in d, (
             f"to_json() output must include 'schema_version'. Keys found: {list(d.keys())}"
         )
-        assert d["schema_version"] == "1"
+        assert d["schema_version"] == "2"
         # schema_version should be the first key in the JSON dict
         first_key = next(iter(d))
         assert first_key == "schema_version", (
