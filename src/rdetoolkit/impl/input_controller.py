@@ -301,10 +301,10 @@ class RDEFormatChecker(IInputFileChecker):
         return [f for f in input_files if f.suffix.lower() == ".zip"]
 
     def _unpacked(self, zip_path: Path, target_dir: Path) -> list[Path]:
-        extract_zip_with_encoding(zip_path, self.out_dir_temp)
+        extract_zip_with_encoding(zip_path, target_dir)
 
         cleaner = SystemFilesCleaner()
-        removed_paths = cleaner.clean_directory(self.out_dir_temp)
+        removed_paths = cleaner.clean_directory(target_dir)
         if removed_paths:
             logger.info(f"Removed {len(removed_paths)} system/temporary files after extraction")
 
@@ -376,11 +376,11 @@ class MultiFileChecker(IInputFileChecker):
         return [f for f in input_files if f not in excel_invoice_files]
 
     def _unpacked(self, zip_path: Path, target_dir: Path) -> list[Path]:
-        extract_zip_with_encoding(zip_path, self.out_dir_temp)
+        extract_zip_with_encoding(zip_path, target_dir)
 
         # Clean up system files after extraction
         cleaner = SystemFilesCleaner()
-        removed_paths = cleaner.clean_directory(self.out_dir_temp)
+        removed_paths = cleaner.clean_directory(target_dir)
         if removed_paths:
             logger.info(f"Removed {len(removed_paths)} system/temporary files after extraction")
 

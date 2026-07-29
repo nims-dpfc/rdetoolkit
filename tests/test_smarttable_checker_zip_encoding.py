@@ -31,6 +31,7 @@ Equivalence Partitioning:
 | ``_unpacked_smarttable`` | UTF-8-encoded filename, UTF-8 flag set | modern zip tools / Python zipfile default | extracted filename unchanged (no regression) | TC-EP-ZIPENC-002 |
 | ``_unpacked_smarttable`` | ASCII-only filename | common case | extracted filename unchanged | TC-EP-ZIPENC-003 |
 | ``_unpacked_smarttable`` | zip mixing a UTF-8-flagged entry and a cp932-unflagged entry | real-world archives may mix tools | both filenames correctly resolved | TC-EP-ZIPENC-004 |
+| ``_unpacked`` | explicit target differs from configured temp directory | caller-provided extraction contract | extracts, cleans, and lists files from target | TC-EP-ZIPENC-007 |
 
 Validation commands:
 Direct: ``uv run pytest tests/test_smarttable_checker_zip_encoding.py -v``
@@ -301,3 +302,24 @@ class TestOtherCheckersZipEncoding:
 
         # Then: the filename is unchanged.
         assert [f.name for f in extracted] == ["日本語ファイル.txt"]
+
+    def test_explicit_target_directory_is_used__tc_ep_zipenc_007(
+        self,
+        checker_cls: type[RDEFormatChecker | MultiFileChecker],
+        tmp_path: Path,
+    ) -> None:
+        """TC-EP-ZIPENC-007: extraction honors the caller-provided target."""
+        # Given: a checker configured with a different directory from the target.
+        zip_path = tmp_path / "input.zip"
+        with zipfile.ZipFile(zip_path, "w") as zip_ref:
+            zip_ref.writestr("data.txt", b"dummy")
+        configured_dir = tmp_path / "configured"
+        target_dir = tmp_path / "target"
+        checker = checker_cls(configured_dir)
+
+        # When: extracting to the explicit target directory.
+        extracted = checker._unpacked(zip_path, target_dir)
+
+        # Then: extraction and returned paths use the explicit target only.
+        assert extracted == [target_dir / "data.txt"]
+        assert not configured_dir.exists()

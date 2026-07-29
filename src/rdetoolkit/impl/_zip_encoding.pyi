@@ -1,10 +1,9 @@
+import logging
 import zipfile
-from _typeshed import Incomplete
 from pathlib import Path
-from rdetoolkit.rdelogger import get_logger as get_logger
 from typing import Final
 
-logger: Incomplete
+logger: logging.Logger
 LANG_ENC_FLAG: Final[int]
 FALLBACK_ENCODING: Final[str]
 PREFERRED_ENCODING: Final[str]

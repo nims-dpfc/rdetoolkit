@@ -12,14 +12,23 @@ End-to-end coverage through the checkers lives in
 ``tests/test_smarttable_checker_zip_encoding.py``.
 
 Equivalence Partitioning:
-| Input/State Partition | Rationale | Expected Outcome | Test ID |
-| --- | --- | --- | --- |
-| UTF-8 flag set | spec guarantees UTF-8; zipfile already correct | name returned verbatim, no detection | TC-EP-RESOLVE-001 |
-| cp932 bytes, flag unset | legacy Japanese Windows zip (the issue #515 bug) | name recovered as cp932 | TC-EP-RESOLVE-002 |
-| ASCII bytes, flag unset | common case | name unchanged | TC-EP-RESOLVE-003 |
-| bytes cp932 cannot decode, flag unset | non-Japanese legacy zip | falls back to detection, never raises | TC-EP-RESOLVE-004 |
-| detection returns an unusable codec | heuristic failure | warns and keeps zipfile's name; never raises | TC-EP-RESOLVE-005 |
-| detection returns None | heuristic yields nothing | falls back to cp437 (zipfile's own default) | TC-EP-RESOLVE-006 |
+| API | Input/State Partition | Rationale | Expected Outcome | Test ID |
+| --- | --- | --- | --- | --- |
+| ``resolve_filename`` | UTF-8 flag set | spec guarantees UTF-8; zipfile already correct | name returned verbatim, no detection | TC-EP-RESOLVE-001 |
+| ``resolve_filename`` | cp932 bytes, flag unset | legacy Japanese Windows zip (the issue #515 bug) | name recovered as cp932 | TC-EP-RESOLVE-002 |
+| ``resolve_filename`` | ASCII bytes, flag unset | common case | name unchanged | TC-EP-RESOLVE-003 |
+| ``resolve_filename`` | bytes cp932 cannot decode, flag unset | non-Japanese legacy zip | falls back to detection, never raises | TC-EP-RESOLVE-004 |
+| ``resolve_filename`` | detection returns an unusable codec | heuristic failure | warns and keeps zipfile's name; never raises | TC-EP-RESOLVE-005 |
+| ``resolve_filename`` | detection returns None | heuristic yields nothing | falls back to cp437 (zipfile's own default) | TC-EP-RESOLVE-006 |
+| ``extract_zip_with_encoding`` | safe nested entry | normal archive hierarchy | extracts beneath destination | TC-EP-EXTRACT-001 |
+| ``extract_zip_with_encoding`` | parent traversal entry | Zip Slip attempt | warns and skips entry | TC-EP-EXTRACT-002 |
+| ``extract_zip_with_encoding`` | absolute path entry | Zip Slip attempt | warns and skips entry | TC-EP-EXTRACT-003 |
+
+Boundary Value:
+| API | Boundary | Rationale | Expected Outcome | Test ID |
+| --- | --- | --- | --- | --- |
+| ``extract_zip_with_encoding`` | destination child at depth 1 | nearest path inside extraction root | extracts entry | TC-BV-EXTRACT-001 |
+| ``extract_zip_with_encoding`` | destination parent via one ``..`` | nearest path outside extraction root | skips entry | TC-BV-EXTRACT-002 |
 
 Validation commands:
 Direct: ``uv run pytest tests/test_zip_encoding.py -v``
@@ -29,11 +38,16 @@ Tox: ``tox -e py312-module -- tests/test_zip_encoding.py``
 from __future__ import annotations
 
 import zipfile
+from pathlib import Path
 
 import pytest
 
 from rdetoolkit.impl import _zip_encoding
-from rdetoolkit.impl._zip_encoding import LANG_ENC_FLAG, resolve_filename
+from rdetoolkit.impl._zip_encoding import (
+    LANG_ENC_FLAG,
+    extract_zip_with_encoding,
+    resolve_filename,
+)
 
 
 def _zip_info_for(raw_name: bytes, *, utf8_flag: bool) -> zipfile.ZipInfo:
@@ -182,3 +196,65 @@ class TestResolveFilename:
 
         # Then: the cp437 reading (what zipfile produced) is used.
         assert result == raw.decode("cp437")
+
+
+class TestExtractZipWithEncoding:
+    """Secure extraction tests for the shared ZIP helper."""
+
+    def test_safe_nested_entry_is_extracted__tc_ep_extract_001__tc_bv_extract_001(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Extract a nearest-child entry beneath the destination."""
+        # Given: a normal archive containing one nested file.
+        zip_path = tmp_path / "safe.zip"
+        with zipfile.ZipFile(zip_path, "w") as zip_ref:
+            zip_ref.writestr("nested/data.txt", b"safe")
+        extract_path = tmp_path / "extract"
+
+        # When: extracting the archive.
+        extract_zip_with_encoding(zip_path, extract_path)
+
+        # Then: the file is written beneath the extraction root.
+        assert (extract_path / "nested" / "data.txt").read_bytes() == b"safe"
+
+    def test_parent_traversal_is_skipped__tc_ep_extract_002__tc_bv_extract_002(
+        self,
+        tmp_path: Path,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Skip an entry resolving one level above the destination."""
+        # Given: an archive entry targeting the extraction directory's parent.
+        zip_path = tmp_path / "traversal.zip"
+        with zipfile.ZipFile(zip_path, "w") as zip_ref:
+            zip_ref.writestr("../escaped.txt", b"unsafe")
+        extract_path = tmp_path / "extract"
+
+        # When: extracting the archive.
+        extract_zip_with_encoding(zip_path, extract_path)
+
+        # Then: the unsafe entry is not written and the skip is visible.
+        assert not (tmp_path / "escaped.txt").exists()
+        assert not (extract_path / "escaped.txt").exists()
+        assert "Skipping unsafe zip entry '../escaped.txt'" in caplog.text
+
+    def test_absolute_path_is_skipped__tc_ep_extract_003(
+        self,
+        tmp_path: Path,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Skip an entry whose name is an absolute path."""
+        # Given: an archive entry with an absolute destination.
+        zip_path = tmp_path / "absolute.zip"
+        outside_path = tmp_path / "absolute-escaped.txt"
+        with zipfile.ZipFile(zip_path, "w") as zip_ref:
+            zip_ref.writestr(str(outside_path), b"unsafe")
+        extract_path = tmp_path / "extract"
+
+        # When: extracting the archive.
+        extract_zip_with_encoding(zip_path, extract_path)
+
+        # Then: the absolute path is not written and the skip is visible.
+        assert not outside_path.exists()
+        assert not extract_path.exists()
+        assert f"Skipping unsafe zip entry {str(outside_path)!r}" in caplog.text

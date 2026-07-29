@@ -95,14 +95,20 @@ def extract_zip_with_encoding(zip_path: Path | str, extract_path: Path | str) ->
     Example:
         >>> extract_zip_with_encoding("archive.zip", "outdir")
     """
+    base_dir = Path(extract_path).resolve()
+
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         for zip_info in zip_ref.infolist():
-            old_filename = zip_info.filename
             resolved = resolve_filename(zip_info)
+            destination = (base_dir / resolved).resolve()
 
-            if resolved != old_filename:
+            if destination != base_dir and base_dir not in destination.parents:
+                logger.warning(
+                    f"Skipping unsafe zip entry {resolved!r}: path resolves outside {str(base_dir)!r}",
+                )
+                continue
+
+            if resolved != zip_info.filename:
                 zip_info.filename = resolved
-                zip_ref.NameToInfo[resolved] = zip_info
-                del zip_ref.NameToInfo[old_filename]
 
-            zip_ref.extract(zip_info, extract_path)
+            zip_ref.extract(zip_info, base_dir)
