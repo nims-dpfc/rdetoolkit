@@ -228,7 +228,7 @@ class Runner:
         schema_path = data_root / "tasksupport" / "invoice.schema.json"
         for path in (invoice_path, schema_path):
             if not path.exists():
-                raise _validation_error(4003, f"Required input artifact does not exist: {path}")
+                raise _validation_error(4003, str(path))
         try:
             invoice_validate(invoice_path, schema_path)
         except Exception as exc:  # noqa: BLE001

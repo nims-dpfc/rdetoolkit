@@ -282,6 +282,9 @@ def test_missing_input_artifact_fails_before_flow_with_4003__tc_ep_h2_002(
     assert report.error is not None
     assert report.error["code"] == 4003
     assert "invoice.json" in report.error["message"]
+    # The 4003 template already prefixes the path; the reason must be the bare
+    # path, never a second sentence that double-formats the message.
+    assert "does not exist:" not in report.error["message"]
     assert "ErrorCode=4003" in (data_root / "job.failed").read_text(encoding="utf-8")
 
 

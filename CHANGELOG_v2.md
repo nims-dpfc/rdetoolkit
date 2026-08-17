@@ -110,18 +110,6 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 - Split execution planning, tile execution, flow invocation, and finalization
   into `RunPlanner`, `TileExecutor`, `FlowInvoker`, and `RunFinalizer` while
   preserving the six public `Runner` lifecycle step methods.
-
-### Changed — Phase H Runner lifecycle completion
-
-- Completed source invoice pre-validation and the completed-tile output sweep
-  by delegating to the existing `invoice_validate` and `metadata_validate`
-  domain functions. Missing metadata remains an optional, v1-compatible skip.
-- Defined output-validation failures as run-level failures: an invalid
-  completed invoice now produces catalog code 4001 and `job.failed`; artifacts
-  left by failed iterations are excluded from the sweep.
-- Split execution planning, tile execution, flow invocation, and finalization
-  into `RunPlanner`, `TileExecutor`, `FlowInvoker`, and `RunFinalizer` while
-  preserving the six public `Runner` lifecycle step methods.
 - Recorded the executing `git describe --always --dirty` revision in generated
   snapshots and added non-failing provenance warnings plus deterministic input
   drift checks; XLSX drift is compared semantically because workbook metadata

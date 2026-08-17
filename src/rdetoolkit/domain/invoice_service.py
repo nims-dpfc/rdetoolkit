@@ -25,22 +25,21 @@ class InvoiceService:
     """Own run-scoped invoice preparation with explicit filesystem paths."""
 
     def __init__(self) -> None:
-        """Create an invoice service with instance-owned cache-key tracking."""
-        self._owned_smarttable_keys: set[Path] = set()
+        """Create a stateless invoice service using explicit filesystem paths."""
 
     def begin_run(self, root: Path) -> None:
         """Invalidate only this run's SmartTable base-invoice cache entry.
 
         The retained v1 initializer still owns its class cache until Phase I.
         Targeted invalidation avoids the former process-wide clear that could
-        evict a concurrently executing run rooted elsewhere.
+        evict a concurrently executing run rooted elsewhere. ``pop`` is
+        idempotent, so the Runner and Planner may both call this per run.
 
         Args:
             root: Project or flat data root for the run.
         """
         key = (_data_root(root) / "invoice" / "invoice.json").resolve()
         SmartTableInvoiceInitializer._BASE_INVOICE_CACHE.pop(key, None)  # noqa: SLF001 -- Phase I removes the retained v1 cache
-        self._owned_smarttable_keys.add(key)
 
     def backup(
         self,
