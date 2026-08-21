@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from typing import Any
 
 
+RUN_REPORT_SCHEMA_VERSION = "2"
+
+
 @dataclass(frozen=True, slots=True)
 class RunReport:
     """Summary of a v2 run.
@@ -38,7 +41,7 @@ class RunReport:
     iterations: list[dict[str, Any]]
     warnings: list[dict[str, Any]]
     error: dict[str, Any] | None = None
-    schema_version: str = "1"
+    schema_version: str = RUN_REPORT_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the report to a plain dict.
@@ -71,6 +74,40 @@ class RunReport:
         """
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent)
 
+    def to_legacy_statuses(self) -> str:
+        """Convert iteration results to the v1 workflow-status JSON shape.
+
+        This compatibility helper is a total function. For failed runs where
+        v1 exited before returning a value, the returned status list is the v2
+        definition of the previously unobservable representation.
+
+        Returns:
+            JSON string containing v1-compatible workflow statuses.
+        """
+        return json.dumps(
+            {"statuses": [self._legacy_status(iteration) for iteration in self.iterations]},
+            ensure_ascii=False,
+        )
+
+    def _legacy_status(self, iteration: dict[str, Any]) -> dict[str, Any]:
+        error = iteration.get("error")
+        if not isinstance(error, dict):
+            error = self.error if isinstance(self.error, dict) else {}
+        raw_index = iteration.get("index")
+        legacy_run_id = f"{raw_index:04d}" if isinstance(raw_index, int) else ""
+        if raw_index is not None and not isinstance(raw_index, int):
+            legacy_run_id = str(raw_index)
+        return {
+            "error_code": error.get("code"),
+            "error_message": error.get("message"),
+            "mode": _legacy_mode(self.mode),
+            "run_id": legacy_run_id,
+            "stacktrace": iteration.get("stacktrace"),
+            "status": "success" if iteration.get("status") == "completed" else "failed",
+            "target": iteration.get("target"),
+            "title": iteration.get("title") or iteration.get("datatile_id") or "",
+        }
+
     @classmethod
     def from_json(cls, json_str: str) -> RunReport:
         """Deserialize a report from JSON.
@@ -95,3 +132,11 @@ class RunReport:
             warnings=data.get("warnings", []),
             error=data.get("error"),
         )
+
+
+def _legacy_mode(mode: str) -> str:
+    return {
+        "excelinvoice": "Excelinvoice",
+        "multidatatile": "MultiDataTile",
+        "smarttable": "SmartTableInvoice",
+    }.get(mode, mode)

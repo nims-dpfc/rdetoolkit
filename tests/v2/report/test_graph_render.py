@@ -188,7 +188,7 @@ class TestRenderCallSequenceHtml:
 
 class TestRenderCallSequenceEmptyNodeCalls:
     """TC-GRAPH-UNIT-004: a tile with ``node_calls == []`` (matching
-    ``RunAggregator.record_failure()``'s real output shape, Known Trap 1)
+    a failed ``ExecutionResult`` summary's real output shape, Known Trap 1)
     renders without raising in all three formats, showing the tile as
     present but empty."""
 

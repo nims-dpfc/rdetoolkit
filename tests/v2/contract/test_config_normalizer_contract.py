@@ -1,4 +1,4 @@
-"""Phase H contract for ``ConfigNormalizer`` (all tests intentionally xfail).
+"""Phase H contract for ``ConfigNormalizer``.
 
 The future public method is fixed as
 ``ConfigNormalizer.normalize(source, *, root: Path, origin: Literal["v1", "v2"])``.
@@ -31,12 +31,6 @@ from typing import Any
 import pytest
 
 
-_PHASE_H = pytest.mark.xfail(
-    strict=False,
-    reason="Phase H: ConfigNormalizer is not implemented yet",
-)
-
-
 def _nested_value(value: object, path: str) -> object:
     """Read a dotted attribute path from a normalized model."""
     current = value
@@ -45,7 +39,6 @@ def _nested_value(value: object, path: str) -> object:
     return current
 
 
-@_PHASE_H
 @pytest.mark.parametrize(
     "source_path,source_value,target_path,expected",
     [
@@ -110,7 +103,6 @@ def test_machine_mapped_v1_keys__tc_ep_g2_201(
     assert _nested_value(config, target_path) == expected
 
 
-@_PHASE_H
 @pytest.mark.parametrize(
     "ignore_errors,expected",
     [
@@ -136,7 +128,6 @@ def test_ignore_errors_is_inverted__tc_ep_g2_202(
     assert config.execution.on_iteration_error == expected
 
 
-@_PHASE_H
 @pytest.mark.parametrize(
     "key,value",
     [
@@ -168,7 +159,6 @@ def test_traceback_keys_warn_and_are_discarded__tc_ep_g2_203(
     assert "traceback" not in config.model_dump()
 
 
-@_PHASE_H
 def test_unknown_v1_key_moves_to_custom_with_warning__tc_ep_g2_204(
     tmp_path: Path,
 ) -> None:
@@ -187,7 +177,6 @@ def test_unknown_v1_key_moves_to_custom_with_warning__tc_ep_g2_204(
     assert config.custom["vendor_extension"] == extension
 
 
-@_PHASE_H
 def test_unknown_v2_key_raises_e1002__tc_ep_g2_205(tmp_path: Path) -> None:
     """TC-EP-G2-205: Unknown v2-origin keys fail with catalog error 1002."""
     from rdetoolkit.config.normalize import ConfigNormalizer
@@ -203,7 +192,6 @@ def test_unknown_v2_key_raises_e1002__tc_ep_g2_205(tmp_path: Path) -> None:
     assert ERROR_CATALOG[1002].remediation in str(exc_info.value)
 
 
-@_PHASE_H
 def test_v1_config_model_is_accepted__tc_ep_g2_206(tmp_path: Path) -> None:
     """TC-EP-G2-206: A legacy Config model is a supported normalization source."""
     from rdetoolkit.config.normalize import ConfigNormalizer
@@ -219,7 +207,6 @@ def test_v1_config_model_is_accepted__tc_ep_g2_206(tmp_path: Path) -> None:
     assert config.system.save_raw is True
 
 
-@_PHASE_H
 def test_plain_mapping_is_accepted__tc_ep_g2_207(tmp_path: Path) -> None:
     """TC-EP-G2-207: A plain mapping is a supported normalization source."""
     from rdetoolkit.config.normalize import ConfigNormalizer
@@ -236,7 +223,6 @@ def test_plain_mapping_is_accepted__tc_ep_g2_207(tmp_path: Path) -> None:
     assert config.execution.type_check == "strict"
 
 
-@_PHASE_H
 def test_v1_yml_is_discovered__tc_ep_g2_208(tmp_path: Path) -> None:
     """TC-EP-G2-208: Legacy rdeconfig.yml discovery remains supported."""
     from rdetoolkit.config.normalize import ConfigNormalizer
@@ -251,7 +237,6 @@ def test_v1_yml_is_discovered__tc_ep_g2_208(tmp_path: Path) -> None:
     assert config.system.save_raw is True
 
 
-@_PHASE_H
 def test_v2_yaml_is_discovered__tc_ep_g2_209(tmp_path: Path) -> None:
     """TC-EP-G2-209: Canonical rdeconfig.yaml is a supported v2 source."""
     from rdetoolkit.config.normalize import ConfigNormalizer
@@ -269,7 +254,6 @@ def test_v2_yaml_is_discovered__tc_ep_g2_209(tmp_path: Path) -> None:
     assert config.execution.type_check == "warn"
 
 
-@_PHASE_H
 @pytest.mark.parametrize(
     "origin,expected",
     [
@@ -293,7 +277,6 @@ def test_error_policy_default_depends_on_origin__tc_bv_g2_201(
     assert config.execution.on_iteration_error == expected
 
 
-@_PHASE_H
 def test_none_extended_mode_becomes_invoice__tc_bv_g2_202(tmp_path: Path) -> None:
     """TC-BV-G2-202: The legacy None mode normalizes to canonical invoice."""
     from rdetoolkit.config.normalize import ConfigNormalizer

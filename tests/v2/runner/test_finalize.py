@@ -7,14 +7,28 @@ Design authority: local/develop/v2/Design.md §6.3 (job.failed), §13.1, §13.3
 Session authority: local/develop/v2/tasks/session_b2.md (B2.4/B2.5/B2.6)
 
 Contract exercised here:
-    finalize(report: RunReport, config: RdeConfig) -> None
+    finalize(report: RunReport, config: RdeConfig, *, root: Path) -> None
       - status == "failed"  -> calls rdetoolkit.errors.write_job_errorlog_file
                                 with an int ERROR_CATALOG code and a message;
                                 v1 owns the "ErrorCode=/ErrorMessage=" format.
       - status in {"success", "partial"} -> job.failed is NOT written.
-      - Regardless of status, RunReport is persisted as JSON to
-        ``data/logs/run_report_{run_id}.json`` (cwd-relative, same "data" root
-        convention as write_job_errorlog_file / StorageDir.get_datadir).
+      - Regardless of status, RunReport is persisted as JSON below
+        ``root/data/logs/run_report_{run_id}.json``.
+
+EP table:
+
+| API | Partition | Expected | Test ID |
+| --- | --- | --- | --- |
+| Runner.finalize | root differs from cwd | report is written below root | TC-H0-ROOT-EP-001 |
+| finalize | root is already ``data`` | report is written below ``root/logs`` | TC-EP-HR2-B-001 |
+
+BV table:
+
+| API | Boundary | Expected | Test ID |
+| --- | --- | --- | --- |
+| Runner.finalize | one successful report | exactly one root-relative report | TC-H0-ROOT-BV-001 |
+| Runner.finalize | one failed report and root != cwd | job.failed is written below root | TC-HR-F1-BV-001 |
+| finalize | flat root | no nested ``root/data/logs`` is created | TC-BV-HR2-B-001 |
 
 ``write_job_errorlog_file`` itself is v1 public surface and MUST NOT be
 reimplemented by finalize.py; finalize.py only calls it.
@@ -72,7 +86,7 @@ class TestFinalizeWritesJobFailedOnFailure:
         """job.failed must exist under data/ after finalize() on a failed report."""
         report = _make_report("failed", error={"code": _NODE_EXECUTION_FAILED_CODE, "message": "boom"})
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         assert (_cwd_data_dir / "job.failed").exists()
 
@@ -84,7 +98,7 @@ class TestFinalizeSkipsJobFailedOnSuccessOrPartial:
         """job.failed must be absent after finalize() on a successful report."""
         report = _make_report("success")
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         assert not (_cwd_data_dir / "job.failed").exists()
 
@@ -92,7 +106,7 @@ class TestFinalizeSkipsJobFailedOnSuccessOrPartial:
         """job.failed must be absent after finalize() on a partial report."""
         report = _make_report("partial")
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         assert not (_cwd_data_dir / "job.failed").exists()
 
@@ -107,7 +121,7 @@ class TestFinalizeJobFailedFormat:
             error={"code": _NODE_EXECUTION_FAILED_CODE, "message": "node execution failed for call c-1"},
         )
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         content = (_cwd_data_dir / "job.failed").read_text(encoding="utf_8")
         assert content == f"ErrorCode={_NODE_EXECUTION_FAILED_CODE}\nErrorMessage=node execution failed for call c-1\n"
@@ -128,9 +142,13 @@ class TestFinalizeSingleResponsibility:
         monkeypatch.setattr("rdetoolkit.runner.finalize.write_job_errorlog_file", mock_write)
         report = _make_report("failed", error={"code": _NODE_EXECUTION_FAILED_CODE, "message": "boom"})
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
-        mock_write.assert_called_once_with(_NODE_EXECUTION_FAILED_CODE, "boom")
+        mock_write.assert_called_once_with(
+            _NODE_EXECUTION_FAILED_CODE,
+            "boom",
+            filename=str((_cwd_data_dir / "job.failed").resolve()),
+        )
 
     def test_finalize_does_not_call_write_job_errorlog_file_on_success(
         self, _cwd_data_dir: Path, monkeypatch: pytest.MonkeyPatch,
@@ -140,7 +158,7 @@ class TestFinalizeSingleResponsibility:
         monkeypatch.setattr("rdetoolkit.runner.finalize.write_job_errorlog_file", mock_write)
         report = _make_report("success")
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         mock_write.assert_not_called()
 
@@ -152,7 +170,7 @@ class TestFinalizePersistsRunReport:
         """A logs/run_report_{run_id}.json file must exist after a failed run is finalized."""
         report = _make_report("failed", error={"code": _NODE_EXECUTION_FAILED_CODE, "message": "boom"}, run_id="run-fail-1")
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         report_path = _cwd_data_dir / "logs" / "run_report_run-fail-1.json"
         assert report_path.exists()
@@ -164,13 +182,30 @@ class TestFinalizePersistsRunReport:
         """A logs/run_report_{run_id}.json file must exist after a successful run is finalized too."""
         report = _make_report("success", run_id="run-ok-1")
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=_cwd_data_dir.parent)
 
         report_path = _cwd_data_dir / "logs" / "run_report_run-ok-1.json"
         assert report_path.exists()
         saved = json.loads(report_path.read_text(encoding="utf-8"))
         assert saved["run_id"] == "run-ok-1"
         assert saved["status"] == "success"
+
+    def test_flat_data_root_does_not_create_nested_data__tc_ep_bv_hr2_b_001(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """TC-EP/BV-HR2-B-001: a flat data root owns its report logs directly."""
+        # Given: a root that is already the canonical flat data directory
+        data_root = tmp_path / "data"
+        data_root.mkdir()
+        report = _make_report("success", run_id="flat-root")
+
+        # When: finalizing the report against that flat root
+        finalize(report, RdeConfig(), root=data_root)
+
+        # Then: the report is under root/logs and no second data layer exists
+        assert (data_root / "logs" / "run_report_flat-root.json").exists()
+        assert not (data_root / "data" / "logs").exists()
 
 
 class TestReviewFollowUps:
@@ -199,7 +234,55 @@ class TestReviewFollowUps:
         (tmp_path / "data").mkdir()
         report = _make_report(status="failed", error={"code": 3001})  # no message
 
-        finalize(report, RdeConfig())
+        finalize(report, RdeConfig(), root=tmp_path)
 
         content = (tmp_path / "data" / "job.failed").read_text(encoding="utf-8")
         assert "{" not in content and "}" not in content, content
+
+    def test_runner_finalize_uses_root_when_cwd_differs__tc_h0_root_ep_001_bv_001(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-H0-ROOT-EP-001/BV-001: report storage derives from Runner.root."""
+        from rdetoolkit.runner.lifecycle import Runner
+
+        # Given: a Runner root and an unrelated process working directory
+        run_root = tmp_path / "run-root"
+        caller = tmp_path / "caller"
+        run_root.mkdir()
+        caller.mkdir()
+        monkeypatch.chdir(caller)
+        report = _make_report(status="success", run_id="root-relative")
+
+        # When: the production Runner finalizes one successful report
+        Runner(root=run_root).finalize(report, RdeConfig())
+
+        # Then: the report is persisted only below the Runner root
+        expected = run_root / "data" / "logs" / "run_report_root-relative.json"
+        assert expected.exists()
+        assert not (caller / "data" / "logs" / expected.name).exists()
+
+    def test_failed_runner_finalize_uses_root_when_cwd_differs__tc_hr_f1_bv_001(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """TC-HR-F1-BV-001: failed marker belongs to Runner.root, not cwd."""
+        # Given: a failed report, a Runner root, and an unrelated cwd
+        from rdetoolkit.runner.lifecycle import Runner
+
+        run_root = tmp_path / "run-root"
+        caller = tmp_path / "caller"
+        run_root.mkdir()
+        caller.mkdir()
+        monkeypatch.chdir(caller)
+        report = _make_report(status="failed", error={"code": 3001, "message": "boom"})
+
+        # When: the production Runner finalizes the failed report
+        Runner(root=run_root).finalize(report, RdeConfig())
+
+        # Then: only the absolute root-owned marker is created
+        failure_path = run_root / "data" / "job.failed"
+        assert failure_path.read_text(encoding="utf-8") == "ErrorCode=3001\nErrorMessage=boom\n"
+        assert not (caller / "data" / "job.failed").exists()

@@ -15,6 +15,20 @@ directory creation is owned exclusively by Runner step 4a. Its return value
 must expose the ten canonical output-kind attributes (Design §4.2) so that
 ``OutputContext.from_resource_paths(...)`` can adapt it into an
 ``OutputContext`` instance.
+
+EP table:
+
+| API | Partition | Expected | Test ID |
+| --- | --- | --- | --- |
+| ``resolve_data_root`` | existing nested ``data`` | nested directory | TC-EP-HR2-B-002 |
+| ``resolve_data_root`` | alias-flat markers | supplied root | TC-EP-HR2-B-003 |
+
+BV table:
+
+| API | Boundary | Expected | Test ID |
+| --- | --- | --- | --- |
+| ``resolve_data_root`` | root named ``data`` | supplied root | TC-BV-HR2-B-002 |
+| ``resolve_data_root`` | bare project root | future ``root/data`` | TC-BV-HR2-B-003 |
 """
 from __future__ import annotations
 
@@ -25,7 +39,7 @@ import pytest
 from rdetoolkit.types import OutputContext
 
 # Target import — fails until implementation exists (expected in Red phase):
-from rdetoolkit.runner.paths import resolve_tile_paths
+from rdetoolkit.runner.paths import resolve_data_root, resolve_tile_paths
 
 # v1 RdeOutputResourcePath field -> on-disk directory basename
 # (rdetoolkit.types.OutputContext docstring "v1 field coverage" table).
@@ -41,6 +55,50 @@ _OUTPUT_FIELD_TO_DIRNAME = {
     "invoice": "invoice",
     "logs": "logs",
 }
+
+
+class TestResolveDataRootPriority:
+    """Finding B pins the four-tier project/flat-root resolver contract."""
+
+    def test_explicit_data_name_is_flat__tc_bv_hr2_b_002(self, tmp_path: Path) -> None:
+        """TC-BV-HR2-B-002: a directory named data is explicitly flat."""
+        # Given: an existing root whose basename is data
+        root = tmp_path / "data"
+        root.mkdir()
+
+        # When/Then: the explicit flat root resolves to itself
+        assert resolve_data_root(root) == root
+
+    def test_existing_nested_data_wins__tc_ep_hr2_b_002(self, tmp_path: Path) -> None:
+        """TC-EP-HR2-B-002: an existing nested data directory is canonical."""
+        # Given: a project root with an existing data child
+        candidate = tmp_path / "data"
+        candidate.mkdir()
+
+        # When/Then: the existing nested child is selected
+        assert resolve_data_root(tmp_path) == candidate
+
+    def test_alias_flat_markers_select_root__tc_ep_hr2_b_003(self, tmp_path: Path) -> None:
+        """TC-EP-HR2-B-003: RDE marker directories identify an alias-flat root."""
+        # Given: a non-data-named root with the minimum RDE marker vocabulary
+        root = tmp_path / "fixture-root"
+        root.mkdir()
+        (root / "inputdata").mkdir()
+
+        # When/Then: the alias-flat root remains direct
+        assert resolve_data_root(root) == root
+
+    def test_bare_project_root_selects_future_data_child__tc_bv_hr2_b_003(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """TC-BV-HR2-B-003: a bare project root defaults to its data child."""
+        # Given: a bare project root with no data child or RDE markers
+        root = tmp_path / "project-root"
+        root.mkdir()
+
+        # When/Then: resolution identifies the child Runner must create
+        assert resolve_data_root(root) == root / "data"
 
 
 class TestResolveTilePathsBaseCase:

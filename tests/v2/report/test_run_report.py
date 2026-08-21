@@ -1,4 +1,17 @@
-"""Tests for the canonical v2 RunReport schema."""
+"""Tests for the canonical v2 RunReport schema.
+
+EP table:
+
+| API | Partition | Expected | Test ID |
+| --- | --- | --- | --- |
+| ``to_legacy_statuses`` | non-integer index | preserve explicit value | TC-EP-HR2-A-002 |
+
+BV table:
+
+| API | Boundary | Expected | Test ID |
+| --- | --- | --- | --- |
+| ``to_legacy_statuses`` | missing index | empty run_id fallback | TC-BV-HR2-A-002 |
+"""
 
 from __future__ import annotations
 
@@ -39,7 +52,7 @@ class TestRunReport:
         # When: constructing a RunReport
         report = _make_report(iterations=iterations, warnings=warnings)
         # Then: all fields are accessible
-        assert report.schema_version == "1"
+        assert report.schema_version == "2"
         assert report.run_id == "run-1"
         assert report.status == "success"
         assert report.flow_id == "pkg.mod:pipeline"
@@ -59,7 +72,7 @@ class TestRunReport:
         # Then: it is valid JSON with schema_version first
         data = json.loads(json_str)
         assert next(iter(data)) == "schema_version"
-        assert data["schema_version"] == "1"
+        assert data["schema_version"] == "2"
         assert data["run_id"] == "run-1"
         assert data["iterations"] == []
 
@@ -109,6 +122,28 @@ class TestRunReport:
         report = _make_report(status="failed", error={"code": 3001, "message": "boom"})
         # Then: error details are preserved
         assert report.error == {"code": 3001, "message": "boom"}
+
+    @pytest.mark.parametrize(
+        ("iteration", "expected"),
+        [
+            pytest.param({"status": "completed"}, "", id="missing"),
+            pytest.param({"index": "tile-x", "status": "completed"}, "tile-x", id="non-integer"),
+        ],
+    )
+    def test_legacy_run_id_has_total_fallback__tc_ep_bv_hr2_a_002(
+        self,
+        iteration: dict[str, Any],
+        expected: str,
+    ) -> None:
+        """TC-EP/BV-HR2-A-002: malformed iteration indexes have explicit fallbacks."""
+        # Given: a report with an iteration index outside the canonical integer shape
+        report = _make_report(iterations=[iteration])
+
+        # When: converting through the total legacy compatibility helper
+        status = json.loads(report.to_legacy_statuses())["statuses"][0]
+
+        # Then: missing is empty and an explicit non-integer value remains inspectable
+        assert status["run_id"] == expected
 
     def test_no_events_field(self) -> None:
         """RunReport does not carry EventSink output in A2."""

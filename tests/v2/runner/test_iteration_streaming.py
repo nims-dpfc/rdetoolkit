@@ -182,7 +182,16 @@ class TestCanonicalIterationSummary:
 
         # Then: §8.3 is literal, with first-rawfile stem as deterministic id
         summary = report.iterations[0]
-        assert set(summary) == {"index", "datatile_id", "status", "node_calls", "error"}
+        assert set(summary) == {
+            "index",
+            "datatile_id",
+            "status",
+            "node_calls",
+            "error",
+            "title",
+            "target",
+            "stacktrace",
+        }
         assert summary["index"] == 0
         assert summary["datatile_id"] == "file_0"
         assert summary["status"] == "completed"

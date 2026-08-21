@@ -38,8 +38,8 @@ import pytest
 
 from rdetoolkit.runner.execute import ExecutionResult
 from rdetoolkit.runner.lifecycle import Runner
-from rdetoolkit.runner.lifecycle import _flat_layout_invoice_source
 from rdetoolkit.runner.mode_resolver import ModeKind
+from rdetoolkit.runner.planner import _flat_layout_invoice_source
 from rdetoolkit.types import InputPaths, IterationInfo, RdeConfig
 
 _CASES = [
@@ -110,12 +110,12 @@ def test_run_level_invoice_backup_matches_v1_mode_contract__tc_g0_backup(
     )
     out = SimpleNamespace(invoice=invoice_dir)
     monkeypatch.setattr(
-        "rdetoolkit.runner.lifecycle.iterate_tiles",
+        "rdetoolkit.runner.planner.iterate_tiles",
         lambda *args, **kwargs: iter([(info, paths, out)]),
     )
-    monkeypatch.setattr("rdetoolkit.runner.lifecycle._tile_invoice", lambda *args, **kwargs: None)
+    monkeypatch.setattr("rdetoolkit.runner.planner._tile_invoice", lambda *args, **kwargs: None)
     monkeypatch.setattr(
-        "rdetoolkit.runner.lifecycle.run_tile",
+        "rdetoolkit.runner.invoker.run_tile",
         lambda *args, **kwargs: ExecutionResult(
             iteration_index=0,
             status="completed",
@@ -178,12 +178,12 @@ def test_invoice_backup_is_root_relative_across_layout_cwd_mode_matrix__tc_gr_ba
     )
     out = SimpleNamespace(invoice=invoice_dir)
     monkeypatch.setattr(
-        "rdetoolkit.runner.lifecycle.iterate_tiles",
+        "rdetoolkit.runner.planner.iterate_tiles",
         lambda *args, **kwargs: iter([(info, paths, out)]),
     )
-    monkeypatch.setattr("rdetoolkit.runner.lifecycle._tile_invoice", lambda *args, **kwargs: None)
+    monkeypatch.setattr("rdetoolkit.runner.planner._tile_invoice", lambda *args, **kwargs: None)
     monkeypatch.setattr(
-        "rdetoolkit.runner.lifecycle.run_tile",
+        "rdetoolkit.runner.invoker.run_tile",
         lambda *args, **kwargs: ExecutionResult(
             iteration_index=0,
             status="completed",

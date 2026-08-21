@@ -56,7 +56,6 @@ _SEED_INVOICE = {
 _EMPTY_METADATA_DEF = {"constant": {}, "variable": []}
 
 _KEY_PLACEHOLDERS = {
-    "run_id": "<RUN_ID>",
     "started_at": "<TIMESTAMP>",
     "finished_at": "<TIMESTAMP>",
     "timestamp": "<TIMESTAMP>",
@@ -814,8 +813,6 @@ def freeze_expected_outputs(*, check: bool) -> list[str]:
     staleness is surfaced by the non-failing ``source_revision_warnings``
     instead. Only a real regeneration (check=False) stamps a new revision.
     """
-    if not check:
-        _require_write_tree_hygiene()
     stamped_commit = None if check else _git_revision()
     mismatches: list[str] = []
     for path in expected_snapshot_paths():
@@ -850,6 +847,11 @@ def _parse_args() -> argparse.Namespace:
         "--check",
         action="store_true",
         help="regenerate normalized expectations in isolation and compare only",
+    )
+    parser.add_argument(
+        "--rebuild-inputs",
+        action="store_true",
+        help="rebuild static inputs before freezing normalized expectations",
     )
     parser.add_argument("--oracle-worker", nargs=3, metavar=("MODE", "OUTCOME", "ROOT"), help=argparse.SUPPRESS)
     parser.add_argument(
@@ -893,9 +895,13 @@ def main() -> int:
         print("all normalized v1 snapshots match frozen expectations")  # noqa: T201
         return 0
     _require_write_tree_hygiene()
-    manifest = build_static_inputs()
+    manifest = build_static_inputs() if args.rebuild_inputs else None
     freeze_expected_outputs(check=False)
-    message = f"built inputs and froze v1 outputs for {', '.join(sorted(manifest))}"
+    message = (
+        f"built inputs and froze v1 outputs for {', '.join(sorted(manifest))}"
+        if manifest is not None
+        else "froze v1 outputs (static inputs unchanged)"
+    )
     print(message)  # noqa: T201
     return 0
 

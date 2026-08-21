@@ -104,10 +104,29 @@ def _build_minimal_rde_tree(root: Path, fixture_dir: Path) -> None:
             destination.write_bytes(path.read_bytes())
     from rdetoolkit.testing.builders import make_invoice  # noqa: PLC0415
 
-    (root / "invoice" / "invoice.json").write_text(
-        json.dumps(make_invoice().raw),
-        encoding="utf-8",
-    )
+    invoice_path = root / "invoice" / "invoice.json"
+    if not invoice_path.exists():
+        invoice_path.write_text(
+            json.dumps(
+                make_invoice(
+                    {
+                        "datasetId": "testing-seed",
+                        "basic": {
+                            "dateSubmitted": "2026-07-20",
+                            "dataOwnerId": "0" * 56,
+                            "dataName": "test",
+                        },
+                    },
+                ).raw,
+            ),
+            encoding="utf-8",
+        )
+    schema_path = root / "tasksupport" / "invoice.schema.json"
+    if not schema_path.exists():
+        schema_path.write_text(
+            json.dumps({"properties": {}}),
+            encoding="utf-8",
+        )
 
 
 @contextmanager

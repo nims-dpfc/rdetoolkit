@@ -548,32 +548,21 @@ def run(  # pragma: no cover  # noqa: PLR0915
         - RdeOutputResourcePath: Output path structure (legacy)
         - WorkflowExecutionStatus: Execution result details
     """
-    if flow is not None and custom_dataset_function is not None:
-        from rdetoolkit.errors import ERROR_CATALOG, RdeConfigError
-
-        error_def = ERROR_CATALOG[1001]
-        error_cls: Any = RdeConfigError
-        raise error_cls(
-            code=1001,
-            name=error_def.name,
-            message=error_def.message_template,
-        )
     if flow is not None:
+        from rdetoolkit.api.request import build_run_request
         from rdetoolkit.runner.lifecycle import Runner
 
-        root = Path.cwd()
-        data_root = root / "data"
-        if config is None:
-            overrides: dict[str, Any] = {}
-        elif isinstance(config, dict):
-            overrides = config
-        else:
-            overrides = config.model_dump()
+        request = build_run_request(
+            flow=flow,
+            custom_dataset_function=custom_dataset_function,
+            config=config,
+        )
+        data_root = request.root / "data"
         return Runner(
-            root=root,
+            root=request.root,
             inputdata_path=data_root / "inputdata",
             unpacked_dir_path=data_root / "temp",
-        ).run(flow, **overrides)
+        ).run(request)
 
     from rdetoolkit.config import load_config
     from rdetoolkit.errors import handle_and_exit_on_structured_error, handle_generic_error

@@ -213,7 +213,7 @@ convention = "google"
 "src/rdetoolkit/types.py" = ["A005"]
 "src/rdetoolkit/fileops.py" = ["PLC0415"]
 # TODO: Refactor parse_config_file to reduce complexity (Issue #361)
-"src/rdetoolkit/config.py" = ["C901", "PLR0912"]
+"src/rdetoolkit/config/__init__.py" = ["C901", "PLR0912"]
 "src/rdetoolkit/graph/__init__.py" = ["PLC0415"]
 "src/rdetoolkit/graph/api/csv2graph.py" = ["PLC0415"]
 "src/rdetoolkit/invoicefile.py" = ["PLC0415"]
@@ -301,6 +301,7 @@ warn_unreachable = true
 check_untyped_defs = true
 
 [tool.coverage.run]
+branch = true
 omit = ["tests/*", "interfaces/*", "local/*"]
 
 [tool.coverage.report]

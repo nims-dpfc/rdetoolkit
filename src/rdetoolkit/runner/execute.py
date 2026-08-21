@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal, cast
@@ -25,6 +26,9 @@ class ExecutionResult:
     outputs: tuple[TypeSummary, ...]
     error: dict[str, Any] | None = None
     datatile_id: str = ""
+    title: str = ""
+    target: str | None = None
+    stacktrace: str | None = None
 
 
 class TileExecutionError(RdeExecutionError):
@@ -94,6 +98,7 @@ def run_tile(
             outputs=(),
             error=error,
             datatile_id=_datatile_id(run_context),
+            stacktrace=traceback.format_exc(),
         )
         raise TileExecutionError(failed, exc) from exc
     outputs = _summarize_outputs(

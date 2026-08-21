@@ -26,6 +26,7 @@ events.py.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from rdetoolkit.core.flow import flow
@@ -43,6 +44,23 @@ def _build_multidatatile_root(tmp_path: Path, file_count: int) -> Path:
     (root / "unpacked").mkdir()
     (root / "invoice").mkdir()
     (root / "tasksupport").mkdir()
+    (root / "invoice" / "invoice.json").write_text(
+        json.dumps(
+            {
+                "datasetId": "event-fixture",
+                "basic": {
+                    "dateSubmitted": "2026-07-20",
+                    "dataOwnerId": "0" * 56,
+                    "dataName": "event-fixture",
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    (root / "tasksupport" / "invoice.schema.json").write_text(
+        json.dumps({"properties": {}}),
+        encoding="utf-8",
+    )
     return root
 
 

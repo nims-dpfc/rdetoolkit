@@ -7,7 +7,7 @@ from typing import Annotated, Any, Never
 
 import typer
 
-from rdetoolkit.report.run_report import RunReport
+from rdetoolkit.report.run_report import RUN_REPORT_SCHEMA_VERSION, RunReport
 
 app = typer.Typer(help="Inspect run reports.")
 
@@ -37,7 +37,7 @@ def _failed_calls(iterations: list[dict[str, Any]]) -> list[str]:
 def show(run_report: Annotated[Path, typer.Argument(metavar="<run_report.json>")]) -> None:
     """Display status, iterations, and failed calls from a run report."""
     report = _load_report(run_report)
-    if report.schema_version != "1":
+    if report.schema_version != RUN_REPORT_SCHEMA_VERSION:
         typer.echo(f"Warning: unrecognized schema_version {report.schema_version}", err=True)
     typer.echo(f"run_id: {report.run_id}")
     typer.echo(f"status: {report.status}")
