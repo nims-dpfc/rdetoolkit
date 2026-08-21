@@ -11,6 +11,7 @@ EP table:
 | rdeformat | ``v1/rdeformat/ok.json`` | exact legacy-return JSON | TC-EP-G2-305 |
 | each mode | ``usererr.json`` | total failed-run conversion | TC-EP-GR2-306..310 |
 | each mode | ``valerr.json`` | total failed-run conversion | TC-EP-GR2-311..315 |
+| ``Runner.run`` | two tiles, run UUID | each status uses its zero-padded tile index | TC-EP-HR2-AE-001 |
 
 BV table:
 
@@ -19,9 +20,11 @@ BV table:
 | one status | full single-item ``statuses`` list | invoice cell |
 | multiple statuses | order and every field preserved | other four cells |
 | null v1 error return | v2 defines one structural failed status | ten error seats |
+| two statuses | run UUID never leaks into either status | TC-BV-HR2-AE-001 |
 """
 
 import json
+from dataclasses import fields
 from pathlib import Path
 from typing import Any
 
@@ -83,7 +86,7 @@ def test_to_legacy_statuses_matches_frozen_v1_ok_payload(
     titles = _iteration_titles(observed)
     targets = _iteration_targets(mode, observed, len(titles))
     aggregator = RunAggregator(
-        run_id="<RUN_ID>",
+        run_id="run-uuid-abc",
         flow_id="legacy:custom_dataset_function",
         mode=mode,
         config_digest="sha256:<NORMALIZED>",
@@ -158,7 +161,7 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
         "message": message_text.removeprefix("ErrorMessage=").rstrip("\n"),
     }
     aggregator = RunAggregator(
-        run_id="<RUN_ID>",
+        run_id="run-uuid-abc",
         flow_id="legacy:custom_dataset_function",
         mode=mode,
         config_digest="sha256:<NORMALIZED>",
@@ -200,3 +203,87 @@ def test_to_legacy_statuses_matches_frozen_v1_error_payload(
     assert set(actual_statuses[0]) == set(reference_status)
     assert actual_statuses[0]["error_code"] == error["code"]
     assert actual_statuses[0]["error_message"] == error["message"]
+    assert actual_statuses[0]["run_id"] == "0000"
+    assert actual_statuses[0]["run_id"] != report.run_id
+
+
+def test_runner_run_legacy_statuses_use_tile_indexes_not_run_uuid__tc_ep_hr2_ae_001(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-EP/BV-HR2-AE-001: production Runner keeps tile and run identities distinct."""
+    from rdetoolkit.report.run_report import RunReport
+    from rdetoolkit.runner.lifecycle import Runner
+    from rdetoolkit.runner.mode_resolver import ModeKind
+    from rdetoolkit.runner.paths import resolve_tile_paths
+    from rdetoolkit.runner.planner import ExecutionPlan, TilePlan
+    from rdetoolkit.types import InputPaths, IterationInfo, OutputContext, RdeConfig
+
+    data_root = tmp_path / "data"
+    inputdata = data_root / "inputdata"
+    inputdata.mkdir(parents=True)
+
+    class TwoTilePlanner:
+        """Provide two explicit tiles while retaining Runner's production execution path."""
+
+        def create(
+            self,
+            request: Any,
+            *,
+            config: RdeConfig,
+            mode: ModeKind,
+        ) -> ExecutionPlan:
+            tiles: list[TilePlan] = []
+            for index in range(2):
+                raw = inputdata / f"tile-{index}.txt"
+                raw.write_text(str(index), encoding="utf-8")
+                resource_paths = resolve_tile_paths(data_root, index)
+                for field in fields(resource_paths):
+                    Path(getattr(resource_paths, field.name)).mkdir(parents=True, exist_ok=True)
+                tiles.append(
+                    TilePlan(
+                        iteration=IterationInfo(index=index, total=2, mode=mode.value),
+                        paths=InputPaths(
+                            inputdata=inputdata,
+                            invoice=data_root / "invoice",
+                            tasksupport=data_root / "tasksupport",
+                            raw=raw,
+                            rawfiles=(raw,),
+                        ),
+                        out=OutputContext.from_resource_paths(resource_paths),
+                        invoice=None,
+                    ),
+                )
+            return ExecutionPlan(
+                run_id="run-uuid-abc",
+                target=request.target,
+                mode=mode,
+                config=config,
+                root=request.root,
+                error_policy="continue",
+                tiles=tuple(tiles),
+            )
+
+    # Given: a real Runner with a fixed run UUID and a production two-tile plan
+    runner = Runner(
+        root=tmp_path,
+        planner=TwoTilePlanner(),  # type: ignore[arg-type]
+        run_id_factory=lambda: "run-uuid-abc",
+    )
+    monkeypatch.setattr(runner, "load_config", lambda source: RdeConfig())
+    monkeypatch.setattr(runner, "resolve_mode", lambda config: ModeKind.invoice)
+    monkeypatch.setattr(runner, "pre_validate", lambda config: None)
+    monkeypatch.setattr(runner, "post_validate", lambda config, report: None)
+    monkeypatch.setattr(runner, "finalize", lambda report, config: None)
+
+    def flow(iteration: IterationInfo) -> None:
+        assert iteration.total == 2
+
+    # When: Runner.run executes both tiles and the report is converted
+    report: RunReport = runner.run(flow)
+    statuses = json.loads(report.to_legacy_statuses())["statuses"]
+
+    # Then: each legacy identity is its decimal tile index, never the run UUID
+    assert report.run_id == "run-uuid-abc"
+    assert [status["run_id"] for status in statuses] == ["0000", "0001"]
+    assert all(status["run_id"] != report.run_id for status in statuses)

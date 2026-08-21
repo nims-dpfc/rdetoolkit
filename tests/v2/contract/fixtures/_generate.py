@@ -56,7 +56,6 @@ _SEED_INVOICE = {
 _EMPTY_METADATA_DEF = {"constant": {}, "variable": []}
 
 _KEY_PLACEHOLDERS = {
-    "run_id": "<RUN_ID>",
     "started_at": "<TIMESTAMP>",
     "finished_at": "<TIMESTAMP>",
     "timestamp": "<TIMESTAMP>",

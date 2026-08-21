@@ -58,7 +58,7 @@ def finalize(report: RunReport, config: RdeConfig, *, root: Path) -> None:
 
 
 def _write_run_report(report: RunReport, *, root: Path) -> None:
-    logs_dir = root / "data" / "logs"
+    logs_dir = resolve_data_root(root) / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     report_path = logs_dir / f"run_report_{report.run_id}.json"
     report_path.write_text(report.to_json(), encoding="utf-8")

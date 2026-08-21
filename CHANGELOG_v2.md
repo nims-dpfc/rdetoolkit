@@ -168,6 +168,15 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 - Enabled branch coverage and added focused rejection, interruption, path,
   artifact-filter, directory-copy, copy-failure, and disabled-image tests for
   new Phase H modules.
+- Corrected legacy status identities to the v1-observed four-digit tile index
+  (`0000`, `0001`, ...), kept run-level UUIDs out of every compatibility
+  status, and preserved those deterministic values during fixture freezing.
+- Unified RunReport and `job.failed` placement through the four-tier data-root
+  resolver: explicit `data`, existing nested `data`, marker-identified alias
+  flat root, then a bare project root's future `data` child.
+- Added CI enforcement for 95% branch coverage on the six reviewed Phase H
+  modules at the end of the existing Python 3.12 module run. Focused tox
+  invocations skip the scoped gates while retaining the global 80% policy.
 
 #### Existing-test UPDATE table
 
@@ -184,3 +193,9 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 | `test_config_loader.py` TC-CFG-005/006 | raw Pydantic `ValidationError` | public `RdeConfigError` with integer code 1002 (F4 contract strengthening) |
 | `test_rdeconfig_v1_keys.py` TC-EP-G2-005 | direct model `ValidationError` | public loader rejects every strict-section unknown key with `RdeConfigError(1002)` (F4) |
 | `test_cli_report.py` TC-CLI-REPORT-EP-003 fixture | version-1 report was current | version-2 report is current and must not emit an unknown-schema warning (F2 consumer compatibility) |
+| `test_legacy_statuses_contract.py` TC-EP-G2-301..315 | run-level placeholder could mask tile identity | fixed run UUID is deliberately distinct; frozen four-digit tile IDs must match and never expose the UUID (A/E) |
+| `test_legacy_statuses_contract.py` TC-EP/BV-HR2-AE-001 | no production-path multi-tile identity regression | real `Runner.run` with two tiles yields `0000` and `0001` while retaining its separate UUID (A/E) |
+| `test_fixture_generator.py` TC-HR2-E-001 | every `run_id` key normalized to one placeholder | deterministic legacy tile IDs survive normalization and regeneration (E) |
+| `test_finalize.py` TC-EP/BV-HR2-B-001 | report path covered project roots only | flat `data` root writes directly to `logs` and never creates `data/data` (B) |
+| `test_paths.py` TC-EP/BV-HR2-B-002/003 | project/flat fallback was ambiguous for bare and alias roots | four resolver priorities cover explicit, nested, marker-flat, and bare-project layouts (B) |
+| `test_coverage_policy.py` TC-EP/BV-HR2-C-001/002 | branch measurement enabled without scoped enforcement | existing Python 3.12 CI run enforces six independent 95% module gates and preserves focused tox use (C) |

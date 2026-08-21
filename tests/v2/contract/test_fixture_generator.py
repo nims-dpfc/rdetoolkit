@@ -3,6 +3,7 @@
 EP table:
     TC-G1-001 (normal): volatile report fields and embedded version/path text
         are normalized before a snapshot is frozen.
+    TC-HR2-E-001 (normal): deterministic v1 status tile indexes remain distinct.
     TC-G1-002 (normal): canonical JSON output is byte-identical across writes.
     TC-G1-003 (abnormal): ``--check`` reports a missing frozen snapshot instead
         of silently creating an expected value.
@@ -44,6 +45,7 @@ BV table:
     TC-GR-008 (invalid markers): dirty, unrecorded, and empty revisions are
         fatal provenance values and make the CLI process exit nonzero.
     TC-GR-009 (16 snapshots): the complete inventory has exactly one clean SHA.
+    TC-HR2-E-001 (two indexes): adjacent status identities remain ``0000``/``0001``.
 """
 
 from __future__ import annotations
@@ -71,7 +73,6 @@ def test_normalize_snapshot_replaces_all_declared_volatile_values__tc_g1_001(
     # Given: representative v1/v2 output with every declared volatile value
     root = tmp_path / "isolated-v1-run"
     source = {
-        "run_id": "2ec0bfdf-4b91-46d0-a6a8-6c7585b33f31",
         "started_at": "2026-07-15T13:52:26.123456Z",
         "duration_ms": 91.25,
         "config_digest": "sha256:abcdef",
@@ -86,7 +87,6 @@ def test_normalize_snapshot_replaces_all_declared_volatile_values__tc_g1_001(
 
     # Then: stable placeholders replace volatility while stable text remains
     assert normalized == {
-        "run_id": "<RUN_ID>",
         "started_at": "<TIMESTAMP>",
         "duration_ms": "<DURATION_MS>",
         "config_digest": "<CONFIG_DIGEST>",
@@ -95,6 +95,18 @@ def test_normalize_snapshot_replaces_all_declared_volatile_values__tc_g1_001(
         "path": "<RUN_ROOT>/data/inputdata/sample.txt",
         "nested": [{"dateSubmitted": "<DATE>"}],
     }
+
+
+def test_normalize_snapshot_preserves_legacy_tile_run_ids__tc_hr2_e_001() -> None:
+    """TC-HR2-E-001: v1 status run IDs are deterministic tile indexes."""
+    # Given: the two-status boundary produced by a v1 multi-tile run
+    source = {"legacy_return": {"statuses": [{"run_id": "0000"}, {"run_id": "0001"}]}}
+
+    # When: normalizing the oracle observation before freezing
+    normalized = _generate.normalize_snapshot(source)
+
+    # Then: tile identity and the distinction between adjacent tiles survive
+    assert normalized == source
 
 
 def test_write_json_snapshot_is_canonical__tc_g1_002(tmp_path: Path) -> None:

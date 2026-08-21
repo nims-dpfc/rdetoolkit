@@ -93,11 +93,15 @@ class RunReport:
         error = iteration.get("error")
         if not isinstance(error, dict):
             error = self.error if isinstance(self.error, dict) else {}
+        raw_index = iteration.get("index")
+        legacy_run_id = f"{raw_index:04d}" if isinstance(raw_index, int) else ""
+        if raw_index is not None and not isinstance(raw_index, int):
+            legacy_run_id = str(raw_index)
         return {
             "error_code": error.get("code"),
             "error_message": error.get("message"),
             "mode": _legacy_mode(self.mode),
-            "run_id": self.run_id,
+            "run_id": legacy_run_id,
             "stacktrace": iteration.get("stacktrace"),
             "status": "success" if iteration.get("status") == "completed" else "failed",
             "target": iteration.get("target"),

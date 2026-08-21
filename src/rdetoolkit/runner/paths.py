@@ -47,6 +47,10 @@ _DIRNAMES = {
 def resolve_data_root(root: Path) -> Path:
     """Resolve either a project root or an already-flat ``data`` root.
 
+    Resolution priority is: an explicitly named ``data`` root, an existing
+    nested ``data`` child, an alias-flat root identified by an RDE marker
+    directory, then a bare project root's future ``data`` child.
+
     Args:
         root: Runner-owned project or data directory.
 
@@ -58,7 +62,10 @@ def resolve_data_root(root: Path) -> Path:
     candidate = root / "data"
     if candidate.exists():
         return candidate
-    return root
+    markers = ("inputdata", "invoice", "tasksupport")
+    if any((root / marker).is_dir() for marker in markers):
+        return root
+    return candidate
 
 
 def resolve_tile_paths(base_dir: Path, idx: int) -> TileOutputPaths:

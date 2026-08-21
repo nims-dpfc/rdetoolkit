@@ -20,6 +20,7 @@ EP table:
 | API | Partition | Expected | Test ID |
 | --- | --- | --- | --- |
 | Runner.finalize | root differs from cwd | report is written below root | TC-H0-ROOT-EP-001 |
+| finalize | root is already ``data`` | report is written below ``root/logs`` | TC-EP-HR2-B-001 |
 
 BV table:
 
@@ -27,6 +28,7 @@ BV table:
 | --- | --- | --- | --- |
 | Runner.finalize | one successful report | exactly one root-relative report | TC-H0-ROOT-BV-001 |
 | Runner.finalize | one failed report and root != cwd | job.failed is written below root | TC-HR-F1-BV-001 |
+| finalize | flat root | no nested ``root/data/logs`` is created | TC-BV-HR2-B-001 |
 
 ``write_job_errorlog_file`` itself is v1 public surface and MUST NOT be
 reimplemented by finalize.py; finalize.py only calls it.
@@ -187,6 +189,23 @@ class TestFinalizePersistsRunReport:
         saved = json.loads(report_path.read_text(encoding="utf-8"))
         assert saved["run_id"] == "run-ok-1"
         assert saved["status"] == "success"
+
+    def test_flat_data_root_does_not_create_nested_data__tc_ep_bv_hr2_b_001(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """TC-EP/BV-HR2-B-001: a flat data root owns its report logs directly."""
+        # Given: a root that is already the canonical flat data directory
+        data_root = tmp_path / "data"
+        data_root.mkdir()
+        report = _make_report("success", run_id="flat-root")
+
+        # When: finalizing the report against that flat root
+        finalize(report, RdeConfig(), root=data_root)
+
+        # Then: the report is under root/logs and no second data layer exists
+        assert (data_root / "logs" / "run_report_flat-root.json").exists()
+        assert not (data_root / "data" / "logs").exists()
 
 
 class TestReviewFollowUps:
