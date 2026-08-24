@@ -25,8 +25,14 @@ EP table:
         static inputs before snapshot freeze.
     TC-GR-008 (abnormal): ``--check`` rejects dirty or unrecorded frozen
         provenance instead of treating it as a stale-revision warning.
-    TC-GR-009 (normal): every frozen snapshot shares one clean non-empty
-        writer revision.
+    TC-GR-009 (normal): every frozen snapshot has clean non-empty provenance;
+        the PII-remediated SmartTable cohort may have its own writer revision.
+    TC-H4-PII-001 (normal): rebuilt G1 SmartTable input replaces the imported
+        sample owner with the same synthetic 56-digit owner used by canaries.
+    TC-H4-PII-002 (boundary): write-mode regeneration touches only the three
+        authorized G1 SmartTable snapshots; other synthetic modes stay frozen.
+    TC-H4-PII-003 (normal): all owner-key values across contract fixtures match
+        the synthetic zero-padded 56-digit policy, regardless of source prefix.
 
 BV table:
     TC-G1-004 (empty): normalization preserves empty containers and ``None``.
@@ -44,13 +50,15 @@ BV table:
     TC-H0-GEN-BV-001 (zero flags): write mode performs no input rebuild.
     TC-GR-008 (invalid markers): dirty, unrecorded, and empty revisions are
         fatal provenance values and make the CLI process exit nonzero.
-    TC-GR-009 (16 snapshots): the complete inventory has exactly one clean SHA.
+    TC-GR-009 (16 snapshots): the complete inventory has one clean SHA per
+        authorized regeneration cohort.
     TC-HR2-E-001 (two indexes): adjacent status identities remain ``0000``/``0001``.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -64,6 +72,72 @@ import pytest
 
 from rdetoolkit.invoicefile import SmartTableFile
 from tests.v2.contract.fixtures import _generate
+
+
+def test_g1_smarttable_builder_sanitizes_owner_id__tc_h4_pii_001() -> None:
+    """TC-H4-PII-001: G1 input regeneration cannot restore a real owner hash."""
+    # Given: the SmartTable input builder that adapts the legacy sample invoice
+    # When: constructing its repository-owned invoice payload
+    invoice = _generate._smarttable_invoice()
+    # Then: the owner is the canonical synthetic 56-digit identity
+    assert invoice["basic"]["dataOwnerId"] == "0" * 55 + "1"
+    assert invoice["sample"]["ownerId"] == "0" * 55 + "5"
+
+
+def test_all_fixture_owner_keys_use_synthetic_ids__tc_h4_pii_003() -> None:
+    """TC-H4-PII-003: every fixture owner key uses a zero-padded synthetic ID."""
+    # Given: every JSON document in contract inputs and frozen expectations
+    roots = (_generate.INPUT_ROOT, _generate.FIXTURE_ROOT / "expected")
+    values: list[tuple[Path, str, str]] = []
+
+    def collect(value: object, path: Path) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in {"dataOwnerId", "ownerId"} and isinstance(item, str):
+                    values.append((path, key, item))
+                collect(item, path)
+        elif isinstance(value, list):
+            for item in value:
+                collect(item, path)
+
+    # When: enumerating values by semantic key rather than known hash prefix
+    for root in roots:
+        for path in root.rglob("*.json"):
+            collect(json.loads(path.read_text(encoding="utf-8")), path)
+    # Then: all observed owners are synthetic 56-digit zero-padded values
+    assert values
+    invalid = [entry for entry in values if re.fullmatch(r"0{55}[0-9]", entry[2]) is None]
+    assert invalid == []
+
+
+def test_g1_write_freeze_is_limited_to_smarttable__tc_h4_pii_002(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-H4-PII-002: only authorized G1 SmartTable snapshots are rewritten."""
+    # Given: one candidate snapshot for SmartTable and one for another G1 mode
+    smarttable = tmp_path / "smarttable" / "ok.json"
+    invoice = tmp_path / "invoice" / "ok.json"
+    written: list[Path] = []
+    monkeypatch.setattr(
+        _generate,
+        "expected_snapshot_paths",
+        lambda: [invoice, smarttable],
+    )
+    monkeypatch.setattr(_generate, "_observe_v1", lambda *args, **kwargs: {})
+    monkeypatch.setattr(
+        _generate,
+        "_compare_or_write",
+        lambda path, payload, check: written.append(path),
+    )
+    # When: running the G1 processor in write mode
+    mismatches = _generate._process_v1_snapshots(
+        check=False,
+        stamped_commit="clean-revision",
+    )
+    # Then: the authorized SmartTable observation is the sole write target
+    assert mismatches == []
+    assert written == [smarttable]
 
 
 def test_normalize_snapshot_replaces_all_declared_volatile_values__tc_g1_001(
@@ -289,24 +363,25 @@ def test_frozen_v1_scenarios_cover_matrix_and_excel_zero_boundary__tc_g1_010() -
     assert all(path.is_file() for path in snapshots)
 
     # And: each value records clean generator provenance and observed v1 result.
-    # source.commit is the revision that WROTE the snapshot (recorded at
-    # regeneration time), so it must be one non-empty value shared by every
-    # snapshot (single-regeneration invariant) — it intentionally does NOT
-    # have to match the currently checked-out revision; staleness is a
-    # non-failing warning surfaced by _generate.source_revision_warnings.
-    recorded_commits: set[str] = set()
+    # source.commit is the revision that WROTE each snapshot. The authorized
+    # PII remediation selectively regenerated SmartTable, so provenance must
+    # be internally consistent within that cohort and within the untouched G1
+    # baseline; it intentionally need not match the checked-out revision.
+    commits_by_mode: dict[str, set[str]] = {}
     for path in snapshots:
         payload = json.loads(path.read_text(encoding="utf-8"))
         assert payload["source"]["tag"] == _generate.SOURCE_TAG
         commit = payload["source"]["commit"]
         assert isinstance(commit, str) and commit and commit != "<unrecorded>"
         assert "-dirty" not in commit
-        recorded_commits.add(commit)
+        commits_by_mode.setdefault(path.parent.name, set()).add(commit)
         assert payload["observed"]["exit_code"] in {0, 1}
         assert "output_tree" in payload["observed"]
-    assert len(recorded_commits) == 1, (
-        f"snapshots must come from one regeneration run, got {sorted(recorded_commits)}"
-    )
+    smarttable_commits = commits_by_mode.pop("smarttable")
+    baseline_commits = set().union(*commits_by_mode.values())
+    assert len(smarttable_commits) == 1
+    assert len(baseline_commits) == 1
+    assert smarttable_commits.isdisjoint(baseline_commits)
 
 
 def test_materialize_oracle_case_recreates_unpacked_after_fresh_checkout__tc_gr_001(

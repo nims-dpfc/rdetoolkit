@@ -178,6 +178,28 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   modules at the end of the existing Python 3.12 module run. Focused tox
   invocations skip the scoped gates while retaining the global 80% policy.
 
+### Added — Phase H real-canary compatibility protection
+
+- Added permanent import and minimal-behavior coverage for the maintained v1
+  Tier 1 public API, including an explicit compatibility pin for
+  `rdetoolkit.core.detect_encoding`.
+- Imported representative real inputs for invoice, ExcelInvoice,
+  MultiDataTile, RDEFormat, and SmartTable without copying canary program code
+  or dependency environments.
+- Added a repository-independent assembly helper for Phase K v1↔v2 canary
+  comparisons. MultiDataTile combines the shared schema and metadata support
+  with its mode-specific `rdeconfig.yaml` overlay.
+- Added a deterministic canary-import sanitization boundary. ExcelInvoice user
+  names become `RDE,User01` through `RDE,User04`; user IDs and invoice owner IDs
+  become synthetic 56-digit values ending in `1` through `4`; sample owner IDs
+  use the non-colliding value ending in `5`. The sanitizer edits OOXML members
+  surgically to retain formulas and cached values, removes personal workbook
+  metadata, and is byte-idempotent after the first import.
+- Froze five additional OK-only v1 observations under `expected/canary` through
+  the canonical normalization and provenance path. The G1 SmartTable input and
+  affected observations use the same synthetic owner-ID policy; this is the
+  sole intentional update to the original 16 synthetic G1 observations.
+
 #### Existing-test UPDATE table
 
 | Test seat | Previous expectation | Strengthened expectation and reason |
