@@ -13,7 +13,7 @@
       "data/invoice/invoice.json": {
         "basic": {
           "dataName": "smarttable_value_2",
-          "dataOwnerId": "0c233ef274f28e611de4074638b4dc43e737ab993132343532343430",
+          "dataOwnerId": "00000000000000000000000000000000000000000000000000000001",
           "dateSubmitted": "<DATE>",
           "description": "",
           "experimentId": null,
@@ -68,7 +68,7 @@
           "names": [
             "sample-c"
           ],
-          "ownerId": "0c233ef274f28e611de4074638b4dc43e737ab993132343532343430",
+          "ownerId": "00000000000000000000000000000000000000000000000000000001",
           "referenceUrl": null,
           "sampleId": null,
           "specificAttributes": [
@@ -137,7 +137,7 @@
     "raw_sha256": {}
   },
   "source": {
-    "commit": "ada227a85b4a",
+    "commit": "543caa17a3a6",
     "tag": "v2.0.0a1"
   }
 }
