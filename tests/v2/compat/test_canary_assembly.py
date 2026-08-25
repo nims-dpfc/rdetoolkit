@@ -12,6 +12,10 @@ Equivalence partitions prepared before implementation:
 | imported canary copy | already sanitized | second sanitization is byte-identical | TC-H4-ASSEMBLY-009 |
 | imported canary copy | required invoice missing | ``FileNotFoundError`` before partial rewrite | TC-H4-ASSEMBLY-010 |
 | imported canary copy | unexpected owner ID | ``ValueError`` before partial rewrite | TC-H4-ASSEMBLY-011 |
+| unsanitized canary copy | one ID under both owner keys | both key-scoped values are replaced | TC-H4-ASSEMBLY-012 |
+| unsanitized canary copy | minified JSON | whitespace-independent replacement succeeds | TC-H4-ASSEMBLY-013 |
+| unsanitized canary copy | late replacement validation failure | every input file remains byte-identical | TC-H4-ASSEMBLY-014 |
+| unsanitized OOXML metadata | personal authors and path | creator, modifier, and path are normalized | TC-H4-ASSEMBLY-015 |
 | canary mode | unsupported name | ``ValueError`` | TC-H4-ASSEMBLY-003 |
 
 Boundary values prepared before implementation:
@@ -25,7 +29,10 @@ Boundary values prepared before implementation:
 from __future__ import annotations
 
 import json
+import re
 import shutil
+import zipfile
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -39,6 +46,61 @@ from tests.v2.compat.canary_assembly import (
 )
 
 _SYNTHETIC_IDS = tuple(f"{index:056d}" for index in range(1, 5))
+_FAKE_NAMES = tuple(f"Canary,Person{index:02d}" for index in range(1, 5))
+_FAKE_IDS = tuple(f"f{index:055d}" for index in range(1, 5))
+
+
+def _rewrite_workbook_members(path: Path, replacements: dict[bytes, bytes]) -> None:
+    """Rewrite selected test-only OOXML values without using openpyxl save."""
+    output = BytesIO()
+    with zipfile.ZipFile(path) as source, zipfile.ZipFile(output, "w") as target:
+        for member in source.infolist():
+            payload = source.read(member.filename)
+            for old, new in replacements.items():
+                payload = payload.replace(old, new)
+            target.writestr(member, payload)
+    path.write_bytes(output.getvalue())
+
+
+def _make_unsanitized_corpus(root: Path, *, minified: bool = False) -> Path:
+    """Create a synthetic unsanitized corpus exercising every replacement branch."""
+    imported = root / "canary"
+    shutil.copytree(CANARY_INPUT_ROOT, imported)
+    workbook = imported / "excelinvoice/inputdata/cb550_excelinvoice.xlsx"
+    replacements = {
+        **{
+            source.encode(): replacement.encode()
+            for source, replacement in zip(
+                (f"RDE,User{index:02d}" for index in range(1, 5)),
+                _FAKE_NAMES,
+                strict=True,
+            )
+        },
+        **{
+            source.encode(): replacement.encode()
+            for source, replacement in zip(_SYNTHETIC_IDS, _FAKE_IDS, strict=True)
+        },
+        b">RDE<": b">Personal Author<",
+        b'url="/Users/rde-user/Downloads/"': b'url="/Users/private-user/Documents/"',
+    }
+    _rewrite_workbook_members(workbook, replacements)
+    for index, relative in enumerate(
+        (
+            "excelinvoice/invoice/invoice_auto.json",
+            "multidatatile/invoice/invoice.json",
+            "smarttable/invoice/invoice.json",
+        ),
+    ):
+        path = imported / relative
+        invoice = json.loads(path.read_text(encoding="utf-8"))
+        invoice["basic"]["dataOwnerId"] = _FAKE_IDS[0]
+        invoice["sample"]["ownerId"] = _FAKE_IDS[0]
+        separators = (",", ":") if minified and index == 0 else None
+        path.write_text(
+            json.dumps(invoice, ensure_ascii=False, separators=separators),
+            encoding="utf-8",
+        )
+    return imported
 
 
 @pytest.mark.parametrize(
@@ -217,6 +279,91 @@ def test_canary_sanitization_rejects_unexpected_owner_id__tc_h4_assembly_011(
         sanitize_canary_inputs(imported)
     # Then: preflight validation prevents a partial workbook rewrite
     assert workbook.read_bytes() == original_workbook
+
+
+def test_unsanitized_shared_owner_id_is_replaced_by_key__tc_h4_assembly_012(
+    tmp_path: Path,
+) -> None:
+    """TC-H4-ASSEMBLY-012: one source ID may occur under both owner keys."""
+    # Given: synthetic unsanitized invoices where one ID owns data and sample
+    imported = _make_unsanitized_corpus(tmp_path)
+    # When: applying the import sanitizer
+    sanitize_canary_inputs(imported)
+    # Then: both key-scoped values take their distinct canonical replacements
+    for relative in (
+        "excelinvoice/invoice/invoice_auto.json",
+        "multidatatile/invoice/invoice.json",
+        "smarttable/invoice/invoice.json",
+    ):
+        invoice = json.loads((imported / relative).read_text(encoding="utf-8"))
+        assert invoice["basic"]["dataOwnerId"] == _SYNTHETIC_IDS[0]
+        assert invoice["sample"]["ownerId"] == "0" * 55 + "5"
+
+
+def test_unsanitized_minified_json_is_replaced__tc_h4_assembly_013(
+    tmp_path: Path,
+) -> None:
+    """TC-H4-ASSEMBLY-013: key-scoped matching tolerates minified JSON."""
+    # Given: an unsanitized corpus whose ExcelInvoice JSON has no key whitespace
+    imported = _make_unsanitized_corpus(tmp_path, minified=True)
+    invoice_path = imported / "excelinvoice/invoice/invoice_auto.json"
+    assert '"dataOwnerId":"' in invoice_path.read_text(encoding="utf-8")
+    # When: applying the import sanitizer
+    sanitize_canary_inputs(imported)
+    # Then: both minified owner fields are replaced without reformatting the file
+    payload = invoice_path.read_text(encoding="utf-8")
+    assert f'"dataOwnerId":"{_SYNTHETIC_IDS[0]}"' in payload
+    assert f'"ownerId":"{"0" * 55 + "5"}"' in payload
+
+
+def test_late_sanitization_failure_changes_no_file__tc_h4_assembly_014(
+    tmp_path: Path,
+) -> None:
+    """TC-H4-ASSEMBLY-014: two-phase validation prevents every partial write."""
+    # Given: a complete unsanitized corpus with a duplicate late owner pair
+    imported = _make_unsanitized_corpus(tmp_path)
+    invalid = imported / "smarttable/invoice/invoice.json"
+    payload = invalid.read_text(encoding="utf-8")
+    duplicate = f'"dataOwnerId": "{_FAKE_IDS[0]}"'
+    invalid.write_text(
+        payload.replace(duplicate, f"{duplicate}, {duplicate}"),
+        encoding="utf-8",
+    )
+    before = {
+        path.relative_to(imported): path.read_bytes()
+        for path in imported.rglob("*")
+        if path.is_file()
+    }
+    # When: a late JSON replacement violates the single-occurrence guard
+    with pytest.raises(ValueError, match="unexpected dataOwnerId occurrence count"):
+        sanitize_canary_inputs(imported)
+    # Then: neither the workbook nor any earlier invoice was changed
+    after = {
+        path.relative_to(imported): path.read_bytes()
+        for path in imported.rglob("*")
+        if path.is_file()
+    }
+    assert after == before
+
+
+def test_ooxml_personal_metadata_is_sanitized__tc_h4_assembly_015(
+    tmp_path: Path,
+) -> None:
+    """TC-H4-ASSEMBLY-015: OOXML authors and personal paths are normalized."""
+    # Given: unsanitized creator, modifier, and workbook absolute-path metadata
+    imported = _make_unsanitized_corpus(tmp_path)
+    workbook = imported / "excelinvoice/inputdata/cb550_excelinvoice.xlsx"
+    # When: applying the import sanitizer
+    sanitize_canary_inputs(imported)
+    # Then: both author properties and the personal path have stable replacements
+    with zipfile.ZipFile(workbook) as archive:
+        core = archive.read("docProps/core.xml").decode()
+        workbook_xml = archive.read("xl/workbook.xml").decode()
+    assert re.search(r"<dc:creator>RDE</dc:creator>", core)
+    assert re.search(r"<cp:lastModifiedBy>RDE</cp:lastModifiedBy>", core)
+    assert 'url="/Users/rde-user/Downloads/"' in workbook_xml
+    assert "Personal Author" not in core
+    assert "private-user" not in workbook_xml
 
 
 def test_multidatatile_overlays_config_on_base_tasksupport(tmp_path: Path) -> None:

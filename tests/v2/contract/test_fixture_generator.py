@@ -33,6 +33,9 @@ EP table:
         authorized G1 SmartTable snapshots; other synthetic modes stay frozen.
     TC-H4-PII-003 (normal): all owner-key values across contract fixtures match
         the synthetic zero-padded 56-digit policy, regardless of source prefix.
+    TC-H4-CONFIG-001 (normal): nested imported YAML becomes the effective v1 Config.
+    TC-H4-CONFIG-002 (normal): flat SEM YAML keys normalize below ``system``.
+    TC-H4-CONFIG-003 (boundary): RDEFormat receives only its assembly mode overlay.
 
 BV table:
     TC-G1-004 (empty): normalization preserves empty containers and ``None``.
@@ -82,6 +85,27 @@ def test_g1_smarttable_builder_sanitizes_owner_id__tc_h4_pii_001() -> None:
     # Then: the owner is the canonical synthetic 56-digit identity
     assert invoice["basic"]["dataOwnerId"] == "0" * 55 + "1"
     assert invoice["sample"]["ownerId"] == "0" * 55 + "5"
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        ("invoice", {"save_raw": True, "save_nonshared_raw": False}),
+        ("excelinvoice", {"save_thumbnail_image": True, "save_nonshared_raw": True}),
+        ("rdeformat", {"extended_mode": "rdeformat", "save_nonshared_raw": False}),
+    ],
+)
+def test_canary_effective_config_uses_imported_yaml__tc_h4_config_001_003(
+    mode: str,
+    expected: dict[str, object],
+) -> None:
+    """TC-H4-CONFIG-001..003: canary Config records YAML and assembly overlays."""
+    # Given: one imported canary config, including flat and mode-overlay variants
+    # When: constructing its recorded effective v1 Config
+    record = _generate.canary_effective_config_record(mode)
+    # Then: the model uses v1 defaults for omissions and records its exact source
+    assert record["source"]["path"] == "data/tasksupport/rdeconfig.yaml"
+    assert record["config"]["system"] | expected == record["config"]["system"]
 
 
 def test_all_fixture_owner_keys_use_synthetic_ids__tc_h4_pii_003() -> None:
@@ -540,7 +564,7 @@ def test_check_mode_returns_nonzero_for_invalid_frozen_provenance__tc_gr_008(
     monkeypatch.setattr(
         _generate,
         "source_revision_errors",
-        lambda: ["fatal provenance; commit code changes first"],
+        lambda **_: ["fatal provenance; commit code changes first"],
     )
 
     # When: running the generator's check-mode entry point

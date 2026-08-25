@@ -9,6 +9,8 @@ Equivalence partitions prepared before implementation:
 | real canary | MultiDataTile | frozen match and v1 mode ``MultiDataTile`` | TC-H4-CANARY-003 |
 | real canary | RDEFormat | frozen match and v1 mode ``rdeformat`` | TC-H4-CANARY-004 |
 | real canary | SmartTable | frozen match and v1 mode ``SmartTableInvoice`` | TC-H4-CANARY-005 |
+| effective config | imported YAML plus assembly normalization | frozen model and source reproduce execution | TC-H4-CANARY-006 |
+| invoice config | ``save_nonshared_raw: false`` | no ``nonshared_raw`` artifact is frozen | TC-H4-CANARY-007 |
 
 Boundary values prepared before implementation:
 
@@ -53,12 +55,11 @@ def test_real_canary_matches_frozen_v1_observation(mode: str) -> None:
     # When: executing the v1 SUT against the same imported real input
     actual = _generate.run_v1_canary_sut(mode)
     # Then: every normalized primary observation matches the frozen oracle
-    assert fixture["case"] == {
-        "entry": "custom_dataset_function",
-        "family": "canary",
-        "mode": mode,
-        "outcome": "ok",
-    }
+    assert fixture["case"]["entry"] == "custom_dataset_function"
+    assert fixture["case"]["family"] == "canary"
+    assert fixture["case"]["mode"] == mode
+    assert fixture["case"]["outcome"] == "ok"
+    assert fixture["case"]["effective_config"] == _generate.canary_effective_config_record(mode)
     assert actual == fixture["observed"]
     assert actual["exit_code"] == 0
     assert actual["callback_count"] >= 1
@@ -86,10 +87,24 @@ def test_real_canary_matches_frozen_v1_observation(mode: str) -> None:
         } == {"CrossBeam550_手動_1.tif", "CrossBeam550_自動_1.tif"}
 
 
+def test_invoice_canary_honors_nonshared_raw_setting__tc_h4_canary_007() -> None:
+    """TC-H4-CANARY-007: imported invoice config disables nonshared raw output."""
+    # Given: the frozen invoice canary and its recorded effective v1 Config
+    path = _generate.CANARY_EXPECTED_ROOT / "invoice" / "ok.json"
+    fixture: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    effective = fixture["case"]["effective_config"]
+    # When: inspecting the reproducibility condition and observed output tree
+    files = fixture["observed"]["output_tree"]["files"]
+    # Then: the imported false value is effective and no nonshared artifact exists
+    assert effective["config"]["system"]["save_nonshared_raw"] is False
+    assert effective["source"]["path"] == "data/tasksupport/rdeconfig.yaml"
+    assert all("/nonshared_raw/" not in item for item in files)
+
+
 def test_canary_snapshot_inventory_is_five_ok_only__tc_h4_canary_bv_001() -> None:
     """TC-H4-CANARY-BV-001: canary adds five OK snapshots and no error cases."""
     # Given: the generator's real-canary inventory
-    snapshots = _generate.canary_snapshot_paths()
+    snapshots = sorted(_generate.CANARY_EXPECTED_ROOT.rglob("*.json"))
     # When: rendering paths relative to the fixture root
     relative = [path.relative_to(_generate.FIXTURE_ROOT) for path in snapshots]
     # Then: the sorted inventory is exactly one OK snapshot per mode

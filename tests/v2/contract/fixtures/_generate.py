@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 if str(REPOSITORY_ROOT) not in sys.path:
@@ -656,6 +657,56 @@ def _oracle_config(mode: str) -> Any:
     )
 
 
+def _canary_config_path(mode: str) -> Path:
+    """Return the imported source config later assembled as ``data/tasksupport``."""
+    support = "tasksupport2" if mode == "multidatatile" else "tasksupport"
+    return INPUT_ROOT / "canary" / mode / support / "rdeconfig.yaml"
+
+
+def _effective_canary_config(mode: str, path: Path) -> tuple[Any, list[str]]:
+    """Build a v1 Config from imported canary YAML plus assembly normalizations.
+
+    The SEM/ExcelInvoice material predates the nested schema, so its top-level
+    system keys are interpreted as ``system.*``. The RDEFormat material does
+    not declare a mode; assembly overlays ``system.extended_mode=rdeformat`` in
+    the same way the MultiDataTile material overlays its ``tasksupport2``
+    config. Every unspecified field is left to the v1 Config model default.
+    """
+    from rdetoolkit.models.config import Config, SystemSettings  # noqa: PLC0415
+
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        msg = f"canary config must contain a mapping: {path.as_posix()}"
+        raise ValueError(msg)
+    data = dict(loaded)
+    normalizations: list[str] = []
+    if "system" not in data:
+        system_keys = set(SystemSettings.model_fields)
+        system = {key: data.pop(key) for key in tuple(data) if key in system_keys}
+        data["system"] = system
+        normalizations.append("top-level system keys normalized to system.*")
+    if mode == "rdeformat":
+        system_data = data.setdefault("system", {})
+        if not isinstance(system_data, dict):
+            msg = f"canary system config must contain a mapping: {path.as_posix()}"
+            raise ValueError(msg)
+        system_data["extended_mode"] = "rdeformat"
+        normalizations.append("system.extended_mode overlaid as rdeformat")
+    return Config(**data), normalizations
+
+
+def canary_effective_config_record(mode: str) -> dict[str, Any]:
+    """Return the reproducible effective Config and source for a canary mode."""
+    config, normalizations = _effective_canary_config(mode, _canary_config_path(mode))
+    return {
+        "source": {
+            "path": "data/tasksupport/rdeconfig.yaml",
+            "normalizations": normalizations,
+        },
+        "config": config.model_dump(mode="json"),
+    }
+
+
 def _record_callback_call() -> None:
     marker = Path(".callback_calls")
     with marker.open("a", encoding="utf-8") as stream:
@@ -755,7 +806,13 @@ def _collect_oracle_observation(root: Path, result: str | None, exit_code: int) 
     }
 
 
-def _run_oracle_worker(mode: str, outcome: str, root: Path) -> int:
+def _run_oracle_worker(
+    mode: str,
+    outcome: str,
+    root: Path,
+    *,
+    canary: bool = False,
+) -> int:
     from rdetoolkit.workflows import run as v1_run  # noqa: PLC0415
 
     if outcome == "valerr":
@@ -767,9 +824,17 @@ def _run_oracle_worker(mode: str, outcome: str, root: Path) -> int:
     try:
         os.chdir(root)
         try:
+            effective_config = (
+                _effective_canary_config(
+                    mode,
+                    root / "data/tasksupport/rdeconfig.yaml",
+                )[0]
+                if canary
+                else _oracle_config(mode)
+            )
             result = v1_run(
                 custom_dataset_function=callback,
-                config=_oracle_config(mode),
+                config=effective_config,
             )
         except SystemExit as error:
             exit_code = int(error.code or 0)
@@ -780,7 +845,13 @@ def _run_oracle_worker(mode: str, outcome: str, root: Path) -> int:
     return 0
 
 
-def _execute_v1_observation(mode: str, outcome: str, root: Path) -> dict[str, Any]:
+def _execute_v1_observation(
+    mode: str,
+    outcome: str,
+    root: Path,
+    *,
+    canary: bool = False,
+) -> dict[str, Any]:
     """Run the isolated v1 worker against an already-materialized case."""
     command = [
         sys.executable,
@@ -790,6 +861,8 @@ def _execute_v1_observation(mode: str, outcome: str, root: Path) -> dict[str, An
         outcome,
         str(root),
     ]
+    if canary:
+        command.append("--canary")
     completed = subprocess.run(  # noqa: S603
         command,
         cwd=REPOSITORY_ROOT,
@@ -814,12 +887,13 @@ def _observe_materialized_v1(
     *,
     prefix: str,
     materialize: Callable[[str, Path], None],
+    canary: bool = False,
 ) -> dict[str, Any]:
     """Observe one case family through the shared isolated worker path."""
     with tempfile.TemporaryDirectory(prefix=f"{prefix}-{mode}-") as temporary:
         root = Path(temporary)
         materialize(mode, root)
-        return _execute_v1_observation(mode, outcome, root)
+        return _execute_v1_observation(mode, outcome, root, canary=canary)
 
 
 def _observe_v1(mode: str, outcome: str, *, zero_rows: bool = False) -> dict[str, Any]:
@@ -840,6 +914,7 @@ def _observe_canary_v1(mode: str) -> dict[str, Any]:
         "ok",
         prefix="rdetoolkit-h4-canary",
         materialize=_materialize_canary_case,
+        canary=True,
     )
 
 
@@ -925,6 +1000,7 @@ def _process_canary_snapshots(*, check: bool, stamped_commit: str | None) -> lis
                 "outcome": "ok",
                 "entry": "custom_dataset_function",
                 "family": "canary",
+                "effective_config": canary_effective_config_record(mode),
             },
             "observed": _observe_canary_v1(mode),
         }
@@ -967,6 +1043,7 @@ def _parse_args() -> argparse.Namespace:
         help="rebuild static inputs before freezing normalized expectations",
     )
     parser.add_argument("--oracle-worker", nargs=3, metavar=("MODE", "OUTCOME", "ROOT"), help=argparse.SUPPRESS)
+    parser.add_argument("--canary", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument(
         "--provenance-root",
         type=Path,
@@ -984,7 +1061,7 @@ def main() -> int:  # noqa: PLR0911
     args = _parse_args()
     if args.oracle_worker is not None:
         mode, outcome, root = args.oracle_worker
-        return _run_oracle_worker(mode, outcome, Path(root))
+        return _run_oracle_worker(mode, outcome, Path(root), canary=args.canary)
     if args.provenance_root is not None:
         provenance_errors = source_revision_errors(root=args.provenance_root)
         if provenance_errors:
@@ -993,9 +1070,10 @@ def main() -> int:  # noqa: PLR0911
         print("provenance ok")  # noqa: T201
         return 0
     if args.check:
-        provenance_errors = source_revision_errors()
-        if not provenance_errors:
-            provenance_errors = source_revision_errors(root=CANARY_EXPECTED_ROOT)
+        provenance_errors = [
+            *source_revision_errors(),
+            *source_revision_errors(root=CANARY_EXPECTED_ROOT),
+        ]
         if provenance_errors:
             print("\n".join(provenance_errors), file=sys.stderr)  # noqa: T201
             return 1

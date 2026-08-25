@@ -64,7 +64,9 @@ def sanitize_canary_inputs(inputs_root: Path = CANARY_INPUT_ROOT) -> None:
     Workbook member payloads are rewritten inside the existing OOXML archive.
     This preserves formulas and their cached values, unlike an openpyxl save.
     Personal author and absolute-path metadata are normalized at the same
-    boundary even though the runtime does not consume them.
+    boundary even though the runtime does not consume them. Workbook and JSON
+    transformations are fully rendered and validated before any file is
+    written, so a late failure leaves the complete imported corpus unchanged.
 
     Args:
         inputs_root: Imported canary root containing all five mode families.
@@ -95,26 +97,45 @@ def sanitize_canary_inputs(inputs_root: Path = CANARY_INPUT_ROOT) -> None:
         msg = "unexpected sample.ownerId mismatch across imported canary invoices"
         raise ValueError(msg)
 
-    _sanitize_excelinvoice_workbook(workbook_path, source_names, source_ids)
+    rewritten: dict[Path, bytes] = {
+        workbook_path: _render_sanitized_excelinvoice(
+            workbook_path,
+            source_names,
+            source_ids,
+        ),
+    }
     for relative in _CANARY_OWNER_PATHS:
-        _replace_invoice_identity(
-            inputs_root / relative,
+        path = inputs_root / relative
+        payload = path.read_text(encoding="utf-8")
+        payload = _replace_invoice_identity(
+            path,
             "dataOwnerId",
             invoice_owner_ids[0],
             SYNTHETIC_OWNER_IDS[0],
+            payload,
         )
-        _replace_invoice_identity(
-            inputs_root / relative,
+        payload = _replace_invoice_identity(
+            path,
             "ownerId",
             sample_owner_ids[0],
             SYNTHETIC_SAMPLE_OWNER_ID,
+            payload,
         )
+        rewritten[path] = payload.encode()
+
+    for path, payload in rewritten.items():
+        if path.read_bytes() != payload:
+            path.write_bytes(payload)
 
 
-def _read_excelinvoice_identities(workbook_path: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _read_excelinvoice_identities(
+    workbook: Path | bytes,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Validate and return the workbook's four user-list identities."""
-    cached_book = load_workbook(workbook_path, read_only=True, data_only=True)
-    formula_book = load_workbook(workbook_path, read_only=True, data_only=False)
+    cached_source = io.BytesIO(workbook) if isinstance(workbook, bytes) else workbook
+    formula_source = io.BytesIO(workbook) if isinstance(workbook, bytes) else workbook
+    cached_book = load_workbook(cached_source, read_only=True, data_only=True)
+    formula_book = load_workbook(formula_source, read_only=True, data_only=False)
     try:
         users = cached_book["ユーザーリスト"]
         registration = cached_book["登録用"]
@@ -160,23 +181,35 @@ def _replace_invoice_identity(
     key: str,
     source: str,
     replacement: str,
-) -> None:
-    """Replace one scoped invoice identity without otherwise reformatting JSON."""
+    payload: str,
+) -> str:
+    """Replace one key-scoped invoice identity without otherwise reformatting JSON.
+
+    The replacement targets the exact ``"key": "value"`` pair so the same
+    56-character identity may legitimately appear under another key (for
+    example one person acting as both ``dataOwnerId`` and ``sample.ownerId``)
+    without breaking the single-occurrence guard or touching the wrong field.
+    """
     if source == replacement:
-        return
-    payload = path.read_text(encoding="utf-8")
-    if payload.count(source) != 1:
+        return payload
+    pattern = re.compile(
+        rf'("{re.escape(key)}"\s*:\s*)"{re.escape(source)}"',
+    )
+    if len(pattern.findall(payload)) != 1:
         msg = f"unexpected {key} occurrence count in {path.as_posix()}"
         raise ValueError(msg)
-    path.write_text(payload.replace(source, replacement), encoding="utf-8", newline="")
+    return pattern.sub(
+        lambda match: f'{match.group(1)}"{replacement}"',
+        payload,
+    )
 
 
-def _sanitize_excelinvoice_workbook(
+def _render_sanitized_excelinvoice(
     workbook_path: Path,
     source_names: tuple[str, ...],
     source_ids: tuple[str, ...],
-) -> None:
-    """Rewrite identity-bearing OOXML payloads while retaining formula caches."""
+) -> bytes:
+    """Render sanitized OOXML bytes while retaining formula caches."""
     replacements = {
         **dict(zip(source_names, _SYNTHETIC_USER_NAMES, strict=True)),
         **dict(zip(source_ids, SYNTHETIC_OWNER_IDS, strict=True)),
@@ -204,9 +237,9 @@ def _sanitize_excelinvoice_workbook(
                 rewritten = _sanitize_core_properties(rewritten)
             changed = changed or rewritten != payload
             target.writestr(member, rewritten)
-    if changed:
-        workbook_path.write_bytes(output.getvalue())
-        _assert_sanitized_excelinvoice(workbook_path)
+    rendered = output.getvalue() if changed else workbook_path.read_bytes()
+    _assert_sanitized_excelinvoice(rendered)
+    return rendered
 
 
 def _sanitize_core_properties(payload: bytes) -> bytes:
@@ -218,9 +251,9 @@ def _sanitize_core_properties(payload: bytes) -> bytes:
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
-def _assert_sanitized_excelinvoice(workbook_path: Path) -> None:
+def _assert_sanitized_excelinvoice(workbook: Path | bytes) -> None:
     """Verify sanitized workbook values and cached formulas after OOXML rewrite."""
-    names, owner_ids = _read_excelinvoice_identities(workbook_path)
+    names, owner_ids = _read_excelinvoice_identities(workbook)
     if names != _SYNTHETIC_USER_NAMES or owner_ids != SYNTHETIC_OWNER_IDS:
         msg = "ExcelInvoice identity sanitization did not produce canonical values"
         raise ValueError(msg)
