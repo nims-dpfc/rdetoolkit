@@ -1,5 +1,29 @@
 {
   "case": {
+    "effective_config": {
+      "config": {
+        "multidata_tile": {
+          "ignore_errors": false
+        },
+        "smarttable": null,
+        "system": {
+          "extended_mode": null,
+          "feature_description": true,
+          "magic_variable": false,
+          "save_invoice_to_structured": false,
+          "save_nonshared_raw": true,
+          "save_raw": true,
+          "save_thumbnail_image": true
+        },
+        "traceback": null
+      },
+      "source": {
+        "normalizations": [
+          "top-level system keys normalized to system.*"
+        ],
+        "path": "data/tasksupport/rdeconfig.yaml"
+      }
+    },
     "entry": "custom_dataset_function",
     "family": "canary",
     "mode": "excelinvoice",
@@ -198,7 +222,7 @@
     }
   },
   "source": {
-    "commit": "543caa17a3a6",
+    "commit": "750f20a3c412",
     "tag": "v2.0.0a1"
   }
 }

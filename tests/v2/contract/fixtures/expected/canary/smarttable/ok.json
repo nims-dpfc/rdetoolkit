@@ -1,5 +1,35 @@
 {
   "case": {
+    "effective_config": {
+      "config": {
+        "multidata_tile": {
+          "ignore_errors": false
+        },
+        "smarttable": null,
+        "system": {
+          "extended_mode": null,
+          "feature_description": true,
+          "magic_variable": true,
+          "save_invoice_to_structured": false,
+          "save_nonshared_raw": false,
+          "save_raw": true,
+          "save_thumbnail_image": true
+        },
+        "traceback": {
+          "enabled": true,
+          "format": "duplex",
+          "include_context": false,
+          "include_env": false,
+          "include_locals": false,
+          "max_locals_size": 512,
+          "sensitive_patterns": []
+        }
+      },
+      "source": {
+        "normalizations": [],
+        "path": "data/tasksupport/rdeconfig.yaml"
+      }
+    },
     "entry": "custom_dataset_function",
     "family": "canary",
     "mode": "smarttable",
@@ -108,7 +138,6 @@
         "data/inputdata/smarttable_battery_electrolyte.csv",
         "data/invoice/invoice.json",
         "data/logs/rdesys_<LOG_TIMESTAMP>.log",
-        "data/nonshared_raw/LiTFSI_DME_charge_discharge_dummy.csv",
         "data/raw/LiTFSI_DME_charge_discharge_dummy.csv",
         "data/tasksupport/invoice.schema.json",
         "data/tasksupport/metadata-def.json",
@@ -119,12 +148,11 @@
       ]
     },
     "raw_sha256": {
-      "data/nonshared_raw/LiTFSI_DME_charge_discharge_dummy.csv": "0789d619ac4864b6482f573e130c42ad66a6639e3e5f72e5aa6f50fd4af0f048",
       "data/raw/LiTFSI_DME_charge_discharge_dummy.csv": "0789d619ac4864b6482f573e130c42ad66a6639e3e5f72e5aa6f50fd4af0f048"
     }
   },
   "source": {
-    "commit": "543caa17a3a6",
+    "commit": "750f20a3c412",
     "tag": "v2.0.0a1"
   }
 }
