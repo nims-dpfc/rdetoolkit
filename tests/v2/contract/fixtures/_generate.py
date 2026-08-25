@@ -21,12 +21,13 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 if str(REPOSITORY_ROOT) not in sys.path:
@@ -37,6 +38,10 @@ from tests.fixtures.excelinvoice import (  # noqa: E402
     EXCELINVOICE_ENTRYDATA_SHEET2,
     EXCELINVOICE_ENTRYDATA_SHEET3,
 )
+from tests.v2.compat.canary_assembly import (  # noqa: E402
+    CANARY_MODES,
+    assemble_canary_case,
+)
 
 SOURCE_TAG = "v2.0.0a1"
 GENERATED_ON = "2026-07-15"
@@ -44,6 +49,7 @@ GENERATED_ON = "2026-07-15"
 FIXTURE_ROOT = Path(__file__).resolve().parent
 INPUT_ROOT = FIXTURE_ROOT / "inputs"
 EXPECTED_ROOT = FIXTURE_ROOT / "expected" / "v1"
+CANARY_EXPECTED_ROOT = FIXTURE_ROOT / "expected" / "canary"
 
 _SEED_INVOICE = {
     "datasetId": "seed-dataset",
@@ -81,6 +87,7 @@ _VERSION_PATTERN = re.compile(r"(?m)^rdetoolkit==[^\s]+$")
 _TILE_TARGET_PATTERN = re.compile(r"^(data/temp/\d{4})/.+$")
 _TILE_TARGET_PLACEHOLDER = r"\1/<TILE_SUBDIR>"
 _EXPECTED_RELATIVE_ROOT = EXPECTED_ROOT.relative_to(REPOSITORY_ROOT)
+_CANARY_EXPECTED_RELATIVE_ROOT = CANARY_EXPECTED_ROOT.relative_to(REPOSITORY_ROOT)
 _PROVENANCE_REMEDIATION = (
     "commit code changes first, regenerate on the clean tree, then commit the snapshots"
 )
@@ -127,10 +134,11 @@ def _git_dirty_paths() -> tuple[Path, ...]:
 def _require_write_tree_hygiene() -> None:
     """Refuse regeneration when dirtiness extends beyond expected snapshots."""
     dirty_paths = _git_dirty_paths()
+    expected_roots = (_EXPECTED_RELATIVE_ROOT, _CANARY_EXPECTED_RELATIVE_ROOT)
     disallowed = [
         path
         for path in dirty_paths
-        if path != _EXPECTED_RELATIVE_ROOT and _EXPECTED_RELATIVE_ROOT not in path.parents
+        if not any(path == root or root in path.parents for root in expected_roots)
     ]
     if disallowed:
         rendered = ", ".join(path.as_posix() for path in disallowed)
@@ -363,9 +371,15 @@ def _smarttable_schema() -> dict[str, Any]:
 
 
 def _smarttable_invoice() -> dict[str, Any]:
+    """Return the legacy sample invoice with a repository-safe owner identity."""
     invoice_path = REPOSITORY_ROOT / "tests" / "samplefile" / "invoice.json"
     invoice = json.loads(invoice_path.read_text(encoding="utf-8"))
     invoice["basic"]["description"] = ""
+    # The legacy sample predates fixture PII policy and contains a real owner
+    # hash. Keep that v1 input untouched while preventing every G1 rebuild from
+    # copying the identity into the public contract corpus.
+    invoice["basic"]["dataOwnerId"] = "0" * 55 + "1"
+    invoice["sample"]["ownerId"] = "0" * 55 + "5"
     return invoice
 
 
@@ -495,11 +509,15 @@ def _workbook_values_equal(left: Path, right: Path) -> bool:
 
 
 def check_static_input_drift(committed_root: Path = INPUT_ROOT) -> tuple[list[str], str]:
-    """Rebuild static inputs and report committed fixture drift."""
+    """Rebuild synthetic inputs and report drift, excluding imported canaries."""
     with tempfile.TemporaryDirectory(prefix="rdetoolkit-g-review-inputs-") as temporary:
         generated_root = Path(temporary) / "inputs"
         build_static_inputs(generated_root)
-        committed = _relative_files(committed_root)
+        committed = {
+            relative: path
+            for relative, path in _relative_files(committed_root).items()
+            if relative.parts[0] != "canary"
+        }
         generated = _relative_files(generated_root)
         mismatches: list[str] = []
         for relative in sorted(committed.keys() | generated.keys()):
@@ -565,6 +583,11 @@ def expected_snapshot_paths(root: Path = EXPECTED_ROOT) -> list[Path]:
     return snapshots
 
 
+def canary_snapshot_paths(root: Path = CANARY_EXPECTED_ROOT) -> list[Path]:
+    """Return the five OK-only real-canary snapshot paths in sorted order."""
+    return [root / mode / "ok.json" for mode in CANARY_MODES]
+
+
 def _materialize_oracle_case(mode: str, root: Path, *, zero_rows: bool = False) -> None:
     if mode == "invoice":
         data_root = _build_data_layout(root)
@@ -582,6 +605,11 @@ def _materialize_oracle_case(mode: str, root: Path, *, zero_rows: bool = False) 
     (root / "data" / "unpacked").mkdir(exist_ok=True)
     if mode == "excelinvoice":
         _select_excelinvoice_case(root, zero_rows=zero_rows)
+
+
+def _materialize_canary_case(mode: str, root: Path) -> None:
+    """Assemble one repository-owned real-canary input family."""
+    assemble_canary_case(mode, root)
 
 
 def _select_excelinvoice_case(root: Path, *, zero_rows: bool) -> None:
@@ -627,6 +655,56 @@ def _oracle_config(mode: str) -> Any:
         multidata_tile=MultiDataTileSettings(ignore_errors=False),
         smarttable=SmartTableSettings(save_table_file=False),
     )
+
+
+def _canary_config_path(mode: str) -> Path:
+    """Return the imported source config later assembled as ``data/tasksupport``."""
+    support = "tasksupport2" if mode == "multidatatile" else "tasksupport"
+    return INPUT_ROOT / "canary" / mode / support / "rdeconfig.yaml"
+
+
+def _effective_canary_config(mode: str, path: Path) -> tuple[Any, list[str]]:
+    """Build a v1 Config from imported canary YAML plus assembly normalizations.
+
+    The SEM/ExcelInvoice material predates the nested schema, so its top-level
+    system keys are interpreted as ``system.*``. The RDEFormat material does
+    not declare a mode; assembly overlays ``system.extended_mode=rdeformat`` in
+    the same way the MultiDataTile material overlays its ``tasksupport2``
+    config. Every unspecified field is left to the v1 Config model default.
+    """
+    from rdetoolkit.models.config import Config, SystemSettings  # noqa: PLC0415
+
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        msg = f"canary config must contain a mapping: {path.as_posix()}"
+        raise ValueError(msg)
+    data = dict(loaded)
+    normalizations: list[str] = []
+    if "system" not in data:
+        system_keys = set(SystemSettings.model_fields)
+        system = {key: data.pop(key) for key in tuple(data) if key in system_keys}
+        data["system"] = system
+        normalizations.append("top-level system keys normalized to system.*")
+    if mode == "rdeformat":
+        system_data = data.setdefault("system", {})
+        if not isinstance(system_data, dict):
+            msg = f"canary system config must contain a mapping: {path.as_posix()}"
+            raise ValueError(msg)
+        system_data["extended_mode"] = "rdeformat"
+        normalizations.append("system.extended_mode overlaid as rdeformat")
+    return Config(**data), normalizations
+
+
+def canary_effective_config_record(mode: str) -> dict[str, Any]:
+    """Return the reproducible effective Config and source for a canary mode."""
+    config, normalizations = _effective_canary_config(mode, _canary_config_path(mode))
+    return {
+        "source": {
+            "path": "data/tasksupport/rdeconfig.yaml",
+            "normalizations": normalizations,
+        },
+        "config": config.model_dump(mode="json"),
+    }
 
 
 def _record_callback_call() -> None:
@@ -728,7 +806,13 @@ def _collect_oracle_observation(root: Path, result: str | None, exit_code: int) 
     }
 
 
-def _run_oracle_worker(mode: str, outcome: str, root: Path) -> int:
+def _run_oracle_worker(
+    mode: str,
+    outcome: str,
+    root: Path,
+    *,
+    canary: bool = False,
+) -> int:
     from rdetoolkit.workflows import run as v1_run  # noqa: PLC0415
 
     if outcome == "valerr":
@@ -740,9 +824,17 @@ def _run_oracle_worker(mode: str, outcome: str, root: Path) -> int:
     try:
         os.chdir(root)
         try:
+            effective_config = (
+                _effective_canary_config(
+                    mode,
+                    root / "data/tasksupport/rdeconfig.yaml",
+                )[0]
+                if canary
+                else _oracle_config(mode)
+            )
             result = v1_run(
                 custom_dataset_function=callback,
-                config=_oracle_config(mode),
+                config=effective_config,
             )
         except SystemExit as error:
             exit_code = int(error.code or 0)
@@ -753,34 +845,77 @@ def _run_oracle_worker(mode: str, outcome: str, root: Path) -> int:
     return 0
 
 
-def _observe_v1(mode: str, outcome: str, *, zero_rows: bool = False) -> dict[str, Any]:
-    with tempfile.TemporaryDirectory(prefix=f"rdetoolkit-g1-{mode}-") as temporary:
-        root = Path(temporary)
-        _materialize_oracle_case(mode, root, zero_rows=zero_rows)
-        command = [
-            sys.executable,
-            str(Path(__file__).resolve()),
-            "--oracle-worker",
-            mode,
-            outcome,
-            str(root),
-        ]
-        completed = subprocess.run(  # noqa: S603
-            command,
-            cwd=REPOSITORY_ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
+def _execute_v1_observation(
+    mode: str,
+    outcome: str,
+    root: Path,
+    *,
+    canary: bool = False,
+) -> dict[str, Any]:
+    """Run the isolated v1 worker against an already-materialized case."""
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--oracle-worker",
+        mode,
+        outcome,
+        str(root),
+    ]
+    if canary:
+        command.append("--canary")
+    completed = subprocess.run(  # noqa: S603
+        command,
+        cwd=REPOSITORY_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    observation_path = root / ".oracle_observation.json"
+    if completed.returncode != 0 or not observation_path.exists():
+        message = (
+            f"v1 oracle worker failed for {mode}/{outcome}: "
+            f"exit={completed.returncode}; stderr={completed.stderr[-1000:]}"
         )
-        observation_path = root / ".oracle_observation.json"
-        if completed.returncode != 0 or not observation_path.exists():
-            message = (
-                f"v1 oracle worker failed for {mode}/{outcome}: "
-                f"exit={completed.returncode}; stderr={completed.stderr[-1000:]}"
-            )
-            raise RuntimeError(message)
-        observation = json.loads(observation_path.read_text(encoding="utf-8"))
-        return normalize_snapshot(observation, roots=(root,))
+        raise RuntimeError(message)
+    observation = json.loads(observation_path.read_text(encoding="utf-8"))
+    return normalize_snapshot(observation, roots=(root,))
+
+
+def _observe_materialized_v1(
+    mode: str,
+    outcome: str,
+    *,
+    prefix: str,
+    materialize: Callable[[str, Path], None],
+    canary: bool = False,
+) -> dict[str, Any]:
+    """Observe one case family through the shared isolated worker path."""
+    with tempfile.TemporaryDirectory(prefix=f"{prefix}-{mode}-") as temporary:
+        root = Path(temporary)
+        materialize(mode, root)
+        return _execute_v1_observation(mode, outcome, root, canary=canary)
+
+
+def _observe_v1(mode: str, outcome: str, *, zero_rows: bool = False) -> dict[str, Any]:
+    def materialize(selected_mode: str, root: Path) -> None:
+        _materialize_oracle_case(selected_mode, root, zero_rows=zero_rows)
+
+    return _observe_materialized_v1(
+        mode,
+        outcome,
+        prefix="rdetoolkit-g1",
+        materialize=materialize,
+    )
+
+
+def _observe_canary_v1(mode: str) -> dict[str, Any]:
+    return _observe_materialized_v1(
+        mode,
+        "ok",
+        prefix="rdetoolkit-h4-canary",
+        materialize=_materialize_canary_case,
+        canary=True,
+    )
 
 
 def materialize_sut_case(mode: str, root: Path) -> None:
@@ -797,6 +932,11 @@ def run_v1_sut(mode: str, outcome: str) -> dict[str, Any]:
     return _observe_v1(mode, outcome)
 
 
+def run_v1_canary_sut(mode: str) -> dict[str, Any]:
+    """Execute v1 against an imported real-canary input family."""
+    return _observe_canary_v1(mode)
+
+
 def _snapshot_case_from_path(path: Path) -> tuple[str, str, bool]:
     mode = path.parent.name
     outcome = path.stem
@@ -804,27 +944,37 @@ def _snapshot_case_from_path(path: Path) -> tuple[str, str, bool]:
     return mode, "ok" if zero_rows else outcome, zero_rows
 
 
-def freeze_expected_outputs(*, check: bool) -> list[str]:
-    """Observe every v1 scenario and write or compare normalized snapshots.
+def _frozen_source(path: Path, *, check: bool, stamped_commit: str | None) -> dict[str, Any]:
+    """Return carried-forward or newly stamped snapshot provenance."""
+    if check and path.exists():
+        return json.loads(path.read_text(encoding="utf-8")).get(
+            "source",
+            {"tag": SOURCE_TAG, "commit": "<unrecorded>"},
+        )
+    return {"tag": SOURCE_TAG, "commit": stamped_commit}
 
-    Provenance semantics: ``source.commit`` records the revision that WROTE a
-    snapshot. In check mode the frozen provenance is carried forward so that
-    a later commit does not turn every snapshot into a false mismatch —
-    staleness is surfaced by the non-failing ``source_revision_warnings``
-    instead. Only a real regeneration (check=False) stamps a new revision.
-    """
-    stamped_commit = None if check else _git_revision()
+
+def _compare_or_write(path: Path, payload: dict[str, Any], *, check: bool) -> str | None:
+    """Compare a check candidate or write a generated snapshot."""
+    if check:
+        return compare_snapshot(path, payload)
+    write_json_snapshot(path, payload)
+    return None
+
+
+def _process_v1_snapshots(*, check: bool, stamped_commit: str | None) -> list[str]:
+    """Check every G1 snapshot or rewrite the sanitized SmartTable subset."""
     mismatches: list[str] = []
-    for path in expected_snapshot_paths():
+    paths = expected_snapshot_paths()
+    if not check:
+        # The G1 SmartTable source once copied a real owner hash from the legacy
+        # sample invoice. Its three observations are the only authorized G1
+        # rewrite; all other synthetic snapshots remain byte-identical.
+        paths = [path for path in paths if path.parent.name == "smarttable"]
+    for path in paths:
         mode, outcome, zero_rows = _snapshot_case_from_path(path)
-        if check and path.exists():
-            frozen_source = json.loads(path.read_text(encoding="utf-8")).get(
-                "source", {"tag": SOURCE_TAG, "commit": "<unrecorded>"},
-            )
-        else:
-            frozen_source = {"tag": SOURCE_TAG, "commit": stamped_commit}
         payload = {
-            "source": frozen_source,
+            "source": _frozen_source(path, check=check, stamped_commit=stamped_commit),
             "case": {
                 "mode": mode,
                 "outcome": "zero_rows" if zero_rows else outcome,
@@ -832,13 +982,52 @@ def freeze_expected_outputs(*, check: bool) -> list[str]:
             },
             "observed": _observe_v1(mode, outcome, zero_rows=zero_rows),
         }
-        if check:
-            mismatch = compare_snapshot(path, payload)
-            if mismatch is not None:
-                mismatches.append(f"{mode}/{path.stem}: {mismatch}")
-        else:
-            write_json_snapshot(path, payload)
+        mismatch = _compare_or_write(path, payload, check=check)
+        if mismatch is not None:
+            mismatches.append(f"{mode}/{path.stem}: {mismatch}")
     return mismatches
+
+
+def _process_canary_snapshots(*, check: bool, stamped_commit: str | None) -> list[str]:
+    """Write or compare the five real-canary OK snapshots."""
+    mismatches: list[str] = []
+    for path in canary_snapshot_paths():
+        mode = path.parent.name
+        payload = {
+            "source": _frozen_source(path, check=check, stamped_commit=stamped_commit),
+            "case": {
+                "mode": mode,
+                "outcome": "ok",
+                "entry": "custom_dataset_function",
+                "family": "canary",
+                "effective_config": canary_effective_config_record(mode),
+            },
+            "observed": _observe_canary_v1(mode),
+        }
+        mismatch = _compare_or_write(path, payload, check=check)
+        if mismatch is not None:
+            mismatches.append(f"canary/{mode}/ok: {mismatch}")
+    return mismatches
+
+
+def freeze_expected_outputs(*, check: bool) -> list[str]:
+    """Observe synthetic and real-canary scenarios through one snapshot path.
+
+    Provenance semantics: ``source.commit`` records the revision that WROTE a
+    snapshot. In check mode the frozen provenance is carried forward so that
+    a later commit does not turn every snapshot into a false mismatch —
+    staleness is surfaced by the non-failing ``source_revision_warnings``
+    instead. Only a real regeneration (check=False) stamps a new revision.
+
+    In write mode, the sanitized G1 SmartTable subset and ``expected/canary``
+    are frozen. Other G1 modes remain byte-identical. Check mode regenerates
+    and compares both complete families.
+    """
+    stamped_commit = None if check else _git_revision()
+    return [
+        *_process_v1_snapshots(check=check, stamped_commit=stamped_commit),
+        *_process_canary_snapshots(check=check, stamped_commit=stamped_commit),
+    ]
 
 
 def _parse_args() -> argparse.Namespace:
@@ -854,6 +1043,7 @@ def _parse_args() -> argparse.Namespace:
         help="rebuild static inputs before freezing normalized expectations",
     )
     parser.add_argument("--oracle-worker", nargs=3, metavar=("MODE", "OUTCOME", "ROOT"), help=argparse.SUPPRESS)
+    parser.add_argument("--canary", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument(
         "--provenance-root",
         type=Path,
@@ -866,12 +1056,12 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0911
     """Run fixture generation or deterministic comparison."""
     args = _parse_args()
     if args.oracle_worker is not None:
         mode, outcome, root = args.oracle_worker
-        return _run_oracle_worker(mode, outcome, Path(root))
+        return _run_oracle_worker(mode, outcome, Path(root), canary=args.canary)
     if args.provenance_root is not None:
         provenance_errors = source_revision_errors(root=args.provenance_root)
         if provenance_errors:
@@ -880,12 +1070,16 @@ def main() -> int:
         print("provenance ok")  # noqa: T201
         return 0
     if args.check:
-        provenance_errors = source_revision_errors()
+        provenance_errors = [
+            *source_revision_errors(),
+            *source_revision_errors(root=CANARY_EXPECTED_ROOT),
+        ]
         if provenance_errors:
             print("\n".join(provenance_errors), file=sys.stderr)  # noqa: T201
             return 1
-        for warning in source_revision_warnings():
-            print(warning, file=sys.stderr)  # noqa: T201
+        for root in (EXPECTED_ROOT, CANARY_EXPECTED_ROOT):
+            for warning in source_revision_warnings(root=root):
+                print(warning, file=sys.stderr)  # noqa: T201
         input_mismatches, xlsx_note = check_static_input_drift()
         print(xlsx_note)  # noqa: T201
         mismatches = [*input_mismatches, *freeze_expected_outputs(check=True)]
