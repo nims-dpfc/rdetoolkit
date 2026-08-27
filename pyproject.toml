@@ -211,6 +211,8 @@ convention = "google"
 "src/rdetoolkit/fileops.py" = ["PLC0415"]
 # TODO: Refactor parse_config_file to reduce complexity (Issue #361)
 "src/rdetoolkit/config.py" = ["C901", "PLR0912"]
+# Standalone CLI helper scripts: print-based output and no package context are expected.
+"scripts/**/*.py" = ["T201", "D103", "INP001", "PLC0415"]
 "src/rdetoolkit/graph/__init__.py" = ["PLC0415"]
 "src/rdetoolkit/graph/api/csv2graph.py" = ["PLC0415"]
 "src/rdetoolkit/invoicefile.py" = ["PLC0415"]
