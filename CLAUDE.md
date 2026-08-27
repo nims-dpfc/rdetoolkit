@@ -534,3 +534,10 @@ system:
   the main repo shared by all worktrees (see AGENTS.md §6.4).
 - `local/develop/` is never committed or pushed (`git add -f local/...` is
   forbidden). Session artifacts stay there as local-only documents.
+- **Release/tagging is human-only** (AGENTS.md §6.6). Agents never run `git tag`
+  or push tags. Before any tag, `pyproject.toml` version, `__version__` in
+  `src/rdetoolkit/__init__.py`, and the tag must all be identical canonical
+  PEP 440 (`python scripts/check_version_consistency.py --tag vX.Y.Z` must pass);
+  CI's `check-version` gate enforces this and must never be weakened. Full
+  procedure: `local/develop/v2/release_flow.md`. Note: PyPI version `2.0.0` is
+  permanently burned (2026-07 incident, yanked) — GA cannot be `2.0.0`.

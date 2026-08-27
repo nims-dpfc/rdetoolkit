@@ -252,6 +252,32 @@ git commit -m "test(v2/phase-c): PBT for provenance edge reconstruction invarian
 - Direct-Refactor work (anything touching v1 files): confirm v1 tests GREEN and
   paste the tail of the tox output into the PR description.
 
+### 6.6 Release / Tagging Rules
+
+> Background: on 2026-07 a `v2.0.0a1` tag was pushed while `pyproject.toml`
+> still said `2.0.0`, so an unintended **2.0.0** was published to PyPI (now
+> yanked). PyPI file names can never be reused, so the version number `2.0.0`
+> is permanently burned. These rules exist to make that impossible to repeat.
+
+- **Version sources that must always agree** (canonical PEP 440 form, e.g.
+  `2.0.0a1` — never `2.0.0.a1`):
+  1. `pyproject.toml` `[project].version` (maturin stamps the wheel/sdist with this)
+  2. `src/rdetoolkit/__init__.py` `__version__`
+  3. the git tag (`v` + version, e.g. `v2.0.0a1`)
+- **A version bump is a normal committed change**: update both source files in
+  one commit *before* tagging; the tag points at that commit.
+- **Before pushing any tag**, run and paste the output of:
+  `python scripts/check_version_consistency.py --tag v<version>`
+- CI enforces the same check: the `check-version` job in
+  `.github/workflows/pypi-release.yml` gates every build, and the release jobs
+  additionally verify that the built artifact file names match the tag. Never
+  bypass, weaken, or `continue-on-error` these gates.
+- **Only the human operator creates and pushes tags.** Agents (Claude, Codex)
+  must never run `git tag` or `git push --tags`; they stop and report the
+  verified version state instead.
+- Never re-point (delete + recreate) a tag that has already produced a PyPI
+  upload; pick the next free version instead.
+
 ---
 
 ## 7. Testing
