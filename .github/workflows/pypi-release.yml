@@ -13,8 +13,6 @@ on:
 jobs:
   # Gate: every version declaration (pyproject.toml, __init__.py, and — on tag
   # builds — the tag itself) must agree before anything is built or published.
-  # Added after the v2.0.0a1 incident (tag v2.0.0a1 + pyproject 2.0.0 shipped
-  # an unintended 2.0.0 to PyPI).
   check-version:
     name: Check version consistency
     runs-on: ubuntu-latest
@@ -247,8 +245,8 @@ jobs:
   release-to-testpypi:
     name: Release to TestPyPI
     runs-on: ubuntu-latest
-    # Manual gate (v2.0.0a1 incident follow-up): publishing waits for approval
-    # by the required reviewers of the 'testpypi' GitHub Environment.
+    # Publishing waits for approval by the required reviewers of the
+    # 'testpypi' GitHub Environment.
     environment: testpypi
     if: ${{ startsWith(github.ref, 'refs/tags/v') && !(github.event_name == 'pull_request' && (startsWith(github.head_ref, 'docs-') ||
       startsWith(github.head_ref, 'docs/') || startsWith(github.head_ref, 'doc-') || startsWith(github.head_ref, 'doc/'))) }}
@@ -286,8 +284,8 @@ jobs:
   release-to-pypi:
     name: Release to PyPI
     runs-on: ubuntu-latest
-    # Manual gate (v2.0.0a1 incident follow-up): publishing waits for approval
-    # by the required reviewers of the 'pypi' GitHub Environment.
+    # Publishing waits for approval by the required reviewers of the
+    # 'pypi' GitHub Environment.
     environment:
       name: pypi
       url: https://pypi.org/project/rdetoolkit/
