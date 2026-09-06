@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from rdetoolkit.core.context import RunContext
+from rdetoolkit.domain.artifacts import ImageArtifactService, RawArtifactService
 from rdetoolkit.errors import ERROR_CATALOG, RdeExecutionError
 from rdetoolkit.report.events import EventSink
 from rdetoolkit.runner.execute import ExecutionResult, TileExecutionError
@@ -29,15 +30,21 @@ class TileExecutor:
         *,
         event_sink: EventSink,
         flow_invoker: TargetInvoker | None = None,
+        raw_artifact_service: RawArtifactService | None = None,
+        image_artifact_service: ImageArtifactService | None = None,
     ) -> None:
         """Create a tile executor.
 
         Args:
             event_sink: Sink receiving node events from the eager execution core.
             flow_invoker: Optional flow adapter used by tests or alternate hosts.
+            raw_artifact_service: Optional completed-tile raw publisher.
+            image_artifact_service: Optional completed-tile image publisher.
         """
         self._event_sink = event_sink
         self._flow_invoker = flow_invoker or FlowInvoker()
+        self._raw_artifact_service = raw_artifact_service
+        self._image_artifact_service = image_artifact_service
 
     def execute(self, plan: ExecutionPlan, tile: TilePlan) -> ExecutionResult:
         """Execute one tile and normalize ordinary failures into a result.
@@ -59,7 +66,7 @@ class TileExecutor:
                 invoice=invoice,
                 iteration=tile.iteration,
             )
-            return _with_legacy_metadata(
+            result = _with_legacy_metadata(
                 self._flow_invoker.invoke(
                     plan.target,
                     context,
@@ -71,6 +78,9 @@ class TileExecutor:
                 rawfiles=tile.paths.rawfiles,
                 root=plan.root,
             )
+            if result.status == "completed":
+                self._publish_artifacts(plan, tile)
+            return result
         except Exception as exc:  # noqa: BLE001
             if _is_run_interrupted(exc):
                 raise
@@ -94,6 +104,23 @@ class TileExecutor:
                 invoice=invoice,
                 rawfiles=tile.paths.rawfiles,
                 root=plan.root,
+            )
+
+    def _publish_artifacts(self, plan: ExecutionPlan, tile: TilePlan) -> None:
+        """Invoke injected artifact services after successful tile execution."""
+        if self._raw_artifact_service is not None:
+            self._raw_artifact_service.copy(
+                tile.paths.rawfiles,
+                raw_dir=tile.out.raw,
+                nonshared_raw_dir=tile.out.nonshared_raw,
+                config=plan.config,
+                smarttable=plan.mode.value == "smarttable",
+            )
+        if self._image_artifact_service is not None:
+            self._image_artifact_service.generate(
+                main_image_dir=tile.out.main_image,
+                thumbnail_dir=tile.out.thumbnail,
+                config=plan.config,
             )
 
 

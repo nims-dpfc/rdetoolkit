@@ -487,6 +487,7 @@ class TestExcelinvoiceSourceBackup:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """TC-D2R-F9: flat Excel mode backs up by root-relative paths."""
+        from rdetoolkit.domain.invoice_service import InvoiceService
         from rdetoolkit.runner.planner import _run_invoice_source
         from rdetoolkit.runner.mode_resolver import ModeKind
 
@@ -500,9 +501,31 @@ class TestExcelinvoiceSourceBackup:
         expected = tmp_path / "temp" / "invoice_org.json"
 
         def _unexpected_legacy_backup(*args: object, **kwargs: object) -> Path:
-            raise AssertionError("flat Excel backup must not use the cwd-dependent v1 helper")
+            message = "flat Excel backup must not use the cwd-dependent v1 helper"
+            raise AssertionError(message)
 
-        monkeypatch.setattr("rdetoolkit.runner.planner.backup_invoice_json_files", _unexpected_legacy_backup)
+        monkeypatch.setattr("rdetoolkit.invoicefile.backup_invoice_json_files", _unexpected_legacy_backup)
+        backup_calls: list[tuple[ModeKind, Path, Path, tuple[Path, ...]]] = []
+        original_backup = InvoiceService.backup
+
+        def _backup_spy(
+            self: InvoiceService,
+            mode: ModeKind,
+            *,
+            root: Path,
+            inputdata_path: Path,
+            rawfiles: tuple[Path, ...] = (),
+        ) -> Path:
+            backup_calls.append((mode, root, inputdata_path, rawfiles))
+            return original_backup(
+                self,
+                mode,
+                root=root,
+                inputdata_path=inputdata_path,
+                rawfiles=rawfiles,
+            )
+
+        monkeypatch.setattr(InvoiceService, "backup", _backup_spy)
 
         # When: preparing the run-level Excel invoice source from another cwd
         caller = tmp_path / "caller"
@@ -517,3 +540,4 @@ class TestExcelinvoiceSourceBackup:
         # Then: Runner creates and returns the explicit backup with exact content
         assert actual == expected
         assert json.loads(actual.read_text(encoding="utf-8")) == source
+        assert backup_calls == [(ModeKind.excelinvoice, tmp_path, inputdata, ())]

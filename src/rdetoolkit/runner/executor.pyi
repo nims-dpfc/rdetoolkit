@@ -1,3 +1,4 @@
+from rdetoolkit.domain.artifacts import ImageArtifactService, RawArtifactService
 from rdetoolkit.report.events import EventSink
 from rdetoolkit.runner.execute import ExecutionResult
 from rdetoolkit.runner.invoker import TargetInvoker
@@ -9,5 +10,7 @@ class TileExecutor:
         *,
         event_sink: EventSink,
         flow_invoker: TargetInvoker | None = None,
+        raw_artifact_service: RawArtifactService | None = None,
+        image_artifact_service: ImageArtifactService | None = None,
     ) -> None: ...
     def execute(self, plan: ExecutionPlan, tile: TilePlan) -> ExecutionResult: ...

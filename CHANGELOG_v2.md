@@ -178,6 +178,21 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   modules at the end of the existing Python 3.12 module run. Focused tox
   invocations skip the scoped gates while retaining the global 80% policy.
 
+### Changed — Phase I core mode seam
+
+- Added the narrow `ModeHandler` planning protocol and mode registry. The
+  planner delegates tile-plan creation to registered handlers while retaining
+  its unchanged legacy iterator fallback until per-mode migration in I5/I6.
+- Added optional, default-off per-tile `RawArtifactService` and
+  `ImageArtifactService` injection to `TileExecutor`; injected services run
+  only after completed tile execution, so existing output trees remain
+  unchanged.
+- Removed the test-only `backup_invoice_json_files` re-export from the planner
+  and strengthened the ExcelInvoice backup guard at the direct
+  `InvoiceService.backup` boundary.
+- Kept RunReport data-root handling unchanged in this session because the
+  I0.4 symmetry fix was already completed during Phase H review remediation.
+
 ### Added — Phase H real-canary compatibility protection
 
 - Added permanent import and minimal-behavior coverage for the maintained v1

@@ -10,7 +10,8 @@ from typing import Literal
 
 from rdetoolkit.api.request import ExecutionTarget, RunRequest
 from rdetoolkit.domain.invoice_service import InvoiceService
-from rdetoolkit.invoicefile import backup_invoice_json_files  # noqa: F401
+from rdetoolkit.modes.protocol import PlanningContext
+from rdetoolkit.modes.registry import handler_for
 from rdetoolkit.runner.iterator import iterate_tiles
 from rdetoolkit.runner.mode_resolver import ModeKind
 from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
@@ -93,6 +94,25 @@ class RunPlanner:
         inputdata_path = _resolve_path(self._inputdata_path)
         unpacked_dir_path = _resolve_path(self._unpacked_dir_path)
         self._invoice_service.begin_run(request.root)
+        handler = handler_for(mode)
+        tiles = (
+            self._create_tiles(
+                mode,
+                root=request.root,
+                inputdata_path=inputdata_path,
+                unpacked_dir_path=unpacked_dir_path,
+                invoice_service=self._invoice_service,
+            )
+            if handler is None
+            else handler.create_tiles(
+                PlanningContext(
+                    root=request.root,
+                    inputdata_path=inputdata_path,
+                    unpacked_dir_path=unpacked_dir_path,
+                    invoice_service=self._invoice_service,
+                ),
+            )
+        )
         return ExecutionPlan(
             run_id=self._run_id_factory(),
             target=request.target,
@@ -100,13 +120,7 @@ class RunPlanner:
             config=config,
             root=request.root,
             error_policy=config.execution.on_iteration_error,
-            tiles=self._create_tiles(
-                mode,
-                root=request.root,
-                inputdata_path=inputdata_path,
-                unpacked_dir_path=unpacked_dir_path,
-                invoice_service=self._invoice_service,
-            ),
+            tiles=tiles,
         )
 
     def _create_tiles(
