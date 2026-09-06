@@ -193,6 +193,31 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 - Kept RunReport data-root handling unchanged in this session because the
   I0.4 symmetry fix was already completed during Phase H review remediation.
 
+### Added — Phase I walking skeleton (five modes, two entry points)
+
+- Added thin `ModeHandler` implementations for invoice, ExcelInvoice,
+  MultiDataTile, RDEFormat, and SmartTable, plus the explicit
+  `modes.install.install_default_handlers()` registration the Runner performs
+  while it is constructed. Registration is never an import side effect, so the
+  planner fallback stays reachable. The handlers delegate to one shared tile
+  builder, so the planned tiles are identical to the pre-handler Runner in
+  every mode; mode-specific behavior arrives in I6.
+- Added the minimal v1 callback adapter `compat/v1/callback.py`
+  (`LegacyCallbackInvoker`, `to_legacy_dataset_paths`,
+  `accepts_unified_argument`). It only converts arguments and calls the user
+  callback, porting the v1 `DatasetRunner` signature rules including the
+  guarded fallback for undecidable signatures. Call-log semantics for this
+  entry point remain Session I8 work.
+- Added the Runner-side `InvokerRegistry` that selects the flow or legacy
+  adapter for a normalized target, and removed the placeholder `TypeError`
+  that rejected `LegacyCallbackTarget` at the Runner entrance. `workflows.run`
+  is unchanged: the public v1 entry point still uses the v1 code path.
+- `Runner.iterate` now accepts a normalized execution target (a bare flow
+  callable is still accepted and wrapped), and a callback-free legacy run
+  reports the stable flow id `rdetoolkit.compat.v1.callback:none`.
+- Added `modes.registry.clear()` so a caller can return to the
+  pre-installation state without reaching into registry internals.
+
 ### Added — Phase H real-canary compatibility protection
 
 - Added permanent import and minimal-behavior coverage for the maintained v1

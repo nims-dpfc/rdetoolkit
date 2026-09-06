@@ -27,3 +27,21 @@ class FlowInvoker:
         run_id: str,
         config: RdeConfig,
     ) -> ExecutionResult: ...
+
+class InvokerRegistry:
+    def __init__(
+        self,
+        *,
+        flow_invoker: TargetInvoker | None = ...,
+        legacy_invoker: TargetInvoker | None = ...,
+    ) -> None: ...
+    def for_target(self, target: ExecutionTarget) -> TargetInvoker: ...
+    def invoke(
+        self,
+        target: ExecutionTarget,
+        context: RunContext,
+        *,
+        event_sink: EventSink,
+        run_id: str,
+        config: RdeConfig,
+    ) -> ExecutionResult: ...

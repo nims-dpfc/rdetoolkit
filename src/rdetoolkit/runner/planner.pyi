@@ -1,10 +1,11 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 from rdetoolkit.api.request import ExecutionTarget, RunRequest
 from rdetoolkit.domain.invoice_service import InvoiceService
+from rdetoolkit.modes.protocol import PlanningContext
 from rdetoolkit.runner.mode_resolver import ModeKind
 from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputContext, RdeConfig
 
@@ -44,3 +45,5 @@ class RunPlanner:
         config: RdeConfig,
         mode: ModeKind,
     ) -> ExecutionPlan: ...
+
+def create_common_tiles(mode: ModeKind, context: PlanningContext) -> Iterator[TilePlan]: ...

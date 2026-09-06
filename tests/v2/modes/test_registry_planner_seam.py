@@ -91,10 +91,10 @@ def _request(tmp_path: Path) -> RunRequest:
     return RunRequest(root=tmp_path, target=FlowTarget(function=lambda: None))
 
 
-def test_registry_returns_registered_handler__tc_ep_i0_001(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.usefixtures("empty_mode_registry")
+def test_registry_returns_registered_handler__tc_ep_i0_001() -> None:
     """TC-EP-I0-001: registration exposes the exact mode handler instance."""
     # Given: an isolated empty registry and one mode handler
-    monkeypatch.setattr("rdetoolkit.modes.registry._HANDLERS", {})
     handler: ModeHandler = _FakeHandler(())
 
     # When: registering and resolving the handler by mode
@@ -104,10 +104,10 @@ def test_registry_returns_registered_handler__tc_ep_i0_001(monkeypatch: pytest.M
     assert handler_for(ModeKind.invoice) is handler
 
 
-def test_empty_registry_returns_none__tc_bv_i0_001(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.usefixtures("empty_mode_registry")
+def test_empty_registry_returns_none__tc_bv_i0_001() -> None:
     """TC-BV-I0-001: an unregistered mode has no handler during the I0 transition."""
     # Given: an isolated empty registry
-    monkeypatch.setattr("rdetoolkit.modes.registry._HANDLERS", {})
 
     # When: resolving a mode before I5/I6 registrations exist
     actual = handler_for(ModeKind.invoice)
@@ -116,13 +116,13 @@ def test_empty_registry_returns_none__tc_bv_i0_001(monkeypatch: pytest.MonkeyPat
     assert actual is None
 
 
+@pytest.mark.usefixtures("empty_mode_registry")
 def test_planner_delegates_to_registered_handler__tc_ep_i0_002(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """TC-EP-I0-002: a registered handler owns tile material creation."""
     # Given: a registered fake handler returning one fixed tile
-    monkeypatch.setattr("rdetoolkit.modes.registry._HANDLERS", {})
     expected = _tile(tmp_path)
     handler = _FakeHandler((expected,))
     register(ModeKind.invoice, handler)
@@ -146,13 +146,13 @@ def test_planner_delegates_to_registered_handler__tc_ep_i0_002(
     assert context.unpacked_dir_path == tmp_path / "temp"
 
 
+@pytest.mark.usefixtures("empty_mode_registry")
 def test_planner_falls_back_when_mode_is_unregistered__tc_ep_i0_003(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """TC-EP-I0-003: an unregistered mode retains the existing iterator path."""
     # Given: an empty registry and one tile from the existing iterator
-    monkeypatch.setattr("rdetoolkit.modes.registry._HANDLERS", {})
     expected = _tile(tmp_path)
     fallback_calls: list[tuple[object, ...]] = []
 

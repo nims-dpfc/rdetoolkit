@@ -23,6 +23,16 @@ def register(mode: ModeKind, handler: ModeHandler) -> None:
     _HANDLERS[mode] = handler
 
 
+def clear() -> None:
+    """Remove every registered handler.
+
+    This exists so a caller can return to the pre-installation state without
+    reaching into registry internals; production code installs handlers through
+    ``rdetoolkit.modes.install.install_default_handlers()``.
+    """
+    _HANDLERS.clear()
+
+
 def handler_for(mode: ModeKind) -> ModeHandler | None:
     """Return the registered handler for a mode, when installed.
 

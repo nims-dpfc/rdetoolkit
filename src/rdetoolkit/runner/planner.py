@@ -91,27 +91,16 @@ class RunPlanner:
         Returns:
             Frozen plan whose ``tiles`` iterable performs existing tile discovery lazily.
         """
-        inputdata_path = _resolve_path(self._inputdata_path)
-        unpacked_dir_path = _resolve_path(self._unpacked_dir_path)
+        context = PlanningContext(
+            root=request.root,
+            inputdata_path=_resolve_path(self._inputdata_path),
+            unpacked_dir_path=_resolve_path(self._unpacked_dir_path),
+            invoice_service=self._invoice_service,
+        )
         self._invoice_service.begin_run(request.root)
         handler = handler_for(mode)
-        tiles = (
-            self._create_tiles(
-                mode,
-                root=request.root,
-                inputdata_path=inputdata_path,
-                unpacked_dir_path=unpacked_dir_path,
-                invoice_service=self._invoice_service,
-            )
-            if handler is None
-            else handler.create_tiles(
-                PlanningContext(
-                    root=request.root,
-                    inputdata_path=inputdata_path,
-                    unpacked_dir_path=unpacked_dir_path,
-                    invoice_service=self._invoice_service,
-                ),
-            )
+        tiles: Iterable[TilePlan] = (
+            create_common_tiles(mode, context) if handler is None else handler.create_tiles(context)
         )
         return ExecutionPlan(
             run_id=self._run_id_factory(),
@@ -123,49 +112,58 @@ class RunPlanner:
             tiles=tiles,
         )
 
-    def _create_tiles(
-        self,
-        mode: ModeKind,
-        *,
-        root: Path,
-        inputdata_path: Path,
-        unpacked_dir_path: Path,
-        invoice_service: InvoiceService,
-    ) -> Iterator[TilePlan]:
-        invariant_invoice = _invariant_invoice(mode, root=root, invoice_service=invoice_service)
-        invoice_org = _data_root(root) / "invoice" / "invoice.json"
-        source = _InvoiceSourceState(path=invoice_org, prepared=mode is not ModeKind.excelinvoice)
-        if mode in {ModeKind.multidatatile, ModeKind.rdeformat}:
-            source.path = _run_invoice_source(
+
+def create_common_tiles(mode: ModeKind, context: PlanningContext) -> Iterator[TilePlan]:
+    """Enumerate the common tile plans for one mode.
+
+    This is the single tile-construction body shared by the planner fallback
+    and the thin mode handlers installed in Session I5. Mode-specific
+    behavior belongs in the handlers themselves (Session I6), not here.
+
+    Args:
+        mode: Resolved internal mode.
+        context: Run-scoped paths and invoice operations.
+
+    Yields:
+        One immutable ``TilePlan`` per discovered tile.
+    """
+    root = context.root
+    inputdata_path = context.inputdata_path
+    invoice_service = context.invoice_service
+    invariant_invoice = _invariant_invoice(mode, root=root, invoice_service=invoice_service)
+    invoice_org = _data_root(root) / "invoice" / "invoice.json"
+    source = _InvoiceSourceState(path=invoice_org, prepared=mode is not ModeKind.excelinvoice)
+    if mode in {ModeKind.multidatatile, ModeKind.rdeformat}:
+        source.path = _run_invoice_source(
+            mode,
+            root=root,
+            inputdata_path=inputdata_path,
+            invoice_service=invoice_service,
+        )
+    for info, paths, out in iterate_tiles(
+        mode,
+        inputdata_path,
+        context.unpacked_dir_path,
+        root / "data",
+    ):
+        yield TilePlan(
+            iteration=info,
+            paths=paths,
+            out=out,
+            invoice=None,
+            prepare_invoice=partial(
+                _prepare_tile_invoice,
                 mode,
                 root=root,
                 inputdata_path=inputdata_path,
-                invoice_service=invoice_service,
-            )
-        for info, paths, out in iterate_tiles(
-            mode,
-            inputdata_path,
-            unpacked_dir_path,
-            root / "data",
-        ):
-            yield TilePlan(
-                iteration=info,
                 paths=paths,
-                out=out,
-                invoice=None,
-                prepare_invoice=partial(
-                    _prepare_tile_invoice,
-                    mode,
-                    root=root,
-                    inputdata_path=inputdata_path,
-                    paths=paths,
-                    invoice_dir=out.invoice,
-                    iteration_index=info.index,
-                    invariant_invoice=invariant_invoice,
-                    source=source,
-                    invoice_service=invoice_service,
-                ),
-            )
+                invoice_dir=out.invoice,
+                iteration_index=info.index,
+                invariant_invoice=invariant_invoice,
+                source=source,
+                invoice_service=invoice_service,
+            ),
+        )
 
 
 def _prepare_tile_invoice(
