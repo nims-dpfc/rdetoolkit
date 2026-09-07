@@ -86,6 +86,21 @@ class TileExecutor:
             # in processing/factories.py. A tile that fails therefore still leaves
             # raw/ and nonshared_raw/ populated, exactly as v1 does.
             self._publish_raw(plan, tile)
+            if tile.precompleted:
+                # The mode already finished this tile. v1's SmartTable
+                # EarlyExit is the case: it writes the tile invoice, lets the
+                # raw stage above copy the table, and raises
+                # SkipRemainingProcessorsError before the dataset callback.
+                # Recording a completed iteration with an empty call log keeps
+                # the tile visible in the RunReport while nothing after the raw
+                # stage runs; Runner.post_validate still validates its invoice,
+                # as v1's EarlyExit validated before skipping.
+                return _with_legacy_metadata(
+                    _precompleted_result(tile),
+                    invoice=invoice,
+                    rawfiles=tile.paths.rawfiles,
+                    root=plan.root,
+                )
             result = _with_legacy_metadata(
                 self._flow_invoker.invoke(
                     plan.target,
@@ -187,6 +202,26 @@ class TileExecutor:
                 ),
                 steps=_invoice_stage_steps(plan),
             )
+
+
+def _precompleted_result(tile: TilePlan) -> ExecutionResult:
+    """Return the result of a tile the mode completed without the flow.
+
+    Args:
+        tile: Tile the mode marked as pre-completed.
+
+    Returns:
+        A completed result with no call records and no outputs, because no
+        flow — and therefore no node — ran for this tile.
+    """
+    return ExecutionResult(
+        iteration_index=tile.iteration.index,
+        status="completed",
+        call_records=(),
+        outputs=(),
+        error=None,
+        datatile_id=_datatile_id(tile.paths.rawfiles, tile.iteration.index),
+    )
 
 
 class _StagePublicationError(Exception):

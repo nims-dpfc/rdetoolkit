@@ -5,9 +5,13 @@ EP table:
     TC-UM-*-CB-USERERR: callback StructuredError exits with frozen job.failed.
     TC-UM-*-CB-VALERR: invalid invoice exits with frozen validation artifact.
     TC-UM-*-FLOW-OK: eager v2 Runner succeeds against the same static input.
-        For invoice and multidatatile this compares the full frozen artifact
-        observation (output tree minus data/logs/ contents, raw digests, and
-        written invoices) through tests/v2/contract/observe.py.
+        For the modes listed in ``_FULL_PARITY_MODES`` this compares the full
+        frozen artifact observation (output tree minus data/logs/ contents, raw
+        digests, and written invoices) through tests/v2/contract/observe.py.
+    TC-UM-*-CANARY-FLOW-OK: the same full parity comparison against the frozen
+        observation of imported real RDE material (expected/canary/), which
+        covers artifacts the synthetic inputs never produce, thumbnails
+        included. Modes are enabled through ``_CANARY_FLOW_MODES``.
     TC-UM-*-FLOW-USERERR/VALERR: v2 flow errors follow the I6-0 translation
         table (tests/v2/contract/flow_error_table.py, contracts.md §I6-0).
     TC-UM-*-CB-OBS: callback Events/Provenance/RunReport columns are Phase J xfails.
@@ -25,11 +29,14 @@ the SUT; they never create an expected value at test time.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 import pytest
 
+from rdetoolkit.config.normalize import ConfigNormalizer
 from rdetoolkit.core.flow import flow
 from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.runner.lifecycle import Runner
@@ -58,9 +65,18 @@ _FLOW_INVOICES: list[dict] = []
 #: Session I6-1 proves the shared Core wiring with invoice and multidatatile;
 #: excelinvoice and smarttable were measured to match exactly once that wiring
 #: existed, and are pinned here so I6-A/B/C cannot regress them silently.
-#: rdeformat keeps the narrower comparison until Session I6-A ports the
-#: RDEFormat copy semantics.
-_FULL_PARITY_MODES = frozenset({"invoice", "multidatatile", "excelinvoice", "smarttable"})
+#: Session I6-A added rdeformat once its component-dispatching copy semantics
+#: (``RDEFormatFileCopier``) were ported into ``modes/rdeformat.py``, so all
+#: five modes now compare the complete observation.
+_FULL_PARITY_MODES = frozenset({"invoice", "multidatatile", "excelinvoice", "smarttable", "rdeformat"})
+
+#: Modes whose real-canary FLOW cell is proven against ``expected/canary/``.
+#: The cell body below is mode-agnostic, so a session that finishes its mode
+#: adds exactly one entry here (I6-A: invoice + rdeformat; I6-B: excelinvoice +
+#: multidatatile, both already matching without any mode-handler change;
+#: I6-C: smarttable, whose tile invoices are now built by the ported v2 builder
+#: in ``modes/smarttable.py``).
+_CANARY_FLOW_MODES = ("excelinvoice", "invoice", "multidatatile", "rdeformat", "smarttable")
 
 
 @flow
@@ -192,6 +208,71 @@ def test_flow_entry_success_matches_frozen_v1_primary_contract(
     # And: the proven modes reproduce every frozen artifact observation
     if mode in _FULL_PARITY_MODES:
         assert observe_v2_run(root) == parity_view(expected)
+
+
+def _frozen_canary(mode: str) -> dict:
+    path = _generate.CANARY_EXPECTED_ROOT / mode / "ok.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _canary_overrides(case: Mapping[str, Any], *, root: Path) -> dict[str, Any]:
+    """Project a frozen canary effective config onto v2 Runner overrides.
+
+    The canary snapshots record the *v1* effective ``Config`` the oracle ran
+    with, assembled from the case's own ``data/tasksupport/rdeconfig.yaml``.
+    A v2 flow entry does not search ``data/tasksupport`` (``config/normalize.py``
+    ``origin="v2"``, deferred ruling #9), so the frozen config is handed to the
+    Runner as explicit overrides instead. The v1 -> v2 projection is delegated to
+    the production ``ConfigNormalizer`` so this helper cannot invent a mapping
+    of its own: it re-uses the same ``origin="v1"`` rules the Runner applies to
+    a legacy config (``extended_mode: null`` -> ``invoice``,
+    ``multidata_tile.ignore_errors`` -> ``execution.on_iteration_error``).
+    """
+    effective = case["effective_config"]["config"]
+    canonical = ConfigNormalizer().normalize(effective, root=root, origin="v1")
+    return canonical.model_dump()
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [pytest.param(mode, id=f"TC-UM-{_MODE_IDS[mode]}-CANARY-FLOW-OK") for mode in _CANARY_FLOW_MODES],
+)
+def test_canary_flow_entry_matches_frozen_real_input_observation(
+    mode: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Canary FLOW cells reproduce the frozen v1 observation of real RDE material.
+
+    The static matrix fixtures are minimal by construction; the canary family is
+    imported production material, so it exercises artifacts the synthetic cases
+    never produce — RDEFormat's ``data/thumbnail/1.jpg`` above all. The
+    comparison is therefore the same full parity view as the FLOW-OK cells,
+    thumbnails included.
+    """
+    # Given: the assembled canary inputs and their frozen v1 observation
+    frozen = _frozen_canary(mode)
+    expected = frozen["observed"]
+    root = tmp_path / mode
+    _generate._materialize_canary_case(mode, root)  # noqa: SLF001 -- frozen v1 assembly is the contract
+    monkeypatch.chdir(root)
+    _FLOW_INVOICES.clear()
+    runner = Runner(
+        root=root,
+        inputdata_path=root / "data" / "inputdata",
+        # Same flow-entry contract as the FLOW-OK cells (ruling #1).
+        unpacked_dir_path=root / "data" / "temp",
+    )
+
+    # When: running the eager flow with the canary's own effective config
+    report = runner.run(_contract_noop_flow, **_canary_overrides(frozen["case"], root=root))
+
+    # Then: the run succeeds with the tile count v1 observed
+    assert report.status == "success"
+    assert len(report.iterations) == expected["callback_count"]
+
+    # And: every observed artifact matches, including generated thumbnails
+    assert observe_v2_run(root) == parity_view(expected)
 
 
 @pytest.mark.parametrize(

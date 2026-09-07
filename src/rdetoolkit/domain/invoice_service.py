@@ -13,11 +13,11 @@ from rdetoolkit.domain.invoice import (
     build_smarttable_tile_invoice,
     clear_tile_row_data,
     load_invoice,
+    smarttable_invoice_builder,
 )
 from rdetoolkit.domain.service_errors import validation_error
 from rdetoolkit.invoicefile import apply_magic_variable, update_description_with_features
 from rdetoolkit.models.rde2types import RdeDatasetPaths, RdeInputDirPaths, RdeOutputResourcePath
-from rdetoolkit.processing.processors.invoice import SmartTableInvoiceInitializer
 from rdetoolkit.types import InputPaths, InvoiceData, RdeConfig
 
 if TYPE_CHECKING:
@@ -28,33 +28,35 @@ class InvoiceService:
     """Own run-scoped invoice preparation with explicit filesystem paths."""
 
     def __init__(self) -> None:
-        """Create a stateless invoice service using explicit filesystem paths."""
+        """Create an invoice service owning this run's SmartTable material."""
+        self._smarttable_builder = smarttable_invoice_builder()
 
     def begin_run(self, root: Path) -> None:
-        """Invalidate only this run's SmartTable base-invoice cache entry.
+        """Release the SmartTable material of any previously executed run.
 
-        The retained v1 initializer still owns its class cache until Phase I.
-        Targeted invalidation avoids the former process-wide clear that could
-        evict a concurrently executing run rooted elsewhere. ``pop`` is
-        idempotent, so the Runner and Planner may both call this per run.
+        The base invoice is owned by this service's builder rather than by a
+        process-global cache keyed by path (Session I6-C): two runs over one
+        root can no longer observe each other's source invoice, and a service
+        reused for a second run always re-reads it.
 
         Args:
             root: Project or flat data root for the run.
         """
-        key = (_data_root(root) / "invoice" / "invoice.json").resolve()
-        SmartTableInvoiceInitializer._BASE_INVOICE_CACHE.pop(key, None)  # noqa: SLF001 -- Phase I removes the retained v1 cache
+        self._smarttable_builder.reset()
         clear_tile_row_data(_data_root(root))
 
     def end_run(self, root: Path) -> None:
-        """Release this run's retained SmartTable row dictionaries.
+        """Release this run's retained SmartTable material.
 
-        Runs are bounded, so the row-data handoff is released here as well as
-        at ``begin_run``: a long-lived process that executes many runs never
-        accumulates the material of the runs it already finished.
+        Runs are bounded, so the row-data handoff and the base invoice snapshot
+        are released here as well as at ``begin_run``: a long-lived process
+        that executes many runs never accumulates the material of the runs it
+        already finished.
 
         Args:
             root: Project or flat data root for the run.
         """
+        self._smarttable_builder.reset()
         clear_tile_row_data(_data_root(root))
 
     def backup(
@@ -132,8 +134,8 @@ class InvoiceService:
                 invoice_org=invoice_source,
                 invoice_schema_path=schema,
                 dist_path=destination,
-                rawfiles=paths.rawfiles,
                 data_root=paths.invoice.parent,
+                builder=self._smarttable_builder,
             )
         return None
 

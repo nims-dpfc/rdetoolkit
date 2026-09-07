@@ -16,6 +16,7 @@ class TilePlan:
     out: OutputContext
     invoice: InvoiceData | None
     prepare_invoice: Callable[[], InvoiceData | None] | None = ...
+    precompleted: bool = ...
 
 @dataclass(frozen=True, slots=True)
 class ExecutionPlan:

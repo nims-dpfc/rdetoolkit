@@ -10,7 +10,7 @@ EP table:
 | TC | Class | Input | Expected |
 |----|-------|-------|----------|
 | TC-I6-1-EP-030 | seam used | handler returning a strategy | raw files land where the strategy puts them |
-| TC-I6-1-EP-031 | default | the five built-in handlers | every ``raw_copy_strategy`` returns ``None`` |
+| TC-I6-1-EP-031 | default | the five built-in handlers | only RDEFormat returns a strategy (I6-A) |
 
 BV / negative table:
 | TC | Class | Input | Expected |
@@ -185,24 +185,34 @@ def test_mode_strategy_changes_raw_placement__tc_i6_1_ep_030(
 
 
 def test_builtin_handlers_install_no_strategy__tc_i6_1_ep_031() -> None:
-    """TC-I6-1-EP-031: the five built-in handlers keep the generic service."""
+    """TC-I6-1-EP-031: only RDEFormat overrides raw publication.
+
+    Session I6-A filled the seam for RDEFormat (ruling #1), so the invariant is
+    no longer "nobody uses it" but the sharper "exactly one mode uses it": every
+    other built-in handler must still resolve to ``RawArtifactService``.
+    """
     # Given: the production handler set
     from rdetoolkit.modes.excelinvoice import ExcelInvoiceModeHandler
     from rdetoolkit.modes.multidatatile import MultiDataTileModeHandler
-    from rdetoolkit.modes.rdeformat import RdeFormatModeHandler
+    from rdetoolkit.modes.rdeformat import RdeFormatModeHandler, RdeFormatRawCopyStrategy
     from rdetoolkit.modes.smarttable import SmartTableModeHandler
 
-    handlers = (
+    generic_handlers = (
         InvoiceModeHandler(),
         ExcelInvoiceModeHandler(),
         MultiDataTileModeHandler(),
-        RdeFormatModeHandler(),
         SmartTableModeHandler(),
     )
 
-    # When/Then: no built-in handler overrides raw publication yet
-    for handler in handlers:
+    # When/Then: four of the five built-in handlers keep the generic service
+    for handler in generic_handlers:
         assert handler.raw_copy_strategy(None) is None  # type: ignore[arg-type]
+
+    # And: RDEFormat is the single mode whose v1 copier is component-based
+    assert isinstance(
+        RdeFormatModeHandler().raw_copy_strategy(None),  # type: ignore[arg-type]
+        RdeFormatRawCopyStrategy,
+    )
 
 
 def test_handler_returning_none_uses_the_generic_service__tc_i6_1_ev_032(

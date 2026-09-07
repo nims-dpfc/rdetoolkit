@@ -1,8 +1,21 @@
 from collections.abc import Iterable
+from pathlib import Path
 
 from rdetoolkit.modes.protocol import PlanningContext, RawCopyStrategy
 from rdetoolkit.runner.mode_resolver import ModeKind
 from rdetoolkit.runner.planner import ExecutionPlan, TilePlan
+from rdetoolkit.types import RdeConfig
+
+class RdeFormatRawCopyStrategy:
+    def copy(
+        self,
+        source_files: tuple[Path, ...],
+        *,
+        raw_dir: Path,
+        nonshared_raw_dir: Path,
+        config: RdeConfig,
+        smarttable: bool = ...,
+    ) -> None: ...
 
 class RdeFormatModeHandler:
     kind: ModeKind

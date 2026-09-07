@@ -20,13 +20,21 @@ from rdetoolkit.types import InputPaths, InvoiceData, IterationInfo, OutputConte
 
 @dataclass(frozen=True, slots=True)
 class TilePlan:
-    """Immutable execution material for one tile."""
+    """Immutable execution material for one tile.
+
+    ``precompleted`` is the mode-owned skip seam (Session I6-C). A mode sets it
+    on a tile whose work its own ``prepare_invoice`` already finished — v1's
+    SmartTable EarlyExit tile is the only case today — and the executor then
+    records the iteration as completed without invoking the flow and without
+    the post-invoke invoice stage. The default keeps every other tile identical.
+    """
 
     iteration: IterationInfo
     paths: InputPaths
     out: OutputContext
     invoice: InvoiceData | None
     prepare_invoice: Callable[[], InvoiceData | None] | None = None
+    precompleted: bool = False
 
 
 @dataclass(frozen=True, slots=True)
