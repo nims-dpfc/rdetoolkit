@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from rdetoolkit.api.request import LegacyCallbackTarget
+from rdetoolkit.domain.invoice import tile_row_data
+from rdetoolkit.domain.invoice_service import resolve_invoice_source
 from rdetoolkit.models.config import (
     Config,
     MultiDataTileSettings,
@@ -38,6 +40,9 @@ if TYPE_CHECKING:
 
 
 _LEGACY_ARG_COUNT = 2
+# v1's own threshold (``workflows._select_smarttable_rowfile``): a row CSV stem
+# splits into at least ["fsmarttable", "<index>"].
+_SMARTTABLE_ROWFILE_MIN_PARTS = 2
 # v1 ``Config.system.extended_mode`` accepts only these two spellings; every
 # other v2 mode name (including the canonical default "invoice") is None in v1.
 _V1_EXTENDED_MODES = frozenset({"rdeformat", "MultiDataTile"})
@@ -106,8 +111,10 @@ def to_legacy_dataset_paths(context: RunContext) -> RdeDatasetPaths:
         inputdata=paths.inputdata,
         invoice=paths.invoice,
         tasksupport=paths.tasksupport,
-        config=_legacy_config(context.config),
+        config=to_legacy_config(context.config),
     )
+    tile_root = out.invoice.parent
+    smarttable_rowfile = _select_smarttable_rowfile(paths.rawfiles)
     output_paths = RdeOutputResourcePath(
         raw=out.raw,
         nonshared_raw=out.nonshared_raw,
@@ -120,10 +127,47 @@ def to_legacy_dataset_paths(context: RunContext) -> RdeDatasetPaths:
         logs=out.logs,
         invoice=out.invoice,
         invoice_schema_json=paths.tasksupport / "invoice.schema.json",
-        invoice_org=_invoice_org(paths.invoice),
+        invoice_org=resolve_invoice_source(paths.invoice.parent),
+        # OutputContext deliberately omits these two directories (Design §6.3
+        # addendum), so the tile root they share with invoice/ resolves them.
+        temp=tile_root / "temp",
+        invoice_patch=tile_root / "invoice_patch",
+        smarttable_rowfile=smarttable_rowfile,
+        smarttable_row_data=(
+            tile_row_data(paths.invoice.parent, out.invoice / "invoice.json")
+            if smarttable_rowfile is not None
+            else None
+        ),
         attachment=out.attachment,
     )
     return RdeDatasetPaths(input_paths=input_paths, output_paths=output_paths)
+
+
+def _select_smarttable_rowfile(rawfiles: tuple[Path, ...]) -> Path | None:
+    """Return the generated SmartTable row CSV, using the v1 selection rule.
+
+    Ported from ``workflows._select_smarttable_rowfile``: only the first raw
+    file is considered, and it must be an ``fsmarttable_*_<digits>.csv`` file
+    produced by the SmartTable checker.
+
+    Args:
+        rawfiles: The tile's input files, in checker order.
+
+    Returns:
+        The row CSV, or ``None`` when this tile has none.
+    """
+    if not rawfiles:
+        return None
+    candidate = rawfiles[0]
+    if candidate.suffix.lower() != ".csv":
+        return None
+    stem = candidate.stem
+    if not stem.startswith("fsmarttable_"):
+        return None
+    parts = stem.split("_")
+    if len(parts) < _SMARTTABLE_ROWFILE_MIN_PARTS:
+        return None
+    return candidate if parts[-1].isdigit() else None
 
 
 class LegacyCallbackInvoker:
@@ -209,19 +253,19 @@ def _looks_like_arity_mismatch(error: TypeError) -> bool:
     return any(keyword in message for keyword in _ARITY_ERROR_KEYWORDS)
 
 
-def _invoice_org(invoice_dir: Path) -> Path:
-    """Return the v1 ``invoice_org`` source for the current run.
+def to_legacy_config(config: RdeConfig | None) -> Config:
+    """Project the canonical v2 config back onto the v1 Config contract.
 
-    The Runner's invoice service already produced ``data/temp/invoice_org.json``
-    for the modes that back the original invoice up, so its presence — not a
-    mode branch — selects the source.
+    Public because the Runner's tile iterator needs the same projection for the
+    legacy input checkers, which read ``smarttable.save_table_file`` from a v1
+    ``Config`` (``domain.mode.selected_input_checker``).
+
+    Args:
+        config: Effective canonical configuration, or ``None``.
+
+    Returns:
+        Equivalent v1 configuration.
     """
-    backup = invoice_dir.parent / "temp" / "invoice_org.json"
-    return backup if backup.exists() else invoice_dir / "invoice.json"
-
-
-def _legacy_config(config: RdeConfig | None) -> Config:
-    """Project the canonical v2 config back onto the v1 Config contract."""
     if config is None:
         return Config()
     system = config.system

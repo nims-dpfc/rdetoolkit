@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 from rdetoolkit.invoicefile import ExcelInvoiceFile as ExcelInvoiceFile, InvoiceFile as InvoiceFile, SmartTableFile as SmartTableFile
 from rdetoolkit.types import InvoiceData as InvoiceData
 
@@ -21,4 +22,9 @@ def build_smarttable_tile_invoice(
     invoice_schema_path: Path,
     dist_path: Path,
     rawfiles: tuple[Path, ...] = ...,
+    data_root: Path | None = ...,
 ) -> InvoiceData: ...
+
+def record_tile_row_data(data_root: Path, tile_invoice_path: Path, row_data: dict[str, Any] | None) -> None: ...
+def tile_row_data(data_root: Path, tile_invoice_path: Path) -> dict[str, Any] | None: ...
+def clear_tile_row_data(data_root: Path) -> None: ...

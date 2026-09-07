@@ -5,8 +5,8 @@ Equivalence partitions (EP):
 | API | Partition | Expected | Test ID |
 | --- | --- | --- | --- |
 | ``TileExecutor.execute`` | completed tile + injected services | invokes both services once per tile | TC-EP-I0-101 |
-| ``TileExecutor.execute`` | failed result | invokes neither service | TC-EP-I0-102 |
-| ``TileExecutor.execute`` | raised tile failure | invokes neither service | TC-EP-I0-103 |
+| ``TileExecutor.execute`` | failed result | copies raw (v1 order), publishes no image | TC-EP-I0-102 |
+| ``TileExecutor.execute`` | raised tile failure | copies raw (v1 order), publishes no image | TC-EP-I0-103 |
 
 Boundary values (BV):
 
@@ -160,8 +160,13 @@ def test_completed_tiles_invoke_each_artifact_service__tc_ep_i0_101(tmp_path: Pa
     assert all(call["config"] is plan.config for call in (*raw_service.calls, *image_service.calls))
 
 
-def test_failed_result_skips_artifact_services__tc_ep_i0_102(tmp_path: Path) -> None:
-    """TC-EP-I0-102: a normalized failed result does not publish artifacts."""
+def test_failed_result_keeps_raw_and_skips_images__tc_ep_i0_102(tmp_path: Path) -> None:
+    """TC-EP-I0-102: a failed tile still has its raw inputs copied, as v1 does.
+
+    Updated in Session I6-1: every v1 pipeline runs its FileCopier *before*
+    DatasetRunner (``processing/factories.py``), so a tile that fails keeps the
+    raw copies v1 would have made. Only the post-invoke services are skipped.
+    """
     # Given: one tile whose invoker returns a failed primary result
     tile = _tile(tmp_path, 0)
     plan = _plan(tmp_path, (tile,))
@@ -177,14 +182,17 @@ def test_failed_result_skips_artifact_services__tc_ep_i0_102(tmp_path: Path) -> 
     # When: executing the failed tile
     result = executor.execute(plan, tile)
 
-    # Then: failure remains primary and no artifact service runs
+    # Then: failure remains primary, raw is published, images are not
     assert result.status == "failed"
-    assert raw_service.calls == []
+    assert len(raw_service.calls) == 1
     assert image_service.calls == []
 
 
-def test_raised_tile_failure_skips_artifact_services__tc_ep_i0_103(tmp_path: Path) -> None:
-    """TC-EP-I0-103: a raised tile failure is normalized without artifact calls."""
+def test_raised_tile_failure_keeps_raw_and_skips_images__tc_ep_i0_103(tmp_path: Path) -> None:
+    """TC-EP-I0-103: a raised tile failure keeps the pre-invoke raw copy only.
+
+    Updated in Session I6-1 for the same v1 ordering reason as TC-EP-I0-102.
+    """
     # Given: one tile whose invoker raises its failed recorder snapshot
     tile = _tile(tmp_path, 0)
     plan = _plan(tmp_path, (tile,))
@@ -202,9 +210,9 @@ def test_raised_tile_failure_skips_artifact_services__tc_ep_i0_103(tmp_path: Pat
     # When: executing the tile through the normalization boundary
     result = executor.execute(plan, tile)
 
-    # Then: the failed result is returned and artifacts remain untouched
+    # Then: the failed result is returned with raw published and images not
     assert result.status == "failed"
-    assert raw_service.calls == []
+    assert len(raw_service.calls) == 1
     assert image_service.calls == []
 
 

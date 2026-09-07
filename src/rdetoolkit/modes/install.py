@@ -12,15 +12,17 @@ from rdetoolkit.modes.invoice import InvoiceModeHandler
 from rdetoolkit.modes.multidatatile import MultiDataTileModeHandler
 from rdetoolkit.modes.protocol import ModeHandler
 from rdetoolkit.modes.rdeformat import RdeFormatModeHandler
-from rdetoolkit.modes.registry import register
+from rdetoolkit.modes.registry import handler_for, register
 from rdetoolkit.modes.smarttable import SmartTableModeHandler
 
 
 def install_default_handlers() -> None:
-    """Register every built-in mode handler.
+    """Register the built-in handler for every mode that has none yet.
 
-    The Runner calls this while it is constructed. Calling it again is
-    idempotent because each handler replaces its own registry entry.
+    The Runner calls this while it is constructed, so installation must not
+    overwrite a handler the caller registered deliberately: a mode keeps
+    whatever handler it already has. ``registry.clear()`` followed by this call
+    still restores the pristine built-in set, which is how tests reset it.
     """
     handlers: tuple[ModeHandler, ...] = (
         InvoiceModeHandler(),
@@ -30,4 +32,5 @@ def install_default_handlers() -> None:
         SmartTableModeHandler(),
     )
     for handler in handlers:
-        register(handler.kind, handler)
+        if handler_for(handler.kind) is None:
+            register(handler.kind, handler)

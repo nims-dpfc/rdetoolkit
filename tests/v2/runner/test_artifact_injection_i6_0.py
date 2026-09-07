@@ -13,7 +13,7 @@ Equivalence partitions (EP):
 | ``Runner.run`` | default services, ``save_nonshared_raw`` on | raw input published to nonshared_raw/ | TC-EP-I60-201 |
 | ``Runner.run`` | default services, both raw switches off | nothing published | TC-EP-I60-202 |
 | ``Runner.run`` | default services, ``save_raw`` on | raw input published to raw/ | TC-EP-I60-203 |
-| ``Runner.run`` | failed tile | nothing published | TC-EP-I60-204 |
+| ``Runner.run`` | failed tile | raw published (v1 order), post-invoke artifacts not | TC-EP-I60-204 |
 
 Boundary values (BV):
 
@@ -114,20 +114,39 @@ def test_save_raw_publishes_shared_raw__tc_ep_i60_203(
     assert not (root / "data" / "nonshared_raw" / _RAW_INPUT_NAME).exists()
 
 
-def test_failed_tile_publishes_nothing__tc_ep_i60_204(
+def test_failed_tile_keeps_raw_and_skips_post_invoke__tc_ep_i60_204(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """TC-EP-I60-204: publication stays bound to completed tiles."""
+    """TC-EP-I60-204: a failed tile keeps its raw copies and gains nothing else.
+
+    Updated in Session I6-1: v1 copies raw inputs before the dataset callback
+    (FileCopier precedes DatasetRunner in every pipeline of
+    ``processing/factories.py``), so a failing tile is still expected to hold
+    the inputs. Publication that v1 performs *after* the callback — thumbnail,
+    structured invoice, magic variable, description — must not happen.
+    """
     # Given: an invoice fixture whose flow fails with a user error
     root = tmp_path / "invoice"
 
     # When: running the failing flow with publication enabled
-    _run(root, monkeypatch, {"save_raw": True, "save_nonshared_raw": True}, target=_failing_flow)
+    _run(
+        root,
+        monkeypatch,
+        {
+            "save_raw": True,
+            "save_nonshared_raw": True,
+            "save_thumbnail_image": True,
+            "save_invoice_to_structured": True,
+        },
+        target=_failing_flow,
+    )
 
-    # Then: no artifact is published for the failed tile
-    assert not (root / "data" / "raw" / _RAW_INPUT_NAME).exists()
-    assert not (root / "data" / "nonshared_raw" / _RAW_INPUT_NAME).exists()
+    # Then: the raw copies exist and no post-invoke artifact was produced
+    assert (root / "data" / "raw" / _RAW_INPUT_NAME).is_file()
+    assert (root / "data" / "nonshared_raw" / _RAW_INPUT_NAME).is_file()
+    assert not (root / "data" / "structured" / "invoice.json").exists()
+    assert not any((root / "data" / "thumbnail").iterdir())
 
 
 def test_caller_supplied_executor_is_not_overridden__tc_bv_i60_201(tmp_path: Path) -> None:

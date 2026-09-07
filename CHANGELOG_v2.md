@@ -254,6 +254,59 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
   whether a completed tile publishes anything. Failed tiles publish nothing,
   and a caller-supplied executor is never overridden.
 
+### Added — Phase I output-tree parity foundation (Session I6-1)
+
+- Every tile now owns the same **twelve** directories as v1, adding `temp/` and
+  `invoice_patch/`. `TileOutputPaths` carries them and the iterator creates
+  them; `OutputContext` still exposes ten fields, so the directories are a
+  contract while the public output API is unchanged (Design §6.3 addendum).
+- The tile executor gained an artifact stage split around the flow, matching
+  every v1 pipeline: the raw/nonshared copy runs **before** the flow (v1's
+  FileCopier precedes DatasetRunner), while thumbnail,
+  `structured/invoice.json`, magic variable and the feature description update
+  run after it and only for completed tiles. Each step keeps its v1 config
+  gate. `InvoiceService.apply_config` — previously never called — is now the
+  production path for the last three, and it receives the whole v1
+  `RdeDatasetPaths` bundle so `${invoice:...}` and `${metadata:...}` resolve
+  the way v1's VariableApplier resolves them.
+- A tile whose flow fails therefore keeps the raw copies v1 would have made,
+  which is what the frozen `usererr` observations record.
+- The run-level invoice backup now happens after the input checker has parsed,
+  as in v1 (`backup_invoice_json_files` runs after `check_files`). With the
+  unpack root at `data/temp`, backing up earlier made the RDEFormat checker
+  ingest `data/temp/invoice_org.json` as raw data.
+- The structured invoice copy now takes the run-level `invoice_org`, matching
+  v1's `StructuredInvoiceSaver`. Copying the tile invoice would have published
+  magic-variable substitutions that v1 never writes to `structured/`.
+- Artifact stages run outside the flow invocation and are attributed
+  separately: raw/nonshared and thumbnail failures are the new **3005
+  `ArtifactPublicationFailed`**, invoice-stage failures are the new **3006
+  `InvoiceArtifactFailed`**, and a `StructuredError` raised by the invoice
+  stage keeps its v1 `ecode`/`emsg` (Session I6-0 passthrough). None of them is
+  reported as 3001 `NodeExecutionFailed`, because the flow already succeeded.
+  A failed post-invoke stage keeps the tile's call log and stack trace.
+- `ModeHandler` gained two optional seams, `raw_copy_strategy(plan)` and
+  `invoice_stage_steps(plan)`. All five built-in handlers return `None` from
+  both; Session I6-A uses them for the RDEFormat copy semantics and for the
+  fact that v1's RDEFormat pipeline runs neither StructuredInvoiceSaver nor
+  VariableApplier.
+- Installing the built-in mode handlers no longer overwrites a handler the
+  caller registered before constructing a Runner.
+- The tile iterator forwards the effective configuration to the legacy input
+  checkers, so `smarttable.save_table_file` is reachable on the v2 path. The
+  default (`False`) reproduces the previous tile layout exactly.
+- v1 callbacks now receive real `temp`, `invoice_patch`, `smarttable_rowfile`
+  and `smarttable_row_data` values (Session I5 left all four `None`), and
+  `invoice_org` is resolved run-level so divided tiles stop looking for a
+  backup inside `divided/NNNN/temp/`.
+- `tests/v2/contract/observe.py` observes a v2 run through the frozen
+  `_generate` walkers, and the `invoice`, `multidatatile`, `excelinvoice` and
+  `smarttable` FLOW-OK matrix cells now compare the complete artifact
+  observation — output tree (excluding the contents of `data/logs/`),
+  `raw_sha256`, and written invoices — with the frozen v1 snapshot. Only
+  `rdeformat` keeps the narrower comparison, until Session I6-A ports the
+  RDEFormat copy semantics.
+
 ### Added — Phase H real-canary compatibility protection
 
 - Added permanent import and minimal-behavior coverage for the maintained v1

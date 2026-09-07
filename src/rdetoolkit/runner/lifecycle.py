@@ -106,6 +106,7 @@ class Runner:
             flow_invoker=InvokerRegistry(),
             raw_artifact_service=RawArtifactService(),
             image_artifact_service=ImageArtifactService(),
+            invoice_service=self._invoice_service,
         )
         self._finalizer = finalizer or RunFinalizer(root=lambda: self.root)
 
@@ -187,6 +188,10 @@ class Runner:
         finally:
             if sigterm_installed:
                 signal.signal(signal.SIGTERM, previous_sigterm)
+            # Runs are bounded, so this run's invoice material is released here
+            # as well as at begin_run: a long-lived host process never
+            # accumulates the material of the runs it already finished.
+            self._invoice_service.end_run(self.root)
 
     def load_config(self, source: object | None = None) -> RdeConfig:
         """Load the effective v2 Runner config.

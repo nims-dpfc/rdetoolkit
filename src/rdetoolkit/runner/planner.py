@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from functools import partial
+from itertools import chain
 from pathlib import Path
 from typing import Literal
 
@@ -96,6 +97,7 @@ class RunPlanner:
             inputdata_path=_resolve_path(self._inputdata_path),
             unpacked_dir_path=_resolve_path(self._unpacked_dir_path),
             invoice_service=self._invoice_service,
+            config=config,
         )
         self._invoice_service.begin_run(request.root)
         handler = handler_for(mode)
@@ -130,22 +132,38 @@ def create_common_tiles(mode: ModeKind, context: PlanningContext) -> Iterator[Ti
     root = context.root
     inputdata_path = context.inputdata_path
     invoice_service = context.invoice_service
-    invariant_invoice = _invariant_invoice(mode, root=root, invoice_service=invoice_service)
-    invoice_org = _data_root(root) / "invoice" / "invoice.json"
+    # Resolve the run data root once, before any tile directory exists. An
+    # alias-flat root gains a ``data`` child as soon as tile 0 is created, so a
+    # later resolution would silently switch roots mid-run.
+    data_root = _data_root(root)
+    invariant_invoice = _invariant_invoice(mode, root=data_root, invoice_service=invoice_service)
+    invoice_org = data_root / "invoice" / "invoice.json"
     source = _InvoiceSourceState(path=invoice_org, prepared=mode is not ModeKind.excelinvoice)
+    tiles = iter(
+        iterate_tiles(
+            mode,
+            inputdata_path,
+            context.unpacked_dir_path,
+            root / "data",
+            context.config,
+        ),
+    )
+    # v1 backs the invoice up AFTER check_files (workflows.py), so
+    # data/temp/invoice_org.json does not exist while an input checker scans
+    # the unpack directory. Pulling the first tile forces the checker's parse
+    # (including unpacking) to finish first, which keeps the backup out of the
+    # RDEFormat checker's data/temp/** glob.
+    first = next(tiles, None)
     if mode in {ModeKind.multidatatile, ModeKind.rdeformat}:
         source.path = _run_invoice_source(
             mode,
-            root=root,
+            root=data_root,
             inputdata_path=inputdata_path,
             invoice_service=invoice_service,
         )
-    for info, paths, out in iterate_tiles(
-        mode,
-        inputdata_path,
-        context.unpacked_dir_path,
-        root / "data",
-    ):
+    if first is None:
+        return
+    for info, paths, out in chain((first,), tiles):
         yield TilePlan(
             iteration=info,
             paths=paths,
@@ -154,7 +172,7 @@ def create_common_tiles(mode: ModeKind, context: PlanningContext) -> Iterator[Ti
             prepare_invoice=partial(
                 _prepare_tile_invoice,
                 mode,
-                root=root,
+                root=data_root,
                 inputdata_path=inputdata_path,
                 paths=paths,
                 invoice_dir=out.invoice,
