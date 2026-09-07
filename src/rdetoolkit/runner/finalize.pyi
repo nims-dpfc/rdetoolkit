@@ -1,8 +1,13 @@
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.types import RdeConfig
+
+PASSTHROUGH_ERROR_NAME: str
+
+def structured_error_record(exc: BaseException | None) -> dict[str, Any] | None: ...
 
 class RunFinalizer:
     def __init__(self, *, root: Path | Callable[[], Path]) -> None: ...

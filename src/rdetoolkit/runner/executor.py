@@ -12,6 +12,7 @@ from rdetoolkit.domain.artifacts import ImageArtifactService, RawArtifactService
 from rdetoolkit.errors import ERROR_CATALOG, RdeExecutionError
 from rdetoolkit.report.events import EventSink
 from rdetoolkit.runner.execute import ExecutionResult, TileExecutionError
+from rdetoolkit.runner.finalize import structured_error_record
 from rdetoolkit.runner.invoker import FlowInvoker, TargetInvoker
 
 
@@ -86,7 +87,7 @@ class TileExecutor:
                 raise
             if isinstance(exc, TileExecutionError):
                 return _with_legacy_metadata(
-                    exc.result,
+                    _with_user_error(exc.result, exc.__cause__),
                     invoice=invoice,
                     rawfiles=tile.paths.rawfiles,
                     root=plan.root,
@@ -128,7 +129,32 @@ def _is_run_interrupted(exc: Exception) -> bool:
     return isinstance(exc, RdeExecutionError) and exc.code == _RUN_INTERRUPTED_CODE
 
 
+#: Fields the passthrough record owns. ``remediation`` is included because it
+#: is derived from the catalog code being replaced, so keeping the wrapper's
+#: 3001 remediation would describe an error the run no longer reports.
+_PASSTHROUGH_OWNED_KEYS = frozenset({"code", "name", "message", "remediation"})
+
+
+def _with_user_error(result: ExecutionResult, cause: BaseException | None) -> ExecutionResult:
+    """Restore a ``StructuredError``'s ``ecode``/``emsg`` on a wrapped result.
+
+    ``run_tile`` catalogues every flow failure as 3001 before raising, so the
+    raised code would otherwise be lost at the tile boundary. Only the
+    catalogued fields are replaced: recorder context such as ``call_id`` stays
+    on the record so the failing call remains identifiable.
+    """
+    passthrough = structured_error_record(cause)
+    if passthrough is None:
+        return result
+    preserved = {key: value for key, value in (result.error or {}).items() if key not in _PASSTHROUGH_OWNED_KEYS}
+    return replace(result, error={**preserved, **passthrough})
+
+
 def _execution_error(exc: Exception) -> dict[str, Any]:
+    # A StructuredError carries ecode/emsg, not code/message (Design §6.3).
+    passthrough = structured_error_record(exc)
+    if passthrough is not None:
+        return passthrough
     code = getattr(exc, "code", 3001)
     error_def = ERROR_CATALOG.get(code) if isinstance(code, int) else None
     return {

@@ -20,6 +20,7 @@ from rdetoolkit.api.request import (
     build_run_request,
 )
 from rdetoolkit.config.normalize import ConfigNormalizer
+from rdetoolkit.domain.artifacts import ImageArtifactService, RawArtifactService
 from rdetoolkit.domain.invoice_service import InvoiceService
 from rdetoolkit.domain.validation import invoice_validate, metadata_validate
 from rdetoolkit.errors import (
@@ -37,7 +38,7 @@ from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.aggregator import RunAggregator
 from rdetoolkit.runner.config_loader import load_config as load_config_from_root
 from rdetoolkit.runner.executor import TileExecutor
-from rdetoolkit.runner.finalize import RunFinalizer
+from rdetoolkit.runner.finalize import RunFinalizer, structured_error_record
 from rdetoolkit.runner.invoker import InvokerRegistry
 from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode as resolve_mode_from_paths
 from rdetoolkit.runner.paths import resolve_tile_paths
@@ -97,9 +98,14 @@ class Runner:
             run_id_factory=lambda: self.run_id,
             invoice_service=self._invoice_service,
         )
+        # The services read save_raw / save_nonshared_raw / save_thumbnail_image
+        # from the per-run config themselves, so injecting them unconditionally
+        # keeps configuration -- not construction -- in charge of publication.
         self._executor = executor or TileExecutor(
             event_sink=self.event_sink,
             flow_invoker=InvokerRegistry(),
+            raw_artifact_service=RawArtifactService(),
+            image_artifact_service=ImageArtifactService(),
         )
         self._finalizer = finalizer or RunFinalizer(root=lambda: self.root)
 
@@ -416,6 +422,20 @@ def _exception_error(exc: Exception) -> dict[str, Any]:
     return error
 
 
+def _run_error(exc: Exception) -> dict[str, Any]:
+    """Translate a lifecycle-escaping exception into a run-level error record.
+
+    Any v1 ``StructuredError`` — raised by user code or by the framework's own
+    v1-derived helpers — publishes its ``ecode``/``emsg`` verbatim and bypasses
+    the 1002 mapping (Design §6.3). Everything else is catalogued; validation
+    keeps 4001/4002/4003 because those steps raise ``RdeValidationError``.
+    """
+    passthrough = structured_error_record(exc)
+    if passthrough is not None:
+        return passthrough
+    return _exception_error(_lifecycle_error(exc))
+
+
 def _lifecycle_error(exc: Exception) -> RdeError:
     if isinstance(exc, RdeError):
         return exc
@@ -439,7 +459,6 @@ def _failed_report(
     config: RdeConfig,
     exc: Exception,
 ) -> RunReport:
-    error = _lifecycle_error(exc)
     return RunReport(
         run_id=run_id,
         status="failed",
@@ -450,7 +469,7 @@ def _failed_report(
         config_digest=_config_digest(config),
         iterations=[],
         warnings=[],
-        error=_exception_error(error),
+        error=_run_error(exc),
     )
 
 

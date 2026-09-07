@@ -218,6 +218,42 @@ templates (Design §5.2) or plain node/flow functions (Design §3).
 - Added `modes.registry.clear()` so a caller can return to the
   pre-installation state without reaching into registry internals.
 
+### Fixed — Phase I unified flow error translation
+
+- Fixed the loss of raised error codes on the v2 Runner path. A
+  `StructuredError` carries `emsg` / `ecode`, not `message` / `code`, so the
+  tile, run-level, and finalize translators all silently rewrote it as 3001
+  `NodeExecutionFailed`. Its `ecode` and `emsg` now reach `RunReport.error` and
+  `job.failed` verbatim, restoring the v1 Tier 1 contract (Design §6.3).
+  Catalog substitution still applies to everything else: a plain exception is
+  3001, an `RdeError` keeps its own code, and an off-catalog code that is not a
+  passthrough record is still replaced in `finalize`. No `RunReport.error`
+  field was added, so `schema_version` remains `"2"`.
+- Added `runner.finalize.structured_error_record()` as the single owner of that
+  rule, used by the tile executor, the lifecycle failure path, and the
+  `job.failed` writer. The passthrough covers every `StructuredError` a v2
+  domain error has not already wrapped — framework-raised ones included, since
+  v1 `catch_exception_with_message` publishes those verbatim as well — while
+  validation stays 4001/4002/4003. At the tile boundary only
+  `code`/`name`/`message`/`remediation` are replaced, so recorder context such
+  as `call_id` still identifies the failing call.
+- Contracted the v1-to-v2 error mapping for all five modes as
+  `tests/v2/contract/flow_error_table.py` and contracts.md §I6-0. Validation
+  failures keep the v2 catalog codes (4001 for every mode's invalid source
+  invoice) rather than v1's mode-specific 999 / 1, because v2 validates the
+  source invoice before the flow runs. The ten TC-UM FLOW-USERERR /
+  FLOW-VALERR seats now assert that table instead of being placeholders;
+  twelve Phase J seats (policy, SIGTERM, callback observability) stay xfail.
+
+### Changed — Phase I artifact publication is wired
+
+- The Runner now injects `RawArtifactService` and `ImageArtifactService` into
+  its tile executor by default, so `save_raw`, `save_nonshared_raw`, and
+  `save_thumbnail_image` finally take effect on the v2 path. The services read
+  those settings themselves, so configuration — not construction — decides
+  whether a completed tile publishes anything. Failed tiles publish nothing,
+  and a caller-supplied executor is never overridden.
+
 ### Added — Phase H real-canary compatibility protection
 
 - Added permanent import and minimal-behavior coverage for the maintained v1

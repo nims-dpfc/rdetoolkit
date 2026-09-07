@@ -32,15 +32,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
 from rdetoolkit.runner.execute import ExecutionResult
 from rdetoolkit.runner.lifecycle import Runner
 from rdetoolkit.runner.mode_resolver import ModeKind
+from rdetoolkit.runner.paths import resolve_tile_paths
 from rdetoolkit.runner.planner import _flat_layout_invoice_source
-from rdetoolkit.types import InputPaths, IterationInfo, RdeConfig
+from rdetoolkit.types import InputPaths, IterationInfo, OutputContext, RdeConfig
 
 _CASES = [
     pytest.param(ModeKind.excelinvoice, True, id="excelinvoice"),
@@ -108,7 +108,9 @@ def test_run_level_invoice_backup_matches_v1_mode_contract__tc_g0_backup(
         raw=rawfile,
         rawfiles=(rawfile,),
     )
-    out = SimpleNamespace(invoice=invoice_dir)
+    # A complete OutputContext: the Runner now injects artifact services, so a
+    # partial double would hide the per-tile publication path from this test.
+    out = OutputContext.from_resource_paths(resolve_tile_paths(data_root, 0))
     monkeypatch.setattr(
         "rdetoolkit.runner.planner.iterate_tiles",
         lambda *args, **kwargs: iter([(info, paths, out)]),
@@ -176,7 +178,9 @@ def test_invoice_backup_is_root_relative_across_layout_cwd_mode_matrix__tc_gr_ba
         raw=rawfile,
         rawfiles=(rawfile,),
     )
-    out = SimpleNamespace(invoice=invoice_dir)
+    # A complete OutputContext: the Runner now injects artifact services, so a
+    # partial double would hide the per-tile publication path from this test.
+    out = OutputContext.from_resource_paths(resolve_tile_paths(data_root, 0))
     monkeypatch.setattr(
         "rdetoolkit.runner.planner.iterate_tiles",
         lambda *args, **kwargs: iter([(info, paths, out)]),

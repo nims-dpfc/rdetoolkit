@@ -5,7 +5,8 @@ EP table:
     TC-UM-*-CB-USERERR: callback StructuredError exits with frozen job.failed.
     TC-UM-*-CB-VALERR: invalid invoice exits with frozen validation artifact.
     TC-UM-*-FLOW-OK: eager v2 Runner succeeds against the same static input.
-    TC-UM-*-FLOW-USERERR/VALERR: placed as Phase H/I non-strict xfails.
+    TC-UM-*-FLOW-USERERR/VALERR: v2 flow errors follow the I6-0 translation
+        table (tests/v2/contract/flow_error_table.py, contracts.md §I6-0).
     TC-UM-*-CB-OBS: callback Events/Provenance/RunReport columns are Phase J xfails.
 
 BV table:
@@ -27,9 +28,18 @@ from pathlib import Path
 import pytest
 
 from rdetoolkit.core.flow import flow
+from rdetoolkit.exceptions import StructuredError
 from rdetoolkit.runner.lifecycle import Runner
 from rdetoolkit.types import InputPaths, InvoiceData
 from tests.v2.contract.fixtures import _generate
+from tests.v2.contract.flow_error_table import (
+    FAILED_EXIT_CODE,
+    VALIDATION_REASON,
+    MessageRule,
+    expected_divided_indices,
+    expected_iteration_count,
+    flow_error_cell,
+)
 
 _MODES = ("invoice", "excelinvoice", "multidatatile", "rdeformat", "smarttable")
 _MODE_IDS = {
@@ -47,6 +57,22 @@ def _contract_noop_flow(paths: InputPaths, invoice: InvoiceData) -> None:
     """Exercise flow-boundary injection without changing v1-owned artifacts."""
     assert paths.inputdata.is_dir()
     _FLOW_INVOICES.append(deepcopy(invoice.raw))
+
+
+# Byte-identical to fixtures/_generate.py::_oracle_callback_usererr so the v2
+# flow entry raises exactly what the frozen v1 observation recorded.
+_USERERR_MESSAGE = (
+    "Contract callback failed. Remediation: inspect the fixture callback "
+    "and correct its input."
+)
+
+
+@flow
+def _contract_usererr_flow(paths: InputPaths, invoice: InvoiceData) -> None:
+    """Fail the tile the way the frozen v1 callback oracle fails."""
+    assert paths.inputdata.is_dir()
+    _FLOW_INVOICES.append(deepcopy(invoice.raw))
+    raise StructuredError(_USERERR_MESSAGE, ecode=999)
 
 
 def _frozen(mode: str, outcome: str) -> dict:
@@ -129,7 +155,6 @@ def test_flow_entry_success_matches_frozen_v1_primary_contract(
     assert _generate.normalize_snapshot(_FLOW_INVOICES, roots=(root,)) == _expected_invoice_sequence(expected["invoices"])
 
 
-@pytest.mark.xfail(strict=False, reason="Phase H/I: unified flow error translation is not wired")
 @pytest.mark.parametrize(
     ("mode", "outcome"),
     [
@@ -138,13 +163,66 @@ def test_flow_entry_success_matches_frozen_v1_primary_contract(
         for outcome in ("usererr", "valerr")
     ],
 )
-def test_flow_error_cells_are_placed_for_phase_h_i(mode: str, outcome: str) -> None:
-    """Flow error cells reserve the Phase H/I translation contract."""
-    # Given: a matrix cell whose unified error adapter does not exist yet
-    assert mode in _MODES
-    assert outcome in {"usererr", "valerr"}
-    # When/Then: the explicit failure keeps the non-strict xfail visible
-    pytest.fail("Phase H/I must implement flow error parity against frozen fixtures")
+def test_flow_error_cells_match_the_i6_0_translation_table(
+    mode: str,
+    outcome: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Flow error cells follow the contracted v1 -> v2 error translation.
+
+    The frozen v1 observation is checked against the table first, so the table
+    can never silently drift away from the oracle it documents.
+    """
+    # Given: the contracted translation row and the frozen v1 observation
+    cell = flow_error_cell(mode, outcome)
+    expected = _frozen(mode, outcome)["observed"]
+    assert expected["job_failed_error_code"] == f"ErrorCode={cell.v1_code}"
+    assert expected["callback_count"] == cell.v1_callback_count
+    assert expected["exit_code"] == FAILED_EXIT_CODE
+    assert expected["legacy_return"] is None
+
+    root = tmp_path / mode
+    _generate.materialize_sut_case(mode, root)
+    if outcome == "valerr":
+        _generate._invalidate_invoice(root)
+    monkeypatch.chdir(root)
+    _FLOW_INVOICES.clear()
+    runner = Runner(
+        root=root,
+        inputdata_path=root / "data" / "inputdata",
+        unpacked_dir_path=root / "data" / "unpacked",
+    )
+    target = _contract_usererr_flow if outcome == "usererr" else _contract_noop_flow
+
+    # When: running the eager flow through the v2 Runner on the same input
+    report = runner.run(target, **_v2_overrides(mode))
+
+    # Then: the run fails, and job.failed carries the contracted code
+    assert report.status == "failed"
+    job_failed = _generate.normalize_snapshot(
+        (root / "data" / "job.failed").read_text(encoding="utf-8"),
+        roots=(root,),
+    )
+    assert job_failed.splitlines()[0] == f"ErrorCode={cell.v2_code}"
+
+    # And: the message follows this cell's rule
+    if cell.v2_message is MessageRule.V1_VERBATIM:
+        assert job_failed == expected["job_failed_text"]
+    else:
+        assert VALIDATION_REASON in job_failed
+        assert cell.v2_code != cell.v1_code
+
+    # And: the flow ran exactly once per tile, or not at all
+    tile_count = int(_frozen(mode, "ok")["observed"]["callback_count"])
+    assert len(report.iterations) == expected_iteration_count(cell, tile_count)
+    assert [iteration["status"] for iteration in report.iterations] == ["failed"] * len(report.iterations)
+    assert len(_FLOW_INVOICES) == len(report.iterations)
+
+    # And: only the attempted tiles left a divided/ tree behind
+    divided = root / "data" / "divided"
+    actual_divided = tuple(sorted(path.name for path in divided.iterdir())) if divided.exists() else ()
+    assert actual_divided == expected_divided_indices(cell, tile_count)
 
 
 @pytest.mark.xfail(strict=False, reason="Phase H/I: multi-tile policy integration is not wired")
