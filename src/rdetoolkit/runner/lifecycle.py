@@ -12,8 +12,15 @@ from pathlib import Path
 from types import FrameType
 from typing import Any
 
-from rdetoolkit.api.request import FlowTarget, RunRequest, build_run_request
+from rdetoolkit.api.request import (
+    ExecutionTarget,
+    FlowTarget,
+    LegacyCallbackTarget,
+    RunRequest,
+    build_run_request,
+)
 from rdetoolkit.config.normalize import ConfigNormalizer
+from rdetoolkit.domain.artifacts import ImageArtifactService, RawArtifactService
 from rdetoolkit.domain.invoice_service import InvoiceService
 from rdetoolkit.domain.validation import invoice_validate, metadata_validate
 from rdetoolkit.errors import (
@@ -31,7 +38,8 @@ from rdetoolkit.report.run_report import RunReport
 from rdetoolkit.runner.aggregator import RunAggregator
 from rdetoolkit.runner.config_loader import load_config as load_config_from_root
 from rdetoolkit.runner.executor import TileExecutor
-from rdetoolkit.runner.finalize import RunFinalizer
+from rdetoolkit.runner.finalize import RunFinalizer, structured_error_record
+from rdetoolkit.runner.invoker import InvokerRegistry
 from rdetoolkit.runner.mode_resolver import ModeKind, resolve_mode as resolve_mode_from_paths
 from rdetoolkit.runner.paths import resolve_tile_paths
 from rdetoolkit.runner.planner import RunPlanner
@@ -71,6 +79,11 @@ class Runner:
             finalizer: Optional report persistence collaborator.
             invoice_service: Run-owned path-based invoice operations.
         """
+        # Imported here because the mode modules import the planner, so a
+        # module-level import would close a runner -> modes -> runner cycle.
+        from rdetoolkit.modes.install import install_default_handlers  # noqa: PLC0415
+
+        install_default_handlers()
         self.root = root or Path.cwd()
         self.inputdata_path = inputdata_path or self.root / "inputdata"
         self.unpacked_dir_path = unpacked_dir_path or self.root / "unpacked"
@@ -85,7 +98,16 @@ class Runner:
             run_id_factory=lambda: self.run_id,
             invoice_service=self._invoice_service,
         )
-        self._executor = executor or TileExecutor(event_sink=self.event_sink)
+        # The services read save_raw / save_nonshared_raw / save_thumbnail_image
+        # from the per-run config themselves, so injecting them unconditionally
+        # keeps configuration -- not construction -- in charge of publication.
+        self._executor = executor or TileExecutor(
+            event_sink=self.event_sink,
+            flow_invoker=InvokerRegistry(),
+            raw_artifact_service=RawArtifactService(),
+            image_artifact_service=ImageArtifactService(),
+            invoice_service=self._invoice_service,
+        )
         self._finalizer = finalizer or RunFinalizer(root=lambda: self.root)
 
     def run(self, request: RunRequest | Callable[..., Any], **overrides: Any) -> RunReport:
@@ -116,10 +138,7 @@ class Runner:
         if isinstance(request, RunRequest) and overrides:
             msg = "Config overrides must be carried by RunRequest.config_source"
             raise TypeError(msg)
-        if not isinstance(run_request.target, FlowTarget):
-            msg = "LegacyCallbackTarget execution is implemented in Phase J"
-            raise TypeError(msg)
-        flow_fn = run_request.target.function
+        target = run_request.target
         self._apply_request_root(run_request.root)
         self._invoice_service.begin_run(self.root)
 
@@ -145,13 +164,13 @@ class Runner:
                     config = self.load_config(run_request.config_source)
                     mode = self.resolve_mode(config)
                     self.pre_validate(config)
-                    report = self.iterate(flow_fn, mode, config)
+                    report = self.iterate(target, mode, config)
                     self.post_validate(config, report)
                 except Exception as exc:  # noqa: BLE001
                     config = config or RdeConfig()
                     report = _failed_report(
                         run_id=self.run_id,
-                        flow_fn=flow_fn,
+                        flow_id=_target_flow_id(target),
                         mode=mode,
                         started=started,
                         config=config,
@@ -169,6 +188,10 @@ class Runner:
         finally:
             if sigterm_installed:
                 signal.signal(signal.SIGTERM, previous_sigterm)
+            # Runs are bounded, so this run's invoice material is released here
+            # as well as at begin_run: a long-lived host process never
+            # accumulates the material of the runs it already finished.
+            self._invoice_service.end_run(self.root)
 
     def load_config(self, source: object | None = None) -> RdeConfig:
         """Load the effective v2 Runner config.
@@ -236,14 +259,14 @@ class Runner:
 
     def iterate(
         self,
-        flow_fn: Callable[..., Any],
+        target: ExecutionTarget | Callable[..., Any],
         mode: ModeKind,
         config: RdeConfig,
     ) -> RunReport:
-        """Execute the flow once per tile and return a minimal run report.
+        """Execute the target once per tile and return a minimal run report.
 
         Args:
-            flow_fn: Flow function placeholder.
+            target: Normalized execution target, or a bare flow callable.
             mode: Effective mode.
             config: Effective configuration.
 
@@ -251,15 +274,16 @@ class Runner:
             Minimal successful run report.
         """
         started = time.time()
+        execution_target = target if isinstance(target, (FlowTarget, LegacyCallbackTarget)) else FlowTarget(function=target)
         request = RunRequest(
             root=self.root,
-            target=FlowTarget(function=flow_fn),
+            target=execution_target,
             config_source=config,
         )
         plan = self._planner.create(request, config=config, mode=mode)
         aggregator = RunAggregator(
             run_id=self.run_id,
-            flow_id=_flow_id(flow_fn),
+            flow_id=_target_flow_id(execution_target),
             mode=mode.value,
             config_digest=_config_digest(config),
             logs_dir=self.root / "data" / "logs",
@@ -358,6 +382,16 @@ def _flow_id(flow_fn: Callable[..., Any]) -> str:
     return f"{module}.{qualname}" if module else qualname
 
 
+def _target_flow_id(target: ExecutionTarget) -> str:
+    """Identify the executed target for the report.
+
+    A v1 callback-free run has no callable at all, so it reports a stable
+    sentinel instead of an identifier derived from ``None``.
+    """
+    function = target.function
+    return _flow_id(function) if function is not None else "rdetoolkit.compat.v1.callback:none"
+
+
 def _raise_run_interrupted(signum: int, frame: FrameType | None) -> None:
     """Interrupt the active Runner so its existing failure path can finalize."""
     _ = (signum, frame)
@@ -393,6 +427,20 @@ def _exception_error(exc: Exception) -> dict[str, Any]:
     return error
 
 
+def _run_error(exc: Exception) -> dict[str, Any]:
+    """Translate a lifecycle-escaping exception into a run-level error record.
+
+    Any v1 ``StructuredError`` — raised by user code or by the framework's own
+    v1-derived helpers — publishes its ``ecode``/``emsg`` verbatim and bypasses
+    the 1002 mapping (Design §6.3). Everything else is catalogued; validation
+    keeps 4001/4002/4003 because those steps raise ``RdeValidationError``.
+    """
+    passthrough = structured_error_record(exc)
+    if passthrough is not None:
+        return passthrough
+    return _exception_error(_lifecycle_error(exc))
+
+
 def _lifecycle_error(exc: Exception) -> RdeError:
     if isinstance(exc, RdeError):
         return exc
@@ -410,24 +458,23 @@ def _lifecycle_error(exc: Exception) -> RdeError:
 def _failed_report(
     *,
     run_id: str,
-    flow_fn: Callable[..., Any],
+    flow_id: str,
     mode: ModeKind | None,
     started: float,
     config: RdeConfig,
     exc: Exception,
 ) -> RunReport:
-    error = _lifecycle_error(exc)
     return RunReport(
         run_id=run_id,
         status="failed",
-        flow_id=_flow_id(flow_fn),
+        flow_id=flow_id,
         mode=mode.value if mode is not None else "unknown",
         started_at=_iso_timestamp(started),
         duration_ms=(time.time() - started) * 1000.0,
         config_digest=_config_digest(config),
         iterations=[],
         warnings=[],
-        error=_exception_error(error),
+        error=_run_error(exc),
     )
 
 

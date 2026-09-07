@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 from collections.abc import Callable
 from pathlib import Path
@@ -10,11 +11,13 @@ from typing import TYPE_CHECKING, Any
 from rdetoolkit.domain.invoice import (
     build_excelinvoice_tile_invoice,
     build_smarttable_tile_invoice,
+    clear_tile_row_data,
     load_invoice,
+    smarttable_invoice_builder,
 )
 from rdetoolkit.domain.service_errors import validation_error
-from rdetoolkit.invoicefile import apply_magic_variable
-from rdetoolkit.processing.processors.invoice import SmartTableInvoiceInitializer
+from rdetoolkit.invoicefile import apply_magic_variable, update_description_with_features
+from rdetoolkit.models.rde2types import RdeDatasetPaths, RdeInputDirPaths, RdeOutputResourcePath
 from rdetoolkit.types import InputPaths, InvoiceData, RdeConfig
 
 if TYPE_CHECKING:
@@ -25,21 +28,36 @@ class InvoiceService:
     """Own run-scoped invoice preparation with explicit filesystem paths."""
 
     def __init__(self) -> None:
-        """Create a stateless invoice service using explicit filesystem paths."""
+        """Create an invoice service owning this run's SmartTable material."""
+        self._smarttable_builder = smarttable_invoice_builder()
 
     def begin_run(self, root: Path) -> None:
-        """Invalidate only this run's SmartTable base-invoice cache entry.
+        """Release the SmartTable material of any previously executed run.
 
-        The retained v1 initializer still owns its class cache until Phase I.
-        Targeted invalidation avoids the former process-wide clear that could
-        evict a concurrently executing run rooted elsewhere. ``pop`` is
-        idempotent, so the Runner and Planner may both call this per run.
+        The base invoice is owned by this service's builder rather than by a
+        process-global cache keyed by path (Session I6-C): two runs over one
+        root can no longer observe each other's source invoice, and a service
+        reused for a second run always re-reads it.
 
         Args:
             root: Project or flat data root for the run.
         """
-        key = (_data_root(root) / "invoice" / "invoice.json").resolve()
-        SmartTableInvoiceInitializer._BASE_INVOICE_CACHE.pop(key, None)  # noqa: SLF001 -- Phase I removes the retained v1 cache
+        self._smarttable_builder.reset()
+        clear_tile_row_data(_data_root(root))
+
+    def end_run(self, root: Path) -> None:
+        """Release this run's retained SmartTable material.
+
+        Runs are bounded, so the row-data handoff and the base invoice snapshot
+        are released here as well as at ``begin_run``: a long-lived process
+        that executes many runs never accumulates the material of the runs it
+        already finished.
+
+        Args:
+            root: Project or flat data root for the run.
+        """
+        self._smarttable_builder.reset()
+        clear_tile_row_data(_data_root(root))
 
     def backup(
         self,
@@ -116,7 +134,8 @@ class InvoiceService:
                 invoice_org=invoice_source,
                 invoice_schema_path=schema,
                 dist_path=destination,
-                rawfiles=paths.rawfiles,
+                data_root=paths.invoice.parent,
+                builder=self._smarttable_builder,
             )
         return None
 
@@ -146,41 +165,184 @@ class InvoiceService:
         self,
         *,
         config: RdeConfig,
-        invoice_path: Path,
-        structured_dir: Path,
-        rawfiles: tuple[Path, ...],
+        dataset_paths: RdeDatasetPaths,
+        steps: frozenset[str] | None = None,
         feature_updater: Callable[[], None] | None = None,
     ) -> None:
         """Apply the three canonical invoice artifact configuration flags.
 
+        The step order and the copy source are ported from the v1 invoice
+        pipeline (``processing/factories.py``: StructuredInvoiceSaver ->
+        VariableApplier -> DescriptionUpdater). The structured copy takes
+        ``invoice_org`` — the run-level source invoice — exactly like v1's
+        ``StructuredInvoiceSaver``; copying the tile invoice instead would
+        publish magic-variable substitutions v1 never writes there.
+
+        The three steps touch disjoint state (``structured/invoice.json``, the
+        tile invoice's ``basic.dataName`` and its ``basic.description``), which
+        is why the MultiDataTile/ExcelInvoice pipelines can interleave them
+        differently without changing any observable artifact.
+
+        The whole v1 dataset bundle is required — not just a few paths —
+        because ``apply_magic_variable`` resolves ``${invoice:...}`` from
+        ``dataset_paths.invoice_org`` and ``${metadata:...}`` from the tile's
+        ``meta/metadata.json``, exactly as v1's ``VariableApplier`` does.
+
         Args:
             config: Canonical run configuration.
-            invoice_path: Tile invoice to update or persist.
-            structured_dir: Structured artifact destination.
-            rawfiles: Tile inputs used for magic-variable replacement.
-            feature_updater: Optional description update operation.
+            dataset_paths: v1 dataset bundle for the tile being finalized.
+            steps: Steps this mode runs (``structured`` / ``magic`` /
+                ``description``). ``None`` runs all three, which is the v1
+                invoice, MultiDataTile, ExcelInvoice and SmartTable behavior.
+            feature_updater: Optional replacement for the description update.
+
+        Raises:
+            FileNotFoundError: If the structured copy is enabled but the source
+                invoice is missing (v1 ``StructuredInvoiceSaver`` behavior).
         """
-        if config.system.magic_variable and rawfiles:
+        resource = dataset_paths.output_paths
+        invoice_path = resource.invoice / "invoice.json"
+        if _step_enabled(steps, INVOICE_STEP_STRUCTURED) and config.system.save_invoice_to_structured:
+            self._save_structured_invoice(resource.invoice_org, resource.struct)
+        if _step_enabled(steps, INVOICE_STEP_MAGIC) and config.system.magic_variable and resource.rawfiles:
             apply_magic_variable(
                 invoice_path,
-                rawfiles[0],
+                resource.rawfiles[0],
                 save_filepath=invoice_path,
+                dataset_paths=dataset_paths,
             )
-        if config.system.save_invoice_to_structured:
-            structured_dir.mkdir(parents=True, exist_ok=True)
-            destination = structured_dir / "invoice.json"
-            if invoice_path.resolve() != destination.resolve():
-                shutil.copy2(invoice_path, destination)
-        if config.system.feature_description and feature_updater is not None:
-            try:
-                feature_updater()
-            except Exception:  # noqa: BLE001
-                return
+        if _step_enabled(steps, INVOICE_STEP_DESCRIPTION) and config.system.feature_description:
+            updater = feature_updater or build_description_updater(dataset_paths)
+            # v1's DescriptionUpdater suppresses every failure because the
+            # description transfer is optional enrichment, not an artifact.
+            with contextlib.suppress(Exception):
+                updater()
+
+    @staticmethod
+    def _save_structured_invoice(invoice_org: Path, structured_dir: Path) -> None:
+        if not invoice_org.exists():
+            msg = f"Original invoice not found for structured export: {invoice_org}"
+            raise FileNotFoundError(msg)
+        structured_dir.mkdir(parents=True, exist_ok=True)
+        destination = structured_dir / "invoice.json"
+        if invoice_org.resolve() != destination.resolve():
+            shutil.copy2(invoice_org, destination)
+
+
+def resolve_invoice_source(root: Path) -> Path:
+    """Return the run-level ``invoice_org`` source for a run root.
+
+    The v1 ``backup_invoice_json_files`` contract is: modes that back the
+    original invoice up read ``data/temp/invoice_org.json``, every other mode
+    reads ``data/invoice/invoice.json``. The backup's presence — not a mode
+    branch — therefore selects the source, and the source is run-level, so
+    divided tiles share the tile-0 backup exactly as v1 does.
+
+    Args:
+        root: Project or flat data root for the run.
+
+    Returns:
+        Path of the run-level source invoice.
+    """
+    data_root = _data_root(root)
+    backup = data_root / "temp" / "invoice_org.json"
+    return backup if backup.exists() else data_root / "invoice" / "invoice.json"
+
+
+def build_tile_dataset_paths(
+    *,
+    paths: InputPaths,
+    out: Any,
+    invoice_org: Path,
+) -> RdeDatasetPaths:
+    """Build the v1 dataset bundle for one tile's invoice artifact stage.
+
+    ``RdeDatasetPaths`` is a v1 primitive (``models.rde2types``) that the v1
+    invoice helpers consume directly, so the domain layer constructs it here
+    rather than importing the ``compat`` adapter. ``RdeInputDirPaths.config``
+    keeps its v1 default: none of the invoice steps reads it.
+
+    Args:
+        paths: Runner input paths for the tile.
+        out: Runner output context for the tile.
+        invoice_org: Run-level source invoice.
+
+    Returns:
+        The v1 bundle expected by ``apply_magic_variable`` and
+        ``update_description_with_features``.
+    """
+    resource = RdeOutputResourcePath(
+        raw=out.raw,
+        nonshared_raw=out.nonshared_raw,
+        rawfiles=paths.rawfiles,
+        struct=out.struct,
+        main_image=out.main_image,
+        other_image=out.other_image,
+        meta=out.meta,
+        thumbnail=out.thumbnail,
+        logs=out.logs,
+        invoice=out.invoice,
+        invoice_schema_json=paths.tasksupport / "invoice.schema.json",
+        invoice_org=invoice_org,
+        attachment=out.attachment,
+    )
+    return RdeDatasetPaths(
+        input_paths=RdeInputDirPaths(
+            inputdata=paths.inputdata,
+            invoice=paths.invoice,
+            tasksupport=paths.tasksupport,
+        ),
+        output_paths=resource,
+    )
+
+
+def build_description_updater(dataset_paths: RdeDatasetPaths) -> Callable[[], None]:
+    """Build the v1 feature-description update operation for one tile.
+
+    Args:
+        dataset_paths: v1 dataset bundle for the tile.
+
+    Returns:
+        Callable performing the v1 ``update_description_with_features`` call.
+    """
+
+    def _update() -> None:
+        update_description_with_features(
+            dataset_paths.output_paths,
+            dataset_paths.output_paths.invoice / "invoice.json",
+            dataset_paths.tasksupport / "metadata-def.json",
+        )
+
+    return _update
+
+
+#: Canonical names of the three invoice artifact steps a mode may select.
+INVOICE_STEP_STRUCTURED = "structured"
+INVOICE_STEP_MAGIC = "magic"
+INVOICE_STEP_DESCRIPTION = "description"
+INVOICE_STEPS = frozenset({INVOICE_STEP_STRUCTURED, INVOICE_STEP_MAGIC, INVOICE_STEP_DESCRIPTION})
+
+
+def _step_enabled(steps: frozenset[str] | None, step: str) -> bool:
+    return steps is None or step in steps
+
+
+_RDE_MARKERS = ("inputdata", "invoice", "tasksupport")
 
 
 def _data_root(root: Path) -> Path:
+    """Resolve the directory that owns this run's invoice inputs.
+
+    A root that *directly* holds the RDE marker directories is the data root,
+    even once tile creation adds a ``data`` child below it. Resolving the
+    ``data`` child first would make the answer depend on when it is asked:
+    the invoice source would silently move from ``<root>/invoice`` to
+    ``<root>/data/invoice`` in the middle of a run over an alias-flat root.
+    """
+    if any((root / name).exists() for name in _RDE_MARKERS):
+        return root
     candidate = root / "data"
-    if any((candidate / name).exists() for name in ("inputdata", "invoice", "tasksupport")):
+    if any((candidate / name).exists() for name in _RDE_MARKERS):
         return candidate
     return root
 
